@@ -1,0 +1,145 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Reference data (Stage 1 – extensible for Stage 2)
+// ---------------------------------------------------------------------------
+
+model Archetype {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  traitProfiles ArchetypeTraitProfile[]
+  agents        Agent[]
+}
+
+model TraitDefinition {
+  id             String   @id @default(uuid()) @db.Uuid
+  key            String   @unique
+  displayName    String
+  description    String?
+  valueRangeText String?
+  minValue       Float?
+  maxValue       Float?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  archetypeProfiles ArchetypeTraitProfile[]
+}
+
+model ArchetypeTraitProfile {
+  archetypeId       String @db.Uuid
+  traitDefinitionId String @db.Uuid
+  baselineValue     Float
+
+  archetype       Archetype       @relation(fields: [archetypeId], references: [id], onDelete: Cascade)
+  traitDefinition TraitDefinition @relation(fields: [traitDefinitionId], references: [id], onDelete: Cascade)
+
+  @@unique([archetypeId, traitDefinitionId])
+}
+
+// ---------------------------------------------------------------------------
+// Runtime / simulation (Stage 1 – extensible for Stage 2)
+// ---------------------------------------------------------------------------
+
+model Agent {
+  id          String   @id @default(uuid()) @db.Uuid
+  displayName String
+  archetypeId String   @db.Uuid
+  stateJson   Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  archetype   Archetype         @relation(fields: [archetypeId], references: [id], onDelete: Restrict)
+  experiences AgentExperience[]
+}
+
+enum SimulationRunStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model SimulationRun {
+  id             String              @id @default(uuid()) @db.Uuid
+  name           String
+  status         SimulationRunStatus @default(PENDING)
+  seed           Int
+  modelVersion   String
+  datasetVersion String
+  codeGitSha     String?
+  schemaVersion  String
+  startedAt      DateTime?
+  finishedAt     DateTime?
+  configJson     Json?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  agentExperiences AgentExperience[]
+  crowdSnapshots   CrowdSnapshot[]
+
+  @@unique([name, datasetVersion])
+}
+
+model AgentExperience {
+  id              String   @id @default(uuid()) @db.Uuid
+  runId           String   @db.Uuid
+  agentId         String   @db.Uuid
+  step            Int
+  ts              DateTime
+  actionJson      Json?
+  signalsJson     Json?
+  pnl             Float?
+  drawdown        Float?
+  reward          Float?
+  learningMetaJson Json?
+  stateBeforeJson Json?
+  stateAfterJson  Json?
+
+  run   SimulationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  agent Agent         @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([runId, step])
+  @@index([agentId, ts])
+}
+
+model CrowdSnapshot {
+  id              String   @id @default(uuid()) @db.Uuid
+  runId           String   @db.Uuid
+  step            Int
+  ts              DateTime
+  aggregationJson Json?
+  confidence      Float?
+
+  run SimulationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@unique([runId, step])
+}
+
+// ---------------------------------------------------------------------------
+// Import tracking (Package A+)
+// ---------------------------------------------------------------------------
+
+model ImportRun {
+  id            String    @id @default(uuid()) @db.Uuid
+  type          String
+  sourceFilename String
+  sourceHash    String
+  status        String
+  summaryJson   Json?
+  errorJson     Json?
+  startedAt     DateTime
+  finishedAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}

@@ -1,0 +1,37 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: crowdvest-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: crowdvest
+      POSTGRES_USER: crowdvest
+      POSTGRES_PASSWORD: crowdvest_dev_pw
+    ports:
+      - "5432:5432"
+    volumes:
+      - crowdvest_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crowdvest -d crowdvest"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7
+    container_name: crowdvest-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - crowdvest_redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  crowdvest_pgdata:
+  crowdvest_redisdata:

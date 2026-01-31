@@ -1,0 +1,32 @@
+{
+  "name": "@crowdvest/db",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "prisma:generate": "node scripts/with-env.js generate",
+    "prisma:migrate": "node scripts/with-env.js migrate dev",
+    "prisma:studio": "node scripts/with-env.js studio",
+    "db:precheck": "docker exec -i crowdvest-postgres psql -U crowdvest -d crowdvest < prisma/sql/pre_migration_cleanup.sql",
+    "db:seed": "node scripts/with-env.js seed",
+    "dev": "tsc --watch",
+    "lint": "eslint \"src/**/*.ts\"",
+    "test": "echo \"No tests yet\""
+  },
+  "prisma": {
+    "seed": "node scripts/with-env.js seed"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0"
+  },
+  "devDependencies": {
+    "dotenv": "^16.4.5",
+    "eslint": "^9.0.0",
+    "prisma": "^5.22.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "xlsx": "^0.18.5"
+  }
+}

@@ -10,6 +10,7 @@ import {
   createSeededRng,
   sampleMarketReturn,
   buildTraitValues,
+  getSellConfig,
   type AgentInSim,
   type SimConfig,
 } from "@crowdvest/sim-core";
@@ -196,6 +197,12 @@ async function main(): Promise<void> {
       wallet,
       peakWallet: wallet,
       traitValues,
+      positionOpen: false,
+      entryWallet: 0,
+      entryStep: 0,
+      holdingSteps: 0,
+      hasBought: false,
+      hasSoldAfterBuy: false,
     };
   });
 
@@ -206,29 +213,52 @@ async function main(): Promise<void> {
   };
 
   const uniform = createSeededRng(config.seed);
-  const MARKET_MEAN = 0.0005;
+  const MARKET_MEAN = 0.002;
   const MARKET_STDEV = 0.01;
+  const sellConfig = getSellConfig(config);
+  const decisionHistogram = { BUY: 0, SELL: 0, HOLD: 0, OTHER: 0 };
+  const sampleDecisions: { agentId: string; step: number; action: string }[] = [];
+  const prePersistHistogram = { BUY: 0, SELL: 0, HOLD: 0, OTHER: 0 };
+  const samplePrePersistActions: { agentId: string; step: number; action: string }[] = [];
 
   for (let stepIndex = 0; stepIndex < config.steps; stepIndex++) {
     const marketReturn = sampleMarketReturn(MARKET_MEAN, MARKET_STDEV, uniform);
     const ts = new Date();
-    const result = runStep(agentsForSim, marketReturn, stepIndex, ts);
+    const result = runStep(agentsForSim, marketReturn, stepIndex, ts, sellConfig);
     const { experiences, snapshot } = result;
 
-    await prisma.agentExperience.createMany({
-      data: experiences.map((e) => ({
-        runId,
-        agentId: e.agentId,
-        step: snapshot.stepIndex,
-        ts,
-        actionJson: { action: e.action },
-        reward: e.reward,
-        pnl: e.pnl,
-        drawdown: e.drawdown,
-        stateAfterJson: { wallet: e.walletAfter },
-        learningMetaJson: e.meta as object,
-      })),
-    });
+    for (const e of experiences) {
+      const action = String(e.action).toLowerCase();
+      const key = action === "buy" ? "BUY" : action === "sell" ? "SELL" : action === "hold" ? "HOLD" : "OTHER";
+      decisionHistogram[key]++;
+      if (sampleDecisions.length < 10) {
+        sampleDecisions.push({ agentId: e.agentId, step: snapshot.stepIndex, action: key });
+      }
+    }
+
+    const data = experiences.map((e) => ({
+      runId,
+      agentId: e.agentId,
+      step: snapshot.stepIndex,
+      ts,
+      actionJson: { action: e.action },
+      reward: e.reward,
+      pnl: e.pnl,
+      drawdown: e.drawdown,
+      stateAfterJson: { wallet: e.walletAfter },
+      learningMetaJson: e.meta as object,
+    }));
+
+    for (const d of data) {
+      const action = ((d.actionJson as { action?: string })?.action ?? "hold").toLowerCase();
+      const key = action === "buy" ? "BUY" : action === "sell" ? "SELL" : action === "hold" ? "HOLD" : "OTHER";
+      prePersistHistogram[key]++;
+      if (samplePrePersistActions.length < 10) {
+        samplePrePersistActions.push({ agentId: d.agentId, step: d.step, action: key });
+      }
+    }
+
+    await prisma.agentExperience.createMany({ data });
 
     await prisma.crowdSnapshot.create({
       data: {
@@ -255,10 +285,25 @@ async function main(): Promise<void> {
   const snapshotCount = await prisma.crowdSnapshot.count({ where: { runId } });
   log(`Persisted ${experienceCount} experiences, ${snapshotCount} snapshots`);
 
-  await prisma.simulationRun.update({
-    where: { id: runId },
-    data: { status: "COMPLETED", finishedAt: new Date() },
-  });
+  const prePersistJson = JSON.stringify(prePersistHistogram);
+  const sampleJson = JSON.stringify(samplePrePersistActions);
+  await prisma.$transaction([
+    prisma.simulationRun.update({
+      where: { id: runId },
+      data: {
+        status: "COMPLETED",
+        finishedAt: new Date(),
+        configJson: { decisionHistogram, sampleDecisions } as object,
+      },
+    }),
+    prisma.$executeRaw`
+      INSERT INTO "RunDebug" ("runId", "prePersistHistogram", "samplePrePersistActions")
+      VALUES (${runId}::uuid, ${prePersistJson}::jsonb, ${sampleJson}::jsonb)
+      ON CONFLICT ("runId") DO UPDATE SET
+        "prePersistHistogram" = EXCLUDED."prePersistHistogram",
+        "samplePrePersistActions" = EXCLUDED."samplePrePersistActions"
+    `,
+  ]);
   log(`Run ${runId} completed.`);
 
   await prisma.$disconnect();

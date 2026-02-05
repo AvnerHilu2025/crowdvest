@@ -1,0 +1,99 @@
+# CI: build, lint, test. Optional: sim-and-gate runs a quick sim then pnpm verify:run.
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+env:
+  pnpm_version: "9"
+
+jobs:
+  build-lint-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.pnpm_version }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Test
+        run: pnpm test
+
+  # Optional: run sim pipeline then post-run gate (API + DB required).
+  sim-and-gate:
+    runs-on: ubuntu-latest
+    needs: [build-lint-test]
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: crowdvest
+          POSTGRES_PASSWORD: crowdvest_dev_pw
+          POSTGRES_DB: crowdvest
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U crowdvest -d crowdvest"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://crowdvest:crowdvest_dev_pw@localhost:5432/crowdvest?schema=public
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.pnpm_version }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Verify migration integrity
+        run: pnpm verify:db
+
+      - name: Prisma migrate deploy
+        run: pnpm --filter @crowdvest/db migrate:deploy
+
+      - name: Start API
+        env:
+          PORT: "4001"
+        run: |
+          pnpm --filter api run start:prod &
+          for i in $(seq 1 30); do
+            if curl -sS -o /dev/null -w "%{http_code}" http://localhost:4001/health | grep -q 200; then break; fi
+            if [ "$i" -eq 30 ]; then echo "API health timeout"; exit 1; fi
+            sleep 1
+          done
+
+      - name: Run sim (smoke)
+        run: pnpm --filter worker sim:smoke
+
+      - name: Post-run gate
+        run: pnpm verify:run

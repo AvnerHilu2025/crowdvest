@@ -6,6 +6,34 @@ export interface SimConfig {
   seed: number;
   steps: number;
   startingCash: number;
+  /** Take-profit threshold (fraction). SELL when pnlPct >= this. Default 0.001. */
+  takeProfit?: number;
+  /** Stop-loss threshold (fraction). SELL when pnlPct <= -this. Default 0.001. */
+  stopLoss?: number;
+  /** Max steps to hold position. SELL when (currentStep - entryStep) >= this. Default 2. */
+  maxHoldSteps?: number;
+}
+
+export interface SellConfig {
+  takeProfit: number;
+  stopLoss: number;
+  maxHoldSteps: number;
+}
+
+export const DEFAULT_TAKE_PROFIT = 0.001;
+export const DEFAULT_STOP_LOSS = 0.001;
+export const DEFAULT_MAX_HOLD_STEPS = 2;
+
+export function getSellConfig(config: SimConfig): SellConfig {
+  const env = typeof process !== "undefined" ? process.env : undefined;
+  const takeEnv = env?.TAKE_PROFIT != null ? parseFloat(env.TAKE_PROFIT) : NaN;
+  const stopEnv = env?.STOP_LOSS != null ? parseFloat(env.STOP_LOSS) : NaN;
+  const maxEnv = env?.MAX_HOLD_STEPS != null ? parseInt(env.MAX_HOLD_STEPS, 10) : NaN;
+  return {
+    takeProfit: config.takeProfit ?? (Number.isFinite(takeEnv) ? takeEnv : DEFAULT_TAKE_PROFIT),
+    stopLoss: config.stopLoss ?? (Number.isFinite(stopEnv) ? stopEnv : DEFAULT_STOP_LOSS),
+    maxHoldSteps: config.maxHoldSteps ?? (Number.isFinite(maxEnv) ? maxEnv : DEFAULT_MAX_HOLD_STEPS),
+  };
 }
 
 /** Trait keys used by the sim for action/reward. Values 0..1. */
@@ -33,6 +61,18 @@ export interface AgentInSim {
   /** Maximum wallet observed so far (for drawdown). Set to wallet at creation. */
   peakWallet: number;
   traitValues: TraitValues;
+  /** True if agent has an open position (bought, not yet sold). */
+  positionOpen: boolean;
+  /** Wallet when position was opened (for profit/loss calc). */
+  entryWallet: number;
+  /** Step index when position was opened. Used for (currentStep - entryStep) >= MAX_HOLD_STEPS. */
+  entryStep: number;
+  /** Steps since opening position (kept for backward compat; derived from entryStep when using stepIndex). */
+  holdingSteps: number;
+  /** True if agent has ever executed BUY. Used for deterministic "SELL after BUY" rule. */
+  hasBought: boolean;
+  /** True after agent has executed SELL following a buy. Ensures one sell after first buy. */
+  hasSoldAfterBuy: boolean;
 }
 
 export type Action = "buy" | "sell" | "hold";

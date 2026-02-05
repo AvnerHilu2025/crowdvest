@@ -10,6 +10,7 @@
 import path from "path";
 import fs from "fs";
 import { PrismaClient } from "@crowdvest/db";
+import { computeValidationMetrics, type ValidationMetrics } from "@crowdvest/shared";
 
 const DATABASE_URL_MISSING =
   "DATABASE_URL is not set. Create a .env at the repository root with DATABASE_URL=postgresql://...";
@@ -115,6 +116,7 @@ interface SummaryResult {
   pnlNulls: number;
   drawdownNulls: number;
   actionsDistribution: { action: string; n: number }[];
+  validation?: ValidationMetrics;
 }
 
 async function findRun(prisma: PrismaClient, argv: SimSummaryArgv): Promise<RunRow | null> {
@@ -227,6 +229,34 @@ async function getSummary(prisma: PrismaClient, runId: string, topActions: numbe
   };
 }
 
+async function getAgentResultsForValidation(
+  prisma: PrismaClient,
+  runId: string,
+): Promise<{ pnl: number; risk: number; archetypeId: string }[]> {
+  const rows = await prisma.agentExperience.findMany({
+    where: { runId },
+    select: {
+      agentId: true,
+      pnl: true,
+      drawdown: true,
+      agent: { select: { archetypeId: true } },
+    },
+  });
+  const byAgent = new Map<string, { pnl: number; risk: number; archetypeId: string }>();
+  for (const r of rows) {
+    const archetypeId = r.agent?.archetypeId ?? "";
+    const pnl = r.pnl ?? 0;
+    const risk = r.drawdown ?? 0;
+    if (!byAgent.has(r.agentId)) {
+      byAgent.set(r.agentId, { pnl: 0, risk: 0, archetypeId });
+    }
+    const a = byAgent.get(r.agentId)!;
+    a.pnl += pnl;
+    a.risk = Math.max(a.risk, risk);
+  }
+  return Array.from(byAgent.values());
+}
+
 function printHumanSummary(run: RunRow, summary: Omit<SummaryResult, "run">): void {
   log("--- Simulation run summary ---");
   log(`Run ID:        ${run.id}`);
@@ -246,6 +276,17 @@ function printHumanSummary(run: RunRow, summary: Omit<SummaryResult, "run">): vo
   log("Top actions:");
   for (const { action, n } of summary.actionsDistribution) {
     log(`  ${action}: ${n}`);
+  }
+  if (summary.validation) {
+    log("--- Validation metrics ---");
+    log(`Total PnL sum:     ${summary.validation.totalPnlSum.toFixed(2)}`);
+    log(`% profitable agents: ${summary.validation.pctProfitableAgents.toFixed(1)}%`);
+    log(`Archetype dispersion: ${summary.validation.archetypeDispersion.toFixed(4)}`);
+    log("Max drawdown by archetype:");
+    for (const { archetypeId, maxDrawdown } of summary.validation.maxDrawdownByArchetype) {
+      log(`  ${archetypeId.slice(0, 8)}…: ${maxDrawdown.toFixed(4)}`);
+    }
+    log("--------------------------------------");
   }
   log("--------------------------------------");
 }
@@ -272,6 +313,8 @@ async function main(): Promise<void> {
 
     log(`Summarizing run: ${run.id} (${run.name})`);
     const summaryData = await getSummary(prisma, run.id, argv.topActions);
+    const agentsForValidation = await getAgentResultsForValidation(prisma, run.id);
+    const validation = computeValidationMetrics(agentsForValidation);
 
     const runForJson = {
       id: run.id,
@@ -286,9 +329,10 @@ async function main(): Promise<void> {
     const summary: SummaryResult = {
       run: runForJson,
       ...summaryData,
+      validation,
     };
 
-    printHumanSummary(run, summaryData);
+    printHumanSummary(run, { ...summaryData, validation });
 
     const jsonOut = JSON.stringify(summary, null, 2);
     log("JSON summary:");

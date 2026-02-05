@@ -1,1 +1,1 @@
-export { PrismaClient, SimulationRunStatus } from "@prisma/client";
+export { PrismaClient, SimulationRunStatus } from "../generated/prisma";

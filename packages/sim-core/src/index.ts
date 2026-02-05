@@ -15,6 +15,13 @@ export type {
   StepResult,
   TraitValues,
   TraitKey,
+  SellConfig,
+} from "./types";
+export {
+  DEFAULT_TAKE_PROFIT,
+  DEFAULT_STOP_LOSS,
+  DEFAULT_MAX_HOLD_STEPS,
+  getSellConfig,
 } from "./types";
 export {
   TRAIT_KEYS,

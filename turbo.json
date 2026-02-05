@@ -14,6 +14,12 @@
     },
     "test": {
       "dependsOn": ["^build"]
+    },
+    "verify:db": {
+      "cache": false
+    },
+    "verify:run": {
+      "cache": false
     }
   }
 }

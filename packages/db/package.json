@@ -5,9 +5,10 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
+    "build": "prisma generate && tsc",
     "prisma:generate": "node scripts/with-env.js generate",
     "prisma:migrate": "node scripts/with-env.js migrate dev",
+    "migrate:deploy": "node scripts/with-env.js migrate deploy",
     "prisma:studio": "node scripts/with-env.js studio",
     "db:precheck": "docker exec -i crowdvest-postgres psql -U crowdvest -d crowdvest < prisma/sql/pre_migration_cleanup.sql",
     "db:seed": "node scripts/with-env.js seed",

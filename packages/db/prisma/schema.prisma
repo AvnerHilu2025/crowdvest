@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -87,8 +88,19 @@ model SimulationRun {
 
   agentExperiences AgentExperience[]
   crowdSnapshots   CrowdSnapshot[]
+  runDebug         RunDebug?
+  bets             Bet[]
 
   @@unique([name, datasetVersion])
+}
+
+model RunDebug {
+  runId                   String   @id @db.Uuid
+  prePersistHistogram     Json?
+  samplePrePersistActions Json?
+  createdAt               DateTime @default(now())
+
+  run SimulationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
 }
 
 model AgentExperience {
@@ -124,6 +136,63 @@ model CrowdSnapshot {
   run SimulationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
 
   @@unique([runId, step])
+}
+
+// ---------------------------------------------------------------------------
+// Import tracking (Package A+)
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Identity (Identity-Lite – multi-user without auth)
+// ---------------------------------------------------------------------------
+
+model UserProfile {
+  userId      String   @id
+  displayName String
+  createdAt   DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Wallet (Retention Core)
+// ---------------------------------------------------------------------------
+
+model UserWallet {
+  userId    String   @id
+  balance   Float    @default(100)
+  updatedAt DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Bets (MVP)
+// ---------------------------------------------------------------------------
+
+enum BetDirection {
+  BUY
+  SELL
+  HOLD
+}
+
+model Bet {
+  id          String       @id @default(uuid()) @db.Uuid
+  userId      String
+  runId       String       @db.Uuid
+  direction   BetDirection
+  confidence  Int
+  stake       Float
+  thesis      String?
+  status      String       @default("PENDING") // PENDING | SETTLED
+  evalVersion String?
+  isCorrect   Boolean?
+  pnl         Float?
+  settledAt   DateTime?
+  createdAt   DateTime     @default(now())
+
+  run SimulationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([runId, createdAt])
+  @@index([userId, status, createdAt])
+  @@index([runId, status, createdAt])
 }
 
 // ---------------------------------------------------------------------------

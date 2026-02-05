@@ -19,6 +19,17 @@ export {
   type ImportRun,
   type AgentExperience,
   type CrowdSnapshot,
+  type SimulationRunResult,
+  type AgentResult,
+  type ActionCounts,
+  type AggregateScope,
+  type AggregateMetrics,
+  type ArchetypeAggregate,
+  type RunAggregate,
+  type GlobalAggregate,
+  type AggregatedResult,
+  type RawResultsPayload,
+  type AggregatedResultsPayload,
 } from "./schemas";
 
 export {
@@ -36,3 +47,10 @@ export {
   type ListDatasetsResponse,
   type DatasetEntry,
 } from "./dto";
+
+export {
+  computeValidationMetrics,
+  type AgentForValidation,
+  type ValidationMetrics,
+  type MaxDrawdownByArchetype,
+} from "./validation-metrics";

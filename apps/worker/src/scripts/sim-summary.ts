@@ -191,9 +191,9 @@ async function getSummary(prisma: PrismaClient, runId: string, topActions: numbe
       prisma.agentExperience.count({ where: { runId, pnl: null } }),
       prisma.agentExperience.count({ where: { runId, drawdown: null } }),
       prisma.agentExperience.groupBy({
-        by: ["agentId"],
+        by: ["runAgentId"],
         where: { runId },
-        _count: { agentId: true },
+        _count: { runAgentId: true },
       }).then((groups) => groups.length),
       prisma.$queryRaw<{ action: string | null; n: bigint }[]>`
         SELECT COALESCE("actionJson"->>'action', 'unknown') AS action, COUNT(*)::bigint AS n
@@ -236,21 +236,21 @@ async function getAgentResultsForValidation(
   const rows = await prisma.agentExperience.findMany({
     where: { runId },
     select: {
-      agentId: true,
+      runAgentId: true,
       pnl: true,
       drawdown: true,
-      agent: { select: { archetypeId: true } },
+      runAgent: { select: { archetype: true } },
     },
   });
   const byAgent = new Map<string, { pnl: number; risk: number; archetypeId: string }>();
   for (const r of rows) {
-    const archetypeId = r.agent?.archetypeId ?? "";
+    const archetypeId = r.runAgent?.archetype ?? "";
     const pnl = r.pnl ?? 0;
     const risk = r.drawdown ?? 0;
-    if (!byAgent.has(r.agentId)) {
-      byAgent.set(r.agentId, { pnl: 0, risk: 0, archetypeId });
+    if (!byAgent.has(r.runAgentId)) {
+      byAgent.set(r.runAgentId, { pnl: 0, risk: 0, archetypeId });
     }
-    const a = byAgent.get(r.agentId)!;
+    const a = byAgent.get(r.runAgentId)!;
     a.pnl += pnl;
     a.risk = Math.max(a.risk, risk);
   }

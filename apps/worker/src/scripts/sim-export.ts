@@ -153,9 +153,9 @@ async function getSummary(prisma: PrismaClient, runId: string, topActions: numbe
       prisma.agentExperience.count({ where: { runId, pnl: null } }),
       prisma.agentExperience.count({ where: { runId, drawdown: null } }),
       prisma.agentExperience.groupBy({
-        by: ["agentId"],
+        by: ["runAgentId"],
         where: { runId },
-        _count: { agentId: true },
+        _count: { runAgentId: true },
       }).then((groups) => groups.length),
       prisma.$queryRaw<{ action: string | null; n: bigint }[]>`
         SELECT COALESCE("actionJson"->>'action', 'unknown') AS action, COUNT(*)::bigint AS n
@@ -242,10 +242,10 @@ async function main(): Promise<void> {
       }),
       prisma.agentExperience.findMany({
         where: { runId },
-        orderBy: [{ step: "asc" }, { agentId: "asc" }],
+        orderBy: [{ step: "asc" }, { runAgentId: "asc" }],
         take: argv.limitExperiences ?? undefined,
         select: {
-          agentId: true,
+          runAgentId: true,
           step: true,
           ts: true,
           reward: true,
@@ -273,7 +273,7 @@ async function main(): Promise<void> {
     };
 
     const experiences = experiencesRows.map((e) => ({
-      agentId: e.agentId,
+      runAgentId: e.runAgentId,
       step: e.step,
       ts: e.ts.toISOString(),
       reward: e.reward,
@@ -328,12 +328,12 @@ async function main(): Promise<void> {
     fs.writeFileSync(snapshotsCsvPath, snapshotLines.join("\n"), "utf8");
     log(`Wrote: ${path.resolve(snapshotsCsvPath)}`);
 
-    const expHeader = "agentId,step,ts,reward,pnl,drawdown,actionJson,signalsJson";
+    const expHeader = "runAgentId,step,ts,reward,pnl,drawdown,actionJson,signalsJson";
     const expLines = [
       expHeader,
       ...experiencesRows.map((e) =>
         [
-          e.agentId,
+          e.runAgentId,
           e.step,
           e.ts.toISOString(),
           e.reward ?? "",

@@ -109,6 +109,534 @@ export class ResultsService {
     };
   }
 
+  /** GET /results/crowd-state?runId=&assetSymbol= — per-step CrowdMetrics + recommendation (direction, strength, confidence, stability, explanation). */
+  async getCrowdState(
+    runId: string,
+    assetSymbol: string,
+  ): Promise<{
+    runId: string;
+    assetSymbol: string;
+    perStep: {
+      step: number;
+      signal: number;
+      weightedSignal: number;
+      consensus: number;
+      polarization: number;
+      uncertainty: number;
+      minorityStrength: number;
+      beliefMomentum: number | null;
+      diversityIndex: number | null;
+      independenceIndex: number | null;
+      herdingIndex: number | null;
+      wisdomScore: number | null;
+      noiseSensitivity: number | null;
+    }[];
+    recommendation: {
+      direction: "bullish" | "bearish" | "neutral";
+      strength: number;
+      confidence: number;
+      stability: number;
+      explanation: string;
+    };
+  }> {
+    const run = await this.prisma.simulationRun.findUnique({
+      where: { id: runId },
+      select: { id: true },
+    });
+    if (!run) throw new NotFoundException(`Run not found: ${runId}`);
+
+    const sym = (assetSymbol ?? "RUN").trim() || "RUN";
+    let rows = await this.prisma.crowdMetrics.findMany({
+      where: { runId, assetSymbol: sym },
+      orderBy: { step: "asc" },
+      select: {
+        step: true,
+        signal: true,
+        weightedSignal: true,
+        consensus: true,
+        polarization: true,
+        uncertainty: true,
+        minorityStrength: true,
+        beliefMomentum: true,
+        diversityIndex: true,
+        independenceIndex: true,
+        herdingIndex: true,
+        wisdomScore: true,
+        noiseSensitivity: true,
+      },
+    });
+
+    if (rows.length === 0) {
+      const decisions = await this.prisma.agentDecision.findMany({
+        where: { runId, assetSymbol: sym },
+        select: { step: true, action: true, confidence: true },
+      });
+      const byStep = new Map<number, { action: string; confidence: number }[]>();
+      for (const d of decisions) {
+        if (!byStep.has(d.step)) byStep.set(d.step, []);
+        byStep.get(d.step)!.push({
+          action: String(d.action),
+          confidence: d.confidence,
+        });
+      }
+      const steps = [...byStep.keys()].sort((a, b) => a - b);
+      let prevWS: number | null = null;
+      rows = steps.map((step) => {
+        const rowsForStep = byStep.get(step)!;
+        const N = rowsForStep.length;
+        if (N === 0) {
+          return {
+            step,
+            signal: 0,
+            weightedSignal: prevWS ?? 0,
+            consensus: 0,
+            polarization: 0,
+            uncertainty: 1,
+            minorityStrength: 0,
+            beliefMomentum: null,
+            diversityIndex: null,
+            independenceIndex: null,
+            herdingIndex: null,
+            wisdomScore: null,
+            noiseSensitivity: null,
+          };
+        }
+        let buyCount = 0;
+        let sellCount = 0;
+        let holdCount = 0;
+        let weightedSum = 0;
+        let confSum = 0;
+        for (const r of rowsForStep) {
+          confSum += r.confidence;
+          if (r.action === "BUY") {
+            buyCount++;
+            weightedSum += r.confidence;
+          } else if (r.action === "SELL") {
+            sellCount++;
+            weightedSum -= r.confidence;
+          } else holdCount++;
+        }
+        const clamp = (x: number, lo: number, hi: number) =>
+          Math.max(lo, Math.min(hi, x));
+        const signal = clamp((buyCount - sellCount) / N, -1, 1);
+        const weightedSignal = clamp(weightedSum / N, -1, 1);
+        const maxFrac = Math.max(buyCount, sellCount, holdCount) / N;
+        const consensus = clamp(maxFrac, 0, 1);
+        const polarization = clamp((2 * Math.min(buyCount, sellCount)) / N, 0, 1);
+        const uncertainty = clamp(1 - confSum / N, 0, 1);
+        const minorityStrength = clamp(1 - consensus, 0, 1);
+        const beliefMomentum =
+          prevWS != null ? clamp(weightedSignal - prevWS, -2, 2) : null;
+        prevWS = weightedSignal;
+        return {
+          step,
+          signal,
+          weightedSignal,
+          consensus,
+          polarization,
+          uncertainty,
+          minorityStrength,
+          beliefMomentum,
+          diversityIndex: null,
+          independenceIndex: null,
+          herdingIndex: null,
+          wisdomScore: null,
+          noiseSensitivity: null,
+        };
+      });
+    }
+
+    type CrowdRow = {
+      step: number;
+      signal: number;
+      weightedSignal: number;
+      consensus: number;
+      polarization: number;
+      uncertainty: number;
+      minorityStrength: number;
+      beliefMomentum: number | null;
+      diversityIndex?: number | null;
+      independenceIndex?: number | null;
+      herdingIndex?: number | null;
+      wisdomScore?: number | null;
+      noiseSensitivity?: number | null;
+    };
+    const typedRows = rows as CrowdRow[];
+    const perStep = typedRows.map((r) => ({
+      step: r.step,
+      signal: r.signal,
+      weightedSignal: r.weightedSignal,
+      consensus: r.consensus,
+      polarization: r.polarization,
+      uncertainty: r.uncertainty,
+      minorityStrength: r.minorityStrength,
+      beliefMomentum: r.beliefMomentum,
+      diversityIndex: r.diversityIndex ?? null,
+      independenceIndex: r.independenceIndex ?? null,
+      herdingIndex: r.herdingIndex ?? 0,
+      wisdomScore: r.wisdomScore ?? null,
+      noiseSensitivity: r.noiseSensitivity ?? 0,
+    }));
+
+    const step0 = perStep[0];
+    if (step0) {
+      console.log(
+        `[api] step0 diversity=${step0.diversityIndex} independence=${step0.independenceIndex} wisdom=${step0.wisdomScore}`,
+      );
+    }
+    const step4 = perStep[4];
+    if (step4 != null && step4.noiseSensitivity != null) {
+      console.log(`[api] step4 noiseSensitivity=${step4.noiseSensitivity}`);
+    }
+
+    const recommendation = this.buildRecommendation(perStep);
+    return { runId, assetSymbol: sym, perStep, recommendation };
+  }
+
+  private buildRecommendation(
+    perStep: {
+      step: number;
+      weightedSignal: number;
+      consensus: number;
+      polarization: number;
+      uncertainty: number;
+      wisdomScore?: number | null;
+      diversityIndex?: number | null;
+      independenceIndex?: number | null;
+    }[],
+  ): {
+    direction: "bullish" | "bearish" | "neutral";
+    strength: number;
+    confidence: number;
+    stability: number;
+    explanation: string;
+  } {
+    if (perStep.length === 0) {
+      return {
+        direction: "neutral",
+        strength: 0,
+        confidence: 0,
+        stability: 0,
+        explanation: "No crowd data available.",
+      };
+    }
+    const recent = perStep.slice(-5);
+    const avgWS =
+      recent.reduce((s, p) => s + p.weightedSignal, 0) / recent.length;
+    const avgConsensus =
+      recent.reduce((s, p) => s + p.consensus, 0) / recent.length;
+    const avgPolarization =
+      recent.reduce((s, p) => s + p.polarization, 0) / recent.length;
+    const avgUncertainty =
+      recent.reduce((s, p) => s + p.uncertainty, 0) / recent.length;
+    const wisdomScores = recent
+      .map((p) => p.wisdomScore)
+      .filter((w): w is number => w != null && Number.isFinite(w));
+    const avgWisdomScore =
+      wisdomScores.length > 0
+        ? wisdomScores.reduce((a, b) => a + b, 0) / wisdomScores.length
+        : 0.5;
+
+    const variance =
+      recent.length > 1
+        ? recent.reduce((s, p) => s + (p.weightedSignal - avgWS) ** 2, 0) /
+          (recent.length - 1)
+        : 0;
+    const stability = Math.max(0, 1 - Math.min(1, Math.sqrt(variance) * 2));
+
+    const t = 0.08;
+    let direction: "bullish" | "bearish" | "neutral" = "neutral";
+    if (avgWS > t) direction = "bullish";
+    else if (avgWS < -t) direction = "bearish";
+
+    const strength = Math.min(1, Math.abs(avgWS));
+    let confidence = Math.max(
+      0,
+      avgConsensus * (1 - avgUncertainty) * (1 - avgPolarization * 0.5),
+    );
+    confidence *= 0.5 + 0.5 * avgWisdomScore;
+
+    let baseExplanation: string;
+    if (direction === "neutral") {
+      baseExplanation = `Crowd is undecided (weightedSignal=${avgWS.toFixed(2)}). Low consensus or high polarization.`;
+    } else if (direction === "bullish") {
+      baseExplanation = `Crowd leans bullish (strength=${strength.toFixed(2)}, stability=${stability.toFixed(2)}). Consensus ${(avgConsensus * 100).toFixed(0)}%.`;
+    } else {
+      baseExplanation = `Crowd leans bearish (strength=${strength.toFixed(2)}, stability=${stability.toFixed(2)}). Consensus ${(avgConsensus * 100).toFixed(0)}%.`;
+    }
+
+    let wisdomNote = "";
+    if (avgWisdomScore < 0.4 && wisdomScores.length > 0) {
+      const lowDiv = recent.some((p) => (p.diversityIndex ?? 1) < 0.4);
+      const lowInd = recent.some((p) => (p.independenceIndex ?? 1) < 0.4);
+      if (lowDiv && lowInd) {
+        wisdomNote = " Low wisdom: low diversity and herding.";
+      } else if (lowDiv) {
+        wisdomNote = " Low wisdom: low diversity.";
+      } else if (lowInd) {
+        wisdomNote = " Low wisdom: herding detected.";
+      }
+    }
+
+    const explanation = baseExplanation + wisdomNote;
+
+    return { direction, strength, confidence, stability, explanation };
+  }
+
+  /** GET /results/decisions?run_id=&step=&assetSymbol= — per-step decision summary from AgentDecision. */
+  async getDecisions(
+    runId: string,
+    step: number,
+    assetSymbol: string,
+  ): Promise<{
+    runId: string;
+    step: number;
+    assetSymbol: string;
+    histogram: { BUY: number; SELL: number; HOLD: number };
+    avgConfidence: number;
+    sample: { agentId: string; action: string; confidence: number; rationale: string | null }[];
+  }> {
+    const run = await this.prisma.simulationRun.findUnique({
+      where: { id: runId },
+      select: { id: true },
+    });
+    if (!run) throw new NotFoundException(`Run not found: ${runId}`);
+
+    const decisions = await this.prisma.agentDecision.findMany({
+      where: { runId, step, assetSymbol },
+      select: { agentId: true, action: true, confidence: true, rationale: true },
+      take: 1000,
+    });
+
+    const histogram = { BUY: 0, SELL: 0, HOLD: 0 };
+    let sumConf = 0;
+    for (const d of decisions) {
+      const key = d.action as "BUY" | "SELL" | "HOLD";
+      if (key in histogram) histogram[key]++;
+      sumConf += d.confidence;
+    }
+    const n = decisions.length;
+    const sample = decisions.slice(0, 10).map((d) => ({
+      agentId: d.agentId,
+      action: String(d.action),
+      confidence: d.confidence,
+      rationale: d.rationale,
+    }));
+
+    return {
+      runId,
+      step,
+      assetSymbol,
+      histogram,
+      avgConfidence: n > 0 ? sumConf / n : 0,
+      sample,
+    };
+  }
+
+  /** GET /results/crowd-summary?run_id= — crowd metrics. When assetSymbol provided, aggregates from AgentDecision with recommendation. */
+  async getCrowdSummary(runId: string, assetSymbol?: string): Promise<{
+    runId: string;
+    steps?: number;
+    voteDistribution?: { buy: number; sell: number; hold: number };
+    totals?: { buy: number; sell: number; hold: number };
+    avgWallet?: number;
+    avgReward?: number;
+    stepSummaries?: { step: number; actionCounts: { buy: number; sell: number; hold: number }; avgWallet: number }[];
+    overall?: { BUY: number; SELL: number; HOLD: number };
+    perStep?: { step: number; BUY: number; SELL: number; HOLD: number }[];
+    recommendation?: { action: "BUY" | "SELL" | "HOLD"; strength: number; weighted: number };
+  }> {
+    const run = await this.prisma.simulationRun.findUnique({
+      where: { id: runId },
+      select: { id: true },
+    });
+    if (!run) throw new NotFoundException(`Run not found: ${runId}`);
+
+    const sym = (assetSymbol ?? "").trim() || "RUN";
+    if (assetSymbol != null && assetSymbol.trim() !== "") {
+      const decisions = await this.prisma.agentDecision.findMany({
+        where: { runId, assetSymbol: sym },
+        select: { step: true, action: true, confidence: true },
+      });
+      const byStep = new Map<number, { BUY: number; SELL: number; HOLD: number }>();
+      let totalBuy = 0;
+      let totalSell = 0;
+      let totalHold = 0;
+      let weighted = 0;
+      const N = decisions.length;
+      for (const d of decisions) {
+        if (!byStep.has(d.step)) byStep.set(d.step, { BUY: 0, SELL: 0, HOLD: 0 });
+        const h = byStep.get(d.step)!;
+        if (d.action === "BUY") {
+          h.BUY++;
+          totalBuy++;
+          weighted += d.confidence;
+        } else if (d.action === "SELL") {
+          h.SELL++;
+          totalSell++;
+          weighted -= d.confidence;
+        } else {
+          h.HOLD++;
+          totalHold++;
+        }
+      }
+      const steps = [...byStep.keys()].sort((a, b) => a - b);
+      const perStep = steps.map((step) => ({ step, ...byStep.get(step)! }));
+      const t = 0.1;
+      let action: "BUY" | "SELL" | "HOLD" = "HOLD";
+      if (N > 0) {
+        if (weighted > t) action = "BUY";
+        else if (weighted < -t) action = "SELL";
+      }
+      const strength = N > 0 ? Math.abs(weighted) / N : 0;
+      return {
+        runId,
+        overall: { BUY: totalBuy, SELL: totalSell, HOLD: totalHold },
+        perStep,
+        recommendation: { action, strength, weighted },
+      };
+    }
+
+    const snapshots = await this.prisma.crowdSnapshot.findMany({
+      where: { runId },
+      orderBy: { step: "asc" },
+      select: { step: true, aggregationJson: true },
+    });
+
+    let totalBuy = 0;
+    let totalSell = 0;
+    let totalHold = 0;
+    let sumAvgWallet = 0;
+    let sumAvgReward = 0;
+    const stepSummaries: { step: number; actionCounts: { buy: number; sell: number; hold: number }; avgWallet: number }[] = [];
+
+    for (const s of snapshots) {
+      const agg = (s.aggregationJson ?? {}) as {
+        actionCounts?: { buy?: number; sell?: number; hold?: number };
+        avgWallet?: number;
+        avgReward?: number;
+      };
+      const counts = agg.actionCounts ?? { buy: 0, sell: 0, hold: 0 };
+      const buy = counts.buy ?? 0;
+      const sell = counts.sell ?? 0;
+      const hold = counts.hold ?? 0;
+      totalBuy += buy;
+      totalSell += sell;
+      totalHold += hold;
+      const avgWallet = agg.avgWallet ?? 0;
+      const avgReward = agg.avgReward ?? 0;
+      sumAvgWallet += avgWallet;
+      sumAvgReward += avgReward;
+      stepSummaries.push({
+        step: s.step,
+        actionCounts: { buy, sell, hold },
+        avgWallet,
+      });
+    }
+
+    const n = snapshots.length;
+    return {
+      runId,
+      steps: n,
+      voteDistribution: {
+        buy: totalBuy,
+        sell: totalSell,
+        hold: totalHold,
+      },
+      totals: { buy: totalBuy, sell: totalSell, hold: totalHold },
+      avgWallet: n > 0 ? sumAvgWallet / n : 0,
+      avgReward: n > 0 ? sumAvgReward / n : 0,
+      stepSummaries,
+    };
+  }
+
+  /** GET /results/step-summary?run_id=&step= — per-step crowd snapshot. */
+  async getStepSummary(
+    runId: string,
+    step: number,
+  ): Promise<{
+    runId: string;
+    step: number;
+    actionCounts: { buy: number; sell: number; hold: number };
+    avgWallet: number;
+    avgReward: number;
+    marketReturn?: number;
+  }> {
+    const snapshot = await this.prisma.crowdSnapshot.findUnique({
+      where: { runId_step: { runId, step } },
+      select: { step: true, aggregationJson: true },
+    });
+    if (!snapshot) throw new NotFoundException(`Step ${step} not found for run ${runId}`);
+
+    const agg = (snapshot.aggregationJson ?? {}) as {
+      actionCounts?: { buy?: number; sell?: number; hold?: number };
+      avgWallet?: number;
+      avgReward?: number;
+      marketReturn?: number;
+    };
+    const counts = agg.actionCounts ?? { buy: 0, sell: 0, hold: 0 };
+    return {
+      runId,
+      step: snapshot.step,
+      actionCounts: {
+        buy: counts.buy ?? 0,
+        sell: counts.sell ?? 0,
+        hold: counts.hold ?? 0,
+      },
+      avgWallet: agg.avgWallet ?? 0,
+      avgReward: agg.avgReward ?? 0,
+      marketReturn: agg.marketReturn,
+    };
+  }
+
+  /** GET /results/agent/:id/decisions?run_id= — AgentExperience for agent (RunAgent id) in run. */
+  async getAgentDecisions(
+    agentId: string,
+    runId: string,
+  ): Promise<{
+    agentId: string;
+    runId: string;
+    decisions: { step: number; action: string; reward: number; pnl: number; drawdown: number }[];
+  }> {
+    const [run, experiences] = await Promise.all([
+      this.prisma.simulationRun.findUnique({
+        where: { id: runId },
+        select: { id: true },
+      }),
+      this.prisma.agentExperience.findMany({
+        where: { runAgentId: agentId, runId },
+        orderBy: { step: "asc" },
+        select: { step: true, actionJson: true, reward: true, pnl: true, drawdown: true },
+      }),
+    ]);
+    if (!run) throw new NotFoundException(`Run not found: ${runId}`);
+
+    const decisions = experiences.map((e) => {
+      const action =
+        (e.actionJson as { action?: string } | null)?.action ?? "hold";
+      return {
+        step: e.step,
+        action: String(action).toLowerCase(),
+        reward: e.reward ?? 0,
+        pnl: e.pnl ?? 0,
+        drawdown: e.drawdown ?? 0,
+      };
+    });
+
+    return { agentId, runId, decisions };
+  }
+
+  /** GET /results/agents-count?runId= — RunAgent count for a run (for smoke verification). */
+  async getAgentsCount(runId: string): Promise<{ runId: string; count: number }> {
+    const run = await this.prisma.simulationRun.findUnique({
+      where: { id: runId },
+      select: { id: true },
+    });
+    if (!run) throw new NotFoundException(`Run not found: ${runId}`);
+    const count = await this.prisma.runAgent.count({ where: { runId } });
+    return { runId, count };
+  }
+
   /** GET /results/agents?run_id= — per-agent rolled-up results for a run. Returns { items, total }. */
   async getAgents(runId: string): Promise<{ items: AgentResult[]; total: number }> {
     const run = await this.prisma.simulationRun.findUnique({
@@ -120,14 +648,14 @@ export class ResultsService {
     const experiences = await this.prisma.agentExperience.findMany({
       where: { runId },
       select: {
-        agentId: true,
+        runAgentId: true,
         pnl: true,
         drawdown: true,
         reward: true,
         actionJson: true,
-        agent: { select: { archetypeId: true } },
+        runAgent: { select: { archetype: true } },
       },
-      orderBy: [{ agentId: "asc" }, { step: "asc" }],
+      orderBy: [{ runAgentId: "asc" }, { step: "asc" }],
     });
 
     type Acc = {
@@ -143,10 +671,10 @@ export class ResultsService {
     const byAgent = new Map<string, Acc>();
 
     for (const e of experiences) {
-      const archetypeId = e.agent?.archetypeId ?? "";
+      const archetypeId = e.runAgent?.archetype ?? "";
       const action = (e.actionJson as { action?: string } | null)?.action ?? "hold";
-      if (!byAgent.has(e.agentId)) {
-        byAgent.set(e.agentId, {
+      if (!byAgent.has(e.runAgentId)) {
+        byAgent.set(e.runAgentId, {
           archetypeId,
           steps: 0,
           pnl: 0,
@@ -157,7 +685,7 @@ export class ResultsService {
           hold: 0,
         });
       }
-      const a = byAgent.get(e.agentId)!;
+      const a = byAgent.get(e.runAgentId)!;
       a.steps += 1;
       a.pnl += e.pnl ?? 0;
       a.risk = Math.max(a.risk, e.drawdown ?? 0);
@@ -293,8 +821,8 @@ export class ResultsService {
       this.getSummary(runId),
       this.prisma.agentExperience.findMany({
         where: { runId },
-        select: { agentId: true, step: true, actionJson: true },
-        orderBy: [{ step: "asc" }, { agentId: "asc" }],
+        select: { runAgentId: true, step: true, actionJson: true },
+        orderBy: [{ step: "asc" }, { runAgentId: "asc" }],
       }),
       this.prisma.simulationRun.findUnique({
         where: { id: runId },
@@ -321,7 +849,7 @@ export class ResultsService {
         action === "buy" ? "BUY" : action === "sell" ? "SELL" : action === "hold" ? "HOLD" : "OTHER";
       persistedHistogram[key]++;
       if (sampleActions.length < 10) {
-        sampleActions.push({ agentId: e.agentId, step: e.step, action: key });
+        sampleActions.push({ agentId: e.runAgentId, step: e.step, action: key });
       }
     }
 
@@ -480,6 +1008,278 @@ export class ResultsService {
     });
     if (!run) throw new NotFoundException(`Run not found: ${runId}`);
     return run;
+  }
+
+  /** GET /results/agent-rewards?runId=&assetSymbol=&agentId=&fromStep=&toStep= — reward rows (AgentReward). */
+  async getAgentRewards(
+    runId: string,
+    assetSymbol: string,
+    agentId?: string,
+    fromStep?: number,
+    toStep?: number,
+  ): Promise<{
+    runId: string;
+    assetSymbol: string;
+    items: {
+      id: string;
+      agentId: string;
+      step: number;
+      action: string;
+      stepReturn: number;
+      pnl: number;
+      regret: number;
+      drawdown: number;
+      rewardScore: number;
+      createdAt: Date;
+    }[];
+    total: number;
+  }> {
+    const run = await this.prisma.simulationRun.findUnique({
+      where: { id: runId },
+      select: { id: true },
+    });
+    if (!run) throw new NotFoundException(`Run not found: ${runId}`);
+
+    const sym = (assetSymbol ?? "RUN").trim() || "RUN";
+    const where: {
+      runId: string;
+      assetSymbol: string;
+      agentId?: string;
+      step?: { gte?: number; lte?: number };
+    } = { runId, assetSymbol: sym };
+    if (agentId?.trim()) where.agentId = agentId.trim();
+    if ((fromStep != null && Number.isFinite(fromStep)) || (toStep != null && Number.isFinite(toStep))) {
+      where.step = {};
+      if (fromStep != null && Number.isFinite(fromStep)) where.step.gte = fromStep;
+      if (toStep != null && Number.isFinite(toStep)) where.step.lte = toStep;
+    }
+
+    const [items, total] = await Promise.all([
+      this.prisma.agentReward.findMany({
+        where,
+        orderBy: [{ step: "asc" }, { agentId: "asc" }],
+        select: {
+          id: true,
+          agentId: true,
+          step: true,
+          action: true,
+          stepReturn: true,
+          pnl: true,
+          regret: true,
+          drawdown: true,
+          rewardScore: true,
+          createdAt: true,
+        },
+      }),
+      this.prisma.agentReward.count({ where }),
+    ]);
+
+    return {
+      runId,
+      assetSymbol: sym,
+      items: items.map((r) => ({
+        id: r.id,
+        agentId: r.agentId,
+        step: r.step,
+        action: String(r.action),
+        stepReturn: r.stepReturn,
+        pnl: r.pnl,
+        regret: r.regret,
+        drawdown: r.drawdown,
+        rewardScore: r.rewardScore,
+        createdAt: r.createdAt,
+      })),
+      total,
+    };
+  }
+
+  /** GET /results/agent-state?runId=&assetSymbol=&agentId=&historyLimit= — latest (max step) + last N steps ascending (AgentState). */
+  async getAgentState(
+    runId: string,
+    assetSymbol: string,
+    agentId: string,
+    historyLimit: number = 10,
+  ): Promise<{
+    runId: string;
+    assetSymbol: string;
+    agentId: string;
+    latest: {
+      step: number;
+      exposedCount: number;
+      infoSignal: number;
+      confidence: number;
+      riskTolerance: number;
+      herding: number;
+      createdAt: Date;
+      updatedAt: Date;
+    } | null;
+    stepHistory: {
+      step: number;
+      exposedCount: number;
+      infoSignal: number;
+      confidence: number;
+      riskTolerance: number;
+      herding: number;
+      createdAt: Date;
+      updatedAt: Date;
+    }[];
+  }> {
+    const run = await this.prisma.simulationRun.findUnique({
+      where: { id: runId },
+      select: { id: true },
+    });
+    if (!run) throw new NotFoundException(`Run not found: ${runId}`);
+    const sym = (assetSymbol ?? "RUN").trim() || "RUN";
+
+    const [latestRow, historyRowsDesc] = await Promise.all([
+      this.prisma.agentState.findFirst({
+        where: { runId, assetSymbol: sym, agentId },
+        orderBy: { step: "desc" },
+        select: {
+          step: true,
+          exposedCount: true,
+          infoSignal: true,
+          confidence: true,
+          riskTolerance: true,
+          herding: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      }),
+      this.prisma.agentState.findMany({
+        where: { runId, assetSymbol: sym, agentId },
+        orderBy: { step: "desc" },
+        take: Math.min(Math.max(1, historyLimit), 100),
+        select: {
+          step: true,
+          exposedCount: true,
+          infoSignal: true,
+          confidence: true,
+          riskTolerance: true,
+          herding: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      }),
+    ]);
+    const historyRows = [...historyRowsDesc].reverse();
+
+    const mapRow = (r: {
+      step: number;
+      exposedCount: number;
+      infoSignal: number;
+      confidence: number;
+      riskTolerance: number;
+      herding: number;
+      createdAt: Date;
+      updatedAt: Date;
+    }) => ({
+      step: r.step,
+      exposedCount: r.exposedCount,
+      infoSignal: r.infoSignal,
+      confidence: r.confidence,
+      riskTolerance: r.riskTolerance,
+      herding: r.herding,
+      createdAt: r.createdAt,
+      updatedAt: r.updatedAt,
+    });
+
+    return {
+      runId,
+      assetSymbol: sym,
+      agentId,
+      latest: latestRow ? mapRow(latestRow) : null,
+      stepHistory: historyRows.map(mapRow), // ascending by step (oldest of last N first)
+    };
+  }
+
+  /** GET /results/backtest?symbol=&limit= — list BacktestWindowResult for a symbol. */
+  async getBacktestResults(
+    symbol: string,
+    limit: number,
+  ): Promise<{
+    items: {
+      id: string;
+      symbol: string;
+      runId: string;
+      fromDate: string;
+      toDate: string;
+      window: number;
+      stride: number;
+      agents: number;
+      seed: number;
+      corr: number;
+      hitRate: number;
+      createdAt: Date;
+    }[];
+    total: number;
+  }> {
+    const sym = (symbol ?? "").trim().toUpperCase() || "SPY";
+    const [items, total] = await Promise.all([
+      this.prisma.backtestWindowResult.findMany({
+        where: { symbol: sym },
+        orderBy: { createdAt: "desc" },
+        take: Math.min(Math.max(1, limit), 200),
+        select: {
+          id: true,
+          symbol: true,
+          runId: true,
+          fromDate: true,
+          toDate: true,
+          window: true,
+          stride: true,
+          agents: true,
+          seed: true,
+          corr: true,
+          hitRate: true,
+          createdAt: true,
+        },
+      }),
+      this.prisma.backtestWindowResult.count({ where: { symbol: sym } }),
+    ]);
+    return {
+      items: items.map((r) => ({
+        id: r.id,
+        symbol: r.symbol,
+        runId: r.runId,
+        fromDate: r.fromDate,
+        toDate: r.toDate,
+        window: r.window,
+        stride: r.stride,
+        agents: r.agents,
+        seed: r.seed,
+        corr: r.corr,
+        hitRate: r.hitRate,
+        createdAt: r.createdAt,
+      })),
+      total,
+    };
+  }
+
+  /** GET /results/run-debug-counts — counts for debugging (decisions, infoState, experiences, crowdMetrics). Guarded by NODE_ENV or X-Debug header. */
+  async getRunDebugCounts(
+    runId: string,
+    assetSymbol: string,
+  ): Promise<{
+    decisions: number;
+    infoState: number;
+    experiences: number;
+    crowdMetrics: number;
+  }> {
+    const sym = (assetSymbol ?? "RUN").trim() || "RUN";
+    const [decisions, infoState, experiences, crowdMetrics] = await Promise.all([
+      this.prisma.agentDecision.count({
+        where: { runId, assetSymbol: sym },
+      }),
+      this.prisma.agentInfoState.count({
+        where: { runId, assetSymbol: sym },
+      }),
+      this.prisma.agentExperience.count({ where: { runId } }),
+      this.prisma.crowdMetrics.count({
+        where: { runId, assetSymbol: sym },
+      }),
+    ]);
+    return { decisions, infoState, experiences, crowdMetrics };
   }
 
   private aggregateMetrics(agents: AgentResult[]): AggregateMetrics {

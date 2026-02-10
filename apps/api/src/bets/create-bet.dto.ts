@@ -1,4 +1,4 @@
-import { IsEnum, IsInt, IsNumber, IsOptional, IsString, IsUUID, Max, Min } from "class-validator";
+import { IsEnum, IsIn, IsInt, IsNumber, IsOptional, IsString, IsUUID, Max, Min } from "class-validator";
 import { Type } from "class-transformer";
 
 export const BET_DIRECTIONS = ["BUY", "SELL", "HOLD"] as const;
@@ -29,4 +29,20 @@ export class CreateBetDto {
   @IsOptional()
   @IsString()
   thesis?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  entryStep?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  exitStep?: number;
+
+  @IsOptional()
+  @IsIn(["v1", "v2"])
+  settleVersion?: "v1" | "v2";
 }

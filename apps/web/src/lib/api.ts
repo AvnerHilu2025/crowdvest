@@ -2,7 +2,7 @@
  * Runs API client. Uses NEXT_PUBLIC_API_BASE or http://localhost:4001.
  */
 
-const API_BASE =
+export const API_BASE =
   (typeof process !== "undefined" && process.env.NEXT_PUBLIC_API_BASE) ??
   "http://localhost:4001";
 
@@ -77,6 +77,22 @@ export async function getRunById(
   return res.json();
 }
 
+export interface TimeseriesResponse {
+  runId: string;
+  steps: number;
+  points: { step: number; value: number }[];
+}
+
+export async function getRunTimeseries(runId: string): Promise<TimeseriesResponse> {
+  const res = await fetch(`${API_BASE}/runs/${encodeURIComponent(runId)}/timeseries`);
+  if (res.status === 404) throw new Error("Timeseries not generated");
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || `timeseries: ${res.status}`);
+  }
+  return res.json();
+}
+
 // ---------------------------------------------------------------------------
 // Wallet API
 // ---------------------------------------------------------------------------
@@ -86,11 +102,51 @@ export interface WalletResponse {
   balance: number;
 }
 
+export interface WalletSummaryResponse {
+  available: number;
+  locked: number;
+  total: number;
+}
+
+export async function getWalletSummary(userId: string): Promise<WalletSummaryResponse> {
+  const res = await fetch(`${API_BASE}/wallet/summary?userId=${encodeURIComponent(userId)}`);
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || `getWalletSummary: ${res.status}`);
+  }
+  return res.json();
+}
+
 export async function getWallet(userId: string): Promise<WalletResponse> {
   const res = await fetch(`${API_BASE}/wallet?userId=${encodeURIComponent(userId)}`);
   if (!res.ok) {
     const text = await res.text();
     throw new Error(text || `getWallet: ${res.status}`);
+  }
+  return res.json();
+}
+
+export interface WalletTransactionItem {
+  id: string;
+  userId: string;
+  type: string;
+  amount: number;
+  betId: string | null;
+  runId: string | null;
+  note: string | null;
+  createdAt: string;
+}
+
+export async function getWalletTransactions(
+  userId: string,
+  limit = 50,
+): Promise<{ items: WalletTransactionItem[]; total: number }> {
+  const params = new URLSearchParams({ userId });
+  params.set("limit", String(limit));
+  const res = await fetch(`${API_BASE}/wallet/transactions?${params.toString()}`);
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || `getWalletTransactions: ${res.status}`);
   }
   return res.json();
 }
@@ -126,6 +182,9 @@ export interface BetItem {
   isCorrect?: boolean | null;
   pnl?: number | null;
   settledAt?: string | null;
+  entryStep?: number | null;
+  exitStep?: number | null;
+  metadataJson?: { start?: number; end?: number; delta?: number } | null;
   createdAt: string;
 }
 
@@ -136,6 +195,48 @@ export interface CreateBetPayload {
   confidence: number;
   stake: number;
   thesis?: string;
+  settleVersion?: "v1" | "v2";
+  entryStep?: number;
+  exitStep?: number;
+}
+
+/** New POST /bets body: creates bet with status OPEN. openPrice optional (API derives from run timeseries when omitted). */
+export interface CreateOpenBetPayload {
+  userId: string;
+  runId: string;
+  agentId?: string;
+  assetSymbol: string;
+  direction: "BUY" | "SELL";
+  amount: number;
+  openStep: number;
+  openPrice?: number;
+}
+
+export async function createOpenBet(payload: CreateOpenBetPayload): Promise<{
+  id: string;
+  userId: string;
+  runId: string;
+  agentId: string | null;
+  assetSymbol: string | null;
+  direction: string;
+  amount: number;
+  status: string;
+  openStep: number | null;
+  closeStep: number | null;
+  openPrice: number | null;
+  pnl: number | null;
+  createdAt: string;
+}> {
+  const res = await fetch(`${API_BASE}/bets`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || `createOpenBet: ${res.status}`);
+  }
+  return res.json();
 }
 
 export async function createBet(payload: CreateBetPayload): Promise<BetItem> {
@@ -160,7 +261,8 @@ export async function getBets(opts?: {
   if (opts?.userId) params.set("userId", opts.userId);
   if (opts?.runId) params.set("runId", opts.runId);
   if (opts?.limit != null) params.set("limit", String(opts.limit));
-  const url = `${API_BASE}/bets${params.toString() ? `?${params}` : ""}`;
+  const qs = params.toString();
+  const url = qs ? `${API_BASE}/bets?${qs}` : `${API_BASE}/bets`;
   const res = await fetch(url);
   if (!res.ok) {
     const text = await res.text();
@@ -181,13 +283,66 @@ export function getBetsByRun(runId: string, limit = 50): Promise<{ items: BetIte
   return getBets({ runId, limit });
 }
 
+// ---------------------------------------------------------------------------
+// Results / Decisions API (Decision Engine v1)
+// ---------------------------------------------------------------------------
+
+export interface DecisionsResponse {
+  runId: string;
+  step: number;
+  assetSymbol: string;
+  histogram: { BUY: number; SELL: number; HOLD: number };
+  avgConfidence: number;
+  sample: { agentId: string; action: string; confidence: number; rationale: string | null }[];
+}
+
+export async function getDecisions(
+  runId: string,
+  step: number,
+  assetSymbol = "RUN",
+): Promise<DecisionsResponse> {
+  const params = new URLSearchParams({
+    run_id: runId,
+    step: String(step),
+    assetSymbol,
+  });
+  const res = await fetch(`${API_BASE}/results/decisions?${params.toString()}`);
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || `decisions: ${res.status}`);
+  }
+  return res.json();
+}
+
+export interface CrowdSummaryDecisionsResponse {
+  runId: string;
+  overall: { BUY: number; SELL: number; HOLD: number };
+  perStep: { step: number; BUY: number; SELL: number; HOLD: number }[];
+  recommendation: { action: "BUY" | "SELL" | "HOLD"; strength: number; weighted: number };
+}
+
+export async function getCrowdSummaryDecisions(
+  runId: string,
+  assetSymbol = "RUN",
+): Promise<CrowdSummaryDecisionsResponse> {
+  const params = new URLSearchParams({ run_id: runId, assetSymbol });
+  const res = await fetch(`${API_BASE}/results/crowd-summary?${params.toString()}`);
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || `crowd-summary: ${res.status}`);
+  }
+  return res.json();
+}
+
 export interface SettleBetsResponse {
   runId: string;
   settledCount: number;
 }
 
-export async function settleBets(runId: string): Promise<SettleBetsResponse> {
-  const res = await fetch(`${API_BASE}/bets/settle?runId=${encodeURIComponent(runId)}`, {
+export async function settleBets(runId: string, version?: string): Promise<SettleBetsResponse> {
+  const params = new URLSearchParams({ runId });
+  if (version) params.set("version", version);
+  const res = await fetch(`${API_BASE}/bets/settle?${params.toString()}`, {
     method: "POST",
   });
   if (!res.ok) {
@@ -225,7 +380,7 @@ export async function getLeaderboard(opts?: {
   const params = new URLSearchParams();
   params.set("by", opts?.by ?? "wallet");
   if (opts?.limit != null) params.set("limit", String(opts.limit));
-  const res = await fetch(`${API_BASE}/leaderboard?${params}`);
+  const res = await fetch(`${API_BASE}/leaderboard?${params.toString()}`);
   if (!res.ok) {
     const text = await res.text();
     throw new Error(text || `getLeaderboard: ${res.status}`);

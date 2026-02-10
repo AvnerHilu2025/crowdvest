@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
-import { getWallet } from "@/lib/api";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { getWalletSummary } from "@/lib/api";
 import { getOrCreateUserId } from "@/lib/identity";
 
 const links = [
@@ -13,25 +13,64 @@ const links = [
   { href: "/leaderboard", label: "Leaderboard" },
 ] as const;
 
-export function NavLinks() {
-  const pathname = usePathname();
-  const [balance, setBalance] = useState<number | null>(null);
+/** Wallet v4 – Read-only. Shows available / locked / total from GET /wallet/summary. */
+function WalletPanel() {
+  const [summary, setSummary] = useState<{ available: number; locked: number; total: number } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const hasWarned = useRef(false);
 
-  const loadWallet = useCallback(() => {
-    getWallet(getOrCreateUserId())
-      .then((w) => setBalance(w.balance))
-      .catch(() => setBalance(null));
+  const load = useCallback(() => {
+    setLoading(true);
+    setError(false);
+    const userId = getOrCreateUserId();
+    getWalletSummary(userId)
+      .then((s) => {
+        setSummary(s);
+        setError(false);
+        hasWarned.current = false;
+        setLoading(false);
+      })
+      .catch(() => {
+        setSummary(null);
+        setError(true);
+        setLoading(false);
+        if (!hasWarned.current) {
+          hasWarned.current = true;
+          console.warn("[WalletPanel] getWalletSummary failed");
+        }
+      });
   }, []);
 
   useEffect(() => {
-    loadWallet();
-  }, [loadWallet]);
+    load();
+  }, [load]);
 
   useEffect(() => {
-    const handler = () => loadWallet();
+    const handler = () => load();
     window.addEventListener("wallet-updated", handler);
     return () => window.removeEventListener("wallet-updated", handler);
-  }, [loadWallet]);
+  }, [load]);
+
+  if (error) {
+    return <span style={{ fontSize: 14, color: "#999" }}>Wallet unavailable</span>;
+  }
+  if (loading && !summary) {
+    return <span style={{ fontSize: 14, color: "#999" }}>Wallet: …</span>;
+  }
+  if (!summary) {
+    return null;
+  }
+  return (
+    <span style={{ fontSize: 14, color: "#666" }}>
+      Available: {summary.available.toFixed(2)} · Locked: {summary.locked.toFixed(2)} · Total:{" "}
+      {summary.total.toFixed(2)} Coins
+    </span>
+  );
+}
+
+export function NavLinks() {
+  const pathname = usePathname();
 
   return (
     <nav style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
@@ -51,11 +90,9 @@ export function NavLinks() {
           </Link>
         );
       })}
-      {balance != null && (
-        <span style={{ marginLeft: "auto", fontSize: 14, color: "#666" }}>
-          Wallet: {balance.toFixed(2)} Coins
-        </span>
-      )}
+      <span style={{ marginLeft: "auto" }}>
+        <WalletPanel />
+      </span>
     </nav>
   );
 }

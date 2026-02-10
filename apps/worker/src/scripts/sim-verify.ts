@@ -146,9 +146,9 @@ async function getMetrics(prisma: PrismaClient, runId: string) {
       prisma.agentExperience.count({ where: { runId } }),
       prisma.crowdSnapshot.count({ where: { runId } }),
       prisma.agentExperience.groupBy({
-        by: ["agentId"],
+        by: ["runAgentId"],
         where: { runId },
-        _count: { agentId: true },
+        _count: { runAgentId: true },
       }).then((groups) => groups.length),
       prisma.agentExperience.aggregate({
         where: { runId },

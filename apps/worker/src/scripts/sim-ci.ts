@@ -251,7 +251,7 @@ async function runSimulation(
 
     const data = experiences.map((e) => ({
       runId,
-      agentId: e.agentId,
+      runAgentId: e.agentId,
       step: snapshot.stepIndex,
       ts,
       actionJson: { action: e.action },
@@ -267,7 +267,7 @@ async function runSimulation(
       const key = action === "buy" ? "BUY" : action === "sell" ? "SELL" : action === "hold" ? "HOLD" : "OTHER";
       prePersistHistogram[key]++;
       if (samplePrePersistActions.length < 10) {
-        samplePrePersistActions.push({ agentId: d.agentId, step: d.step, action: key });
+        samplePrePersistActions.push({ agentId: d.runAgentId, step: d.step, action: key });
       }
     }
 
@@ -350,9 +350,9 @@ async function getMetrics(prisma: PrismaClient, runId: string): Promise<Metrics>
       prisma.agentExperience.count({ where: { runId } }),
       prisma.crowdSnapshot.count({ where: { runId } }),
       prisma.agentExperience.groupBy({
-        by: ["agentId"],
+        by: ["runAgentId"],
         where: { runId },
-        _count: { agentId: true },
+        _count: { runAgentId: true },
       }).then((groups) => groups.length),
       prisma.agentExperience.aggregate({
         where: { runId },
@@ -510,9 +510,9 @@ async function getSummary(prisma: PrismaClient, runId: string) {
       prisma.agentExperience.count({ where: { runId, pnl: null } }),
       prisma.agentExperience.count({ where: { runId, drawdown: null } }),
       prisma.agentExperience.groupBy({
-        by: ["agentId"],
+        by: ["runAgentId"],
         where: { runId },
-        _count: { agentId: true },
+        _count: { runAgentId: true },
       }).then((groups) => groups.length),
       prisma.$queryRaw<{ action: string | null; n: bigint }[]>`
         SELECT COALESCE("actionJson"->>'action', 'unknown') AS action, COUNT(*)::bigint AS n
@@ -562,9 +562,9 @@ async function buildExportPayload(prisma: PrismaClient, runId: string) {
     }),
     prisma.agentExperience.findMany({
       where: { runId },
-      orderBy: [{ step: "asc" }, { agentId: "asc" }],
+      orderBy: [{ step: "asc" }, { runAgentId: "asc" }],
       select: {
-        agentId: true,
+        runAgentId: true,
         step: true,
         ts: true,
         reward: true,
@@ -599,7 +599,7 @@ async function buildExportPayload(prisma: PrismaClient, runId: string) {
   }));
 
   const experiences = experiencesRows.map((e) => ({
-    agentId: e.agentId,
+    runAgentId: e.runAgentId,
     step: e.step,
     ts: e.ts.toISOString(),
     reward: e.reward,

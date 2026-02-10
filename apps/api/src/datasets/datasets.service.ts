@@ -39,4 +39,27 @@ export class DatasetsService {
     });
     return run?.datasetVersion ?? null;
   }
+
+  /** Ingest price series (date, close) for a symbol. Upserts PriceSeriesPoint by (symbol, date). */
+  async uploadPriceSeries(symbol: string, points: { date: string; close: number }[]): Promise<{ symbol: string; upserted: number }> {
+    const sym = (symbol ?? "").trim().toUpperCase() || "SPY";
+    if (points.length === 0) {
+      return { symbol: sym, upserted: 0 };
+    }
+    let upserted = 0;
+    for (const p of points) {
+      const date = String(p.date ?? "").trim();
+      const close = Number(p.close);
+      if (!date || !Number.isFinite(close) || close <= 0) continue;
+      await this.prisma.priceSeriesPoint.upsert({
+        where: {
+          symbol_date: { symbol: sym, date },
+        },
+        create: { symbol: sym, date, close },
+        update: { close },
+      });
+      upserted++;
+    }
+    return { symbol: sym, upserted };
+  }
 }

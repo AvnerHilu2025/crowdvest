@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { PrismaModule } from "./prisma/prisma.module";
 import { HealthModule } from "./health/health.module";
+import { AgentsModule } from "./agents/agents.module";
 import { ArchetypesModule } from "./archetypes/archetypes.module";
 import { TraitsModule } from "./traits/traits.module";
 import { ProfilesModule } from "./profiles/profiles.module";
@@ -12,7 +13,9 @@ import { ResultsModule } from "./results/results.module";
 import { BetsModule } from "./bets/bets.module";
 import { LeaderboardModule } from "./leaderboard/leaderboard.module";
 import { MeModule } from "./me/me.module";
+import { TimeseriesModule } from "./timeseries/timeseries.module";
 import { WalletModule } from "./wallet/wallet.module";
+import { InfoEventsModule } from "./info-events/info-events.module";
 
 @Module({
   imports: [
@@ -23,6 +26,7 @@ import { WalletModule } from "./wallet/wallet.module";
     PrismaModule,
     HealthModule,
     DatasetsModule,
+    AgentsModule,
     ArchetypesModule,
     TraitsModule,
     ProfilesModule,
@@ -32,7 +36,9 @@ import { WalletModule } from "./wallet/wallet.module";
     BetsModule,
     LeaderboardModule,
     MeModule,
+    TimeseriesModule,
     WalletModule,
+    InfoEventsModule,
   ],
 })
 export class AppModule {}

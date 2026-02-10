@@ -55,6 +55,35 @@ Minimal web UI to view simulation results. Functionality only; no styling focus.
    - "Refresh" reloads the compact summary.  
    - Open `/runs/00000000-0000-0000-0000-000000000000` → "Run not found" message.
 
+## Product Checks: Bet status label (OPEN / Open)
+
+API returns `bet.status = "OPEN"` or `"SETTLED"`; UI shows **Open** / **Settled** via `formatBetStatus(status)` (no "Pending"). Used in Run Details "Bets on this run" and `/bets` My Bets table. Backend enums unchanged.
+
+**Manual check steps**
+
+- **Place Bet** → New row status column shows **OPEN** / **Open**.
+- **Click Settle Bets (v1)** on Run Details → After refresh, that row status shows **SETTLED** / **Settled**.
+
+---
+
+1. **Create an OPEN bet (assetSymbol RUN)**  
+   From repo root with API at `http://localhost:4001`:
+
+   ```bash
+   USER_ID="480117fb-d641-4afe-9d32-63310ff14511"
+   RUN_ID="<run-uuid-from-get-runs>"
+
+   curl -s -X POST http://localhost:4001/bets \
+     -H "Content-Type: application/json" \
+     -d "{\"userId\":\"$USER_ID\",\"runId\":\"$RUN_ID\",\"assetSymbol\":\"RUN\",\"direction\":\"BUY\",\"amount\":10,\"openStep\":0}" | jq .
+   ```
+
+2. **Refresh Run Details UI**  
+   Open `http://localhost:4000/runs/<RUN_ID>` (or navigate to the run and click Refresh). In the "Bets on this run" table, confirm the new bet’s status column shows **Open** (not "Pending"). Settled bets should show **Settled**.
+
+3. **My Bets page**  
+   Open `http://localhost:4000/bets?userId=...` (or use the same `USER_ID` in the query). Confirm the table shows **Open** / **Settled** labels consistently.
+
 ## Screenshots
 
 To capture screenshots: run API + web, open `http://localhost:4000`, load a run that has data (e.g. after `pnpm --filter worker sim:run -- --name test --agents 10 --steps 5`), then screenshot the runs table and the run detail (metrics + agents table).

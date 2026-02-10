@@ -6,12 +6,15 @@ export class MeController {
   constructor(private readonly meService: MeService) {}
 
   @Get()
-  async getProfile(@Query("userId") userId?: string) {
+  async getProfile(
+    @Query("userId") userId?: string,
+    @Query("cv_displayName") cvDisplayName?: string,
+  ) {
     const uid = userId?.trim();
     if (!uid) {
       throw new BadRequestException("userId is required");
     }
-    return this.meService.getProfile(uid);
+    return this.meService.getOrCreateProfile(uid, cvDisplayName?.trim());
   }
 
   @Post()

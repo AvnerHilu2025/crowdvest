@@ -157,6 +157,12 @@ exports.Prisma.AgentScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.AgentWalletScalarFieldEnum = {
+  agentId: 'agentId',
+  balance: 'balance',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SimulationRunScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -173,6 +179,134 @@ exports.Prisma.SimulationRunScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.RunAgentScalarFieldEnum = {
+  id: 'id',
+  runId: 'runId',
+  name: 'name',
+  archetype: 'archetype',
+  biases: 'biases',
+  humanState: 'humanState',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.RunAgentTraitScalarFieldEnum = {
+  id: 'id',
+  agentId: 'agentId',
+  key: 'key',
+  valueNum: 'valueNum',
+  valueStr: 'valueStr',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.AgentDecisionScalarFieldEnum = {
+  id: 'id',
+  runId: 'runId',
+  step: 'step',
+  agentId: 'agentId',
+  assetSymbol: 'assetSymbol',
+  action: 'action',
+  confidence: 'confidence',
+  rationale: 'rationale',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.CrowdMetricsScalarFieldEnum = {
+  id: 'id',
+  runId: 'runId',
+  assetSymbol: 'assetSymbol',
+  step: 'step',
+  signal: 'signal',
+  weightedSignal: 'weightedSignal',
+  consensus: 'consensus',
+  polarization: 'polarization',
+  uncertainty: 'uncertainty',
+  minorityStrength: 'minorityStrength',
+  beliefMomentum: 'beliefMomentum',
+  diversityIndex: 'diversityIndex',
+  independenceIndex: 'independenceIndex',
+  herdingIndex: 'herdingIndex',
+  wisdomScore: 'wisdomScore',
+  noiseSensitivity: 'noiseSensitivity',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.AssetStepReturnScalarFieldEnum = {
+  id: 'id',
+  runId: 'runId',
+  assetSymbol: 'assetSymbol',
+  step: 'step',
+  stepReturn: 'stepReturn',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.AgentRewardScalarFieldEnum = {
+  id: 'id',
+  runId: 'runId',
+  agentId: 'agentId',
+  assetSymbol: 'assetSymbol',
+  step: 'step',
+  action: 'action',
+  stepReturn: 'stepReturn',
+  pnl: 'pnl',
+  regret: 'regret',
+  drawdown: 'drawdown',
+  rewardScore: 'rewardScore',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.InfoEventScalarFieldEnum = {
+  id: 'id',
+  runId: 'runId',
+  assetSymbol: 'assetSymbol',
+  step: 'step',
+  topic: 'topic',
+  sentiment: 'sentiment',
+  credibility: 'credibility',
+  reach: 'reach',
+  volatilityImpact: 'volatilityImpact',
+  source: 'source',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.AgentInfoStateScalarFieldEnum = {
+  id: 'id',
+  runId: 'runId',
+  assetSymbol: 'assetSymbol',
+  agentId: 'agentId',
+  step: 'step',
+  exposedCount: 'exposedCount',
+  infoSignal: 'infoSignal',
+  confidence: 'confidence',
+  riskTolerance: 'riskTolerance',
+  herding: 'herding',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.AgentStateScalarFieldEnum = {
+  id: 'id',
+  runId: 'runId',
+  assetSymbol: 'assetSymbol',
+  agentId: 'agentId',
+  step: 'step',
+  confidence: 'confidence',
+  riskTolerance: 'riskTolerance',
+  herding: 'herding',
+  infoSignal: 'infoSignal',
+  exposedCount: 'exposedCount',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.RunTimeSeriesScalarFieldEnum = {
+  id: 'id',
+  runId: 'runId',
+  step: 'step',
+  value: 'value',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.RunDebugScalarFieldEnum = {
   runId: 'runId',
   prePersistHistogram: 'prePersistHistogram',
@@ -183,7 +317,7 @@ exports.Prisma.RunDebugScalarFieldEnum = {
 exports.Prisma.AgentExperienceScalarFieldEnum = {
   id: 'id',
   runId: 'runId',
-  agentId: 'agentId',
+  runAgentId: 'runAgentId',
   step: 'step',
   ts: 'ts',
   actionJson: 'actionJson',
@@ -217,20 +351,34 @@ exports.Prisma.UserWalletScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.UserWalletTransactionScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  type: 'type',
+  amount: 'amount',
+  betId: 'betId',
+  runId: 'runId',
+  note: 'note',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.BetScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
   runId: 'runId',
+  agentId: 'agentId',
+  decisionStep: 'decisionStep',
+  assetSymbol: 'assetSymbol',
   direction: 'direction',
-  confidence: 'confidence',
-  stake: 'stake',
-  thesis: 'thesis',
+  amount: 'amount',
   status: 'status',
-  evalVersion: 'evalVersion',
-  isCorrect: 'isCorrect',
+  openPrice: 'openPrice',
+  openStep: 'openStep',
+  closePrice: 'closePrice',
+  closeStep: 'closeStep',
   pnl: 'pnl',
-  settledAt: 'settledAt',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.ImportRunScalarFieldEnum = {
@@ -245,6 +393,29 @@ exports.Prisma.ImportRunScalarFieldEnum = {
   finishedAt: 'finishedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
+};
+
+exports.Prisma.PriceSeriesPointScalarFieldEnum = {
+  id: 'id',
+  symbol: 'symbol',
+  date: 'date',
+  close: 'close',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.BacktestWindowResultScalarFieldEnum = {
+  id: 'id',
+  symbol: 'symbol',
+  runId: 'runId',
+  fromDate: 'fromDate',
+  toDate: 'toDate',
+  window: 'window',
+  stride: 'stride',
+  agents: 'agents',
+  seed: 'seed',
+  corr: 'corr',
+  hitRate: 'hitRate',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.SortOrder = {
@@ -279,10 +450,28 @@ exports.SimulationRunStatus = exports.$Enums.SimulationRunStatus = {
   FAILED: 'FAILED'
 };
 
-exports.BetDirection = exports.$Enums.BetDirection = {
+exports.AgentDecisionAction = exports.$Enums.AgentDecisionAction = {
   BUY: 'BUY',
   SELL: 'SELL',
   HOLD: 'HOLD'
+};
+
+exports.WalletTransactionType = exports.$Enums.WalletTransactionType = {
+  SEED: 'SEED',
+  BET_DEBIT: 'BET_DEBIT',
+  BET_CREDIT: 'BET_CREDIT',
+  ADJUSTMENT: 'ADJUSTMENT'
+};
+
+exports.BetDirection = exports.$Enums.BetDirection = {
+  BUY: 'BUY',
+  SELL: 'SELL'
+};
+
+exports.BetStatus = exports.$Enums.BetStatus = {
+  OPEN: 'OPEN',
+  SETTLED: 'SETTLED',
+  CANCELLED: 'CANCELLED'
 };
 
 exports.Prisma.ModelName = {
@@ -290,14 +479,28 @@ exports.Prisma.ModelName = {
   TraitDefinition: 'TraitDefinition',
   ArchetypeTraitProfile: 'ArchetypeTraitProfile',
   Agent: 'Agent',
+  AgentWallet: 'AgentWallet',
   SimulationRun: 'SimulationRun',
+  RunAgent: 'RunAgent',
+  RunAgentTrait: 'RunAgentTrait',
+  AgentDecision: 'AgentDecision',
+  CrowdMetrics: 'CrowdMetrics',
+  AssetStepReturn: 'AssetStepReturn',
+  AgentReward: 'AgentReward',
+  InfoEvent: 'InfoEvent',
+  AgentInfoState: 'AgentInfoState',
+  AgentState: 'AgentState',
+  RunTimeSeries: 'RunTimeSeries',
   RunDebug: 'RunDebug',
   AgentExperience: 'AgentExperience',
   CrowdSnapshot: 'CrowdSnapshot',
   UserProfile: 'UserProfile',
   UserWallet: 'UserWallet',
+  UserWalletTransaction: 'UserWalletTransaction',
   Bet: 'Bet',
-  ImportRun: 'ImportRun'
+  ImportRun: 'ImportRun',
+  PriceSeriesPoint: 'PriceSeriesPoint',
+  BacktestWindowResult: 'BacktestWindowResult'
 };
 
 /**

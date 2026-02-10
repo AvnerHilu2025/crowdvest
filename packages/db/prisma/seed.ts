@@ -5,7 +5,7 @@
 const path = require("path");
 const fs = require("fs");
 const { config } = require("dotenv");
-const { PrismaClient } = require("@prisma/client");
+const { PrismaClient } = require("../generated/prisma");
 const { readWorkbook, normalizeTraitKey, parseValueRange, hashFiles } = require("./import/excelHelpers");
 
 config({ path: path.resolve(__dirname, "../../../.env") });

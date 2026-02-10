@@ -1,12 +1,17 @@
 import {
   BadRequestException,
+  Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   NotFoundException,
   Param,
+  Post,
   Query,
 } from "@nestjs/common";
 import { ResultsService } from "../results/results.service";
+import { TimeseriesService } from "../timeseries/timeseries.service";
 import { RunsService } from "./runs.service";
 import { parseLimit, parseOffset } from "../common/parse-query";
 
@@ -17,7 +22,15 @@ export class RunsController {
   constructor(
     private readonly runsService: RunsService,
     private readonly resultsService: ResultsService,
+    private readonly timeseriesService: TimeseriesService,
   ) {}
+
+  /** POST /runs — create a new run. Body: { name?: string }. Returns { id }. */
+  @Post("runs")
+  @HttpCode(HttpStatus.CREATED)
+  async create(@Body() body: { name?: string }) {
+    return this.runsService.createRun(body?.name);
+  }
 
   @Get("runs")
   async findAll(
@@ -42,5 +55,13 @@ export class RunsController {
     const s = id?.trim() ?? "";
     if (s === "" || !UUID_REGEX.test(s)) throw new BadRequestException("run id must be a UUID");
     return this.resultsService.getRunPayload(s, debug === "1");
+  }
+
+  /** GET /runs/:id/timeseries — run timeline curve. Auto-generates if missing. */
+  @Get("runs/:id/timeseries")
+  async getTimeseries(@Param("id") id: string) {
+    const s = id?.trim() ?? "";
+    if (s === "" || !UUID_REGEX.test(s)) throw new BadRequestException("run id must be a UUID");
+    return this.timeseriesService.getTimeseries(s);
   }
 }

@@ -23,6 +23,11 @@
     "test": "turbo test",
     "verify:db": "bash scripts/check_migrations_integrity.sh",
     "verify:run": "bash scripts/post_run_gate.sh",
+    "verify:crowd-v1": "bash scripts/crowdvest_v1_smoke.sh",
+    "verify:agents-v1": "bash scripts/agents_v1_smoke.sh",
+    "verify:decision-engine": "bash scripts/decision_engine_smoke.sh",
+    "verify:learning-v1": "bash scripts/learning_v1_smoke.sh",
+    "verify:spy-e2e": "bash scripts/spy_e2e_smoke.sh",
     "verify:web": "bash scripts/web_smoke_check.sh",
     "check:runs-api": "bash scripts/check-runs-api.sh"
   },

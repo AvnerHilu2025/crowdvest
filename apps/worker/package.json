@@ -14,10 +14,18 @@
     "sim:verify": "tsx src/scripts/sim-verify.ts",
     "sim:ci": "tsx src/scripts/sim-ci.ts",
     "sim:summary": "tsx src/scripts/sim-summary.ts",
+    "decide": "tsx src/scripts/decide.ts",
+    "decide:drift-smoke": "tsx src/scripts/decide-drift-smoke.ts",
+    "compute-crowd-metrics": "tsx src/scripts/compute-crowd-metrics.ts",
+    "compute-rewards": "tsx src/scripts/compute-rewards.ts",
+    "backtest-v0": "tsx src/scripts/backtest-v0.ts",
+    "import-market-csv": "tsx src/scripts/import-market-csv.ts",
+    "settle": "tsx src/scripts/settle.ts",
     "start": "nest start",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
-    "test": "echo \"No tests yet\""
+    "test": "echo \"No tests yet\"",
+    "test:decide-validate": "tsx src/scripts/decide-validate.test.ts"
   },
   "dependencies": {
     "@crowdvest/db": "workspace:*",

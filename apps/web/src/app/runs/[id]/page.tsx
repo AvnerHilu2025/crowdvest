@@ -1,19 +1,30 @@
 "use client";
 
+// Ensure run data, wallet, and bets are always fresh (no static generation).
+export const dynamic = "force-dynamic";
+
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
-  createBet,
+  createOpenBet,
   getBets,
   getRunById,
+  getRunTimeseries,
   getWallet,
+  getWalletSummary,
   settleBets,
   type BetItem,
   type CreateBetPayload,
   type RunDetailResponse,
 } from "@/lib/api";
 import { getOrCreateUserId } from "@/lib/identity";
+
+function formatBetStatus(status: string): string {
+  if (status === "OPEN") return "OPEN";
+  if (status === "SETTLED") return "SETTLED";
+  return status ?? "";
+}
 
 function formatDate(s: string | null): string {
   if (!s) return "—";
@@ -72,12 +83,19 @@ export default function RunDetailPage() {
     confidence: 50,
     stake: 10,
     thesis: "",
+    settleVersion: "v2",
+    entryStep: 0,
+    exitStep: undefined,
   });
   const [betSubmitting, setBetSubmitting] = useState(false);
   const [runBets, setRunBets] = useState<BetItem[]>([]);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [walletSummary, setWalletSummary] = useState<{ available: number; locked: number; total: number } | null>(null);
   const [betSuccess, setBetSuccess] = useState(false);
+  const [placingRowKey, setPlacingRowKey] = useState<string | null>(null);
   const [settling, setSettling] = useState(false);
+  const [timeseries, setTimeseries] = useState<{ points: { step: number; value: number }[] } | null>(null);
+  const [timeseriesLoading, setTimeseriesLoading] = useState(false);
 
   const load = useCallback(() => {
     if (!id) return;
@@ -103,11 +121,18 @@ export default function RunDetailPage() {
 
   const loadRunBets = useCallback(() => {
     if (!id) return;
-    getBets({ runId: id }).then(({ items }) => setRunBets(items)).catch(() => {});
+    const userId = getOrCreateUserId();
+    getBets({ userId, limit: 200 }).then(({ items }) => setRunBets(items.filter((b) => b.runId === id))).catch(() => {});
   }, [id]);
 
   const loadWallet = useCallback(() => {
     getWallet(getOrCreateUserId()).then((w) => setWalletBalance(w.balance)).catch(() => setWalletBalance(null));
+  }, []);
+
+  const loadWalletSummary = useCallback(() => {
+    getWalletSummary(getOrCreateUserId())
+      .then(setWalletSummary)
+      .catch(() => setWalletSummary(null));
   }, []);
 
   useEffect(() => {
@@ -115,37 +140,130 @@ export default function RunDetailPage() {
   }, [loadRunBets]);
 
   useEffect(() => {
-    if (betModalOpen) loadWallet();
-  }, [betModalOpen, loadWallet]);
+    loadWalletSummary();
+  }, [loadWalletSummary]);
+
+  useEffect(() => {
+    if (betModalOpen) {
+      loadWallet();
+      loadWalletSummary();
+    }
+  }, [betModalOpen, loadWallet, loadWalletSummary]);
+
+  useEffect(() => {
+    const handler = () => {
+      loadWalletSummary();
+    };
+    window.addEventListener("wallet-updated", handler);
+    return () => window.removeEventListener("wallet-updated", handler);
+  }, [loadWalletSummary]);
+
+  const openBetsForRun = runBets.filter((b) => b.status === "OPEN");
+  const openBetCount = openBetsForRun.length;
+  const openExposure = openBetsForRun.reduce(
+    (sum, b) => sum + ((b as { amount?: number }).amount ?? b.stake ?? 0),
+    0,
+  );
+  const amount = Number(betForm.stake) || 0;
+  const available = walletSummary?.available ?? walletBalance ?? 0;
+  let disablePlaceBetReason: string | null = null;
+  if (available < amount) disablePlaceBetReason = "Insufficient funds";
+  else if (openBetCount >= 5) disablePlaceBetReason = "Max open bets reached (5)";
+  else if (openExposure + amount > 25) disablePlaceBetReason = "Max exposure reached (25)";
+  const canPlaceBet = !disablePlaceBetReason && amount > 0;
 
   const handlePlaceBet = useCallback(async () => {
     if (!id) return;
-    const bal = walletBalance ?? 0;
-    if (betForm.stake > bal || betForm.stake <= 0) return;
+    if (betForm.direction === "HOLD") {
+      setError("Choose BUY or SELL to place a bet.");
+      return;
+    }
+    if (!canPlaceBet) return;
     setBetSubmitting(true);
     setError(null);
+    const openStep = betForm.entryStep ?? 0;
+    const payload = {
+      userId: getOrCreateUserId(),
+      runId: id,
+      assetSymbol: "RUN",
+      direction: betForm.direction as "BUY" | "SELL",
+      amount: Number(betForm.stake),
+      openStep,
+    };
+    console.log("[Place Bet] request payload", payload);
     try {
-      await createBet({
-        userId: getOrCreateUserId(),
-        runId: id,
-        direction: betForm.direction,
-        confidence: betForm.confidence,
-        stake: betForm.stake,
-        thesis: betForm.thesis.trim() || undefined,
-      });
+      await createOpenBet(payload);
       setBetModalOpen(false);
-      setBetForm({ runId: id, direction: "BUY", confidence: 50, stake: 10, thesis: "" });
+      setBetForm({ runId: id, direction: "BUY", confidence: 50, stake: 10, thesis: "", settleVersion: "v2", entryStep: 0, exitStep: undefined });
       loadRunBets();
       window.dispatchEvent(new CustomEvent("wallet-updated"));
+      loadWallet();
+      loadWalletSummary();
       setBetSuccess(true);
       setTimeout(() => setBetSuccess(false), 3000);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      setError(msg.includes("INSUFFICIENT_BALANCE") ? "Insufficient balance. Reduce stake or add coins." : msg);
+      let displayMsg = msg;
+      try {
+        const parsed = JSON.parse(msg);
+        if (parsed?.message) {
+          displayMsg = Array.isArray(parsed.message) ? parsed.message.join(". ") : String(parsed.message);
+        }
+      } catch {
+        if (msg.includes("insufficient funds")) displayMsg = "Insufficient funds";
+        else if (msg.includes("max open bets exceeded")) displayMsg = "Max open bets exceeded for run";
+        else if (msg.includes("max open exposure exceeded")) displayMsg = "Max open exposure exceeded for run";
+      }
+      setError(displayMsg);
     } finally {
       setBetSubmitting(false);
     }
-  }, [id, betForm.direction, betForm.confidence, betForm.stake, betForm.thesis, loadRunBets, walletBalance]);
+  }, [id, betForm.direction, betForm.stake, betForm.entryStep, loadRunBets, loadWallet, loadWalletSummary, canPlaceBet]);
+
+  const handlePlaceBetForDecision = useCallback(
+    async (agentId: string, step: number, action: string) => {
+      if (!id || (action !== "BUY" && action !== "SELL")) return;
+      const rowKey = `${agentId}-${step}`;
+      setPlacingRowKey(rowKey);
+      setError(null);
+      try {
+        await createOpenBet({
+          userId: getOrCreateUserId(),
+          runId: id,
+          agentId,
+          assetSymbol: "RUN",
+          direction: action as "BUY" | "SELL",
+          amount: 10,
+          openStep: step,
+          openPrice: 0,
+        });
+        setBetSuccess(true);
+        setTimeout(() => setBetSuccess(false), 3000);
+        window.dispatchEvent(new CustomEvent("wallet-updated"));
+        window.dispatchEvent(new CustomEvent("bets-updated"));
+        loadRunBets();
+        loadWallet();
+        loadWalletSummary();
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        let displayMsg = msg;
+        try {
+          const parsed = JSON.parse(msg);
+          if (parsed?.message) {
+            displayMsg = Array.isArray(parsed.message) ? parsed.message.join(". ") : String(parsed.message);
+          }
+        } catch {
+          if (msg.includes("insufficient funds")) displayMsg = "Insufficient funds";
+          else if (msg.includes("max open bets exceeded")) displayMsg = "Max open bets exceeded for run";
+          else if (msg.includes("max open exposure exceeded")) displayMsg = "Max open exposure exceeded for run";
+        }
+        setError(displayMsg);
+      } finally {
+        setPlacingRowKey(null);
+      }
+    },
+    [id, loadRunBets, loadWallet, loadWalletSummary],
+  );
 
   if (!id) {
     return (
@@ -211,7 +329,7 @@ export default function RunDetailPage() {
             if (!id) return;
             setSettling(true);
             try {
-              await settleBets(id);
+              await settleBets(id, "v1");
               window.dispatchEvent(new CustomEvent("wallet-updated"));
               loadWallet();
               loadRunBets();
@@ -294,6 +412,134 @@ export default function RunDetailPage() {
         <HistogramBar label="OTHER" count={hist.OTHER} max={maxCount} />
       </div>
 
+      <h2 style={{ marginBottom: 12 }}>Crowd Decisions (v1)</h2>
+      <div style={{ marginBottom: 24 }}>
+        <button
+          type="button"
+          disabled={crowdLoading}
+          onClick={async () => {
+            if (!id) return;
+            setCrowdLoading(true);
+            setCrowdStep(0);
+            setStepDecisions(null);
+            try {
+              const cs = await getCrowdSummaryDecisions(id, "RUN");
+              setCrowdDecisions({
+                perStep: cs.perStep,
+                recommendation: cs.recommendation,
+              });
+              if (cs.perStep.length > 0) {
+                setCrowdStep(cs.perStep[0].step);
+              }
+            } catch {
+              setCrowdDecisions(null);
+            } finally {
+              setCrowdLoading(false);
+            }
+          }}
+          style={{ padding: "6px 12px", cursor: crowdLoading ? "not-allowed" : "pointer", border: "1px solid #666", borderRadius: 4, marginBottom: 8 }}
+        >
+          {crowdLoading ? "Loading…" : "Load Crowd Decisions"}
+        </button>
+        {crowdDecisions && (
+          <div style={{ marginTop: 12 }}>
+            <p style={{ margin: "0 0 8px", fontSize: 14, color: "#666" }}>
+              Recommendation: <strong>{crowdDecisions.recommendation.action}</strong> (strength: {crowdDecisions.recommendation.strength.toFixed(3)})
+            </p>
+            <label style={{ display: "block", fontSize: 12, color: "#666", marginBottom: 4 }}>Step</label>
+            <select
+              value={crowdStep}
+              onChange={(e) => {
+                const s = Number(e.target.value);
+                setCrowdStep(s);
+              }}
+              style={{ padding: 8, minWidth: 80, marginBottom: 8 }}
+            >
+              {crowdDecisions.perStep.map((ps) => (
+                <option key={ps.step} value={ps.step}>
+                  {ps.step}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              disabled={stepDecisionsLoading}
+              onClick={async () => {
+                if (!id) return;
+                setStepDecisionsLoading(true);
+                try {
+                  const d = await getDecisions(id, crowdStep, "RUN");
+                  setStepDecisions({
+                    histogram: d.histogram,
+                    avgConfidence: d.avgConfidence,
+                    sample: d.sample,
+                  });
+                } catch {
+                  setStepDecisions(null);
+                } finally {
+                  setStepDecisionsLoading(false);
+                }
+              }}
+              style={{ marginLeft: 8, padding: "6px 12px", cursor: stepDecisionsLoading ? "not-allowed" : "pointer", border: "1px solid #666", borderRadius: 4 }}
+            >
+              {stepDecisionsLoading ? "Loading…" : "View step"}
+            </button>
+            {stepDecisions && (
+              <div style={{ marginTop: 12, padding: 12, border: "1px solid #ddd", borderRadius: 4, backgroundColor: "#fafafa" }}>
+                <p style={{ margin: "0 0 8px", fontSize: 14 }}>
+                  Histogram: BUY={stepDecisions.histogram.BUY} SELL={stepDecisions.histogram.SELL} HOLD={stepDecisions.histogram.HOLD} · Avg confidence: {stepDecisions.avgConfidence.toFixed(3)}
+                </p>
+                {stepDecisions.sample.length > 0 && (
+                  <div style={{ marginTop: 8 }}>
+                    <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>Sample rationales</div>
+                    <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13 }}>
+                      {stepDecisions.sample.slice(0, 5).map((s, i) => (
+                        <li key={i} style={{ marginBottom: 4 }}>
+                          {s.action} (conf: {s.confidence.toFixed(2)}): {s.rationale || "—"}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+        {!crowdDecisions && !crowdLoading && (
+          <p style={{ margin: 0, fontSize: 13, color: "#666" }}>
+            Run <code>pnpm -C apps/worker run decide -- --runId {id} --steps 20 --seed 123</code> to generate decisions.
+          </p>
+        )}
+      </div>
+
+      <h2 style={{ marginBottom: 12 }}>Timeline</h2>
+      <div style={{ marginBottom: 24 }}>
+        <button
+          type="button"
+          disabled={timeseriesLoading}
+          onClick={async () => {
+            if (!id) return;
+            setTimeseriesLoading(true);
+            try {
+              const ts = await getRunTimeseries(id);
+              setTimeseries(ts);
+            } catch {
+              setTimeseries(null);
+            } finally {
+              setTimeseriesLoading(false);
+            }
+          }}
+          style={{ padding: "6px 12px", cursor: timeseriesLoading ? "not-allowed" : "pointer", border: "1px solid #666", borderRadius: 4, marginBottom: 8 }}
+        >
+          {timeseriesLoading ? "Loading…" : "View Run Timeline"}
+        </button>
+        {timeseries && timeseries.points.length > 0 && (
+          <p style={{ margin: 0, fontSize: 14, color: "#666" }}>
+            First: step {timeseries.points[0].step} = {timeseries.points[0].value.toFixed(2)} · Last: step {timeseries.points[timeseries.points.length - 1].step} = {timeseries.points[timeseries.points.length - 1].value.toFixed(2)}
+          </p>
+        )}
+      </div>
+
       {d.warnings.length > 0 && (
         <>
           <h2 style={{ marginBottom: 12 }}>Warnings</h2>
@@ -329,22 +575,59 @@ export default function RunDetailPage() {
                 <th>agentId</th>
                 <th>step</th>
                 <th>action</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
-              {d.debug.sampleDecisions.slice(0, 20).map((sd, i) => (
-                <tr key={i}>
-                  <td style={{ fontFamily: "monospace" }}>{sd.agentId.slice(0, 8)}…</td>
-                  <td>{sd.step}</td>
-                  <td>{sd.action}</td>
-                </tr>
-              ))}
+              {d.debug.sampleDecisions.slice(0, 20).map((sd, i) => {
+                const rowKey = `${sd.agentId}-${sd.step}`;
+                const canPlace = sd.action === "BUY" || sd.action === "SELL";
+                const isPlacing = placingRowKey === rowKey;
+                return (
+                  <tr key={i}>
+                    <td style={{ fontFamily: "monospace" }}>{sd.agentId.slice(0, 8)}…</td>
+                    <td>{sd.step}</td>
+                    <td>{sd.action}</td>
+                    <td>
+                      {canPlace && (
+                        <button
+                          type="button"
+                          disabled={isPlacing}
+                          onClick={() => handlePlaceBetForDecision(sd.agentId, sd.step, sd.action)}
+                          style={{
+                            padding: "4px 8px",
+                            fontSize: 12,
+                            cursor: isPlacing ? "not-allowed" : "pointer",
+                            backgroundColor: "#0066cc",
+                            color: "#fff",
+                            border: "none",
+                            borderRadius: 4,
+                            opacity: isPlacing ? 0.6 : 1,
+                          }}
+                        >
+                          {isPlacing ? "Placing…" : "Place bet"}
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </>
       )}
 
-      <h2 style={{ marginBottom: 12 }}>Bets on this run</h2>
+      <h2 style={{ marginBottom: 12 }}>
+        Bets on this run
+        {runBets.length > 0 && (() => {
+          const pending = runBets.filter((b) => b.status !== "SETTLED").length;
+          return pending > 0 ? (
+            <span style={{ fontSize: 14, fontWeight: 400, color: "#666", marginLeft: 8 }}>
+              ({pending} pending)
+            </span>
+          ) : null;
+        })()}
+      </h2>
       {runBets.length === 0 ? (
         <p style={{ color: "#666", marginBottom: 24 }}>No bets yet. Place a bet above.</p>
       ) : (
@@ -391,11 +674,13 @@ export default function RunDetailPage() {
                       color: b.status === "SETTLED" ? "#2e7d32" : "#e65100",
                     }}
                   >
-                    {b.status === "SETTLED" ? "Settled" : "Pending"}
+                    {formatBetStatus(b.status ?? "")}
                   </span>
                 </td>
                 <td style={{ fontFamily: "monospace" }}>
-                  {b.status === "SETTLED" && b.pnl != null ? b.pnl.toFixed(2) : "—"}
+                  {b.status === "SETTLED" && b.pnl != null
+                    ? (b.pnl >= 0 ? "+" : "") + b.pnl.toFixed(2)
+                    : "—"}
                 </td>
                 <td style={{ maxWidth: 180 }}>{b.thesis || "—"}</td>
                 <td style={{ fontSize: 12, color: "#666" }}>{formatDate(b.createdAt)}</td>
@@ -416,7 +701,7 @@ export default function RunDetailPage() {
             justifyContent: "center",
             zIndex: 1000,
           }}
-          onClick={() => !betSubmitting && setBetModalOpen(false)}
+          onClick={() => !betSubmitting && (setBetModalOpen(false), setError(null))}
         >
           <div
             style={{
@@ -430,9 +715,22 @@ export default function RunDetailPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <h3 style={{ margin: "0 0 16px" }}>Place Bet</h3>
-            {walletBalance != null && (
+            {error && (
+              <p style={{ color: "#c00", fontSize: 14, marginBottom: 12 }}>{error}</p>
+            )}
+            {disablePlaceBetReason && (
+              <p style={{ color: "#c00", fontSize: 14, marginBottom: 12 }}>{disablePlaceBetReason}</p>
+            )}
+            {(walletSummary != null || walletBalance != null) && (
               <p style={{ margin: "0 0 12px", fontSize: 14, color: "#666" }}>
-                Balance: {walletBalance.toFixed(0)} coins
+                {walletSummary != null ? (
+                  <>
+                    Available: {walletSummary.available.toFixed(2)} · Locked: {walletSummary.locked.toFixed(2)} ·
+                    Total: {walletSummary.total.toFixed(2)} Coins
+                  </>
+                ) : (
+                  <>Balance: {(walletBalance ?? 0).toFixed(2)} coins (loading summary…)</>
+                )}
               </p>
             )}
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -452,6 +750,17 @@ export default function RunDetailPage() {
                     </label>
                   ))}
                 </div>
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: 12, color: "#666", marginBottom: 4 }}>Settlement version</label>
+                <select
+                  value={betForm.settleVersion ?? "v2"}
+                  onChange={(e) => setBetForm((f) => ({ ...f, settleVersion: (e.target.value as "v1" | "v2") }))}
+                  style={{ width: "100%", padding: 8 }}
+                >
+                  <option value="v1">v1 (total PnL sign)</option>
+                  <option value="v2">v2 (timeline curve Δ)</option>
+                </select>
               </div>
               <div>
                 <label style={{ display: "block", fontSize: 12, color: "#666", marginBottom: 4 }}>
@@ -491,11 +800,43 @@ export default function RunDetailPage() {
                   style={{ width: "100%", padding: 8, resize: "vertical" }}
                 />
               </div>
+              {data?.metrics?.totalSteps != null && data.metrics.totalSteps > 0 && (
+                <>
+                  <div>
+                    <label style={{ display: "block", fontSize: 12, color: "#666", marginBottom: 4 }}>Entry step (optional, default 0)</label>
+                    <select
+                      value={betForm.entryStep ?? 0}
+                      onChange={(e) => setBetForm((f) => ({ ...f, entryStep: Number(e.target.value) }))}
+                      style={{ width: "100%", padding: 8 }}
+                    >
+                      {Array.from({ length: data.metrics.totalSteps + 1 }, (_, i) => (
+                        <option key={i} value={i}>{i}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: 12, color: "#666", marginBottom: 4 }}>Exit step (optional, default last)</label>
+                    <select
+                      value={betForm.exitStep ?? data.metrics.totalSteps}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setBetForm((f) => ({ ...f, exitStep: v === "" ? undefined : Number(v) }));
+                      }}
+                      style={{ width: "100%", padding: 8 }}
+                    >
+                      <option value="">Last step</option>
+                      {Array.from({ length: data.metrics.totalSteps + 1 }, (_, i) => (
+                        <option key={i} value={i}>{i}</option>
+                      ))}
+                    </select>
+                  </div>
+                </>
+              )}
             </div>
             <div style={{ display: "flex", gap: 8, marginTop: 16, justifyContent: "flex-end" }}>
               <button
                 type="button"
-                onClick={() => !betSubmitting && setBetModalOpen(false)}
+                onClick={() => !betSubmitting && (setBetModalOpen(false), setError(null))}
                 disabled={betSubmitting}
                 style={{ padding: "8px 16px", cursor: betSubmitting ? "not-allowed" : "pointer" }}
               >
@@ -504,7 +845,7 @@ export default function RunDetailPage() {
               <button
                 type="button"
                 onClick={handlePlaceBet}
-                disabled={betSubmitting || walletBalance === null || betForm.stake > (walletBalance ?? 0)}
+                disabled={betSubmitting || !canPlaceBet || (walletSummary == null && walletBalance == null)}
                 style={{
                   padding: "8px 16px",
                   cursor: betSubmitting ? "not-allowed" : "pointer",

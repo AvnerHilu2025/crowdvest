@@ -20,9 +20,40 @@ type RunsListRunRow = {
   schemaVersion: string;
 };
 
+const MODEL_VERSION = "stage1";
+const SCHEMA_VERSION = "v1";
+
 @Injectable()
 export class RunsService {
   constructor(private readonly prisma: PrismaService) {}
+
+  /** POST /runs — create a new SimulationRun. Returns { id }. Used by smoke tests for deterministic runs. */
+  async createRun(name?: string): Promise<{ id: string }> {
+    const latest = await this.prisma.simulationRun.findFirst({
+      orderBy: { createdAt: "desc" },
+      select: { datasetVersion: true },
+    });
+    const importRun = await this.prisma.importRun.findFirst({
+      where: { type: "archetypes" },
+      orderBy: { startedAt: "desc" },
+      select: { sourceHash: true },
+    });
+    const datasetVersion = latest?.datasetVersion ?? importRun?.sourceHash ?? "default";
+    const runName =
+      (name ?? "").trim() || `spy-e2e-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    const run = await this.prisma.simulationRun.create({
+      data: {
+        name: runName,
+        status: "PENDING",
+        seed: Math.floor(Math.random() * 0x7fffffff),
+        modelVersion: MODEL_VERSION,
+        datasetVersion,
+        schemaVersion: SCHEMA_VERSION,
+        startedAt: new Date(),
+      },
+    });
+    return { id: run.id };
+  }
 
   /** GET /runs — lightweight list (no configJson). Each item includes metrics and warningsCount. */
   async findAll(

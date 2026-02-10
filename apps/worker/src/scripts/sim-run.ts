@@ -1,6 +1,6 @@
 /**
  * CLI: pnpm --filter worker sim:run -- --name "test-run" --agents 200 --steps 30 [--datasetVersion <hash>]
- * Runs a simulation: creates SimulationRun, Agents, AgentExperience per step, CrowdSnapshot per step.
+ * Runs a simulation: creates SimulationRun, RunAgents, AgentExperience per step, CrowdSnapshot per step.
  */
 import path from "path";
 import fs from "fs";
@@ -168,32 +168,33 @@ async function main(): Promise<void> {
   log(`Created SimulationRun id=${runId}`);
 
   const pad = String(argv.agents).length;
-  const agentPayloads = [];
+  const runAgentPayloads = [];
   for (let i = 0; i < argv.agents; i++) {
     const archetype = archetypes[i % archetypes.length];
-    agentPayloads.push({
-      displayName: `Agent ${String(i + 1).padStart(pad, "0")}`,
-      archetypeId: archetype.id,
-      stateJson: { wallet: STARTING_CASH },
+    runAgentPayloads.push({
+      runId,
+      name: `Agent ${String(i + 1).padStart(pad, "0")}`,
+      archetype: archetype.name,
     });
   }
-  const createdAgents = await prisma.agent.createManyAndReturn({
-    data: agentPayloads,
-    select: { id: true, archetypeId: true, stateJson: true, displayName: true },
+  const createdRunAgents = await prisma.runAgent.createManyAndReturn({
+    data: runAgentPayloads,
+    select: { id: true, archetype: true, name: true },
   });
-  type AgentRow = { id: string; archetypeId: string; stateJson: unknown; displayName: string | null };
-  createdAgents.sort((a: AgentRow, b: AgentRow) =>
-    (a.displayName ?? "").localeCompare(b.displayName ?? "", undefined, { numeric: true }),
+  type RunAgentRow = { id: string; archetype: string | null; name: string };
+  createdRunAgents.sort((a: RunAgentRow, b: RunAgentRow) =>
+    (a.name ?? "").localeCompare(b.name ?? "", undefined, { numeric: true }),
   );
-  log(`Created ${argv.agents} agents`);
-  const agentsForSim: AgentInSim[] = (createdAgents as AgentRow[]).map((a) => {
-    const state = (a.stateJson as { wallet?: number } | null) ?? {};
-    const wallet = typeof state.wallet === "number" ? state.wallet : STARTING_CASH;
-    const traits = profileByArchetype.get(a.archetypeId) ?? {};
+  log(`Created ${argv.agents} RunAgents`);
+  const archetypeByName = new Map(archetypes.map((a) => [a.name, a.id]));
+  const agentsForSim: AgentInSim[] = (createdRunAgents as RunAgentRow[]).map((a) => {
+    const archetypeId = archetypeByName.get(a.archetype ?? "") ?? archetypes[0]!.id;
+    const traits = profileByArchetype.get(archetypeId) ?? {};
     const traitValues = buildTraitValues(traits);
+    const wallet = STARTING_CASH;
     return {
       agentId: a.id,
-      archetypeId: a.archetypeId,
+      archetypeId,
       wallet,
       peakWallet: wallet,
       traitValues,
@@ -238,7 +239,7 @@ async function main(): Promise<void> {
 
     const data = experiences.map((e) => ({
       runId,
-      agentId: e.agentId,
+      runAgentId: e.agentId,
       step: snapshot.stepIndex,
       ts,
       actionJson: { action: e.action },
@@ -254,7 +255,7 @@ async function main(): Promise<void> {
       const key = action === "buy" ? "BUY" : action === "sell" ? "SELL" : action === "hold" ? "HOLD" : "OTHER";
       prePersistHistogram[key]++;
       if (samplePrePersistActions.length < 10) {
-        samplePrePersistActions.push({ agentId: d.agentId, step: d.step, action: key });
+        samplePrePersistActions.push({ agentId: d.runAgentId, step: d.step, action: key });
       }
     }
 
@@ -305,6 +306,25 @@ async function main(): Promise<void> {
     `,
   ]);
   log(`Run ${runId} completed.`);
+
+  // Populate RunTimeSeries (linear curve for v2 settlement)
+  const pnlRows = await prisma.$queryRaw<{ totalPnl: number }[]>`
+    SELECT COALESCE(SUM(pnl)::float, 0) AS "totalPnl"
+    FROM "AgentExperience"
+    WHERE "runId" = ${runId}::uuid
+  `;
+  const totalPnl = pnlRows[0] ? Number(pnlRows[0].totalPnl) : 0;
+  const N = config.steps;
+  const timeseriesData = Array.from({ length: N + 1 }, (_, step) => ({
+    runId,
+    step,
+    value: (step / N) * totalPnl,
+  }));
+  await prisma.runTimeSeries.createMany({
+    data: timeseriesData,
+    skipDuplicates: true,
+  });
+  log(`RunTimeSeries populated (${timeseriesData.length} points).`);
 
   await prisma.$disconnect();
 }

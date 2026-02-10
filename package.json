@@ -28,6 +28,7 @@
     "verify:decision-engine": "bash scripts/decision_engine_smoke.sh",
     "verify:learning-v1": "bash scripts/learning_v1_smoke.sh",
     "verify:spy-e2e": "bash scripts/spy_e2e_smoke.sh",
+    "verify:backtest-e2e": "bash scripts/backtest_e2e_smoke.sh",
     "verify:web": "bash scripts/web_smoke_check.sh",
     "check:runs-api": "bash scripts/check-runs-api.sh"
   },

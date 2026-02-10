@@ -369,6 +369,7 @@ Avner decides business.
   - For each window: creates SimulationRun, calls **POST /agents/generate** (runId, overwrite=true, count, seed), inserts **AssetStepReturn** for steps 0..window-1 from window returns; runs **decide** (overwrite=true, allowSmallCrowd), **compute-crowd-metrics**, **compute-rewards** (overwrite=true to isolate signal); computes corr(weightedSignal_t, return_{t+1}) and hitRate(sign(weightedSignal_t)==sign(return_{t+1})); persists **BacktestWindowResult**.
   - Requires API running (API_BASE env, default http://localhost:4001). Run from repo root or apps/worker (script resolves repo root for pnpm --filter worker).
 - **API:** **GET /results/backtest?symbol=SPY&limit=50** — returns stored BacktestWindowResult items (id, symbol, runId, fromDate, toDate, window, stride, agents, seed, corr, hitRate, createdAt) and total count. Numeric corr and hitRate.
+- **Backtest v0 (SPY local CSV, per-seed):** Worker script **backtest-v0** requires **--csv** (required) and **--priceField** (default `close`). Uses existing local market CSV and decision/metrics pipeline. **Command:** `pnpm -C apps/worker run backtest-v0 --assetSymbol SPY --csv apps/worker/data/market/spy.us.daily.sample.csv [--priceField close] [--steps 29] [--agents 200] [--seeds "1,2,3,4,5"]`. For each seed: (1) **POST /runs** create run, (2) **ensure AssetStepReturn** for this run: if count=0, in-process import (same logic as import-market-csv) from CSV; assert rows==steps after import. **AssetStepReturn is per run** (not global). (3) **POST /agents/generate** overwrite=true, (4) **decide** overwrite=true steps=steps seed=seed, (5) **compute-crowd-metrics**, (6) build pairs; **corr** / **directionalAccuracy** nullable when pairs=0 or variance=0; (7) persist **BacktestResult**. **API:** **GET /results/backtests?assetSymbol=SPY&limit=50** — returns items with corr/directionalAccuracy as-is (nullable). **Prisma CLI** must be run via: `pnpm -C packages/db exec prisma ...`
 
 ---
 
@@ -376,6 +377,7 @@ Avner decides business.
 
 - **verify:learning-v1** — `pnpm verify:learning-v1` runs `scripts/learning_v1_smoke.sh`: deterministic mini-flow (latest run or create 200 agents, seed=123; decide overwrite=true steps=5; inject one low-cred rumor at step4; compute-crowd-metrics; compute-rewards overwrite=false). Asserts: (1) **AgentReward** count = agents×steps (1000), (2) **AgentState** progression for a sample agent (stepHistory has step0 and step4, at least one of confidence/riskTolerance/herding differs between step0 and step4), (3) **/results/crowd-state** step4 includes numeric herdingIndex and noiseSensitivity (not null). Exit 0 if all pass, else exit 1 with clear message. API_BASE defaults to http://localhost:4001.
 - **verify:spy-e2e** — `pnpm verify:spy-e2e` runs `scripts/spy_e2e_smoke.sh`: **always creates a NEW run** via **POST /runs** (deterministic; no reuse of latest run); imports SPY CSV (`apps/worker/data/market/spy.us.daily.sample.csv`) to AssetStepReturn (29 steps); **POST /agents/generate** runId=new run, overwrite=true, count=200, seed=123; **verifies agent count** via **GET /results/agents-count?runId=** (assert count == 200); decide steps=29 assetSymbol=SPY **overwrite=true**; compute-crowd-metrics; compute-rewards overwrite=false. Asserts: agent-rewards total == 200×29, crowd-state perStep[28].wisdomScore numeric, agent-state latest.step == 28. Outputs "=== SPY E2E checks passed ===". Prereq: API running, DB with archetypes.
+- **verify:backtest-e2e** — `pnpm verify:backtest-e2e` runs `scripts/backtest_e2e_smoke.sh` (which delegates to `scripts/spy_backtest_smoke.sh`): runs backtest-v0 with `--csv apps/worker/data/market/spy.us.daily.sample.csv` and `--priceField close`; asserts **GET /results/backtests?assetSymbol=SPY&limit=5** returns 200; asserts at least 5 backtest results and corr is number or null (no 500/crash). Prereq: API running, DB with archetypes.
 
 ---
 
@@ -384,12 +386,21 @@ Avner decides business.
 - **Path:** `apps/worker/data/market/spy.us.daily.sample.csv`
 - **Columns:** date, open, high, low, close, volume, symbol, source
 - **Source:** Stooq "Historical values of SPY.US" page
-- **Note:** Prisma CLI must be run from packages/db, e.g. `pnpm -C packages/db exec prisma ...`
+- **Prisma CLI:** Must be run via `pnpm -C packages/db exec prisma ...` (e.g. migrate, generate).
+- **AssetStepReturn is per runId:** Each SimulationRun has its own AssetStepReturn rows (runId + assetSymbol + step). **Backtest must use the SAME runId** that contains AssetStepReturn for metrics/decisions; otherwise corr/directionalAccuracy become null. backtest-v0 takes **--runId** (or creates one run once) and **--csv** when count is 0; seeds only affect agent randomness, not run identity.
 - **Import into run (AssetStepReturn):** Script **import-market-csv** reads a CSV, sorts by date asc, computes step returns, and upserts **AssetStepReturn** for a given runId and assetSymbol.
   - **Script:** `pnpm -C apps/worker run import-market-csv`
-  - **CSV location:** Any path; sample at `apps/worker/data/market/spy.us.daily.sample.csv`. CSV must have a `date` column and a price column (default `close`; use `--priceField` for another).
+  - **CSV path handling:** When running from inside apps/worker (e.g. `pnpm -C apps/worker run ...`), pass the CSV path as **relative to repo root** (e.g. `apps/worker/data/market/spy.us.daily.sample.csv`) or use an **absolute path**; the script tries cwd, then repo root, so either works.
+  - **CSV:** Must have `date` and a price column (default `close`; use `--priceField` for another).
   - **Formula:** `stepReturn[0] = 0`; for t ≥ 1: `stepReturn[t] = (price[t] - price[t-1]) / price[t-1]`.
   - **Example:** `pnpm -C apps/worker run import-market-csv -- --runId <RUN_ID> --assetSymbol SPY --csv apps/worker/data/market/spy.us.daily.sample.csv --priceField close`
   - Prints summary: rows, steps upserted, min/max/mean stepReturn.
+
+## Key lessons (DB / backtest)
+
+1. **Prisma CLI** lives under `packages/db`. Use: `pnpm -C packages/db exec prisma ...` (e.g. migrate, generate).
+2. **Postgres URL** in `prisma/.env` (or `packages/db/.env`) may include `?schema=public`. For `psql` strip the query string: `DB_URL_PSQL="${DB_URL%\?schema=public}"`.
+3. **Postgres columns** are camelCase and require double-quoting in raw SQL: `"runId"`, `"assetSymbol"`.
+4. **Backtest** must use the **same runId** that has AssetStepReturn data; otherwise corr/directionalAccuracy will be null. Use --runId with a run that already has CSV imported, or omit --runId and pass --csv so the script creates one run and imports into it.
 
 END CONTEXT

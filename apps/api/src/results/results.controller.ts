@@ -183,6 +183,19 @@ export class ResultsController {
     return this.resultsService.getAgentRewards(validRunId, sym, agentId?.trim() || undefined, Number.isFinite(fromStep) ? fromStep : undefined, Number.isFinite(toStep) ? toStep : undefined);
   }
 
+  /** GET /results/backtests?assetSymbol=SPY&limit=50 — list BacktestResult (per-seed backtest v0). parseLimit(value) only; default 50, max 200 in parse-query. */
+  @Get("backtests")
+  async getBacktests(
+    @Query("assetSymbol") assetSymbol: string | undefined,
+    @Query("limit") limitParam: string | undefined,
+  ) {
+    const limit = parseLimit(limitParam);
+    return this.resultsService.getBacktests(
+      assetSymbol?.trim() ?? "SPY",
+      limit,
+    );
+  }
+
   /** GET /results/backtest?symbol=SPY&limit=50 — list backtest window results for a symbol. */
   @Get("backtest")
   async getBacktest(

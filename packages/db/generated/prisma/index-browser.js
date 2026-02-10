@@ -418,6 +418,18 @@ exports.Prisma.BacktestWindowResultScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.BacktestResultScalarFieldEnum = {
+  id: 'id',
+  runId: 'runId',
+  assetSymbol: 'assetSymbol',
+  seed: 'seed',
+  steps: 'steps',
+  agents: 'agents',
+  corr: 'corr',
+  directionalAccuracy: 'directionalAccuracy',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -500,7 +512,8 @@ exports.Prisma.ModelName = {
   Bet: 'Bet',
   ImportRun: 'ImportRun',
   PriceSeriesPoint: 'PriceSeriesPoint',
-  BacktestWindowResult: 'BacktestWindowResult'
+  BacktestWindowResult: 'BacktestWindowResult',
+  BacktestResult: 'BacktestResult'
 };
 
 /**

@@ -1193,6 +1193,60 @@ export class ResultsService {
     };
   }
 
+  /** GET /results/backtests?assetSymbol=&limit= — list BacktestResult (per-seed backtest v0). corr/directionalAccuracy nullable. */
+  async getBacktests(
+    assetSymbol: string,
+    limit: number,
+  ): Promise<{
+    items: {
+      id: string;
+      runId: string;
+      assetSymbol: string;
+      seed: number;
+      steps: number;
+      agents: number;
+      corr: number | null;
+      directionalAccuracy: number | null;
+      createdAt: Date;
+    }[];
+    total: number;
+  }> {
+    const sym = (assetSymbol ?? "").trim().toUpperCase() || "SPY";
+    const [items, total] = await Promise.all([
+      this.prisma.backtestResult.findMany({
+        where: { assetSymbol: sym },
+        orderBy: { createdAt: "desc" },
+        take: Math.min(Math.max(1, limit), 200),
+        select: {
+          id: true,
+          runId: true,
+          assetSymbol: true,
+          seed: true,
+          steps: true,
+          agents: true,
+          corr: true,
+          directionalAccuracy: true,
+          createdAt: true,
+        },
+      }),
+      this.prisma.backtestResult.count({ where: { assetSymbol: sym } }),
+    ]);
+    return {
+      items: items.map((r) => ({
+        id: r.id,
+        runId: r.runId,
+        assetSymbol: r.assetSymbol,
+        seed: r.seed,
+        steps: r.steps,
+        agents: r.agents,
+        corr: r.corr,
+        directionalAccuracy: r.directionalAccuracy,
+        createdAt: r.createdAt,
+      })),
+      total,
+    };
+  }
+
   /** GET /results/backtest?symbol=&limit= — list BacktestWindowResult for a symbol. */
   async getBacktestResults(
     symbol: string,

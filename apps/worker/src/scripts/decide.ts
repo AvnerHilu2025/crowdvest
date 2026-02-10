@@ -3,8 +3,8 @@
  * Decision Engine v1 + Humanization Layer: generates BUY/SELL/HOLD with cognitive biases.
  * Idempotent unless --overwrite. Deterministic given same seed.
  *
- * Overwrite (--overwrite): deletes AgentDecision, AgentInfoState, AgentExperience, CrowdMetrics
- * for (runId, assetSymbol) so derive CrowdMetrics from stale decisions do not remain.
+ * Overwrite (--overwrite): deletes AgentDecision, AgentInfoState, AgentExperience, CrowdMetrics,
+ * AgentReward, AgentState for (runId, assetSymbol). Does NOT delete AssetStepReturn (imported market data).
  *
  * Smoke: decide --overwrite -> compute-crowd-metrics -> SQL check CrowdMetrics:
  *   Expect min_step=0, max_step=steps-1, n=steps for runId+assetSymbol.
@@ -241,7 +241,8 @@ async function main(): Promise<void> {
   log(`Loaded ${agents.length} agents`);
 
   if (argv.overwrite) {
-    const [deletedDec, deletedInfo, deletedExp, deletedCrowd, deletedRewards, deletedReturns, deletedAgentState] = await Promise.all([
+    // Do NOT delete AssetStepReturn: it is imported market data, not derived from decisions.
+    const [deletedDec, deletedInfo, deletedExp, deletedCrowd, deletedRewards, deletedAgentState] = await Promise.all([
       prisma.agentDecision.deleteMany({
         where: { runId: argv.runId, assetSymbol: argv.assetSymbol },
       }),
@@ -255,14 +256,11 @@ async function main(): Promise<void> {
       prisma.agentReward.deleteMany({
         where: { runId: argv.runId, assetSymbol: argv.assetSymbol },
       }),
-      prisma.assetStepReturn.deleteMany({
-        where: { runId: argv.runId, assetSymbol: argv.assetSymbol },
-      }),
       prisma.agentState.deleteMany({
         where: { runId: argv.runId, assetSymbol: argv.assetSymbol },
       }),
     ]);
-    log(`Deleted ${deletedDec.count} decisions, ${deletedInfo.count} AgentInfoState, ${deletedExp.count} experiences, ${deletedCrowd.count} CrowdMetrics, ${deletedRewards.count} AgentReward, ${deletedReturns.count} AssetStepReturn, ${deletedAgentState.count} AgentState (overwrite)`);
+    log(`Deleted ${deletedDec.count} decisions, ${deletedInfo.count} AgentInfoState, ${deletedExp.count} experiences, ${deletedCrowd.count} CrowdMetrics, ${deletedRewards.count} AgentReward, ${deletedAgentState.count} AgentState (overwrite)`);
   }
 
   const [experienceCount, infoStateCount] = await Promise.all([

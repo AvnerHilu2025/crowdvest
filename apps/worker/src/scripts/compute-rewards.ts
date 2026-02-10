@@ -58,6 +58,7 @@ function parseBool(v: unknown, defaultVal: boolean): boolean {
 function parseArgv(): {
   runId: string;
   assetSymbol: string;
+  runVariantId: string | undefined;
   steps: number;
   seed: number | undefined;
   overwrite: boolean;
@@ -65,12 +66,15 @@ function parseArgv(): {
   const args = process.argv.slice(2);
   let runId = "";
   let assetSymbol = "RUN";
+  let runVariantId: string | undefined;
   let steps = 20;
   let seed: number | undefined;
   let overwrite = true; // Default: overwrite=true (no learning)
   for (let i = 0; i < args.length; i++) {
     const arg = args[i]!;
-    if (arg === "--runId" && args[i + 1]) {
+    if (arg === "--runVariantId" && args[i + 1]) {
+      runVariantId = args[++i]!.trim();
+    } else if (arg === "--runId" && args[i + 1]) {
       runId = args[++i]!.trim();
     } else if (arg === "--assetSymbol" && args[i + 1]) {
       assetSymbol = args[++i]!.trim() || "RUN";
@@ -81,15 +85,12 @@ function parseArgv(): {
       const n = parseInt(args[++i]!, 10);
       if (Number.isFinite(n)) seed = n;
     } else if (arg.startsWith("--overwrite=")) {
-      // Handle --overwrite=false or --overwrite=true (single arg)
       const value = arg.slice("--overwrite=".length);
       overwrite = parseBool(value, true);
     } else if (arg === "--overwrite") {
-      // Handle --overwrite false or --overwrite true (two args)
       if (args[i + 1] != null) {
         overwrite = parseBool(args[++i], true);
       } else {
-        // Flag present without value: default to true
         overwrite = true;
       }
     }
@@ -98,8 +99,12 @@ function parseArgv(): {
     console.log(`[DEBUG_ARGS] raw argv: ${JSON.stringify(process.argv)}`);
     console.log(`[DEBUG_ARGS] parsed overwrite: ${overwrite}`);
   }
-  if (!runId) throw new Error("--runId is required");
-  return { runId, assetSymbol, steps, seed, overwrite };
+  if (runVariantId) {
+    if (!runId) runId = "";
+  } else {
+    if (!runId) throw new Error("--runId is required (or use --runVariantId)");
+  }
+  return { runId, assetSymbol, runVariantId, steps, seed, overwrite };
 }
 
 function clamp(x: number, lo: number, hi: number): number {
@@ -156,25 +161,48 @@ function log(msg: string): void {
 async function main(): Promise<void> {
   loadEnv();
   const argv = parseArgv();
-  log(
-    `compute-rewards runId=${argv.runId} assetSymbol=${argv.assetSymbol} steps=${argv.steps} seed=${argv.seed ?? "run"} overwrite=${argv.overwrite}`,
-  );
-
   const prisma = new PrismaClient();
 
+  const { runId, assetSymbol, runVariantId } = await (async () => {
+    if (argv.runVariantId) {
+      const v = await prisma.runVariant.findUnique({
+        where: { id: argv.runVariantId },
+        select: { id: true, runId: true, assetSymbol: true },
+      });
+      if (!v) throw new Error(`RunVariant not found: ${argv.runVariantId}`);
+      return { runId: v.runId, assetSymbol: v.assetSymbol, runVariantId: v.id };
+    }
+    const run = await prisma.simulationRun.findUnique({
+      where: { id: argv.runId },
+      select: { id: true },
+    });
+    if (!run) throw new Error(`Run not found: ${argv.runId}`);
+    const v = await prisma.runVariant.findFirst({
+      where: { runId: argv.runId, assetSymbol: argv.assetSymbol },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, runId: true, assetSymbol: true },
+    });
+    if (!v) throw new Error(`No RunVariant for runId=${argv.runId} assetSymbol=${argv.assetSymbol}. Run decide first or pass --runVariantId.`);
+    return { runId: v.runId, assetSymbol: v.assetSymbol, runVariantId: v.id };
+  })();
+
+  log(
+    `compute-rewards runId=${runId} assetSymbol=${assetSymbol} runVariantId=${runVariantId} steps=${argv.steps} seed=${argv.seed ?? "run"} overwrite=${argv.overwrite}`,
+  );
+
   const run = await prisma.simulationRun.findUnique({
-    where: { id: argv.runId },
+    where: { id: runId },
     select: { id: true, seed: true },
   });
-  if (!run) throw new Error(`Run not found: ${argv.runId}`);
+  if (!run) throw new Error(`Run not found: ${runId}`);
 
   const globalSeed = argv.seed ?? run.seed ?? 0;
 
   // 1) Ensure AssetStepReturn for each step (deterministic)
   const existingReturns = await prisma.assetStepReturn.findMany({
     where: {
-      runId: argv.runId,
-      assetSymbol: argv.assetSymbol,
+      runId,
+      assetSymbol,
       step: { gte: 0, lt: argv.steps },
     },
     select: { step: true, stepReturn: true },
@@ -188,18 +216,9 @@ async function main(): Promise<void> {
       const stepReturn = deterministicStepReturn(globalSeed, step);
       await prisma.assetStepReturn.upsert({
         where: {
-          runId_assetSymbol_step: {
-            runId: argv.runId,
-            assetSymbol: argv.assetSymbol,
-            step,
-          },
+          runId_assetSymbol_step: { runId, assetSymbol, step },
         },
-        create: {
-          runId: argv.runId,
-          assetSymbol: argv.assetSymbol,
-          step,
-          stepReturn,
-        },
+        create: { runId, assetSymbol, step, stepReturn },
         update: { stepReturn },
       });
       returnByStep.set(step, stepReturn);
@@ -207,11 +226,12 @@ async function main(): Promise<void> {
   }
   log(`AssetStepReturn ensured for steps 0..${argv.steps - 1}`);
 
-  // 2) Load decisions for run+asset+steps
+  // 2) Load decisions for run+asset+steps (this variant)
   const decisions = await prisma.agentDecision.findMany({
     where: {
-      runId: argv.runId,
-      assetSymbol: argv.assetSymbol,
+      runId,
+      assetSymbol,
+      runVariantId,
       step: { gte: 0, lt: argv.steps },
     },
     select: { agentId: true, step: true, action: true },
@@ -231,6 +251,7 @@ async function main(): Promise<void> {
 
   const rewardRows: {
     runId: string;
+    runVariantId: string;
     agentId: string;
     assetSymbol: string;
     step: number;
@@ -258,9 +279,10 @@ async function main(): Promise<void> {
       const rewardScore = rewardScoreRaw(pnl, regret, drawdown);
 
       rewardRows.push({
-        runId: argv.runId,
+        runId,
+        runVariantId,
         agentId,
-        assetSymbol: argv.assetSymbol,
+        assetSymbol,
         step,
         action,
         stepReturn,
@@ -276,15 +298,17 @@ async function main(): Promise<void> {
   for (const r of rewardRows) {
     await prisma.agentReward.upsert({
       where: {
-        runId_agentId_assetSymbol_step: {
+        runId_agentId_assetSymbol_step_runVariantId: {
           runId: r.runId,
           agentId: r.agentId,
           assetSymbol: r.assetSymbol,
           step: r.step,
+          runVariantId: r.runVariantId,
         },
       },
       create: {
         runId: r.runId,
+        runVariantId: r.runVariantId,
         agentId: r.agentId,
         assetSymbol: r.assetSymbol,
         step: r.step,
@@ -345,11 +369,12 @@ async function main(): Promise<void> {
       const base = baselineByAgent.get(r.agentId)!;
       const existing = await prisma.agentState.findUnique({
         where: {
-          runId_assetSymbol_agentId_step: {
+          runId_assetSymbol_agentId_step_runVariantId: {
             runId: r.runId,
             assetSymbol: r.assetSymbol,
             agentId: r.agentId,
             step: r.step,
+            runVariantId: r.runVariantId,
           },
         },
       });
@@ -357,6 +382,7 @@ async function main(): Promise<void> {
         await prisma.agentState.create({
           data: {
             runId: r.runId,
+            runVariantId: r.runVariantId,
             assetSymbol: r.assetSymbol,
             agentId: r.agentId,
             step: r.step,
@@ -392,11 +418,12 @@ async function main(): Promise<void> {
         if (step > 0) {
           const prevRow = await prisma.agentState.findUnique({
             where: {
-              runId_assetSymbol_agentId_step: {
-                runId: argv.runId,
-                assetSymbol: argv.assetSymbol,
+              runId_assetSymbol_agentId_step_runVariantId: {
+                runId,
+                assetSymbol,
                 agentId: r.agentId,
                 step: step - 1,
+                runVariantId,
               },
             },
             select: { confidence: true, riskTolerance: true, herding: true },
@@ -424,11 +451,12 @@ async function main(): Promise<void> {
 
         const existingState = await prisma.agentState.findUnique({
           where: {
-            runId_assetSymbol_agentId_step: {
-              runId: argv.runId,
-              assetSymbol: argv.assetSymbol,
+            runId_assetSymbol_agentId_step_runVariantId: {
+              runId,
+              assetSymbol,
               agentId: r.agentId,
-              step: step, // Use loop variable for consistency
+              step,
+              runVariantId,
             },
           },
           select: { exposedCount: true, infoSignal: true },
@@ -438,18 +466,20 @@ async function main(): Promise<void> {
 
         await prisma.agentState.upsert({
           where: {
-            runId_assetSymbol_agentId_step: {
-              runId: argv.runId,
-              assetSymbol: argv.assetSymbol,
+            runId_assetSymbol_agentId_step_runVariantId: {
+              runId,
+              assetSymbol,
               agentId: r.agentId,
-              step: step, // Use loop variable, not r.step (should match but be explicit)
+              step,
+              runVariantId,
             },
           },
           create: {
-            runId: argv.runId,
-            assetSymbol: argv.assetSymbol,
+            runId,
+            runVariantId,
+            assetSymbol,
             agentId: r.agentId,
-            step: step,
+            step,
             confidence,
             riskTolerance,
             herding,

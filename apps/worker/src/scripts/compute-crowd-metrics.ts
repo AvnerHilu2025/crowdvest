@@ -45,19 +45,26 @@ function loadEnv(): void {
   }
 }
 
-function parseArgv(): { runId: string; assetSymbol: string } {
+function parseArgv(): { runId: string; assetSymbol: string; runVariantId: string | undefined } {
   const args = process.argv.slice(2);
   let runId = "";
   let assetSymbol = "RUN";
+  let runVariantId: string | undefined;
   for (let i = 0; i < args.length; i++) {
-    if (args[i] === "--runId" && args[i + 1]) {
+    if (args[i] === "--runVariantId" && args[i + 1]) {
+      runVariantId = args[++i]!.trim();
+    } else if (args[i] === "--runId" && args[i + 1]) {
       runId = args[++i]!.trim();
     } else if (args[i] === "--assetSymbol" && args[i + 1]) {
       assetSymbol = args[++i]!.trim() || "RUN";
     }
   }
-  if (!runId) throw new Error("--runId is required");
-  return { runId, assetSymbol };
+  if (runVariantId) {
+    if (!runId) runId = ""; // will be resolved from RunVariant
+  } else {
+    if (!runId) throw new Error("--runId is required (or use --runVariantId)");
+  }
+  return { runId, assetSymbol, runVariantId };
 }
 
 function clamp(x: number, lo: number, hi: number): number {
@@ -254,21 +261,49 @@ function log(msg: string): void {
   console.log(`[${new Date().toISOString()}] ${msg}`);
 }
 
-async function main(): Promise<void> {
-  loadEnv();
-  const argv = parseArgv();
-  log(`compute-crowd-metrics runId=${argv.runId} assetSymbol=${argv.assetSymbol}`);
-
-  const prisma = new PrismaClient();
-
+/** Resolve runId, assetSymbol, runVariantId. If runVariantId given, load from RunVariant; else use runId+assetSymbol and pick latest variant. */
+async function resolveVariant(
+  prisma: PrismaClient,
+  argv: { runId: string; assetSymbol: string; runVariantId: string | undefined },
+): Promise<{ runId: string; assetSymbol: string; runVariantId: string }> {
+  if (argv.runVariantId) {
+    const v = await prisma.runVariant.findUnique({
+      where: { id: argv.runVariantId },
+      select: { id: true, runId: true, assetSymbol: true },
+    });
+    if (!v) throw new Error(`RunVariant not found: ${argv.runVariantId}`);
+    return { runId: v.runId, assetSymbol: v.assetSymbol, runVariantId: v.id };
+  }
   const run = await prisma.simulationRun.findUnique({
     where: { id: argv.runId },
     select: { id: true },
   });
   if (!run) throw new Error(`Run not found: ${argv.runId}`);
+  const v = await prisma.runVariant.findFirst({
+    where: { runId: argv.runId, assetSymbol: argv.assetSymbol },
+    orderBy: { createdAt: "desc" },
+    select: { id: true, runId: true, assetSymbol: true },
+  });
+  if (!v) throw new Error(`No RunVariant for runId=${argv.runId} assetSymbol=${argv.assetSymbol}. Run decide first or pass --runVariantId.`);
+  return { runId: v.runId, assetSymbol: v.assetSymbol, runVariantId: v.id };
+}
+
+async function main(): Promise<void> {
+  loadEnv();
+  const argv = parseArgv();
+  const prisma = new PrismaClient();
+
+  const { runId, assetSymbol, runVariantId } = await resolveVariant(prisma, argv);
+  log(`compute-crowd-metrics runId=${runId} assetSymbol=${assetSymbol} runVariantId=${runVariantId}`);
+
+  const run = await prisma.simulationRun.findUnique({
+    where: { id: runId },
+    select: { id: true },
+  });
+  if (!run) throw new Error(`Run not found: ${runId}`);
 
   const decisions = await prisma.agentDecision.findMany({
-    where: { runId: argv.runId, assetSymbol: argv.assetSymbol },
+    where: { runId, assetSymbol, runVariantId },
     select: {
       step: true,
       action: true,
@@ -295,7 +330,7 @@ async function main(): Promise<void> {
   }
 
   const steps = [...byStep.keys()].sort((a, b) => a - b);
-  const assetSym = (argv.assetSymbol || "RUN").trim() || "RUN";
+  const assetSym = assetSymbol.trim() || "RUN";
   const debugCrowd = process.env.DEBUG_CROWD_METRICS === "1";
 
   let prevWeightedSignal: number | null = null;
@@ -307,7 +342,7 @@ async function main(): Promise<void> {
 
     const eventsAtStep = await prisma.infoEvent.findMany({
       where: {
-        runId: argv.runId,
+        runId,
         assetSymbol: assetSym,
         step,
       },
@@ -342,14 +377,16 @@ async function main(): Promise<void> {
 
     const saved = await prisma.crowdMetrics.upsert({
       where: {
-        runId_assetSymbol_step: {
-          runId: argv.runId,
+        runId_assetSymbol_step_runVariantId: {
+          runId,
           assetSymbol: assetSym,
           step,
+          runVariantId,
         },
       },
       create: {
-        runId: argv.runId,
+        runId,
+        runVariantId,
         assetSymbol: assetSym,
         step,
         signal: metrics.signal,

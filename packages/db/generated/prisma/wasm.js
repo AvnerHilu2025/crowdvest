@@ -179,6 +179,30 @@ exports.Prisma.SimulationRunScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.RunVariantScalarFieldEnum = {
+  id: 'id',
+  runId: 'runId',
+  assetSymbol: 'assetSymbol',
+  seed: 'seed',
+  agents: 'agents',
+  steps: 'steps',
+  label: 'label',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.RunVariantSummaryScalarFieldEnum = {
+  id: 'id',
+  runVariantId: 'runVariantId',
+  corr: 'corr',
+  directionalAccuracy: 'directionalAccuracy',
+  pairsCount: 'pairsCount',
+  computedAt: 'computedAt',
+  debugDecisionCounts: 'debugDecisionCounts',
+  debugPairsSample: 'debugPairsSample',
+  debugDecisionsHash: 'debugDecisionsHash',
+  debugReturnsHash: 'debugReturnsHash'
+};
+
 exports.Prisma.RunAgentScalarFieldEnum = {
   id: 'id',
   runId: 'runId',
@@ -202,6 +226,7 @@ exports.Prisma.RunAgentTraitScalarFieldEnum = {
 exports.Prisma.AgentDecisionScalarFieldEnum = {
   id: 'id',
   runId: 'runId',
+  runVariantId: 'runVariantId',
   step: 'step',
   agentId: 'agentId',
   assetSymbol: 'assetSymbol',
@@ -214,6 +239,7 @@ exports.Prisma.AgentDecisionScalarFieldEnum = {
 exports.Prisma.CrowdMetricsScalarFieldEnum = {
   id: 'id',
   runId: 'runId',
+  runVariantId: 'runVariantId',
   assetSymbol: 'assetSymbol',
   step: 'step',
   signal: 'signal',
@@ -243,6 +269,7 @@ exports.Prisma.AssetStepReturnScalarFieldEnum = {
 exports.Prisma.AgentRewardScalarFieldEnum = {
   id: 'id',
   runId: 'runId',
+  runVariantId: 'runVariantId',
   agentId: 'agentId',
   assetSymbol: 'assetSymbol',
   step: 'step',
@@ -272,6 +299,7 @@ exports.Prisma.InfoEventScalarFieldEnum = {
 exports.Prisma.AgentInfoStateScalarFieldEnum = {
   id: 'id',
   runId: 'runId',
+  runVariantId: 'runVariantId',
   assetSymbol: 'assetSymbol',
   agentId: 'agentId',
   step: 'step',
@@ -287,6 +315,7 @@ exports.Prisma.AgentInfoStateScalarFieldEnum = {
 exports.Prisma.AgentStateScalarFieldEnum = {
   id: 'id',
   runId: 'runId',
+  runVariantId: 'runVariantId',
   assetSymbol: 'assetSymbol',
   agentId: 'agentId',
   step: 'step',
@@ -317,6 +346,7 @@ exports.Prisma.RunDebugScalarFieldEnum = {
 exports.Prisma.AgentExperienceScalarFieldEnum = {
   id: 'id',
   runId: 'runId',
+  runVariantId: 'runVariantId',
   runAgentId: 'runAgentId',
   step: 'step',
   ts: 'ts',
@@ -421,10 +451,12 @@ exports.Prisma.BacktestWindowResultScalarFieldEnum = {
 exports.Prisma.BacktestResultScalarFieldEnum = {
   id: 'id',
   runId: 'runId',
+  runVariantId: 'runVariantId',
   assetSymbol: 'assetSymbol',
   seed: 'seed',
   steps: 'steps',
   agents: 'agents',
+  pairsCount: 'pairsCount',
   corr: 'corr',
   directionalAccuracy: 'directionalAccuracy',
   createdAt: 'createdAt'
@@ -493,6 +525,8 @@ exports.Prisma.ModelName = {
   Agent: 'Agent',
   AgentWallet: 'AgentWallet',
   SimulationRun: 'SimulationRun',
+  RunVariant: 'RunVariant',
+  RunVariantSummary: 'RunVariantSummary',
   RunAgent: 'RunAgent',
   RunAgentTrait: 'RunAgentTrait',
   AgentDecision: 'AgentDecision',

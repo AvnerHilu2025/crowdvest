@@ -1,18 +1,20 @@
 /**
  * Backtest v0 for SPY using local market CSV and decision/metrics pipeline.
  *
- * CLI: pnpm -C apps/worker run backtest-v0 --runId <id> [--csv path] [--priceField close] [--steps 29] [--agents 200] [--seeds "1,2,3,4,5"]
- * --runId: required OR omit to create a new run once (script prints it). Same runId is used for all seeds; seeds only affect agent randomness.
- * --csv: required when AssetStepReturn count for (runId, assetSymbol) is 0; script imports into this runId.
+ * CLI: pnpm -C apps/worker run backtest-v0 --runId <id> --seeds <count> [--seedStart 1] [--csv path] [--priceField close] [--steps 29] [--agents 200]
+ * --seeds <count>: required. Run <count> different seeds (e.g. --seeds 3 runs seeds 1,2,3 with default seedStart).
+ * --seedStart <number>: optional, default 1. Seed list = [seedStart, seedStart+1, ..., seedStart+count-1].
+ * --runId: required OR omit to create a new run once. Same runId for all seeds; seeds only affect agent randomness.
+ * --csv: required when AssetStepReturn count for (runId, assetSymbol) is 0.
  *
- * Flow: Resolve runId (use --runId or POST /runs once). Ensure AssetStepReturn for (runId, assetSymbol): if count==0, --csv import or throw.
- * For each seed: agents/generate overwrite -> decide -> compute-crowd-metrics -> read CrowdMetrics + AssetStepReturn from SAME runId -> corr/directionalAccuracy -> persist BacktestResult.
- * Backtest must never compute corr on a run without AssetStepReturn (same runId for metrics and returns).
+ * Flow: Resolve runId, ensure AssetStepReturn. For each seed: agents/generate overwrite -> decide overwrite=true -> compute-crowd-metrics -> corr/directionalAccuracy -> persist BacktestResult.
  */
 import path from "path";
 import fs from "fs";
+import { createHash } from "crypto";
 import { spawnSync } from "child_process";
 import { PrismaClient } from "@crowdvest/db";
+import { assertRunExists } from "../lib/assert-run-exists";
 
 function loadEnv(): void {
   const cwd = process.cwd();
@@ -48,6 +50,7 @@ function parseArgv(): {
   steps: number;
   agents: number;
   seeds: number[];
+  label: string;
 } {
   const args = process.argv.slice(2);
   let runId = "";
@@ -56,7 +59,9 @@ function parseArgv(): {
   let priceField = "close";
   let steps = 29;
   let agents = 200;
-  let seedsStr = "1,2,3,4,5";
+  let seedsCount = 0; // required
+  let seedStart = 1;
+  let label = "";
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--runId" && args[i + 1]) {
       runId = String(args[++i]).trim();
@@ -73,14 +78,18 @@ function parseArgv(): {
       const n = parseInt(args[++i]!, 10);
       if (Number.isFinite(n) && n >= 1) agents = n;
     } else if (args[i] === "--seeds" && args[i + 1]) {
-      seedsStr = String(args[++i]).trim();
+      const n = parseInt(String(args[++i]).trim(), 10);
+      if (Number.isFinite(n) && n >= 1) seedsCount = n;
+    } else if (args[i] === "--seedStart" && args[i + 1]) {
+      const n = parseInt(String(args[++i]).trim(), 10);
+      if (Number.isFinite(n)) seedStart = n;
+    } else if (args[i] === "--label" && args[i + 1]) {
+      label = String(args[++i]).trim();
     }
   }
-  const seeds = seedsStr
-    .split(",")
-    .map((s) => parseInt(s.trim(), 10))
-    .filter((n) => Number.isFinite(n));
-  return { runId, assetSymbol, csv, priceField, steps, agents, seeds: seeds.length ? seeds : [1, 2, 3, 4, 5] };
+  if (seedsCount < 1) throw new Error("--seeds <count> is required (count >= 1). Example: --seeds 5");
+  const seeds = Array.from({ length: seedsCount }, (_, i) => seedStart + i);
+  return { runId, assetSymbol, csv, priceField, steps, agents, seeds, label };
 }
 
 function resolveCsvPath(csvArg: string): string {
@@ -225,6 +234,7 @@ async function main(): Promise<void> {
     if (!runId) throw new Error("POST /runs did not return id");
     console.log("runId=" + runId + " (created; use --runId " + runId + " to reuse)");
   } else {
+    await assertRunExists(apiBase, runId);
     console.log("runId=" + runId + " (from --runId)");
   }
 
@@ -272,8 +282,39 @@ async function main(): Promise<void> {
     );
   }
 
+  const variantIds: string[] = [];
+
   for (const seed of argv.seeds) {
-    // 3) POST /agents/generate (same runId; seed only affects randomness)
+    // 3) Find or create RunVariant for this seed (and optional label)
+    const label = argv.label;
+    let variant = await prisma.runVariant.findUnique({
+      where: {
+        runId_assetSymbol_seed_label: {
+          runId,
+          assetSymbol: argv.assetSymbol,
+          seed,
+          label,
+        },
+      },
+      select: { id: true },
+    });
+    if (!variant) {
+      variant = await prisma.runVariant.create({
+        data: {
+          runId,
+          assetSymbol: argv.assetSymbol,
+          seed,
+          label,
+          agents: argv.agents,
+          steps: argv.steps,
+        },
+        select: { id: true },
+      });
+    }
+    const variantId = variant.id;
+    variantIds.push(variantId);
+
+    // 4) POST /agents/generate (same runId; seed only affects randomness)
     const genRes = await fetch(
       apiBase + "/agents/generate?runId=" + encodeURIComponent(runId) + "&overwrite=true",
       {
@@ -287,39 +328,37 @@ async function main(): Promise<void> {
       throw new Error("POST /agents/generate failed: " + genRes.status + " " + t);
     }
 
-    // 4) decide overwrite=true steps=steps seed=seed
+    // 5) decide with runVariantId, overwrite=true (only this variant)
     if (
       !runWorker(
         "decide",
         [
-          "--runId", runId,
-          "--assetSymbol", argv.assetSymbol,
+          "--runVariantId", variantId,
           "--steps", String(argv.steps),
-          "--seed", String(seed),
           "--overwrite", "true",
           "--allowSmallCrowd",
         ],
         repoRoot,
       )
     ) {
-      throw new Error("decide failed for runId=" + runId);
+      throw new Error("decide failed for runId=" + runId + " variantId=" + variantId);
     }
 
-    // 5) compute-crowd-metrics
+    // 6) compute-crowd-metrics with runVariantId
     if (
       !runWorker(
         "compute-crowd-metrics",
-        ["--runId", runId, "--assetSymbol", argv.assetSymbol],
+        ["--runVariantId", variantId],
         repoRoot,
       )
     ) {
-      throw new Error("compute-crowd-metrics failed for runId=" + runId);
+      throw new Error("compute-crowd-metrics failed for runId=" + runId + " variantId=" + variantId);
     }
 
-    // 6) Load CrowdMetrics (weightedSignal) and AssetStepReturn; build pairs for t=0..steps-2
+    // 7) Load CrowdMetrics for this variant and AssetStepReturn; build pairs for t=0..steps-2
     const [metrics, stepReturns] = await Promise.all([
       prisma.crowdMetrics.findMany({
-        where: { runId, assetSymbol: argv.assetSymbol },
+        where: { runVariantId: variantId },
         orderBy: { step: "asc" },
         select: { step: true, weightedSignal: true },
       }),
@@ -330,7 +369,6 @@ async function main(): Promise<void> {
       }),
     ]);
 
-    const perStepEntries = metrics.length;
     const assetStepReturnCount = stepReturns.length;
     if (assetStepReturnCount === 0) {
       throw new Error("Cannot compute corr: AssetStepReturn count is 0 for runId=" + runId + ". Import CSV first.");
@@ -340,7 +378,7 @@ async function main(): Promise<void> {
 
     const pred: number[] = [];
     const ret1: number[] = [];
-    const pairSamples: { t: number; pred: number; nextReturn: number }[] = [];
+    const stepsForPairs: number[] = [];
     for (let t = 0; t <= argv.steps - 2; t++) {
       const sig = signalByStep.get(t);
       const nextRet = returnByStep.get(t + 1);
@@ -352,22 +390,11 @@ async function main(): Promise<void> {
       ) {
         pred.push(sig);
         ret1.push(nextRet);
-        if (pairSamples.length < 5) {
-          pairSamples.push({ t, pred: sig, nextReturn: nextRet });
-        }
+        stepsForPairs.push(t);
       }
     }
     const pairsCount = pred.length;
 
-    console.log(
-      "runId=" + runId + " assetStepReturnRows=" + assetStepReturnRows + " perStepEntries=" + perStepEntries + " pairsCount=" + pairsCount + " (expected steps-1=" + (argv.steps - 1) + ") seed=" + seed,
-    );
-    if (pairSamples.length > 0) {
-      console.log("[debug] sample first 5 pairs: " + JSON.stringify(pairSamples));
-    }
-
-    const predVar = variance(pred);
-    const retVar = variance(ret1);
     const corr: number | null = pearson(pred, ret1);
     let directionalAccuracy: number | null = null;
     if (pairsCount > 0) {
@@ -378,36 +405,78 @@ async function main(): Promise<void> {
       directionalAccuracy = correct / pairsCount;
     }
 
+    // One line per seed: runId, variantId, seed, corr, directionalAccuracy, pairsCount
     console.log(
-      "seed=" +
-        seed +
-        " pairs=" +
-        pairsCount +
-        " predVar=" +
-        predVar.toExponential(4) +
-        " retVar=" +
-        retVar.toExponential(4) +
-        " corr=" +
-        (corr != null ? corr.toFixed(4) : "null") +
-        " directionalAccuracy=" +
-        (directionalAccuracy != null ? directionalAccuracy.toFixed(4) : "null"),
+      "runId=" + runId + " variantId=" + variantId + " seed=" + seed +
+        " corr=" + (corr != null ? corr.toFixed(4) : "null") +
+        " directionalAccuracy=" + (directionalAccuracy != null ? directionalAccuracy.toFixed(4) : "null") +
+        " pairsCount=" + pairsCount,
     );
 
-    // 7) Persist BacktestResult (nullable corr / directionalAccuracy)
+    // Debug: decision counts + hashes and pairs sample (deterministic, seed-sensitive)
+    const decisions = await prisma.agentDecision.findMany({
+      where: { runVariantId: variantId },
+      orderBy: [{ step: "asc" }, { agentId: "asc" }],
+      select: { step: true, agentId: true, action: true },
+    });
+    const decisionCounts = { BUY: 0, SELL: 0, HOLD: 0 };
+    for (const d of decisions) {
+      if (d.action in decisionCounts) (decisionCounts as Record<string, number>)[d.action]++;
+    }
+    const decisionsPayload = decisions.map((d) => ({ step: d.step, agentId: d.agentId, action: d.action }));
+    const decisionsHash = createHash("sha256").update(JSON.stringify(decisionsPayload)).digest("hex");
+    const returnsPayload = stepReturns.map((r) => r.stepReturn);
+    const returnsHash = createHash("sha256").update(JSON.stringify(returnsPayload)).digest("hex");
+    const pairsSample = stepsForPairs.slice(0, 10).map((step, i) => ({
+      step,
+      r: ret1[i],
+      predictedSign: (pred[i]! >= 0) ? 1 : -1,
+      actualSign: (ret1[i]! >= 0) ? 1 : -1,
+    }));
+
+    // 8) Upsert RunVariantSummary (and BacktestResult for backward compat)
+    const corrVal = corr ?? 0;
+    const dirAccVal = directionalAccuracy ?? 0;
+    const debugPayload = {
+      debugDecisionCounts: decisionCounts,
+      debugPairsSample: pairsSample,
+      debugDecisionsHash: decisionsHash,
+      debugReturnsHash: returnsHash,
+    };
+    await prisma.runVariantSummary.upsert({
+      where: { runVariantId: variantId },
+      create: {
+        runVariantId: variantId,
+        corr: corrVal,
+        directionalAccuracy: dirAccVal,
+        pairsCount,
+        ...debugPayload,
+      },
+      update: {
+        corr: corrVal,
+        directionalAccuracy: dirAccVal,
+        pairsCount,
+        computedAt: new Date(),
+        ...debugPayload,
+      },
+    });
+    await prisma.backtestResult.deleteMany({ where: { runVariantId: variantId } });
     await prisma.backtestResult.create({
       data: {
         runId,
+        runVariantId: variantId,
         assetSymbol: argv.assetSymbol,
         seed,
         steps: argv.steps,
         agents: argv.agents,
+        pairsCount,
         corr,
         directionalAccuracy,
       },
     });
   }
 
-  console.log("backtest-v0 done. seeds=" + argv.seeds.length);
+  console.log("backtest-v0 done. variants=" + variantIds.length);
 }
 
 main().catch((e) => {

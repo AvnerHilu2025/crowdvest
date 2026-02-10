@@ -1205,6 +1205,7 @@ export class ResultsService {
       seed: number;
       steps: number;
       agents: number;
+      pairsCount: number | null;
       corr: number | null;
       directionalAccuracy: number | null;
       createdAt: Date;
@@ -1224,6 +1225,7 @@ export class ResultsService {
           seed: true,
           steps: true,
           agents: true,
+          pairsCount: true,
           corr: true,
           directionalAccuracy: true,
           createdAt: true,
@@ -1239,6 +1241,7 @@ export class ResultsService {
         seed: r.seed,
         steps: r.steps,
         agents: r.agents,
+        pairsCount: r.pairsCount,
         corr: r.corr,
         directionalAccuracy: r.directionalAccuracy,
         createdAt: r.createdAt,

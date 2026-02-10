@@ -44,6 +44,16 @@ export type AgentWallet = $Result.DefaultSelection<Prisma.$AgentWalletPayload>
  */
 export type SimulationRun = $Result.DefaultSelection<Prisma.$SimulationRunPayload>
 /**
+ * Model RunVariant
+ * 
+ */
+export type RunVariant = $Result.DefaultSelection<Prisma.$RunVariantPayload>
+/**
+ * Model RunVariantSummary
+ * 
+ */
+export type RunVariantSummary = $Result.DefaultSelection<Prisma.$RunVariantSummaryPayload>
+/**
  * Model RunAgent
  * 
  */
@@ -402,6 +412,26 @@ export class PrismaClient<
     * ```
     */
   get simulationRun(): Prisma.SimulationRunDelegate<ExtArgs>;
+
+  /**
+   * `prisma.runVariant`: Exposes CRUD operations for the **RunVariant** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more RunVariants
+    * const runVariants = await prisma.runVariant.findMany()
+    * ```
+    */
+  get runVariant(): Prisma.RunVariantDelegate<ExtArgs>;
+
+  /**
+   * `prisma.runVariantSummary`: Exposes CRUD operations for the **RunVariantSummary** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more RunVariantSummaries
+    * const runVariantSummaries = await prisma.runVariantSummary.findMany()
+    * ```
+    */
+  get runVariantSummary(): Prisma.RunVariantSummaryDelegate<ExtArgs>;
 
   /**
    * `prisma.runAgent`: Exposes CRUD operations for the **RunAgent** model.
@@ -1059,6 +1089,8 @@ export namespace Prisma {
     Agent: 'Agent',
     AgentWallet: 'AgentWallet',
     SimulationRun: 'SimulationRun',
+    RunVariant: 'RunVariant',
+    RunVariantSummary: 'RunVariantSummary',
     RunAgent: 'RunAgent',
     RunAgentTrait: 'RunAgentTrait',
     AgentDecision: 'AgentDecision',
@@ -1095,7 +1127,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "archetype" | "traitDefinition" | "archetypeTraitProfile" | "agent" | "agentWallet" | "simulationRun" | "runAgent" | "runAgentTrait" | "agentDecision" | "crowdMetrics" | "assetStepReturn" | "agentReward" | "infoEvent" | "agentInfoState" | "agentState" | "runTimeSeries" | "runDebug" | "agentExperience" | "crowdSnapshot" | "userProfile" | "userWallet" | "userWalletTransaction" | "bet" | "importRun" | "priceSeriesPoint" | "backtestWindowResult" | "backtestResult"
+      modelProps: "archetype" | "traitDefinition" | "archetypeTraitProfile" | "agent" | "agentWallet" | "simulationRun" | "runVariant" | "runVariantSummary" | "runAgent" | "runAgentTrait" | "agentDecision" | "crowdMetrics" | "assetStepReturn" | "agentReward" | "infoEvent" | "agentInfoState" | "agentState" | "runTimeSeries" | "runDebug" | "agentExperience" | "crowdSnapshot" | "userProfile" | "userWallet" | "userWalletTransaction" | "bet" | "importRun" | "priceSeriesPoint" | "backtestWindowResult" | "backtestResult"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1516,6 +1548,146 @@ export namespace Prisma {
           count: {
             args: Prisma.SimulationRunCountArgs<ExtArgs>
             result: $Utils.Optional<SimulationRunCountAggregateOutputType> | number
+          }
+        }
+      }
+      RunVariant: {
+        payload: Prisma.$RunVariantPayload<ExtArgs>
+        fields: Prisma.RunVariantFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.RunVariantFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunVariantPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.RunVariantFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunVariantPayload>
+          }
+          findFirst: {
+            args: Prisma.RunVariantFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunVariantPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.RunVariantFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunVariantPayload>
+          }
+          findMany: {
+            args: Prisma.RunVariantFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunVariantPayload>[]
+          }
+          create: {
+            args: Prisma.RunVariantCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunVariantPayload>
+          }
+          createMany: {
+            args: Prisma.RunVariantCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.RunVariantCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunVariantPayload>[]
+          }
+          delete: {
+            args: Prisma.RunVariantDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunVariantPayload>
+          }
+          update: {
+            args: Prisma.RunVariantUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunVariantPayload>
+          }
+          deleteMany: {
+            args: Prisma.RunVariantDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.RunVariantUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.RunVariantUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunVariantPayload>
+          }
+          aggregate: {
+            args: Prisma.RunVariantAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateRunVariant>
+          }
+          groupBy: {
+            args: Prisma.RunVariantGroupByArgs<ExtArgs>
+            result: $Utils.Optional<RunVariantGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.RunVariantCountArgs<ExtArgs>
+            result: $Utils.Optional<RunVariantCountAggregateOutputType> | number
+          }
+        }
+      }
+      RunVariantSummary: {
+        payload: Prisma.$RunVariantSummaryPayload<ExtArgs>
+        fields: Prisma.RunVariantSummaryFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.RunVariantSummaryFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunVariantSummaryPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.RunVariantSummaryFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunVariantSummaryPayload>
+          }
+          findFirst: {
+            args: Prisma.RunVariantSummaryFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunVariantSummaryPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.RunVariantSummaryFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunVariantSummaryPayload>
+          }
+          findMany: {
+            args: Prisma.RunVariantSummaryFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunVariantSummaryPayload>[]
+          }
+          create: {
+            args: Prisma.RunVariantSummaryCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunVariantSummaryPayload>
+          }
+          createMany: {
+            args: Prisma.RunVariantSummaryCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.RunVariantSummaryCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunVariantSummaryPayload>[]
+          }
+          delete: {
+            args: Prisma.RunVariantSummaryDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunVariantSummaryPayload>
+          }
+          update: {
+            args: Prisma.RunVariantSummaryUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunVariantSummaryPayload>
+          }
+          deleteMany: {
+            args: Prisma.RunVariantSummaryDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.RunVariantSummaryUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.RunVariantSummaryUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunVariantSummaryPayload>
+          }
+          aggregate: {
+            args: Prisma.RunVariantSummaryAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateRunVariantSummary>
+          }
+          groupBy: {
+            args: Prisma.RunVariantSummaryGroupByArgs<ExtArgs>
+            result: $Utils.Optional<RunVariantSummaryGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.RunVariantSummaryCountArgs<ExtArgs>
+            result: $Utils.Optional<RunVariantSummaryCountAggregateOutputType> | number
           }
         }
       }
@@ -3264,6 +3436,7 @@ export namespace Prisma {
     agentStates: number
     assetStepReturns: number
     agentRewards: number
+    runVariants: number
   }
 
   export type SimulationRunCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -3279,6 +3452,7 @@ export namespace Prisma {
     agentStates?: boolean | SimulationRunCountOutputTypeCountAgentStatesArgs
     assetStepReturns?: boolean | SimulationRunCountOutputTypeCountAssetStepReturnsArgs
     agentRewards?: boolean | SimulationRunCountOutputTypeCountAgentRewardsArgs
+    runVariants?: boolean | SimulationRunCountOutputTypeCountRunVariantsArgs
   }
 
   // Custom InputTypes
@@ -3374,6 +3548,98 @@ export namespace Prisma {
    */
   export type SimulationRunCountOutputTypeCountAgentRewardsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: AgentRewardWhereInput
+  }
+
+  /**
+   * SimulationRunCountOutputType without action
+   */
+  export type SimulationRunCountOutputTypeCountRunVariantsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RunVariantWhereInput
+  }
+
+
+  /**
+   * Count Type RunVariantCountOutputType
+   */
+
+  export type RunVariantCountOutputType = {
+    agentDecisions: number
+    agentInfoStates: number
+    agentStates: number
+    agentExperiences: number
+    crowdMetrics: number
+    agentRewards: number
+    backtestResults: number
+  }
+
+  export type RunVariantCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    agentDecisions?: boolean | RunVariantCountOutputTypeCountAgentDecisionsArgs
+    agentInfoStates?: boolean | RunVariantCountOutputTypeCountAgentInfoStatesArgs
+    agentStates?: boolean | RunVariantCountOutputTypeCountAgentStatesArgs
+    agentExperiences?: boolean | RunVariantCountOutputTypeCountAgentExperiencesArgs
+    crowdMetrics?: boolean | RunVariantCountOutputTypeCountCrowdMetricsArgs
+    agentRewards?: boolean | RunVariantCountOutputTypeCountAgentRewardsArgs
+    backtestResults?: boolean | RunVariantCountOutputTypeCountBacktestResultsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * RunVariantCountOutputType without action
+   */
+  export type RunVariantCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunVariantCountOutputType
+     */
+    select?: RunVariantCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * RunVariantCountOutputType without action
+   */
+  export type RunVariantCountOutputTypeCountAgentDecisionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AgentDecisionWhereInput
+  }
+
+  /**
+   * RunVariantCountOutputType without action
+   */
+  export type RunVariantCountOutputTypeCountAgentInfoStatesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AgentInfoStateWhereInput
+  }
+
+  /**
+   * RunVariantCountOutputType without action
+   */
+  export type RunVariantCountOutputTypeCountAgentStatesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AgentStateWhereInput
+  }
+
+  /**
+   * RunVariantCountOutputType without action
+   */
+  export type RunVariantCountOutputTypeCountAgentExperiencesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AgentExperienceWhereInput
+  }
+
+  /**
+   * RunVariantCountOutputType without action
+   */
+  export type RunVariantCountOutputTypeCountCrowdMetricsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CrowdMetricsWhereInput
+  }
+
+  /**
+   * RunVariantCountOutputType without action
+   */
+  export type RunVariantCountOutputTypeCountAgentRewardsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AgentRewardWhereInput
+  }
+
+  /**
+   * RunVariantCountOutputType without action
+   */
+  export type RunVariantCountOutputTypeCountBacktestResultsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BacktestResultWhereInput
   }
 
 
@@ -8643,6 +8909,7 @@ export namespace Prisma {
     agentStates?: boolean | SimulationRun$agentStatesArgs<ExtArgs>
     assetStepReturns?: boolean | SimulationRun$assetStepReturnsArgs<ExtArgs>
     agentRewards?: boolean | SimulationRun$agentRewardsArgs<ExtArgs>
+    runVariants?: boolean | SimulationRun$runVariantsArgs<ExtArgs>
     _count?: boolean | SimulationRunCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["simulationRun"]>
 
@@ -8692,6 +8959,7 @@ export namespace Prisma {
     agentStates?: boolean | SimulationRun$agentStatesArgs<ExtArgs>
     assetStepReturns?: boolean | SimulationRun$assetStepReturnsArgs<ExtArgs>
     agentRewards?: boolean | SimulationRun$agentRewardsArgs<ExtArgs>
+    runVariants?: boolean | SimulationRun$runVariantsArgs<ExtArgs>
     _count?: boolean | SimulationRunCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type SimulationRunIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -8712,6 +8980,7 @@ export namespace Prisma {
       agentStates: Prisma.$AgentStatePayload<ExtArgs>[]
       assetStepReturns: Prisma.$AssetStepReturnPayload<ExtArgs>[]
       agentRewards: Prisma.$AgentRewardPayload<ExtArgs>[]
+      runVariants: Prisma.$RunVariantPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -9104,6 +9373,7 @@ export namespace Prisma {
     agentStates<T extends SimulationRun$agentStatesArgs<ExtArgs> = {}>(args?: Subset<T, SimulationRun$agentStatesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AgentStatePayload<ExtArgs>, T, "findMany"> | Null>
     assetStepReturns<T extends SimulationRun$assetStepReturnsArgs<ExtArgs> = {}>(args?: Subset<T, SimulationRun$assetStepReturnsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AssetStepReturnPayload<ExtArgs>, T, "findMany"> | Null>
     agentRewards<T extends SimulationRun$agentRewardsArgs<ExtArgs> = {}>(args?: Subset<T, SimulationRun$agentRewardsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AgentRewardPayload<ExtArgs>, T, "findMany"> | Null>
+    runVariants<T extends SimulationRun$runVariantsArgs<ExtArgs> = {}>(args?: Subset<T, SimulationRun$runVariantsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RunVariantPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -9715,6 +9985,26 @@ export namespace Prisma {
   }
 
   /**
+   * SimulationRun.runVariants
+   */
+  export type SimulationRun$runVariantsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunVariant
+     */
+    select?: RunVariantSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RunVariantInclude<ExtArgs> | null
+    where?: RunVariantWhereInput
+    orderBy?: RunVariantOrderByWithRelationInput | RunVariantOrderByWithRelationInput[]
+    cursor?: RunVariantWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: RunVariantScalarFieldEnum | RunVariantScalarFieldEnum[]
+  }
+
+  /**
    * SimulationRun without action
    */
   export type SimulationRunDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -9726,6 +10016,2233 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: SimulationRunInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model RunVariant
+   */
+
+  export type AggregateRunVariant = {
+    _count: RunVariantCountAggregateOutputType | null
+    _avg: RunVariantAvgAggregateOutputType | null
+    _sum: RunVariantSumAggregateOutputType | null
+    _min: RunVariantMinAggregateOutputType | null
+    _max: RunVariantMaxAggregateOutputType | null
+  }
+
+  export type RunVariantAvgAggregateOutputType = {
+    seed: number | null
+    agents: number | null
+    steps: number | null
+  }
+
+  export type RunVariantSumAggregateOutputType = {
+    seed: number | null
+    agents: number | null
+    steps: number | null
+  }
+
+  export type RunVariantMinAggregateOutputType = {
+    id: string | null
+    runId: string | null
+    assetSymbol: string | null
+    seed: number | null
+    agents: number | null
+    steps: number | null
+    label: string | null
+    createdAt: Date | null
+  }
+
+  export type RunVariantMaxAggregateOutputType = {
+    id: string | null
+    runId: string | null
+    assetSymbol: string | null
+    seed: number | null
+    agents: number | null
+    steps: number | null
+    label: string | null
+    createdAt: Date | null
+  }
+
+  export type RunVariantCountAggregateOutputType = {
+    id: number
+    runId: number
+    assetSymbol: number
+    seed: number
+    agents: number
+    steps: number
+    label: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type RunVariantAvgAggregateInputType = {
+    seed?: true
+    agents?: true
+    steps?: true
+  }
+
+  export type RunVariantSumAggregateInputType = {
+    seed?: true
+    agents?: true
+    steps?: true
+  }
+
+  export type RunVariantMinAggregateInputType = {
+    id?: true
+    runId?: true
+    assetSymbol?: true
+    seed?: true
+    agents?: true
+    steps?: true
+    label?: true
+    createdAt?: true
+  }
+
+  export type RunVariantMaxAggregateInputType = {
+    id?: true
+    runId?: true
+    assetSymbol?: true
+    seed?: true
+    agents?: true
+    steps?: true
+    label?: true
+    createdAt?: true
+  }
+
+  export type RunVariantCountAggregateInputType = {
+    id?: true
+    runId?: true
+    assetSymbol?: true
+    seed?: true
+    agents?: true
+    steps?: true
+    label?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type RunVariantAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RunVariant to aggregate.
+     */
+    where?: RunVariantWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RunVariants to fetch.
+     */
+    orderBy?: RunVariantOrderByWithRelationInput | RunVariantOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: RunVariantWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RunVariants from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RunVariants.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned RunVariants
+    **/
+    _count?: true | RunVariantCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: RunVariantAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: RunVariantSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: RunVariantMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: RunVariantMaxAggregateInputType
+  }
+
+  export type GetRunVariantAggregateType<T extends RunVariantAggregateArgs> = {
+        [P in keyof T & keyof AggregateRunVariant]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateRunVariant[P]>
+      : GetScalarType<T[P], AggregateRunVariant[P]>
+  }
+
+
+
+
+  export type RunVariantGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RunVariantWhereInput
+    orderBy?: RunVariantOrderByWithAggregationInput | RunVariantOrderByWithAggregationInput[]
+    by: RunVariantScalarFieldEnum[] | RunVariantScalarFieldEnum
+    having?: RunVariantScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: RunVariantCountAggregateInputType | true
+    _avg?: RunVariantAvgAggregateInputType
+    _sum?: RunVariantSumAggregateInputType
+    _min?: RunVariantMinAggregateInputType
+    _max?: RunVariantMaxAggregateInputType
+  }
+
+  export type RunVariantGroupByOutputType = {
+    id: string
+    runId: string
+    assetSymbol: string
+    seed: number
+    agents: number
+    steps: number
+    label: string | null
+    createdAt: Date
+    _count: RunVariantCountAggregateOutputType | null
+    _avg: RunVariantAvgAggregateOutputType | null
+    _sum: RunVariantSumAggregateOutputType | null
+    _min: RunVariantMinAggregateOutputType | null
+    _max: RunVariantMaxAggregateOutputType | null
+  }
+
+  type GetRunVariantGroupByPayload<T extends RunVariantGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<RunVariantGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof RunVariantGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], RunVariantGroupByOutputType[P]>
+            : GetScalarType<T[P], RunVariantGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type RunVariantSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    runId?: boolean
+    assetSymbol?: boolean
+    seed?: boolean
+    agents?: boolean
+    steps?: boolean
+    label?: boolean
+    createdAt?: boolean
+    run?: boolean | SimulationRunDefaultArgs<ExtArgs>
+    agentDecisions?: boolean | RunVariant$agentDecisionsArgs<ExtArgs>
+    agentInfoStates?: boolean | RunVariant$agentInfoStatesArgs<ExtArgs>
+    agentStates?: boolean | RunVariant$agentStatesArgs<ExtArgs>
+    agentExperiences?: boolean | RunVariant$agentExperiencesArgs<ExtArgs>
+    crowdMetrics?: boolean | RunVariant$crowdMetricsArgs<ExtArgs>
+    agentRewards?: boolean | RunVariant$agentRewardsArgs<ExtArgs>
+    backtestResults?: boolean | RunVariant$backtestResultsArgs<ExtArgs>
+    summary?: boolean | RunVariant$summaryArgs<ExtArgs>
+    _count?: boolean | RunVariantCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["runVariant"]>
+
+  export type RunVariantSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    runId?: boolean
+    assetSymbol?: boolean
+    seed?: boolean
+    agents?: boolean
+    steps?: boolean
+    label?: boolean
+    createdAt?: boolean
+    run?: boolean | SimulationRunDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["runVariant"]>
+
+  export type RunVariantSelectScalar = {
+    id?: boolean
+    runId?: boolean
+    assetSymbol?: boolean
+    seed?: boolean
+    agents?: boolean
+    steps?: boolean
+    label?: boolean
+    createdAt?: boolean
+  }
+
+  export type RunVariantInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    run?: boolean | SimulationRunDefaultArgs<ExtArgs>
+    agentDecisions?: boolean | RunVariant$agentDecisionsArgs<ExtArgs>
+    agentInfoStates?: boolean | RunVariant$agentInfoStatesArgs<ExtArgs>
+    agentStates?: boolean | RunVariant$agentStatesArgs<ExtArgs>
+    agentExperiences?: boolean | RunVariant$agentExperiencesArgs<ExtArgs>
+    crowdMetrics?: boolean | RunVariant$crowdMetricsArgs<ExtArgs>
+    agentRewards?: boolean | RunVariant$agentRewardsArgs<ExtArgs>
+    backtestResults?: boolean | RunVariant$backtestResultsArgs<ExtArgs>
+    summary?: boolean | RunVariant$summaryArgs<ExtArgs>
+    _count?: boolean | RunVariantCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type RunVariantIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    run?: boolean | SimulationRunDefaultArgs<ExtArgs>
+  }
+
+  export type $RunVariantPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "RunVariant"
+    objects: {
+      run: Prisma.$SimulationRunPayload<ExtArgs>
+      agentDecisions: Prisma.$AgentDecisionPayload<ExtArgs>[]
+      agentInfoStates: Prisma.$AgentInfoStatePayload<ExtArgs>[]
+      agentStates: Prisma.$AgentStatePayload<ExtArgs>[]
+      agentExperiences: Prisma.$AgentExperiencePayload<ExtArgs>[]
+      crowdMetrics: Prisma.$CrowdMetricsPayload<ExtArgs>[]
+      agentRewards: Prisma.$AgentRewardPayload<ExtArgs>[]
+      backtestResults: Prisma.$BacktestResultPayload<ExtArgs>[]
+      summary: Prisma.$RunVariantSummaryPayload<ExtArgs> | null
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      runId: string
+      assetSymbol: string
+      seed: number
+      agents: number
+      steps: number
+      label: string | null
+      createdAt: Date
+    }, ExtArgs["result"]["runVariant"]>
+    composites: {}
+  }
+
+  type RunVariantGetPayload<S extends boolean | null | undefined | RunVariantDefaultArgs> = $Result.GetResult<Prisma.$RunVariantPayload, S>
+
+  type RunVariantCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<RunVariantFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: RunVariantCountAggregateInputType | true
+    }
+
+  export interface RunVariantDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['RunVariant'], meta: { name: 'RunVariant' } }
+    /**
+     * Find zero or one RunVariant that matches the filter.
+     * @param {RunVariantFindUniqueArgs} args - Arguments to find a RunVariant
+     * @example
+     * // Get one RunVariant
+     * const runVariant = await prisma.runVariant.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends RunVariantFindUniqueArgs>(args: SelectSubset<T, RunVariantFindUniqueArgs<ExtArgs>>): Prisma__RunVariantClient<$Result.GetResult<Prisma.$RunVariantPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one RunVariant that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {RunVariantFindUniqueOrThrowArgs} args - Arguments to find a RunVariant
+     * @example
+     * // Get one RunVariant
+     * const runVariant = await prisma.runVariant.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends RunVariantFindUniqueOrThrowArgs>(args: SelectSubset<T, RunVariantFindUniqueOrThrowArgs<ExtArgs>>): Prisma__RunVariantClient<$Result.GetResult<Prisma.$RunVariantPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first RunVariant that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RunVariantFindFirstArgs} args - Arguments to find a RunVariant
+     * @example
+     * // Get one RunVariant
+     * const runVariant = await prisma.runVariant.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends RunVariantFindFirstArgs>(args?: SelectSubset<T, RunVariantFindFirstArgs<ExtArgs>>): Prisma__RunVariantClient<$Result.GetResult<Prisma.$RunVariantPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first RunVariant that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RunVariantFindFirstOrThrowArgs} args - Arguments to find a RunVariant
+     * @example
+     * // Get one RunVariant
+     * const runVariant = await prisma.runVariant.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends RunVariantFindFirstOrThrowArgs>(args?: SelectSubset<T, RunVariantFindFirstOrThrowArgs<ExtArgs>>): Prisma__RunVariantClient<$Result.GetResult<Prisma.$RunVariantPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more RunVariants that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RunVariantFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all RunVariants
+     * const runVariants = await prisma.runVariant.findMany()
+     * 
+     * // Get first 10 RunVariants
+     * const runVariants = await prisma.runVariant.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const runVariantWithIdOnly = await prisma.runVariant.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends RunVariantFindManyArgs>(args?: SelectSubset<T, RunVariantFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RunVariantPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a RunVariant.
+     * @param {RunVariantCreateArgs} args - Arguments to create a RunVariant.
+     * @example
+     * // Create one RunVariant
+     * const RunVariant = await prisma.runVariant.create({
+     *   data: {
+     *     // ... data to create a RunVariant
+     *   }
+     * })
+     * 
+     */
+    create<T extends RunVariantCreateArgs>(args: SelectSubset<T, RunVariantCreateArgs<ExtArgs>>): Prisma__RunVariantClient<$Result.GetResult<Prisma.$RunVariantPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many RunVariants.
+     * @param {RunVariantCreateManyArgs} args - Arguments to create many RunVariants.
+     * @example
+     * // Create many RunVariants
+     * const runVariant = await prisma.runVariant.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends RunVariantCreateManyArgs>(args?: SelectSubset<T, RunVariantCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many RunVariants and returns the data saved in the database.
+     * @param {RunVariantCreateManyAndReturnArgs} args - Arguments to create many RunVariants.
+     * @example
+     * // Create many RunVariants
+     * const runVariant = await prisma.runVariant.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many RunVariants and only return the `id`
+     * const runVariantWithIdOnly = await prisma.runVariant.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends RunVariantCreateManyAndReturnArgs>(args?: SelectSubset<T, RunVariantCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RunVariantPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a RunVariant.
+     * @param {RunVariantDeleteArgs} args - Arguments to delete one RunVariant.
+     * @example
+     * // Delete one RunVariant
+     * const RunVariant = await prisma.runVariant.delete({
+     *   where: {
+     *     // ... filter to delete one RunVariant
+     *   }
+     * })
+     * 
+     */
+    delete<T extends RunVariantDeleteArgs>(args: SelectSubset<T, RunVariantDeleteArgs<ExtArgs>>): Prisma__RunVariantClient<$Result.GetResult<Prisma.$RunVariantPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one RunVariant.
+     * @param {RunVariantUpdateArgs} args - Arguments to update one RunVariant.
+     * @example
+     * // Update one RunVariant
+     * const runVariant = await prisma.runVariant.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends RunVariantUpdateArgs>(args: SelectSubset<T, RunVariantUpdateArgs<ExtArgs>>): Prisma__RunVariantClient<$Result.GetResult<Prisma.$RunVariantPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more RunVariants.
+     * @param {RunVariantDeleteManyArgs} args - Arguments to filter RunVariants to delete.
+     * @example
+     * // Delete a few RunVariants
+     * const { count } = await prisma.runVariant.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends RunVariantDeleteManyArgs>(args?: SelectSubset<T, RunVariantDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more RunVariants.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RunVariantUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many RunVariants
+     * const runVariant = await prisma.runVariant.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends RunVariantUpdateManyArgs>(args: SelectSubset<T, RunVariantUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one RunVariant.
+     * @param {RunVariantUpsertArgs} args - Arguments to update or create a RunVariant.
+     * @example
+     * // Update or create a RunVariant
+     * const runVariant = await prisma.runVariant.upsert({
+     *   create: {
+     *     // ... data to create a RunVariant
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the RunVariant we want to update
+     *   }
+     * })
+     */
+    upsert<T extends RunVariantUpsertArgs>(args: SelectSubset<T, RunVariantUpsertArgs<ExtArgs>>): Prisma__RunVariantClient<$Result.GetResult<Prisma.$RunVariantPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of RunVariants.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RunVariantCountArgs} args - Arguments to filter RunVariants to count.
+     * @example
+     * // Count the number of RunVariants
+     * const count = await prisma.runVariant.count({
+     *   where: {
+     *     // ... the filter for the RunVariants we want to count
+     *   }
+     * })
+    **/
+    count<T extends RunVariantCountArgs>(
+      args?: Subset<T, RunVariantCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], RunVariantCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a RunVariant.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RunVariantAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends RunVariantAggregateArgs>(args: Subset<T, RunVariantAggregateArgs>): Prisma.PrismaPromise<GetRunVariantAggregateType<T>>
+
+    /**
+     * Group by RunVariant.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RunVariantGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends RunVariantGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: RunVariantGroupByArgs['orderBy'] }
+        : { orderBy?: RunVariantGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, RunVariantGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetRunVariantGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the RunVariant model
+   */
+  readonly fields: RunVariantFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for RunVariant.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__RunVariantClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    run<T extends SimulationRunDefaultArgs<ExtArgs> = {}>(args?: Subset<T, SimulationRunDefaultArgs<ExtArgs>>): Prisma__SimulationRunClient<$Result.GetResult<Prisma.$SimulationRunPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    agentDecisions<T extends RunVariant$agentDecisionsArgs<ExtArgs> = {}>(args?: Subset<T, RunVariant$agentDecisionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AgentDecisionPayload<ExtArgs>, T, "findMany"> | Null>
+    agentInfoStates<T extends RunVariant$agentInfoStatesArgs<ExtArgs> = {}>(args?: Subset<T, RunVariant$agentInfoStatesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AgentInfoStatePayload<ExtArgs>, T, "findMany"> | Null>
+    agentStates<T extends RunVariant$agentStatesArgs<ExtArgs> = {}>(args?: Subset<T, RunVariant$agentStatesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AgentStatePayload<ExtArgs>, T, "findMany"> | Null>
+    agentExperiences<T extends RunVariant$agentExperiencesArgs<ExtArgs> = {}>(args?: Subset<T, RunVariant$agentExperiencesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AgentExperiencePayload<ExtArgs>, T, "findMany"> | Null>
+    crowdMetrics<T extends RunVariant$crowdMetricsArgs<ExtArgs> = {}>(args?: Subset<T, RunVariant$crowdMetricsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CrowdMetricsPayload<ExtArgs>, T, "findMany"> | Null>
+    agentRewards<T extends RunVariant$agentRewardsArgs<ExtArgs> = {}>(args?: Subset<T, RunVariant$agentRewardsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AgentRewardPayload<ExtArgs>, T, "findMany"> | Null>
+    backtestResults<T extends RunVariant$backtestResultsArgs<ExtArgs> = {}>(args?: Subset<T, RunVariant$backtestResultsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BacktestResultPayload<ExtArgs>, T, "findMany"> | Null>
+    summary<T extends RunVariant$summaryArgs<ExtArgs> = {}>(args?: Subset<T, RunVariant$summaryArgs<ExtArgs>>): Prisma__RunVariantSummaryClient<$Result.GetResult<Prisma.$RunVariantSummaryPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the RunVariant model
+   */ 
+  interface RunVariantFieldRefs {
+    readonly id: FieldRef<"RunVariant", 'String'>
+    readonly runId: FieldRef<"RunVariant", 'String'>
+    readonly assetSymbol: FieldRef<"RunVariant", 'String'>
+    readonly seed: FieldRef<"RunVariant", 'Int'>
+    readonly agents: FieldRef<"RunVariant", 'Int'>
+    readonly steps: FieldRef<"RunVariant", 'Int'>
+    readonly label: FieldRef<"RunVariant", 'String'>
+    readonly createdAt: FieldRef<"RunVariant", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * RunVariant findUnique
+   */
+  export type RunVariantFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunVariant
+     */
+    select?: RunVariantSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RunVariantInclude<ExtArgs> | null
+    /**
+     * Filter, which RunVariant to fetch.
+     */
+    where: RunVariantWhereUniqueInput
+  }
+
+  /**
+   * RunVariant findUniqueOrThrow
+   */
+  export type RunVariantFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunVariant
+     */
+    select?: RunVariantSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RunVariantInclude<ExtArgs> | null
+    /**
+     * Filter, which RunVariant to fetch.
+     */
+    where: RunVariantWhereUniqueInput
+  }
+
+  /**
+   * RunVariant findFirst
+   */
+  export type RunVariantFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunVariant
+     */
+    select?: RunVariantSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RunVariantInclude<ExtArgs> | null
+    /**
+     * Filter, which RunVariant to fetch.
+     */
+    where?: RunVariantWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RunVariants to fetch.
+     */
+    orderBy?: RunVariantOrderByWithRelationInput | RunVariantOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RunVariants.
+     */
+    cursor?: RunVariantWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RunVariants from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RunVariants.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RunVariants.
+     */
+    distinct?: RunVariantScalarFieldEnum | RunVariantScalarFieldEnum[]
+  }
+
+  /**
+   * RunVariant findFirstOrThrow
+   */
+  export type RunVariantFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunVariant
+     */
+    select?: RunVariantSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RunVariantInclude<ExtArgs> | null
+    /**
+     * Filter, which RunVariant to fetch.
+     */
+    where?: RunVariantWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RunVariants to fetch.
+     */
+    orderBy?: RunVariantOrderByWithRelationInput | RunVariantOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RunVariants.
+     */
+    cursor?: RunVariantWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RunVariants from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RunVariants.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RunVariants.
+     */
+    distinct?: RunVariantScalarFieldEnum | RunVariantScalarFieldEnum[]
+  }
+
+  /**
+   * RunVariant findMany
+   */
+  export type RunVariantFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunVariant
+     */
+    select?: RunVariantSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RunVariantInclude<ExtArgs> | null
+    /**
+     * Filter, which RunVariants to fetch.
+     */
+    where?: RunVariantWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RunVariants to fetch.
+     */
+    orderBy?: RunVariantOrderByWithRelationInput | RunVariantOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing RunVariants.
+     */
+    cursor?: RunVariantWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RunVariants from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RunVariants.
+     */
+    skip?: number
+    distinct?: RunVariantScalarFieldEnum | RunVariantScalarFieldEnum[]
+  }
+
+  /**
+   * RunVariant create
+   */
+  export type RunVariantCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunVariant
+     */
+    select?: RunVariantSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RunVariantInclude<ExtArgs> | null
+    /**
+     * The data needed to create a RunVariant.
+     */
+    data: XOR<RunVariantCreateInput, RunVariantUncheckedCreateInput>
+  }
+
+  /**
+   * RunVariant createMany
+   */
+  export type RunVariantCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many RunVariants.
+     */
+    data: RunVariantCreateManyInput | RunVariantCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * RunVariant createManyAndReturn
+   */
+  export type RunVariantCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunVariant
+     */
+    select?: RunVariantSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many RunVariants.
+     */
+    data: RunVariantCreateManyInput | RunVariantCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RunVariantIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * RunVariant update
+   */
+  export type RunVariantUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunVariant
+     */
+    select?: RunVariantSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RunVariantInclude<ExtArgs> | null
+    /**
+     * The data needed to update a RunVariant.
+     */
+    data: XOR<RunVariantUpdateInput, RunVariantUncheckedUpdateInput>
+    /**
+     * Choose, which RunVariant to update.
+     */
+    where: RunVariantWhereUniqueInput
+  }
+
+  /**
+   * RunVariant updateMany
+   */
+  export type RunVariantUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update RunVariants.
+     */
+    data: XOR<RunVariantUpdateManyMutationInput, RunVariantUncheckedUpdateManyInput>
+    /**
+     * Filter which RunVariants to update
+     */
+    where?: RunVariantWhereInput
+  }
+
+  /**
+   * RunVariant upsert
+   */
+  export type RunVariantUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunVariant
+     */
+    select?: RunVariantSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RunVariantInclude<ExtArgs> | null
+    /**
+     * The filter to search for the RunVariant to update in case it exists.
+     */
+    where: RunVariantWhereUniqueInput
+    /**
+     * In case the RunVariant found by the `where` argument doesn't exist, create a new RunVariant with this data.
+     */
+    create: XOR<RunVariantCreateInput, RunVariantUncheckedCreateInput>
+    /**
+     * In case the RunVariant was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<RunVariantUpdateInput, RunVariantUncheckedUpdateInput>
+  }
+
+  /**
+   * RunVariant delete
+   */
+  export type RunVariantDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunVariant
+     */
+    select?: RunVariantSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RunVariantInclude<ExtArgs> | null
+    /**
+     * Filter which RunVariant to delete.
+     */
+    where: RunVariantWhereUniqueInput
+  }
+
+  /**
+   * RunVariant deleteMany
+   */
+  export type RunVariantDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RunVariants to delete
+     */
+    where?: RunVariantWhereInput
+  }
+
+  /**
+   * RunVariant.agentDecisions
+   */
+  export type RunVariant$agentDecisionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentDecision
+     */
+    select?: AgentDecisionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgentDecisionInclude<ExtArgs> | null
+    where?: AgentDecisionWhereInput
+    orderBy?: AgentDecisionOrderByWithRelationInput | AgentDecisionOrderByWithRelationInput[]
+    cursor?: AgentDecisionWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: AgentDecisionScalarFieldEnum | AgentDecisionScalarFieldEnum[]
+  }
+
+  /**
+   * RunVariant.agentInfoStates
+   */
+  export type RunVariant$agentInfoStatesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentInfoState
+     */
+    select?: AgentInfoStateSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgentInfoStateInclude<ExtArgs> | null
+    where?: AgentInfoStateWhereInput
+    orderBy?: AgentInfoStateOrderByWithRelationInput | AgentInfoStateOrderByWithRelationInput[]
+    cursor?: AgentInfoStateWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: AgentInfoStateScalarFieldEnum | AgentInfoStateScalarFieldEnum[]
+  }
+
+  /**
+   * RunVariant.agentStates
+   */
+  export type RunVariant$agentStatesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentState
+     */
+    select?: AgentStateSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgentStateInclude<ExtArgs> | null
+    where?: AgentStateWhereInput
+    orderBy?: AgentStateOrderByWithRelationInput | AgentStateOrderByWithRelationInput[]
+    cursor?: AgentStateWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: AgentStateScalarFieldEnum | AgentStateScalarFieldEnum[]
+  }
+
+  /**
+   * RunVariant.agentExperiences
+   */
+  export type RunVariant$agentExperiencesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentExperience
+     */
+    select?: AgentExperienceSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgentExperienceInclude<ExtArgs> | null
+    where?: AgentExperienceWhereInput
+    orderBy?: AgentExperienceOrderByWithRelationInput | AgentExperienceOrderByWithRelationInput[]
+    cursor?: AgentExperienceWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: AgentExperienceScalarFieldEnum | AgentExperienceScalarFieldEnum[]
+  }
+
+  /**
+   * RunVariant.crowdMetrics
+   */
+  export type RunVariant$crowdMetricsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CrowdMetrics
+     */
+    select?: CrowdMetricsSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CrowdMetricsInclude<ExtArgs> | null
+    where?: CrowdMetricsWhereInput
+    orderBy?: CrowdMetricsOrderByWithRelationInput | CrowdMetricsOrderByWithRelationInput[]
+    cursor?: CrowdMetricsWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: CrowdMetricsScalarFieldEnum | CrowdMetricsScalarFieldEnum[]
+  }
+
+  /**
+   * RunVariant.agentRewards
+   */
+  export type RunVariant$agentRewardsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentReward
+     */
+    select?: AgentRewardSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgentRewardInclude<ExtArgs> | null
+    where?: AgentRewardWhereInput
+    orderBy?: AgentRewardOrderByWithRelationInput | AgentRewardOrderByWithRelationInput[]
+    cursor?: AgentRewardWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: AgentRewardScalarFieldEnum | AgentRewardScalarFieldEnum[]
+  }
+
+  /**
+   * RunVariant.backtestResults
+   */
+  export type RunVariant$backtestResultsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BacktestResult
+     */
+    select?: BacktestResultSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BacktestResultInclude<ExtArgs> | null
+    where?: BacktestResultWhereInput
+    orderBy?: BacktestResultOrderByWithRelationInput | BacktestResultOrderByWithRelationInput[]
+    cursor?: BacktestResultWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: BacktestResultScalarFieldEnum | BacktestResultScalarFieldEnum[]
+  }
+
+  /**
+   * RunVariant.summary
+   */
+  export type RunVariant$summaryArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunVariantSummary
+     */
+    select?: RunVariantSummarySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RunVariantSummaryInclude<ExtArgs> | null
+    where?: RunVariantSummaryWhereInput
+  }
+
+  /**
+   * RunVariant without action
+   */
+  export type RunVariantDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunVariant
+     */
+    select?: RunVariantSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RunVariantInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model RunVariantSummary
+   */
+
+  export type AggregateRunVariantSummary = {
+    _count: RunVariantSummaryCountAggregateOutputType | null
+    _avg: RunVariantSummaryAvgAggregateOutputType | null
+    _sum: RunVariantSummarySumAggregateOutputType | null
+    _min: RunVariantSummaryMinAggregateOutputType | null
+    _max: RunVariantSummaryMaxAggregateOutputType | null
+  }
+
+  export type RunVariantSummaryAvgAggregateOutputType = {
+    corr: number | null
+    directionalAccuracy: number | null
+    pairsCount: number | null
+  }
+
+  export type RunVariantSummarySumAggregateOutputType = {
+    corr: number | null
+    directionalAccuracy: number | null
+    pairsCount: number | null
+  }
+
+  export type RunVariantSummaryMinAggregateOutputType = {
+    id: string | null
+    runVariantId: string | null
+    corr: number | null
+    directionalAccuracy: number | null
+    pairsCount: number | null
+    computedAt: Date | null
+    debugDecisionsHash: string | null
+    debugReturnsHash: string | null
+  }
+
+  export type RunVariantSummaryMaxAggregateOutputType = {
+    id: string | null
+    runVariantId: string | null
+    corr: number | null
+    directionalAccuracy: number | null
+    pairsCount: number | null
+    computedAt: Date | null
+    debugDecisionsHash: string | null
+    debugReturnsHash: string | null
+  }
+
+  export type RunVariantSummaryCountAggregateOutputType = {
+    id: number
+    runVariantId: number
+    corr: number
+    directionalAccuracy: number
+    pairsCount: number
+    computedAt: number
+    debugDecisionCounts: number
+    debugPairsSample: number
+    debugDecisionsHash: number
+    debugReturnsHash: number
+    _all: number
+  }
+
+
+  export type RunVariantSummaryAvgAggregateInputType = {
+    corr?: true
+    directionalAccuracy?: true
+    pairsCount?: true
+  }
+
+  export type RunVariantSummarySumAggregateInputType = {
+    corr?: true
+    directionalAccuracy?: true
+    pairsCount?: true
+  }
+
+  export type RunVariantSummaryMinAggregateInputType = {
+    id?: true
+    runVariantId?: true
+    corr?: true
+    directionalAccuracy?: true
+    pairsCount?: true
+    computedAt?: true
+    debugDecisionsHash?: true
+    debugReturnsHash?: true
+  }
+
+  export type RunVariantSummaryMaxAggregateInputType = {
+    id?: true
+    runVariantId?: true
+    corr?: true
+    directionalAccuracy?: true
+    pairsCount?: true
+    computedAt?: true
+    debugDecisionsHash?: true
+    debugReturnsHash?: true
+  }
+
+  export type RunVariantSummaryCountAggregateInputType = {
+    id?: true
+    runVariantId?: true
+    corr?: true
+    directionalAccuracy?: true
+    pairsCount?: true
+    computedAt?: true
+    debugDecisionCounts?: true
+    debugPairsSample?: true
+    debugDecisionsHash?: true
+    debugReturnsHash?: true
+    _all?: true
+  }
+
+  export type RunVariantSummaryAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RunVariantSummary to aggregate.
+     */
+    where?: RunVariantSummaryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RunVariantSummaries to fetch.
+     */
+    orderBy?: RunVariantSummaryOrderByWithRelationInput | RunVariantSummaryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: RunVariantSummaryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RunVariantSummaries from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RunVariantSummaries.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned RunVariantSummaries
+    **/
+    _count?: true | RunVariantSummaryCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: RunVariantSummaryAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: RunVariantSummarySumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: RunVariantSummaryMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: RunVariantSummaryMaxAggregateInputType
+  }
+
+  export type GetRunVariantSummaryAggregateType<T extends RunVariantSummaryAggregateArgs> = {
+        [P in keyof T & keyof AggregateRunVariantSummary]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateRunVariantSummary[P]>
+      : GetScalarType<T[P], AggregateRunVariantSummary[P]>
+  }
+
+
+
+
+  export type RunVariantSummaryGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RunVariantSummaryWhereInput
+    orderBy?: RunVariantSummaryOrderByWithAggregationInput | RunVariantSummaryOrderByWithAggregationInput[]
+    by: RunVariantSummaryScalarFieldEnum[] | RunVariantSummaryScalarFieldEnum
+    having?: RunVariantSummaryScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: RunVariantSummaryCountAggregateInputType | true
+    _avg?: RunVariantSummaryAvgAggregateInputType
+    _sum?: RunVariantSummarySumAggregateInputType
+    _min?: RunVariantSummaryMinAggregateInputType
+    _max?: RunVariantSummaryMaxAggregateInputType
+  }
+
+  export type RunVariantSummaryGroupByOutputType = {
+    id: string
+    runVariantId: string
+    corr: number
+    directionalAccuracy: number
+    pairsCount: number
+    computedAt: Date
+    debugDecisionCounts: JsonValue | null
+    debugPairsSample: JsonValue | null
+    debugDecisionsHash: string | null
+    debugReturnsHash: string | null
+    _count: RunVariantSummaryCountAggregateOutputType | null
+    _avg: RunVariantSummaryAvgAggregateOutputType | null
+    _sum: RunVariantSummarySumAggregateOutputType | null
+    _min: RunVariantSummaryMinAggregateOutputType | null
+    _max: RunVariantSummaryMaxAggregateOutputType | null
+  }
+
+  type GetRunVariantSummaryGroupByPayload<T extends RunVariantSummaryGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<RunVariantSummaryGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof RunVariantSummaryGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], RunVariantSummaryGroupByOutputType[P]>
+            : GetScalarType<T[P], RunVariantSummaryGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type RunVariantSummarySelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    runVariantId?: boolean
+    corr?: boolean
+    directionalAccuracy?: boolean
+    pairsCount?: boolean
+    computedAt?: boolean
+    debugDecisionCounts?: boolean
+    debugPairsSample?: boolean
+    debugDecisionsHash?: boolean
+    debugReturnsHash?: boolean
+    runVariant?: boolean | RunVariantDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["runVariantSummary"]>
+
+  export type RunVariantSummarySelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    runVariantId?: boolean
+    corr?: boolean
+    directionalAccuracy?: boolean
+    pairsCount?: boolean
+    computedAt?: boolean
+    debugDecisionCounts?: boolean
+    debugPairsSample?: boolean
+    debugDecisionsHash?: boolean
+    debugReturnsHash?: boolean
+    runVariant?: boolean | RunVariantDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["runVariantSummary"]>
+
+  export type RunVariantSummarySelectScalar = {
+    id?: boolean
+    runVariantId?: boolean
+    corr?: boolean
+    directionalAccuracy?: boolean
+    pairsCount?: boolean
+    computedAt?: boolean
+    debugDecisionCounts?: boolean
+    debugPairsSample?: boolean
+    debugDecisionsHash?: boolean
+    debugReturnsHash?: boolean
+  }
+
+  export type RunVariantSummaryInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    runVariant?: boolean | RunVariantDefaultArgs<ExtArgs>
+  }
+  export type RunVariantSummaryIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    runVariant?: boolean | RunVariantDefaultArgs<ExtArgs>
+  }
+
+  export type $RunVariantSummaryPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "RunVariantSummary"
+    objects: {
+      runVariant: Prisma.$RunVariantPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      runVariantId: string
+      corr: number
+      directionalAccuracy: number
+      pairsCount: number
+      computedAt: Date
+      debugDecisionCounts: Prisma.JsonValue | null
+      debugPairsSample: Prisma.JsonValue | null
+      debugDecisionsHash: string | null
+      debugReturnsHash: string | null
+    }, ExtArgs["result"]["runVariantSummary"]>
+    composites: {}
+  }
+
+  type RunVariantSummaryGetPayload<S extends boolean | null | undefined | RunVariantSummaryDefaultArgs> = $Result.GetResult<Prisma.$RunVariantSummaryPayload, S>
+
+  type RunVariantSummaryCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<RunVariantSummaryFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: RunVariantSummaryCountAggregateInputType | true
+    }
+
+  export interface RunVariantSummaryDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['RunVariantSummary'], meta: { name: 'RunVariantSummary' } }
+    /**
+     * Find zero or one RunVariantSummary that matches the filter.
+     * @param {RunVariantSummaryFindUniqueArgs} args - Arguments to find a RunVariantSummary
+     * @example
+     * // Get one RunVariantSummary
+     * const runVariantSummary = await prisma.runVariantSummary.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends RunVariantSummaryFindUniqueArgs>(args: SelectSubset<T, RunVariantSummaryFindUniqueArgs<ExtArgs>>): Prisma__RunVariantSummaryClient<$Result.GetResult<Prisma.$RunVariantSummaryPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one RunVariantSummary that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {RunVariantSummaryFindUniqueOrThrowArgs} args - Arguments to find a RunVariantSummary
+     * @example
+     * // Get one RunVariantSummary
+     * const runVariantSummary = await prisma.runVariantSummary.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends RunVariantSummaryFindUniqueOrThrowArgs>(args: SelectSubset<T, RunVariantSummaryFindUniqueOrThrowArgs<ExtArgs>>): Prisma__RunVariantSummaryClient<$Result.GetResult<Prisma.$RunVariantSummaryPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first RunVariantSummary that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RunVariantSummaryFindFirstArgs} args - Arguments to find a RunVariantSummary
+     * @example
+     * // Get one RunVariantSummary
+     * const runVariantSummary = await prisma.runVariantSummary.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends RunVariantSummaryFindFirstArgs>(args?: SelectSubset<T, RunVariantSummaryFindFirstArgs<ExtArgs>>): Prisma__RunVariantSummaryClient<$Result.GetResult<Prisma.$RunVariantSummaryPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first RunVariantSummary that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RunVariantSummaryFindFirstOrThrowArgs} args - Arguments to find a RunVariantSummary
+     * @example
+     * // Get one RunVariantSummary
+     * const runVariantSummary = await prisma.runVariantSummary.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends RunVariantSummaryFindFirstOrThrowArgs>(args?: SelectSubset<T, RunVariantSummaryFindFirstOrThrowArgs<ExtArgs>>): Prisma__RunVariantSummaryClient<$Result.GetResult<Prisma.$RunVariantSummaryPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more RunVariantSummaries that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RunVariantSummaryFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all RunVariantSummaries
+     * const runVariantSummaries = await prisma.runVariantSummary.findMany()
+     * 
+     * // Get first 10 RunVariantSummaries
+     * const runVariantSummaries = await prisma.runVariantSummary.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const runVariantSummaryWithIdOnly = await prisma.runVariantSummary.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends RunVariantSummaryFindManyArgs>(args?: SelectSubset<T, RunVariantSummaryFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RunVariantSummaryPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a RunVariantSummary.
+     * @param {RunVariantSummaryCreateArgs} args - Arguments to create a RunVariantSummary.
+     * @example
+     * // Create one RunVariantSummary
+     * const RunVariantSummary = await prisma.runVariantSummary.create({
+     *   data: {
+     *     // ... data to create a RunVariantSummary
+     *   }
+     * })
+     * 
+     */
+    create<T extends RunVariantSummaryCreateArgs>(args: SelectSubset<T, RunVariantSummaryCreateArgs<ExtArgs>>): Prisma__RunVariantSummaryClient<$Result.GetResult<Prisma.$RunVariantSummaryPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many RunVariantSummaries.
+     * @param {RunVariantSummaryCreateManyArgs} args - Arguments to create many RunVariantSummaries.
+     * @example
+     * // Create many RunVariantSummaries
+     * const runVariantSummary = await prisma.runVariantSummary.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends RunVariantSummaryCreateManyArgs>(args?: SelectSubset<T, RunVariantSummaryCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many RunVariantSummaries and returns the data saved in the database.
+     * @param {RunVariantSummaryCreateManyAndReturnArgs} args - Arguments to create many RunVariantSummaries.
+     * @example
+     * // Create many RunVariantSummaries
+     * const runVariantSummary = await prisma.runVariantSummary.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many RunVariantSummaries and only return the `id`
+     * const runVariantSummaryWithIdOnly = await prisma.runVariantSummary.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends RunVariantSummaryCreateManyAndReturnArgs>(args?: SelectSubset<T, RunVariantSummaryCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RunVariantSummaryPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a RunVariantSummary.
+     * @param {RunVariantSummaryDeleteArgs} args - Arguments to delete one RunVariantSummary.
+     * @example
+     * // Delete one RunVariantSummary
+     * const RunVariantSummary = await prisma.runVariantSummary.delete({
+     *   where: {
+     *     // ... filter to delete one RunVariantSummary
+     *   }
+     * })
+     * 
+     */
+    delete<T extends RunVariantSummaryDeleteArgs>(args: SelectSubset<T, RunVariantSummaryDeleteArgs<ExtArgs>>): Prisma__RunVariantSummaryClient<$Result.GetResult<Prisma.$RunVariantSummaryPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one RunVariantSummary.
+     * @param {RunVariantSummaryUpdateArgs} args - Arguments to update one RunVariantSummary.
+     * @example
+     * // Update one RunVariantSummary
+     * const runVariantSummary = await prisma.runVariantSummary.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends RunVariantSummaryUpdateArgs>(args: SelectSubset<T, RunVariantSummaryUpdateArgs<ExtArgs>>): Prisma__RunVariantSummaryClient<$Result.GetResult<Prisma.$RunVariantSummaryPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more RunVariantSummaries.
+     * @param {RunVariantSummaryDeleteManyArgs} args - Arguments to filter RunVariantSummaries to delete.
+     * @example
+     * // Delete a few RunVariantSummaries
+     * const { count } = await prisma.runVariantSummary.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends RunVariantSummaryDeleteManyArgs>(args?: SelectSubset<T, RunVariantSummaryDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more RunVariantSummaries.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RunVariantSummaryUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many RunVariantSummaries
+     * const runVariantSummary = await prisma.runVariantSummary.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends RunVariantSummaryUpdateManyArgs>(args: SelectSubset<T, RunVariantSummaryUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one RunVariantSummary.
+     * @param {RunVariantSummaryUpsertArgs} args - Arguments to update or create a RunVariantSummary.
+     * @example
+     * // Update or create a RunVariantSummary
+     * const runVariantSummary = await prisma.runVariantSummary.upsert({
+     *   create: {
+     *     // ... data to create a RunVariantSummary
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the RunVariantSummary we want to update
+     *   }
+     * })
+     */
+    upsert<T extends RunVariantSummaryUpsertArgs>(args: SelectSubset<T, RunVariantSummaryUpsertArgs<ExtArgs>>): Prisma__RunVariantSummaryClient<$Result.GetResult<Prisma.$RunVariantSummaryPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of RunVariantSummaries.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RunVariantSummaryCountArgs} args - Arguments to filter RunVariantSummaries to count.
+     * @example
+     * // Count the number of RunVariantSummaries
+     * const count = await prisma.runVariantSummary.count({
+     *   where: {
+     *     // ... the filter for the RunVariantSummaries we want to count
+     *   }
+     * })
+    **/
+    count<T extends RunVariantSummaryCountArgs>(
+      args?: Subset<T, RunVariantSummaryCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], RunVariantSummaryCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a RunVariantSummary.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RunVariantSummaryAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends RunVariantSummaryAggregateArgs>(args: Subset<T, RunVariantSummaryAggregateArgs>): Prisma.PrismaPromise<GetRunVariantSummaryAggregateType<T>>
+
+    /**
+     * Group by RunVariantSummary.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RunVariantSummaryGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends RunVariantSummaryGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: RunVariantSummaryGroupByArgs['orderBy'] }
+        : { orderBy?: RunVariantSummaryGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, RunVariantSummaryGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetRunVariantSummaryGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the RunVariantSummary model
+   */
+  readonly fields: RunVariantSummaryFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for RunVariantSummary.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__RunVariantSummaryClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    runVariant<T extends RunVariantDefaultArgs<ExtArgs> = {}>(args?: Subset<T, RunVariantDefaultArgs<ExtArgs>>): Prisma__RunVariantClient<$Result.GetResult<Prisma.$RunVariantPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the RunVariantSummary model
+   */ 
+  interface RunVariantSummaryFieldRefs {
+    readonly id: FieldRef<"RunVariantSummary", 'String'>
+    readonly runVariantId: FieldRef<"RunVariantSummary", 'String'>
+    readonly corr: FieldRef<"RunVariantSummary", 'Float'>
+    readonly directionalAccuracy: FieldRef<"RunVariantSummary", 'Float'>
+    readonly pairsCount: FieldRef<"RunVariantSummary", 'Int'>
+    readonly computedAt: FieldRef<"RunVariantSummary", 'DateTime'>
+    readonly debugDecisionCounts: FieldRef<"RunVariantSummary", 'Json'>
+    readonly debugPairsSample: FieldRef<"RunVariantSummary", 'Json'>
+    readonly debugDecisionsHash: FieldRef<"RunVariantSummary", 'String'>
+    readonly debugReturnsHash: FieldRef<"RunVariantSummary", 'String'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * RunVariantSummary findUnique
+   */
+  export type RunVariantSummaryFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunVariantSummary
+     */
+    select?: RunVariantSummarySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RunVariantSummaryInclude<ExtArgs> | null
+    /**
+     * Filter, which RunVariantSummary to fetch.
+     */
+    where: RunVariantSummaryWhereUniqueInput
+  }
+
+  /**
+   * RunVariantSummary findUniqueOrThrow
+   */
+  export type RunVariantSummaryFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunVariantSummary
+     */
+    select?: RunVariantSummarySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RunVariantSummaryInclude<ExtArgs> | null
+    /**
+     * Filter, which RunVariantSummary to fetch.
+     */
+    where: RunVariantSummaryWhereUniqueInput
+  }
+
+  /**
+   * RunVariantSummary findFirst
+   */
+  export type RunVariantSummaryFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunVariantSummary
+     */
+    select?: RunVariantSummarySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RunVariantSummaryInclude<ExtArgs> | null
+    /**
+     * Filter, which RunVariantSummary to fetch.
+     */
+    where?: RunVariantSummaryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RunVariantSummaries to fetch.
+     */
+    orderBy?: RunVariantSummaryOrderByWithRelationInput | RunVariantSummaryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RunVariantSummaries.
+     */
+    cursor?: RunVariantSummaryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RunVariantSummaries from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RunVariantSummaries.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RunVariantSummaries.
+     */
+    distinct?: RunVariantSummaryScalarFieldEnum | RunVariantSummaryScalarFieldEnum[]
+  }
+
+  /**
+   * RunVariantSummary findFirstOrThrow
+   */
+  export type RunVariantSummaryFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunVariantSummary
+     */
+    select?: RunVariantSummarySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RunVariantSummaryInclude<ExtArgs> | null
+    /**
+     * Filter, which RunVariantSummary to fetch.
+     */
+    where?: RunVariantSummaryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RunVariantSummaries to fetch.
+     */
+    orderBy?: RunVariantSummaryOrderByWithRelationInput | RunVariantSummaryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RunVariantSummaries.
+     */
+    cursor?: RunVariantSummaryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RunVariantSummaries from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RunVariantSummaries.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RunVariantSummaries.
+     */
+    distinct?: RunVariantSummaryScalarFieldEnum | RunVariantSummaryScalarFieldEnum[]
+  }
+
+  /**
+   * RunVariantSummary findMany
+   */
+  export type RunVariantSummaryFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunVariantSummary
+     */
+    select?: RunVariantSummarySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RunVariantSummaryInclude<ExtArgs> | null
+    /**
+     * Filter, which RunVariantSummaries to fetch.
+     */
+    where?: RunVariantSummaryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RunVariantSummaries to fetch.
+     */
+    orderBy?: RunVariantSummaryOrderByWithRelationInput | RunVariantSummaryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing RunVariantSummaries.
+     */
+    cursor?: RunVariantSummaryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RunVariantSummaries from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RunVariantSummaries.
+     */
+    skip?: number
+    distinct?: RunVariantSummaryScalarFieldEnum | RunVariantSummaryScalarFieldEnum[]
+  }
+
+  /**
+   * RunVariantSummary create
+   */
+  export type RunVariantSummaryCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunVariantSummary
+     */
+    select?: RunVariantSummarySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RunVariantSummaryInclude<ExtArgs> | null
+    /**
+     * The data needed to create a RunVariantSummary.
+     */
+    data: XOR<RunVariantSummaryCreateInput, RunVariantSummaryUncheckedCreateInput>
+  }
+
+  /**
+   * RunVariantSummary createMany
+   */
+  export type RunVariantSummaryCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many RunVariantSummaries.
+     */
+    data: RunVariantSummaryCreateManyInput | RunVariantSummaryCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * RunVariantSummary createManyAndReturn
+   */
+  export type RunVariantSummaryCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunVariantSummary
+     */
+    select?: RunVariantSummarySelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many RunVariantSummaries.
+     */
+    data: RunVariantSummaryCreateManyInput | RunVariantSummaryCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RunVariantSummaryIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * RunVariantSummary update
+   */
+  export type RunVariantSummaryUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunVariantSummary
+     */
+    select?: RunVariantSummarySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RunVariantSummaryInclude<ExtArgs> | null
+    /**
+     * The data needed to update a RunVariantSummary.
+     */
+    data: XOR<RunVariantSummaryUpdateInput, RunVariantSummaryUncheckedUpdateInput>
+    /**
+     * Choose, which RunVariantSummary to update.
+     */
+    where: RunVariantSummaryWhereUniqueInput
+  }
+
+  /**
+   * RunVariantSummary updateMany
+   */
+  export type RunVariantSummaryUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update RunVariantSummaries.
+     */
+    data: XOR<RunVariantSummaryUpdateManyMutationInput, RunVariantSummaryUncheckedUpdateManyInput>
+    /**
+     * Filter which RunVariantSummaries to update
+     */
+    where?: RunVariantSummaryWhereInput
+  }
+
+  /**
+   * RunVariantSummary upsert
+   */
+  export type RunVariantSummaryUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunVariantSummary
+     */
+    select?: RunVariantSummarySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RunVariantSummaryInclude<ExtArgs> | null
+    /**
+     * The filter to search for the RunVariantSummary to update in case it exists.
+     */
+    where: RunVariantSummaryWhereUniqueInput
+    /**
+     * In case the RunVariantSummary found by the `where` argument doesn't exist, create a new RunVariantSummary with this data.
+     */
+    create: XOR<RunVariantSummaryCreateInput, RunVariantSummaryUncheckedCreateInput>
+    /**
+     * In case the RunVariantSummary was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<RunVariantSummaryUpdateInput, RunVariantSummaryUncheckedUpdateInput>
+  }
+
+  /**
+   * RunVariantSummary delete
+   */
+  export type RunVariantSummaryDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunVariantSummary
+     */
+    select?: RunVariantSummarySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RunVariantSummaryInclude<ExtArgs> | null
+    /**
+     * Filter which RunVariantSummary to delete.
+     */
+    where: RunVariantSummaryWhereUniqueInput
+  }
+
+  /**
+   * RunVariantSummary deleteMany
+   */
+  export type RunVariantSummaryDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RunVariantSummaries to delete
+     */
+    where?: RunVariantSummaryWhereInput
+  }
+
+  /**
+   * RunVariantSummary without action
+   */
+  export type RunVariantSummaryDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunVariantSummary
+     */
+    select?: RunVariantSummarySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RunVariantSummaryInclude<ExtArgs> | null
   }
 
 
@@ -11840,6 +14357,7 @@ export namespace Prisma {
   export type AgentDecisionMinAggregateOutputType = {
     id: string | null
     runId: string | null
+    runVariantId: string | null
     step: number | null
     agentId: string | null
     assetSymbol: string | null
@@ -11852,6 +14370,7 @@ export namespace Prisma {
   export type AgentDecisionMaxAggregateOutputType = {
     id: string | null
     runId: string | null
+    runVariantId: string | null
     step: number | null
     agentId: string | null
     assetSymbol: string | null
@@ -11864,6 +14383,7 @@ export namespace Prisma {
   export type AgentDecisionCountAggregateOutputType = {
     id: number
     runId: number
+    runVariantId: number
     step: number
     agentId: number
     assetSymbol: number
@@ -11888,6 +14408,7 @@ export namespace Prisma {
   export type AgentDecisionMinAggregateInputType = {
     id?: true
     runId?: true
+    runVariantId?: true
     step?: true
     agentId?: true
     assetSymbol?: true
@@ -11900,6 +14421,7 @@ export namespace Prisma {
   export type AgentDecisionMaxAggregateInputType = {
     id?: true
     runId?: true
+    runVariantId?: true
     step?: true
     agentId?: true
     assetSymbol?: true
@@ -11912,6 +14434,7 @@ export namespace Prisma {
   export type AgentDecisionCountAggregateInputType = {
     id?: true
     runId?: true
+    runVariantId?: true
     step?: true
     agentId?: true
     assetSymbol?: true
@@ -12011,6 +14534,7 @@ export namespace Prisma {
   export type AgentDecisionGroupByOutputType = {
     id: string
     runId: string
+    runVariantId: string | null
     step: number
     agentId: string
     assetSymbol: string
@@ -12042,6 +14566,7 @@ export namespace Prisma {
   export type AgentDecisionSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     runId?: boolean
+    runVariantId?: boolean
     step?: boolean
     agentId?: boolean
     assetSymbol?: boolean
@@ -12050,12 +14575,14 @@ export namespace Prisma {
     rationale?: boolean
     createdAt?: boolean
     run?: boolean | SimulationRunDefaultArgs<ExtArgs>
+    runVariant?: boolean | AgentDecision$runVariantArgs<ExtArgs>
     agent?: boolean | RunAgentDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["agentDecision"]>
 
   export type AgentDecisionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     runId?: boolean
+    runVariantId?: boolean
     step?: boolean
     agentId?: boolean
     assetSymbol?: boolean
@@ -12064,12 +14591,14 @@ export namespace Prisma {
     rationale?: boolean
     createdAt?: boolean
     run?: boolean | SimulationRunDefaultArgs<ExtArgs>
+    runVariant?: boolean | AgentDecision$runVariantArgs<ExtArgs>
     agent?: boolean | RunAgentDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["agentDecision"]>
 
   export type AgentDecisionSelectScalar = {
     id?: boolean
     runId?: boolean
+    runVariantId?: boolean
     step?: boolean
     agentId?: boolean
     assetSymbol?: boolean
@@ -12081,10 +14610,12 @@ export namespace Prisma {
 
   export type AgentDecisionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     run?: boolean | SimulationRunDefaultArgs<ExtArgs>
+    runVariant?: boolean | AgentDecision$runVariantArgs<ExtArgs>
     agent?: boolean | RunAgentDefaultArgs<ExtArgs>
   }
   export type AgentDecisionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     run?: boolean | SimulationRunDefaultArgs<ExtArgs>
+    runVariant?: boolean | AgentDecision$runVariantArgs<ExtArgs>
     agent?: boolean | RunAgentDefaultArgs<ExtArgs>
   }
 
@@ -12092,11 +14623,13 @@ export namespace Prisma {
     name: "AgentDecision"
     objects: {
       run: Prisma.$SimulationRunPayload<ExtArgs>
+      runVariant: Prisma.$RunVariantPayload<ExtArgs> | null
       agent: Prisma.$RunAgentPayload<ExtArgs>
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       runId: string
+      runVariantId: string | null
       step: number
       agentId: string
       assetSymbol: string
@@ -12469,6 +15002,7 @@ export namespace Prisma {
   export interface Prisma__AgentDecisionClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     run<T extends SimulationRunDefaultArgs<ExtArgs> = {}>(args?: Subset<T, SimulationRunDefaultArgs<ExtArgs>>): Prisma__SimulationRunClient<$Result.GetResult<Prisma.$SimulationRunPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    runVariant<T extends AgentDecision$runVariantArgs<ExtArgs> = {}>(args?: Subset<T, AgentDecision$runVariantArgs<ExtArgs>>): Prisma__RunVariantClient<$Result.GetResult<Prisma.$RunVariantPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     agent<T extends RunAgentDefaultArgs<ExtArgs> = {}>(args?: Subset<T, RunAgentDefaultArgs<ExtArgs>>): Prisma__RunAgentClient<$Result.GetResult<Prisma.$RunAgentPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -12501,6 +15035,7 @@ export namespace Prisma {
   interface AgentDecisionFieldRefs {
     readonly id: FieldRef<"AgentDecision", 'String'>
     readonly runId: FieldRef<"AgentDecision", 'String'>
+    readonly runVariantId: FieldRef<"AgentDecision", 'String'>
     readonly step: FieldRef<"AgentDecision", 'Int'>
     readonly agentId: FieldRef<"AgentDecision", 'String'>
     readonly assetSymbol: FieldRef<"AgentDecision", 'String'>
@@ -12826,6 +15361,21 @@ export namespace Prisma {
   }
 
   /**
+   * AgentDecision.runVariant
+   */
+  export type AgentDecision$runVariantArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunVariant
+     */
+    select?: RunVariantSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RunVariantInclude<ExtArgs> | null
+    where?: RunVariantWhereInput
+  }
+
+  /**
    * AgentDecision without action
    */
   export type AgentDecisionDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -12887,6 +15437,7 @@ export namespace Prisma {
   export type CrowdMetricsMinAggregateOutputType = {
     id: string | null
     runId: string | null
+    runVariantId: string | null
     assetSymbol: string | null
     step: number | null
     signal: number | null
@@ -12907,6 +15458,7 @@ export namespace Prisma {
   export type CrowdMetricsMaxAggregateOutputType = {
     id: string | null
     runId: string | null
+    runVariantId: string | null
     assetSymbol: string | null
     step: number | null
     signal: number | null
@@ -12927,6 +15479,7 @@ export namespace Prisma {
   export type CrowdMetricsCountAggregateOutputType = {
     id: number
     runId: number
+    runVariantId: number
     assetSymbol: number
     step: number
     signal: number
@@ -12981,6 +15534,7 @@ export namespace Prisma {
   export type CrowdMetricsMinAggregateInputType = {
     id?: true
     runId?: true
+    runVariantId?: true
     assetSymbol?: true
     step?: true
     signal?: true
@@ -13001,6 +15555,7 @@ export namespace Prisma {
   export type CrowdMetricsMaxAggregateInputType = {
     id?: true
     runId?: true
+    runVariantId?: true
     assetSymbol?: true
     step?: true
     signal?: true
@@ -13021,6 +15576,7 @@ export namespace Prisma {
   export type CrowdMetricsCountAggregateInputType = {
     id?: true
     runId?: true
+    runVariantId?: true
     assetSymbol?: true
     step?: true
     signal?: true
@@ -13128,6 +15684,7 @@ export namespace Prisma {
   export type CrowdMetricsGroupByOutputType = {
     id: string
     runId: string
+    runVariantId: string | null
     assetSymbol: string
     step: number
     signal: number
@@ -13167,6 +15724,7 @@ export namespace Prisma {
   export type CrowdMetricsSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     runId?: boolean
+    runVariantId?: boolean
     assetSymbol?: boolean
     step?: boolean
     signal?: boolean
@@ -13183,11 +15741,13 @@ export namespace Prisma {
     noiseSensitivity?: boolean
     createdAt?: boolean
     run?: boolean | SimulationRunDefaultArgs<ExtArgs>
+    runVariant?: boolean | CrowdMetrics$runVariantArgs<ExtArgs>
   }, ExtArgs["result"]["crowdMetrics"]>
 
   export type CrowdMetricsSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     runId?: boolean
+    runVariantId?: boolean
     assetSymbol?: boolean
     step?: boolean
     signal?: boolean
@@ -13204,11 +15764,13 @@ export namespace Prisma {
     noiseSensitivity?: boolean
     createdAt?: boolean
     run?: boolean | SimulationRunDefaultArgs<ExtArgs>
+    runVariant?: boolean | CrowdMetrics$runVariantArgs<ExtArgs>
   }, ExtArgs["result"]["crowdMetrics"]>
 
   export type CrowdMetricsSelectScalar = {
     id?: boolean
     runId?: boolean
+    runVariantId?: boolean
     assetSymbol?: boolean
     step?: boolean
     signal?: boolean
@@ -13228,19 +15790,23 @@ export namespace Prisma {
 
   export type CrowdMetricsInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     run?: boolean | SimulationRunDefaultArgs<ExtArgs>
+    runVariant?: boolean | CrowdMetrics$runVariantArgs<ExtArgs>
   }
   export type CrowdMetricsIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     run?: boolean | SimulationRunDefaultArgs<ExtArgs>
+    runVariant?: boolean | CrowdMetrics$runVariantArgs<ExtArgs>
   }
 
   export type $CrowdMetricsPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "CrowdMetrics"
     objects: {
       run: Prisma.$SimulationRunPayload<ExtArgs>
+      runVariant: Prisma.$RunVariantPayload<ExtArgs> | null
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       runId: string
+      runVariantId: string | null
       assetSymbol: string
       step: number
       signal: number
@@ -13621,6 +16187,7 @@ export namespace Prisma {
   export interface Prisma__CrowdMetricsClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     run<T extends SimulationRunDefaultArgs<ExtArgs> = {}>(args?: Subset<T, SimulationRunDefaultArgs<ExtArgs>>): Prisma__SimulationRunClient<$Result.GetResult<Prisma.$SimulationRunPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    runVariant<T extends CrowdMetrics$runVariantArgs<ExtArgs> = {}>(args?: Subset<T, CrowdMetrics$runVariantArgs<ExtArgs>>): Prisma__RunVariantClient<$Result.GetResult<Prisma.$RunVariantPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -13652,6 +16219,7 @@ export namespace Prisma {
   interface CrowdMetricsFieldRefs {
     readonly id: FieldRef<"CrowdMetrics", 'String'>
     readonly runId: FieldRef<"CrowdMetrics", 'String'>
+    readonly runVariantId: FieldRef<"CrowdMetrics", 'String'>
     readonly assetSymbol: FieldRef<"CrowdMetrics", 'String'>
     readonly step: FieldRef<"CrowdMetrics", 'Int'>
     readonly signal: FieldRef<"CrowdMetrics", 'Float'>
@@ -13982,6 +16550,21 @@ export namespace Prisma {
      * Filter which CrowdMetrics to delete
      */
     where?: CrowdMetricsWhereInput
+  }
+
+  /**
+   * CrowdMetrics.runVariant
+   */
+  export type CrowdMetrics$runVariantArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunVariant
+     */
+    select?: RunVariantSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RunVariantInclude<ExtArgs> | null
+    where?: RunVariantWhereInput
   }
 
   /**
@@ -15015,6 +17598,7 @@ export namespace Prisma {
   export type AgentRewardMinAggregateOutputType = {
     id: string | null
     runId: string | null
+    runVariantId: string | null
     agentId: string | null
     assetSymbol: string | null
     step: number | null
@@ -15030,6 +17614,7 @@ export namespace Prisma {
   export type AgentRewardMaxAggregateOutputType = {
     id: string | null
     runId: string | null
+    runVariantId: string | null
     agentId: string | null
     assetSymbol: string | null
     step: number | null
@@ -15045,6 +17630,7 @@ export namespace Prisma {
   export type AgentRewardCountAggregateOutputType = {
     id: number
     runId: number
+    runVariantId: number
     agentId: number
     assetSymbol: number
     step: number
@@ -15080,6 +17666,7 @@ export namespace Prisma {
   export type AgentRewardMinAggregateInputType = {
     id?: true
     runId?: true
+    runVariantId?: true
     agentId?: true
     assetSymbol?: true
     step?: true
@@ -15095,6 +17682,7 @@ export namespace Prisma {
   export type AgentRewardMaxAggregateInputType = {
     id?: true
     runId?: true
+    runVariantId?: true
     agentId?: true
     assetSymbol?: true
     step?: true
@@ -15110,6 +17698,7 @@ export namespace Prisma {
   export type AgentRewardCountAggregateInputType = {
     id?: true
     runId?: true
+    runVariantId?: true
     agentId?: true
     assetSymbol?: true
     step?: true
@@ -15212,6 +17801,7 @@ export namespace Prisma {
   export type AgentRewardGroupByOutputType = {
     id: string
     runId: string
+    runVariantId: string | null
     agentId: string
     assetSymbol: string
     step: number
@@ -15246,6 +17836,7 @@ export namespace Prisma {
   export type AgentRewardSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     runId?: boolean
+    runVariantId?: boolean
     agentId?: boolean
     assetSymbol?: boolean
     step?: boolean
@@ -15257,12 +17848,14 @@ export namespace Prisma {
     rewardScore?: boolean
     createdAt?: boolean
     run?: boolean | SimulationRunDefaultArgs<ExtArgs>
+    runVariant?: boolean | AgentReward$runVariantArgs<ExtArgs>
     agent?: boolean | RunAgentDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["agentReward"]>
 
   export type AgentRewardSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     runId?: boolean
+    runVariantId?: boolean
     agentId?: boolean
     assetSymbol?: boolean
     step?: boolean
@@ -15274,12 +17867,14 @@ export namespace Prisma {
     rewardScore?: boolean
     createdAt?: boolean
     run?: boolean | SimulationRunDefaultArgs<ExtArgs>
+    runVariant?: boolean | AgentReward$runVariantArgs<ExtArgs>
     agent?: boolean | RunAgentDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["agentReward"]>
 
   export type AgentRewardSelectScalar = {
     id?: boolean
     runId?: boolean
+    runVariantId?: boolean
     agentId?: boolean
     assetSymbol?: boolean
     step?: boolean
@@ -15294,10 +17889,12 @@ export namespace Prisma {
 
   export type AgentRewardInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     run?: boolean | SimulationRunDefaultArgs<ExtArgs>
+    runVariant?: boolean | AgentReward$runVariantArgs<ExtArgs>
     agent?: boolean | RunAgentDefaultArgs<ExtArgs>
   }
   export type AgentRewardIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     run?: boolean | SimulationRunDefaultArgs<ExtArgs>
+    runVariant?: boolean | AgentReward$runVariantArgs<ExtArgs>
     agent?: boolean | RunAgentDefaultArgs<ExtArgs>
   }
 
@@ -15305,11 +17902,13 @@ export namespace Prisma {
     name: "AgentReward"
     objects: {
       run: Prisma.$SimulationRunPayload<ExtArgs>
+      runVariant: Prisma.$RunVariantPayload<ExtArgs> | null
       agent: Prisma.$RunAgentPayload<ExtArgs>
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       runId: string
+      runVariantId: string | null
       agentId: string
       assetSymbol: string
       step: number
@@ -15685,6 +18284,7 @@ export namespace Prisma {
   export interface Prisma__AgentRewardClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     run<T extends SimulationRunDefaultArgs<ExtArgs> = {}>(args?: Subset<T, SimulationRunDefaultArgs<ExtArgs>>): Prisma__SimulationRunClient<$Result.GetResult<Prisma.$SimulationRunPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    runVariant<T extends AgentReward$runVariantArgs<ExtArgs> = {}>(args?: Subset<T, AgentReward$runVariantArgs<ExtArgs>>): Prisma__RunVariantClient<$Result.GetResult<Prisma.$RunVariantPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     agent<T extends RunAgentDefaultArgs<ExtArgs> = {}>(args?: Subset<T, RunAgentDefaultArgs<ExtArgs>>): Prisma__RunAgentClient<$Result.GetResult<Prisma.$RunAgentPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -15717,6 +18317,7 @@ export namespace Prisma {
   interface AgentRewardFieldRefs {
     readonly id: FieldRef<"AgentReward", 'String'>
     readonly runId: FieldRef<"AgentReward", 'String'>
+    readonly runVariantId: FieldRef<"AgentReward", 'String'>
     readonly agentId: FieldRef<"AgentReward", 'String'>
     readonly assetSymbol: FieldRef<"AgentReward", 'String'>
     readonly step: FieldRef<"AgentReward", 'Int'>
@@ -16042,6 +18643,21 @@ export namespace Prisma {
      * Filter which AgentRewards to delete
      */
     where?: AgentRewardWhereInput
+  }
+
+  /**
+   * AgentReward.runVariant
+   */
+  export type AgentReward$runVariantArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunVariant
+     */
+    select?: RunVariantSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RunVariantInclude<ExtArgs> | null
+    where?: RunVariantWhereInput
   }
 
   /**
@@ -17147,6 +19763,7 @@ export namespace Prisma {
   export type AgentInfoStateMinAggregateOutputType = {
     id: string | null
     runId: string | null
+    runVariantId: string | null
     assetSymbol: string | null
     agentId: string | null
     step: number | null
@@ -17162,6 +19779,7 @@ export namespace Prisma {
   export type AgentInfoStateMaxAggregateOutputType = {
     id: string | null
     runId: string | null
+    runVariantId: string | null
     assetSymbol: string | null
     agentId: string | null
     step: number | null
@@ -17177,6 +19795,7 @@ export namespace Prisma {
   export type AgentInfoStateCountAggregateOutputType = {
     id: number
     runId: number
+    runVariantId: number
     assetSymbol: number
     agentId: number
     step: number
@@ -17212,6 +19831,7 @@ export namespace Prisma {
   export type AgentInfoStateMinAggregateInputType = {
     id?: true
     runId?: true
+    runVariantId?: true
     assetSymbol?: true
     agentId?: true
     step?: true
@@ -17227,6 +19847,7 @@ export namespace Prisma {
   export type AgentInfoStateMaxAggregateInputType = {
     id?: true
     runId?: true
+    runVariantId?: true
     assetSymbol?: true
     agentId?: true
     step?: true
@@ -17242,6 +19863,7 @@ export namespace Prisma {
   export type AgentInfoStateCountAggregateInputType = {
     id?: true
     runId?: true
+    runVariantId?: true
     assetSymbol?: true
     agentId?: true
     step?: true
@@ -17344,6 +19966,7 @@ export namespace Prisma {
   export type AgentInfoStateGroupByOutputType = {
     id: string
     runId: string
+    runVariantId: string | null
     assetSymbol: string
     agentId: string
     step: number
@@ -17378,6 +20001,7 @@ export namespace Prisma {
   export type AgentInfoStateSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     runId?: boolean
+    runVariantId?: boolean
     assetSymbol?: boolean
     agentId?: boolean
     step?: boolean
@@ -17389,12 +20013,14 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     run?: boolean | SimulationRunDefaultArgs<ExtArgs>
+    runVariant?: boolean | AgentInfoState$runVariantArgs<ExtArgs>
     agent?: boolean | RunAgentDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["agentInfoState"]>
 
   export type AgentInfoStateSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     runId?: boolean
+    runVariantId?: boolean
     assetSymbol?: boolean
     agentId?: boolean
     step?: boolean
@@ -17406,12 +20032,14 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     run?: boolean | SimulationRunDefaultArgs<ExtArgs>
+    runVariant?: boolean | AgentInfoState$runVariantArgs<ExtArgs>
     agent?: boolean | RunAgentDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["agentInfoState"]>
 
   export type AgentInfoStateSelectScalar = {
     id?: boolean
     runId?: boolean
+    runVariantId?: boolean
     assetSymbol?: boolean
     agentId?: boolean
     step?: boolean
@@ -17426,10 +20054,12 @@ export namespace Prisma {
 
   export type AgentInfoStateInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     run?: boolean | SimulationRunDefaultArgs<ExtArgs>
+    runVariant?: boolean | AgentInfoState$runVariantArgs<ExtArgs>
     agent?: boolean | RunAgentDefaultArgs<ExtArgs>
   }
   export type AgentInfoStateIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     run?: boolean | SimulationRunDefaultArgs<ExtArgs>
+    runVariant?: boolean | AgentInfoState$runVariantArgs<ExtArgs>
     agent?: boolean | RunAgentDefaultArgs<ExtArgs>
   }
 
@@ -17437,11 +20067,13 @@ export namespace Prisma {
     name: "AgentInfoState"
     objects: {
       run: Prisma.$SimulationRunPayload<ExtArgs>
+      runVariant: Prisma.$RunVariantPayload<ExtArgs> | null
       agent: Prisma.$RunAgentPayload<ExtArgs>
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       runId: string
+      runVariantId: string | null
       assetSymbol: string
       agentId: string
       step: number
@@ -17817,6 +20449,7 @@ export namespace Prisma {
   export interface Prisma__AgentInfoStateClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     run<T extends SimulationRunDefaultArgs<ExtArgs> = {}>(args?: Subset<T, SimulationRunDefaultArgs<ExtArgs>>): Prisma__SimulationRunClient<$Result.GetResult<Prisma.$SimulationRunPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    runVariant<T extends AgentInfoState$runVariantArgs<ExtArgs> = {}>(args?: Subset<T, AgentInfoState$runVariantArgs<ExtArgs>>): Prisma__RunVariantClient<$Result.GetResult<Prisma.$RunVariantPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     agent<T extends RunAgentDefaultArgs<ExtArgs> = {}>(args?: Subset<T, RunAgentDefaultArgs<ExtArgs>>): Prisma__RunAgentClient<$Result.GetResult<Prisma.$RunAgentPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -17849,6 +20482,7 @@ export namespace Prisma {
   interface AgentInfoStateFieldRefs {
     readonly id: FieldRef<"AgentInfoState", 'String'>
     readonly runId: FieldRef<"AgentInfoState", 'String'>
+    readonly runVariantId: FieldRef<"AgentInfoState", 'String'>
     readonly assetSymbol: FieldRef<"AgentInfoState", 'String'>
     readonly agentId: FieldRef<"AgentInfoState", 'String'>
     readonly step: FieldRef<"AgentInfoState", 'Int'>
@@ -18177,6 +20811,21 @@ export namespace Prisma {
   }
 
   /**
+   * AgentInfoState.runVariant
+   */
+  export type AgentInfoState$runVariantArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunVariant
+     */
+    select?: RunVariantSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RunVariantInclude<ExtArgs> | null
+    where?: RunVariantWhereInput
+  }
+
+  /**
    * AgentInfoState without action
    */
   export type AgentInfoStateDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -18224,6 +20873,7 @@ export namespace Prisma {
   export type AgentStateMinAggregateOutputType = {
     id: string | null
     runId: string | null
+    runVariantId: string | null
     assetSymbol: string | null
     agentId: string | null
     step: number | null
@@ -18239,6 +20889,7 @@ export namespace Prisma {
   export type AgentStateMaxAggregateOutputType = {
     id: string | null
     runId: string | null
+    runVariantId: string | null
     assetSymbol: string | null
     agentId: string | null
     step: number | null
@@ -18254,6 +20905,7 @@ export namespace Prisma {
   export type AgentStateCountAggregateOutputType = {
     id: number
     runId: number
+    runVariantId: number
     assetSymbol: number
     agentId: number
     step: number
@@ -18289,6 +20941,7 @@ export namespace Prisma {
   export type AgentStateMinAggregateInputType = {
     id?: true
     runId?: true
+    runVariantId?: true
     assetSymbol?: true
     agentId?: true
     step?: true
@@ -18304,6 +20957,7 @@ export namespace Prisma {
   export type AgentStateMaxAggregateInputType = {
     id?: true
     runId?: true
+    runVariantId?: true
     assetSymbol?: true
     agentId?: true
     step?: true
@@ -18319,6 +20973,7 @@ export namespace Prisma {
   export type AgentStateCountAggregateInputType = {
     id?: true
     runId?: true
+    runVariantId?: true
     assetSymbol?: true
     agentId?: true
     step?: true
@@ -18421,6 +21076,7 @@ export namespace Prisma {
   export type AgentStateGroupByOutputType = {
     id: string
     runId: string
+    runVariantId: string | null
     assetSymbol: string
     agentId: string
     step: number
@@ -18455,6 +21111,7 @@ export namespace Prisma {
   export type AgentStateSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     runId?: boolean
+    runVariantId?: boolean
     assetSymbol?: boolean
     agentId?: boolean
     step?: boolean
@@ -18466,12 +21123,14 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     run?: boolean | SimulationRunDefaultArgs<ExtArgs>
+    runVariant?: boolean | AgentState$runVariantArgs<ExtArgs>
     agent?: boolean | RunAgentDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["agentState"]>
 
   export type AgentStateSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     runId?: boolean
+    runVariantId?: boolean
     assetSymbol?: boolean
     agentId?: boolean
     step?: boolean
@@ -18483,12 +21142,14 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     run?: boolean | SimulationRunDefaultArgs<ExtArgs>
+    runVariant?: boolean | AgentState$runVariantArgs<ExtArgs>
     agent?: boolean | RunAgentDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["agentState"]>
 
   export type AgentStateSelectScalar = {
     id?: boolean
     runId?: boolean
+    runVariantId?: boolean
     assetSymbol?: boolean
     agentId?: boolean
     step?: boolean
@@ -18503,10 +21164,12 @@ export namespace Prisma {
 
   export type AgentStateInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     run?: boolean | SimulationRunDefaultArgs<ExtArgs>
+    runVariant?: boolean | AgentState$runVariantArgs<ExtArgs>
     agent?: boolean | RunAgentDefaultArgs<ExtArgs>
   }
   export type AgentStateIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     run?: boolean | SimulationRunDefaultArgs<ExtArgs>
+    runVariant?: boolean | AgentState$runVariantArgs<ExtArgs>
     agent?: boolean | RunAgentDefaultArgs<ExtArgs>
   }
 
@@ -18514,11 +21177,13 @@ export namespace Prisma {
     name: "AgentState"
     objects: {
       run: Prisma.$SimulationRunPayload<ExtArgs>
+      runVariant: Prisma.$RunVariantPayload<ExtArgs> | null
       agent: Prisma.$RunAgentPayload<ExtArgs>
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       runId: string
+      runVariantId: string | null
       assetSymbol: string
       agentId: string
       step: number
@@ -18894,6 +21559,7 @@ export namespace Prisma {
   export interface Prisma__AgentStateClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     run<T extends SimulationRunDefaultArgs<ExtArgs> = {}>(args?: Subset<T, SimulationRunDefaultArgs<ExtArgs>>): Prisma__SimulationRunClient<$Result.GetResult<Prisma.$SimulationRunPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    runVariant<T extends AgentState$runVariantArgs<ExtArgs> = {}>(args?: Subset<T, AgentState$runVariantArgs<ExtArgs>>): Prisma__RunVariantClient<$Result.GetResult<Prisma.$RunVariantPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     agent<T extends RunAgentDefaultArgs<ExtArgs> = {}>(args?: Subset<T, RunAgentDefaultArgs<ExtArgs>>): Prisma__RunAgentClient<$Result.GetResult<Prisma.$RunAgentPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -18926,6 +21592,7 @@ export namespace Prisma {
   interface AgentStateFieldRefs {
     readonly id: FieldRef<"AgentState", 'String'>
     readonly runId: FieldRef<"AgentState", 'String'>
+    readonly runVariantId: FieldRef<"AgentState", 'String'>
     readonly assetSymbol: FieldRef<"AgentState", 'String'>
     readonly agentId: FieldRef<"AgentState", 'String'>
     readonly step: FieldRef<"AgentState", 'Int'>
@@ -19251,6 +21918,21 @@ export namespace Prisma {
      * Filter which AgentStates to delete
      */
     where?: AgentStateWhereInput
+  }
+
+  /**
+   * AgentState.runVariant
+   */
+  export type AgentState$runVariantArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunVariant
+     */
+    select?: RunVariantSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RunVariantInclude<ExtArgs> | null
+    where?: RunVariantWhereInput
   }
 
   /**
@@ -21181,6 +23863,7 @@ export namespace Prisma {
   export type AgentExperienceMinAggregateOutputType = {
     id: string | null
     runId: string | null
+    runVariantId: string | null
     runAgentId: string | null
     step: number | null
     ts: Date | null
@@ -21192,6 +23875,7 @@ export namespace Prisma {
   export type AgentExperienceMaxAggregateOutputType = {
     id: string | null
     runId: string | null
+    runVariantId: string | null
     runAgentId: string | null
     step: number | null
     ts: Date | null
@@ -21203,6 +23887,7 @@ export namespace Prisma {
   export type AgentExperienceCountAggregateOutputType = {
     id: number
     runId: number
+    runVariantId: number
     runAgentId: number
     step: number
     ts: number
@@ -21235,6 +23920,7 @@ export namespace Prisma {
   export type AgentExperienceMinAggregateInputType = {
     id?: true
     runId?: true
+    runVariantId?: true
     runAgentId?: true
     step?: true
     ts?: true
@@ -21246,6 +23932,7 @@ export namespace Prisma {
   export type AgentExperienceMaxAggregateInputType = {
     id?: true
     runId?: true
+    runVariantId?: true
     runAgentId?: true
     step?: true
     ts?: true
@@ -21257,6 +23944,7 @@ export namespace Prisma {
   export type AgentExperienceCountAggregateInputType = {
     id?: true
     runId?: true
+    runVariantId?: true
     runAgentId?: true
     step?: true
     ts?: true
@@ -21360,6 +24048,7 @@ export namespace Prisma {
   export type AgentExperienceGroupByOutputType = {
     id: string
     runId: string
+    runVariantId: string | null
     runAgentId: string
     step: number
     ts: Date
@@ -21395,6 +24084,7 @@ export namespace Prisma {
   export type AgentExperienceSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     runId?: boolean
+    runVariantId?: boolean
     runAgentId?: boolean
     step?: boolean
     ts?: boolean
@@ -21407,12 +24097,14 @@ export namespace Prisma {
     stateBeforeJson?: boolean
     stateAfterJson?: boolean
     run?: boolean | SimulationRunDefaultArgs<ExtArgs>
+    runVariant?: boolean | AgentExperience$runVariantArgs<ExtArgs>
     runAgent?: boolean | RunAgentDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["agentExperience"]>
 
   export type AgentExperienceSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     runId?: boolean
+    runVariantId?: boolean
     runAgentId?: boolean
     step?: boolean
     ts?: boolean
@@ -21425,12 +24117,14 @@ export namespace Prisma {
     stateBeforeJson?: boolean
     stateAfterJson?: boolean
     run?: boolean | SimulationRunDefaultArgs<ExtArgs>
+    runVariant?: boolean | AgentExperience$runVariantArgs<ExtArgs>
     runAgent?: boolean | RunAgentDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["agentExperience"]>
 
   export type AgentExperienceSelectScalar = {
     id?: boolean
     runId?: boolean
+    runVariantId?: boolean
     runAgentId?: boolean
     step?: boolean
     ts?: boolean
@@ -21446,10 +24140,12 @@ export namespace Prisma {
 
   export type AgentExperienceInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     run?: boolean | SimulationRunDefaultArgs<ExtArgs>
+    runVariant?: boolean | AgentExperience$runVariantArgs<ExtArgs>
     runAgent?: boolean | RunAgentDefaultArgs<ExtArgs>
   }
   export type AgentExperienceIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     run?: boolean | SimulationRunDefaultArgs<ExtArgs>
+    runVariant?: boolean | AgentExperience$runVariantArgs<ExtArgs>
     runAgent?: boolean | RunAgentDefaultArgs<ExtArgs>
   }
 
@@ -21457,11 +24153,13 @@ export namespace Prisma {
     name: "AgentExperience"
     objects: {
       run: Prisma.$SimulationRunPayload<ExtArgs>
+      runVariant: Prisma.$RunVariantPayload<ExtArgs> | null
       runAgent: Prisma.$RunAgentPayload<ExtArgs>
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       runId: string
+      runVariantId: string | null
       runAgentId: string
       step: number
       ts: Date
@@ -21838,6 +24536,7 @@ export namespace Prisma {
   export interface Prisma__AgentExperienceClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     run<T extends SimulationRunDefaultArgs<ExtArgs> = {}>(args?: Subset<T, SimulationRunDefaultArgs<ExtArgs>>): Prisma__SimulationRunClient<$Result.GetResult<Prisma.$SimulationRunPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    runVariant<T extends AgentExperience$runVariantArgs<ExtArgs> = {}>(args?: Subset<T, AgentExperience$runVariantArgs<ExtArgs>>): Prisma__RunVariantClient<$Result.GetResult<Prisma.$RunVariantPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     runAgent<T extends RunAgentDefaultArgs<ExtArgs> = {}>(args?: Subset<T, RunAgentDefaultArgs<ExtArgs>>): Prisma__RunAgentClient<$Result.GetResult<Prisma.$RunAgentPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -21870,6 +24569,7 @@ export namespace Prisma {
   interface AgentExperienceFieldRefs {
     readonly id: FieldRef<"AgentExperience", 'String'>
     readonly runId: FieldRef<"AgentExperience", 'String'>
+    readonly runVariantId: FieldRef<"AgentExperience", 'String'>
     readonly runAgentId: FieldRef<"AgentExperience", 'String'>
     readonly step: FieldRef<"AgentExperience", 'Int'>
     readonly ts: FieldRef<"AgentExperience", 'DateTime'>
@@ -22196,6 +24896,21 @@ export namespace Prisma {
      * Filter which AgentExperiences to delete
      */
     where?: AgentExperienceWhereInput
+  }
+
+  /**
+   * AgentExperience.runVariant
+   */
+  export type AgentExperience$runVariantArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunVariant
+     */
+    select?: RunVariantSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RunVariantInclude<ExtArgs> | null
+    where?: RunVariantWhereInput
   }
 
   /**
@@ -30008,6 +32723,7 @@ export namespace Prisma {
     seed: number | null
     steps: number | null
     agents: number | null
+    pairsCount: number | null
     corr: number | null
     directionalAccuracy: number | null
   }
@@ -30016,6 +32732,7 @@ export namespace Prisma {
     seed: number | null
     steps: number | null
     agents: number | null
+    pairsCount: number | null
     corr: number | null
     directionalAccuracy: number | null
   }
@@ -30023,10 +32740,12 @@ export namespace Prisma {
   export type BacktestResultMinAggregateOutputType = {
     id: string | null
     runId: string | null
+    runVariantId: string | null
     assetSymbol: string | null
     seed: number | null
     steps: number | null
     agents: number | null
+    pairsCount: number | null
     corr: number | null
     directionalAccuracy: number | null
     createdAt: Date | null
@@ -30035,10 +32754,12 @@ export namespace Prisma {
   export type BacktestResultMaxAggregateOutputType = {
     id: string | null
     runId: string | null
+    runVariantId: string | null
     assetSymbol: string | null
     seed: number | null
     steps: number | null
     agents: number | null
+    pairsCount: number | null
     corr: number | null
     directionalAccuracy: number | null
     createdAt: Date | null
@@ -30047,10 +32768,12 @@ export namespace Prisma {
   export type BacktestResultCountAggregateOutputType = {
     id: number
     runId: number
+    runVariantId: number
     assetSymbol: number
     seed: number
     steps: number
     agents: number
+    pairsCount: number
     corr: number
     directionalAccuracy: number
     createdAt: number
@@ -30062,6 +32785,7 @@ export namespace Prisma {
     seed?: true
     steps?: true
     agents?: true
+    pairsCount?: true
     corr?: true
     directionalAccuracy?: true
   }
@@ -30070,6 +32794,7 @@ export namespace Prisma {
     seed?: true
     steps?: true
     agents?: true
+    pairsCount?: true
     corr?: true
     directionalAccuracy?: true
   }
@@ -30077,10 +32802,12 @@ export namespace Prisma {
   export type BacktestResultMinAggregateInputType = {
     id?: true
     runId?: true
+    runVariantId?: true
     assetSymbol?: true
     seed?: true
     steps?: true
     agents?: true
+    pairsCount?: true
     corr?: true
     directionalAccuracy?: true
     createdAt?: true
@@ -30089,10 +32816,12 @@ export namespace Prisma {
   export type BacktestResultMaxAggregateInputType = {
     id?: true
     runId?: true
+    runVariantId?: true
     assetSymbol?: true
     seed?: true
     steps?: true
     agents?: true
+    pairsCount?: true
     corr?: true
     directionalAccuracy?: true
     createdAt?: true
@@ -30101,10 +32830,12 @@ export namespace Prisma {
   export type BacktestResultCountAggregateInputType = {
     id?: true
     runId?: true
+    runVariantId?: true
     assetSymbol?: true
     seed?: true
     steps?: true
     agents?: true
+    pairsCount?: true
     corr?: true
     directionalAccuracy?: true
     createdAt?: true
@@ -30200,10 +32931,12 @@ export namespace Prisma {
   export type BacktestResultGroupByOutputType = {
     id: string
     runId: string
+    runVariantId: string | null
     assetSymbol: string
     seed: number
     steps: number
     agents: number
+    pairsCount: number | null
     corr: number | null
     directionalAccuracy: number | null
     createdAt: Date
@@ -30231,50 +32964,68 @@ export namespace Prisma {
   export type BacktestResultSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     runId?: boolean
+    runVariantId?: boolean
     assetSymbol?: boolean
     seed?: boolean
     steps?: boolean
     agents?: boolean
+    pairsCount?: boolean
     corr?: boolean
     directionalAccuracy?: boolean
     createdAt?: boolean
+    runVariant?: boolean | BacktestResult$runVariantArgs<ExtArgs>
   }, ExtArgs["result"]["backtestResult"]>
 
   export type BacktestResultSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     runId?: boolean
+    runVariantId?: boolean
     assetSymbol?: boolean
     seed?: boolean
     steps?: boolean
     agents?: boolean
+    pairsCount?: boolean
     corr?: boolean
     directionalAccuracy?: boolean
     createdAt?: boolean
+    runVariant?: boolean | BacktestResult$runVariantArgs<ExtArgs>
   }, ExtArgs["result"]["backtestResult"]>
 
   export type BacktestResultSelectScalar = {
     id?: boolean
     runId?: boolean
+    runVariantId?: boolean
     assetSymbol?: boolean
     seed?: boolean
     steps?: boolean
     agents?: boolean
+    pairsCount?: boolean
     corr?: boolean
     directionalAccuracy?: boolean
     createdAt?: boolean
   }
 
+  export type BacktestResultInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    runVariant?: boolean | BacktestResult$runVariantArgs<ExtArgs>
+  }
+  export type BacktestResultIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    runVariant?: boolean | BacktestResult$runVariantArgs<ExtArgs>
+  }
 
   export type $BacktestResultPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "BacktestResult"
-    objects: {}
+    objects: {
+      runVariant: Prisma.$RunVariantPayload<ExtArgs> | null
+    }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       runId: string
+      runVariantId: string | null
       assetSymbol: string
       seed: number
       steps: number
       agents: number
+      pairsCount: number | null
       corr: number | null
       directionalAccuracy: number | null
       createdAt: Date
@@ -30642,6 +33393,7 @@ export namespace Prisma {
    */
   export interface Prisma__BacktestResultClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
+    runVariant<T extends BacktestResult$runVariantArgs<ExtArgs> = {}>(args?: Subset<T, BacktestResult$runVariantArgs<ExtArgs>>): Prisma__RunVariantClient<$Result.GetResult<Prisma.$RunVariantPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -30673,10 +33425,12 @@ export namespace Prisma {
   interface BacktestResultFieldRefs {
     readonly id: FieldRef<"BacktestResult", 'String'>
     readonly runId: FieldRef<"BacktestResult", 'String'>
+    readonly runVariantId: FieldRef<"BacktestResult", 'String'>
     readonly assetSymbol: FieldRef<"BacktestResult", 'String'>
     readonly seed: FieldRef<"BacktestResult", 'Int'>
     readonly steps: FieldRef<"BacktestResult", 'Int'>
     readonly agents: FieldRef<"BacktestResult", 'Int'>
+    readonly pairsCount: FieldRef<"BacktestResult", 'Int'>
     readonly corr: FieldRef<"BacktestResult", 'Float'>
     readonly directionalAccuracy: FieldRef<"BacktestResult", 'Float'>
     readonly createdAt: FieldRef<"BacktestResult", 'DateTime'>
@@ -30693,6 +33447,10 @@ export namespace Prisma {
      */
     select?: BacktestResultSelect<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BacktestResultInclude<ExtArgs> | null
+    /**
      * Filter, which BacktestResult to fetch.
      */
     where: BacktestResultWhereUniqueInput
@@ -30707,6 +33465,10 @@ export namespace Prisma {
      */
     select?: BacktestResultSelect<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BacktestResultInclude<ExtArgs> | null
+    /**
      * Filter, which BacktestResult to fetch.
      */
     where: BacktestResultWhereUniqueInput
@@ -30720,6 +33482,10 @@ export namespace Prisma {
      * Select specific fields to fetch from the BacktestResult
      */
     select?: BacktestResultSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BacktestResultInclude<ExtArgs> | null
     /**
      * Filter, which BacktestResult to fetch.
      */
@@ -30765,6 +33531,10 @@ export namespace Prisma {
      */
     select?: BacktestResultSelect<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BacktestResultInclude<ExtArgs> | null
+    /**
      * Filter, which BacktestResult to fetch.
      */
     where?: BacktestResultWhereInput
@@ -30809,6 +33579,10 @@ export namespace Prisma {
      */
     select?: BacktestResultSelect<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BacktestResultInclude<ExtArgs> | null
+    /**
      * Filter, which BacktestResults to fetch.
      */
     where?: BacktestResultWhereInput
@@ -30848,6 +33622,10 @@ export namespace Prisma {
      */
     select?: BacktestResultSelect<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BacktestResultInclude<ExtArgs> | null
+    /**
      * The data needed to create a BacktestResult.
      */
     data: XOR<BacktestResultCreateInput, BacktestResultUncheckedCreateInput>
@@ -30877,6 +33655,10 @@ export namespace Prisma {
      */
     data: BacktestResultCreateManyInput | BacktestResultCreateManyInput[]
     skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BacktestResultIncludeCreateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -30887,6 +33669,10 @@ export namespace Prisma {
      * Select specific fields to fetch from the BacktestResult
      */
     select?: BacktestResultSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BacktestResultInclude<ExtArgs> | null
     /**
      * The data needed to update a BacktestResult.
      */
@@ -30920,6 +33706,10 @@ export namespace Prisma {
      */
     select?: BacktestResultSelect<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BacktestResultInclude<ExtArgs> | null
+    /**
      * The filter to search for the BacktestResult to update in case it exists.
      */
     where: BacktestResultWhereUniqueInput
@@ -30942,6 +33732,10 @@ export namespace Prisma {
      */
     select?: BacktestResultSelect<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BacktestResultInclude<ExtArgs> | null
+    /**
      * Filter which BacktestResult to delete.
      */
     where: BacktestResultWhereUniqueInput
@@ -30958,6 +33752,21 @@ export namespace Prisma {
   }
 
   /**
+   * BacktestResult.runVariant
+   */
+  export type BacktestResult$runVariantArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunVariant
+     */
+    select?: RunVariantSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RunVariantInclude<ExtArgs> | null
+    where?: RunVariantWhereInput
+  }
+
+  /**
    * BacktestResult without action
    */
   export type BacktestResultDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -30965,6 +33774,10 @@ export namespace Prisma {
      * Select specific fields to fetch from the BacktestResult
      */
     select?: BacktestResultSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BacktestResultInclude<ExtArgs> | null
   }
 
 
@@ -31057,6 +33870,36 @@ export namespace Prisma {
   export type SimulationRunScalarFieldEnum = (typeof SimulationRunScalarFieldEnum)[keyof typeof SimulationRunScalarFieldEnum]
 
 
+  export const RunVariantScalarFieldEnum: {
+    id: 'id',
+    runId: 'runId',
+    assetSymbol: 'assetSymbol',
+    seed: 'seed',
+    agents: 'agents',
+    steps: 'steps',
+    label: 'label',
+    createdAt: 'createdAt'
+  };
+
+  export type RunVariantScalarFieldEnum = (typeof RunVariantScalarFieldEnum)[keyof typeof RunVariantScalarFieldEnum]
+
+
+  export const RunVariantSummaryScalarFieldEnum: {
+    id: 'id',
+    runVariantId: 'runVariantId',
+    corr: 'corr',
+    directionalAccuracy: 'directionalAccuracy',
+    pairsCount: 'pairsCount',
+    computedAt: 'computedAt',
+    debugDecisionCounts: 'debugDecisionCounts',
+    debugPairsSample: 'debugPairsSample',
+    debugDecisionsHash: 'debugDecisionsHash',
+    debugReturnsHash: 'debugReturnsHash'
+  };
+
+  export type RunVariantSummaryScalarFieldEnum = (typeof RunVariantSummaryScalarFieldEnum)[keyof typeof RunVariantSummaryScalarFieldEnum]
+
+
   export const RunAgentScalarFieldEnum: {
     id: 'id',
     runId: 'runId',
@@ -31086,6 +33929,7 @@ export namespace Prisma {
   export const AgentDecisionScalarFieldEnum: {
     id: 'id',
     runId: 'runId',
+    runVariantId: 'runVariantId',
     step: 'step',
     agentId: 'agentId',
     assetSymbol: 'assetSymbol',
@@ -31101,6 +33945,7 @@ export namespace Prisma {
   export const CrowdMetricsScalarFieldEnum: {
     id: 'id',
     runId: 'runId',
+    runVariantId: 'runVariantId',
     assetSymbol: 'assetSymbol',
     step: 'step',
     signal: 'signal',
@@ -31136,6 +33981,7 @@ export namespace Prisma {
   export const AgentRewardScalarFieldEnum: {
     id: 'id',
     runId: 'runId',
+    runVariantId: 'runVariantId',
     agentId: 'agentId',
     assetSymbol: 'assetSymbol',
     step: 'step',
@@ -31171,6 +34017,7 @@ export namespace Prisma {
   export const AgentInfoStateScalarFieldEnum: {
     id: 'id',
     runId: 'runId',
+    runVariantId: 'runVariantId',
     assetSymbol: 'assetSymbol',
     agentId: 'agentId',
     step: 'step',
@@ -31189,6 +34036,7 @@ export namespace Prisma {
   export const AgentStateScalarFieldEnum: {
     id: 'id',
     runId: 'runId',
+    runVariantId: 'runVariantId',
     assetSymbol: 'assetSymbol',
     agentId: 'agentId',
     step: 'step',
@@ -31228,6 +34076,7 @@ export namespace Prisma {
   export const AgentExperienceScalarFieldEnum: {
     id: 'id',
     runId: 'runId',
+    runVariantId: 'runVariantId',
     runAgentId: 'runAgentId',
     step: 'step',
     ts: 'ts',
@@ -31359,10 +34208,12 @@ export namespace Prisma {
   export const BacktestResultScalarFieldEnum: {
     id: 'id',
     runId: 'runId',
+    runVariantId: 'runVariantId',
     assetSymbol: 'assetSymbol',
     seed: 'seed',
     steps: 'steps',
     agents: 'agents',
+    pairsCount: 'pairsCount',
     corr: 'corr',
     directionalAccuracy: 'directionalAccuracy',
     createdAt: 'createdAt'
@@ -31882,6 +34733,7 @@ export namespace Prisma {
     agentStates?: AgentStateListRelationFilter
     assetStepReturns?: AssetStepReturnListRelationFilter
     agentRewards?: AgentRewardListRelationFilter
+    runVariants?: RunVariantListRelationFilter
   }
 
   export type SimulationRunOrderByWithRelationInput = {
@@ -31911,6 +34763,7 @@ export namespace Prisma {
     agentStates?: AgentStateOrderByRelationAggregateInput
     assetStepReturns?: AssetStepReturnOrderByRelationAggregateInput
     agentRewards?: AgentRewardOrderByRelationAggregateInput
+    runVariants?: RunVariantOrderByRelationAggregateInput
   }
 
   export type SimulationRunWhereUniqueInput = Prisma.AtLeast<{
@@ -31944,6 +34797,7 @@ export namespace Prisma {
     agentStates?: AgentStateListRelationFilter
     assetStepReturns?: AssetStepReturnListRelationFilter
     agentRewards?: AgentRewardListRelationFilter
+    runVariants?: RunVariantListRelationFilter
   }, "id" | "name_datasetVersion">
 
   export type SimulationRunOrderByWithAggregationInput = {
@@ -31984,6 +34838,185 @@ export namespace Prisma {
     configJson?: JsonNullableWithAggregatesFilter<"SimulationRun">
     createdAt?: DateTimeWithAggregatesFilter<"SimulationRun"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"SimulationRun"> | Date | string
+  }
+
+  export type RunVariantWhereInput = {
+    AND?: RunVariantWhereInput | RunVariantWhereInput[]
+    OR?: RunVariantWhereInput[]
+    NOT?: RunVariantWhereInput | RunVariantWhereInput[]
+    id?: UuidFilter<"RunVariant"> | string
+    runId?: UuidFilter<"RunVariant"> | string
+    assetSymbol?: StringFilter<"RunVariant"> | string
+    seed?: IntFilter<"RunVariant"> | number
+    agents?: IntFilter<"RunVariant"> | number
+    steps?: IntFilter<"RunVariant"> | number
+    label?: StringNullableFilter<"RunVariant"> | string | null
+    createdAt?: DateTimeFilter<"RunVariant"> | Date | string
+    run?: XOR<SimulationRunRelationFilter, SimulationRunWhereInput>
+    agentDecisions?: AgentDecisionListRelationFilter
+    agentInfoStates?: AgentInfoStateListRelationFilter
+    agentStates?: AgentStateListRelationFilter
+    agentExperiences?: AgentExperienceListRelationFilter
+    crowdMetrics?: CrowdMetricsListRelationFilter
+    agentRewards?: AgentRewardListRelationFilter
+    backtestResults?: BacktestResultListRelationFilter
+    summary?: XOR<RunVariantSummaryNullableRelationFilter, RunVariantSummaryWhereInput> | null
+  }
+
+  export type RunVariantOrderByWithRelationInput = {
+    id?: SortOrder
+    runId?: SortOrder
+    assetSymbol?: SortOrder
+    seed?: SortOrder
+    agents?: SortOrder
+    steps?: SortOrder
+    label?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    run?: SimulationRunOrderByWithRelationInput
+    agentDecisions?: AgentDecisionOrderByRelationAggregateInput
+    agentInfoStates?: AgentInfoStateOrderByRelationAggregateInput
+    agentStates?: AgentStateOrderByRelationAggregateInput
+    agentExperiences?: AgentExperienceOrderByRelationAggregateInput
+    crowdMetrics?: CrowdMetricsOrderByRelationAggregateInput
+    agentRewards?: AgentRewardOrderByRelationAggregateInput
+    backtestResults?: BacktestResultOrderByRelationAggregateInput
+    summary?: RunVariantSummaryOrderByWithRelationInput
+  }
+
+  export type RunVariantWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    runId_assetSymbol_seed_label?: RunVariantRunIdAssetSymbolSeedLabelCompoundUniqueInput
+    AND?: RunVariantWhereInput | RunVariantWhereInput[]
+    OR?: RunVariantWhereInput[]
+    NOT?: RunVariantWhereInput | RunVariantWhereInput[]
+    runId?: UuidFilter<"RunVariant"> | string
+    assetSymbol?: StringFilter<"RunVariant"> | string
+    seed?: IntFilter<"RunVariant"> | number
+    agents?: IntFilter<"RunVariant"> | number
+    steps?: IntFilter<"RunVariant"> | number
+    label?: StringNullableFilter<"RunVariant"> | string | null
+    createdAt?: DateTimeFilter<"RunVariant"> | Date | string
+    run?: XOR<SimulationRunRelationFilter, SimulationRunWhereInput>
+    agentDecisions?: AgentDecisionListRelationFilter
+    agentInfoStates?: AgentInfoStateListRelationFilter
+    agentStates?: AgentStateListRelationFilter
+    agentExperiences?: AgentExperienceListRelationFilter
+    crowdMetrics?: CrowdMetricsListRelationFilter
+    agentRewards?: AgentRewardListRelationFilter
+    backtestResults?: BacktestResultListRelationFilter
+    summary?: XOR<RunVariantSummaryNullableRelationFilter, RunVariantSummaryWhereInput> | null
+  }, "id" | "runId_assetSymbol_seed_label">
+
+  export type RunVariantOrderByWithAggregationInput = {
+    id?: SortOrder
+    runId?: SortOrder
+    assetSymbol?: SortOrder
+    seed?: SortOrder
+    agents?: SortOrder
+    steps?: SortOrder
+    label?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: RunVariantCountOrderByAggregateInput
+    _avg?: RunVariantAvgOrderByAggregateInput
+    _max?: RunVariantMaxOrderByAggregateInput
+    _min?: RunVariantMinOrderByAggregateInput
+    _sum?: RunVariantSumOrderByAggregateInput
+  }
+
+  export type RunVariantScalarWhereWithAggregatesInput = {
+    AND?: RunVariantScalarWhereWithAggregatesInput | RunVariantScalarWhereWithAggregatesInput[]
+    OR?: RunVariantScalarWhereWithAggregatesInput[]
+    NOT?: RunVariantScalarWhereWithAggregatesInput | RunVariantScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"RunVariant"> | string
+    runId?: UuidWithAggregatesFilter<"RunVariant"> | string
+    assetSymbol?: StringWithAggregatesFilter<"RunVariant"> | string
+    seed?: IntWithAggregatesFilter<"RunVariant"> | number
+    agents?: IntWithAggregatesFilter<"RunVariant"> | number
+    steps?: IntWithAggregatesFilter<"RunVariant"> | number
+    label?: StringNullableWithAggregatesFilter<"RunVariant"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"RunVariant"> | Date | string
+  }
+
+  export type RunVariantSummaryWhereInput = {
+    AND?: RunVariantSummaryWhereInput | RunVariantSummaryWhereInput[]
+    OR?: RunVariantSummaryWhereInput[]
+    NOT?: RunVariantSummaryWhereInput | RunVariantSummaryWhereInput[]
+    id?: UuidFilter<"RunVariantSummary"> | string
+    runVariantId?: UuidFilter<"RunVariantSummary"> | string
+    corr?: FloatFilter<"RunVariantSummary"> | number
+    directionalAccuracy?: FloatFilter<"RunVariantSummary"> | number
+    pairsCount?: IntFilter<"RunVariantSummary"> | number
+    computedAt?: DateTimeFilter<"RunVariantSummary"> | Date | string
+    debugDecisionCounts?: JsonNullableFilter<"RunVariantSummary">
+    debugPairsSample?: JsonNullableFilter<"RunVariantSummary">
+    debugDecisionsHash?: StringNullableFilter<"RunVariantSummary"> | string | null
+    debugReturnsHash?: StringNullableFilter<"RunVariantSummary"> | string | null
+    runVariant?: XOR<RunVariantRelationFilter, RunVariantWhereInput>
+  }
+
+  export type RunVariantSummaryOrderByWithRelationInput = {
+    id?: SortOrder
+    runVariantId?: SortOrder
+    corr?: SortOrder
+    directionalAccuracy?: SortOrder
+    pairsCount?: SortOrder
+    computedAt?: SortOrder
+    debugDecisionCounts?: SortOrderInput | SortOrder
+    debugPairsSample?: SortOrderInput | SortOrder
+    debugDecisionsHash?: SortOrderInput | SortOrder
+    debugReturnsHash?: SortOrderInput | SortOrder
+    runVariant?: RunVariantOrderByWithRelationInput
+  }
+
+  export type RunVariantSummaryWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    runVariantId?: string
+    AND?: RunVariantSummaryWhereInput | RunVariantSummaryWhereInput[]
+    OR?: RunVariantSummaryWhereInput[]
+    NOT?: RunVariantSummaryWhereInput | RunVariantSummaryWhereInput[]
+    corr?: FloatFilter<"RunVariantSummary"> | number
+    directionalAccuracy?: FloatFilter<"RunVariantSummary"> | number
+    pairsCount?: IntFilter<"RunVariantSummary"> | number
+    computedAt?: DateTimeFilter<"RunVariantSummary"> | Date | string
+    debugDecisionCounts?: JsonNullableFilter<"RunVariantSummary">
+    debugPairsSample?: JsonNullableFilter<"RunVariantSummary">
+    debugDecisionsHash?: StringNullableFilter<"RunVariantSummary"> | string | null
+    debugReturnsHash?: StringNullableFilter<"RunVariantSummary"> | string | null
+    runVariant?: XOR<RunVariantRelationFilter, RunVariantWhereInput>
+  }, "id" | "runVariantId">
+
+  export type RunVariantSummaryOrderByWithAggregationInput = {
+    id?: SortOrder
+    runVariantId?: SortOrder
+    corr?: SortOrder
+    directionalAccuracy?: SortOrder
+    pairsCount?: SortOrder
+    computedAt?: SortOrder
+    debugDecisionCounts?: SortOrderInput | SortOrder
+    debugPairsSample?: SortOrderInput | SortOrder
+    debugDecisionsHash?: SortOrderInput | SortOrder
+    debugReturnsHash?: SortOrderInput | SortOrder
+    _count?: RunVariantSummaryCountOrderByAggregateInput
+    _avg?: RunVariantSummaryAvgOrderByAggregateInput
+    _max?: RunVariantSummaryMaxOrderByAggregateInput
+    _min?: RunVariantSummaryMinOrderByAggregateInput
+    _sum?: RunVariantSummarySumOrderByAggregateInput
+  }
+
+  export type RunVariantSummaryScalarWhereWithAggregatesInput = {
+    AND?: RunVariantSummaryScalarWhereWithAggregatesInput | RunVariantSummaryScalarWhereWithAggregatesInput[]
+    OR?: RunVariantSummaryScalarWhereWithAggregatesInput[]
+    NOT?: RunVariantSummaryScalarWhereWithAggregatesInput | RunVariantSummaryScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"RunVariantSummary"> | string
+    runVariantId?: UuidWithAggregatesFilter<"RunVariantSummary"> | string
+    corr?: FloatWithAggregatesFilter<"RunVariantSummary"> | number
+    directionalAccuracy?: FloatWithAggregatesFilter<"RunVariantSummary"> | number
+    pairsCount?: IntWithAggregatesFilter<"RunVariantSummary"> | number
+    computedAt?: DateTimeWithAggregatesFilter<"RunVariantSummary"> | Date | string
+    debugDecisionCounts?: JsonNullableWithAggregatesFilter<"RunVariantSummary">
+    debugPairsSample?: JsonNullableWithAggregatesFilter<"RunVariantSummary">
+    debugDecisionsHash?: StringNullableWithAggregatesFilter<"RunVariantSummary"> | string | null
+    debugReturnsHash?: StringNullableWithAggregatesFilter<"RunVariantSummary"> | string | null
   }
 
   export type RunAgentWhereInput = {
@@ -32142,6 +35175,7 @@ export namespace Prisma {
     NOT?: AgentDecisionWhereInput | AgentDecisionWhereInput[]
     id?: UuidFilter<"AgentDecision"> | string
     runId?: UuidFilter<"AgentDecision"> | string
+    runVariantId?: UuidNullableFilter<"AgentDecision"> | string | null
     step?: IntFilter<"AgentDecision"> | number
     agentId?: UuidFilter<"AgentDecision"> | string
     assetSymbol?: StringFilter<"AgentDecision"> | string
@@ -32150,12 +35184,14 @@ export namespace Prisma {
     rationale?: StringNullableFilter<"AgentDecision"> | string | null
     createdAt?: DateTimeFilter<"AgentDecision"> | Date | string
     run?: XOR<SimulationRunRelationFilter, SimulationRunWhereInput>
+    runVariant?: XOR<RunVariantNullableRelationFilter, RunVariantWhereInput> | null
     agent?: XOR<RunAgentRelationFilter, RunAgentWhereInput>
   }
 
   export type AgentDecisionOrderByWithRelationInput = {
     id?: SortOrder
     runId?: SortOrder
+    runVariantId?: SortOrderInput | SortOrder
     step?: SortOrder
     agentId?: SortOrder
     assetSymbol?: SortOrder
@@ -32164,16 +35200,18 @@ export namespace Prisma {
     rationale?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     run?: SimulationRunOrderByWithRelationInput
+    runVariant?: RunVariantOrderByWithRelationInput
     agent?: RunAgentOrderByWithRelationInput
   }
 
   export type AgentDecisionWhereUniqueInput = Prisma.AtLeast<{
     id?: string
-    runId_step_agentId_assetSymbol?: AgentDecisionRunIdStepAgentIdAssetSymbolCompoundUniqueInput
+    runId_step_agentId_assetSymbol_runVariantId?: AgentDecisionRunIdStepAgentIdAssetSymbolRunVariantIdCompoundUniqueInput
     AND?: AgentDecisionWhereInput | AgentDecisionWhereInput[]
     OR?: AgentDecisionWhereInput[]
     NOT?: AgentDecisionWhereInput | AgentDecisionWhereInput[]
     runId?: UuidFilter<"AgentDecision"> | string
+    runVariantId?: UuidNullableFilter<"AgentDecision"> | string | null
     step?: IntFilter<"AgentDecision"> | number
     agentId?: UuidFilter<"AgentDecision"> | string
     assetSymbol?: StringFilter<"AgentDecision"> | string
@@ -32182,12 +35220,14 @@ export namespace Prisma {
     rationale?: StringNullableFilter<"AgentDecision"> | string | null
     createdAt?: DateTimeFilter<"AgentDecision"> | Date | string
     run?: XOR<SimulationRunRelationFilter, SimulationRunWhereInput>
+    runVariant?: XOR<RunVariantNullableRelationFilter, RunVariantWhereInput> | null
     agent?: XOR<RunAgentRelationFilter, RunAgentWhereInput>
-  }, "id" | "runId_step_agentId_assetSymbol">
+  }, "id" | "runId_step_agentId_assetSymbol_runVariantId">
 
   export type AgentDecisionOrderByWithAggregationInput = {
     id?: SortOrder
     runId?: SortOrder
+    runVariantId?: SortOrderInput | SortOrder
     step?: SortOrder
     agentId?: SortOrder
     assetSymbol?: SortOrder
@@ -32208,6 +35248,7 @@ export namespace Prisma {
     NOT?: AgentDecisionScalarWhereWithAggregatesInput | AgentDecisionScalarWhereWithAggregatesInput[]
     id?: UuidWithAggregatesFilter<"AgentDecision"> | string
     runId?: UuidWithAggregatesFilter<"AgentDecision"> | string
+    runVariantId?: UuidNullableWithAggregatesFilter<"AgentDecision"> | string | null
     step?: IntWithAggregatesFilter<"AgentDecision"> | number
     agentId?: UuidWithAggregatesFilter<"AgentDecision"> | string
     assetSymbol?: StringWithAggregatesFilter<"AgentDecision"> | string
@@ -32223,6 +35264,7 @@ export namespace Prisma {
     NOT?: CrowdMetricsWhereInput | CrowdMetricsWhereInput[]
     id?: UuidFilter<"CrowdMetrics"> | string
     runId?: UuidFilter<"CrowdMetrics"> | string
+    runVariantId?: UuidNullableFilter<"CrowdMetrics"> | string | null
     assetSymbol?: StringFilter<"CrowdMetrics"> | string
     step?: IntFilter<"CrowdMetrics"> | number
     signal?: FloatFilter<"CrowdMetrics"> | number
@@ -32239,11 +35281,13 @@ export namespace Prisma {
     noiseSensitivity?: FloatNullableFilter<"CrowdMetrics"> | number | null
     createdAt?: DateTimeFilter<"CrowdMetrics"> | Date | string
     run?: XOR<SimulationRunRelationFilter, SimulationRunWhereInput>
+    runVariant?: XOR<RunVariantNullableRelationFilter, RunVariantWhereInput> | null
   }
 
   export type CrowdMetricsOrderByWithRelationInput = {
     id?: SortOrder
     runId?: SortOrder
+    runVariantId?: SortOrderInput | SortOrder
     assetSymbol?: SortOrder
     step?: SortOrder
     signal?: SortOrder
@@ -32260,15 +35304,17 @@ export namespace Prisma {
     noiseSensitivity?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     run?: SimulationRunOrderByWithRelationInput
+    runVariant?: RunVariantOrderByWithRelationInput
   }
 
   export type CrowdMetricsWhereUniqueInput = Prisma.AtLeast<{
     id?: string
-    runId_assetSymbol_step?: CrowdMetricsRunIdAssetSymbolStepCompoundUniqueInput
+    runId_assetSymbol_step_runVariantId?: CrowdMetricsRunIdAssetSymbolStepRunVariantIdCompoundUniqueInput
     AND?: CrowdMetricsWhereInput | CrowdMetricsWhereInput[]
     OR?: CrowdMetricsWhereInput[]
     NOT?: CrowdMetricsWhereInput | CrowdMetricsWhereInput[]
     runId?: UuidFilter<"CrowdMetrics"> | string
+    runVariantId?: UuidNullableFilter<"CrowdMetrics"> | string | null
     assetSymbol?: StringFilter<"CrowdMetrics"> | string
     step?: IntFilter<"CrowdMetrics"> | number
     signal?: FloatFilter<"CrowdMetrics"> | number
@@ -32285,11 +35331,13 @@ export namespace Prisma {
     noiseSensitivity?: FloatNullableFilter<"CrowdMetrics"> | number | null
     createdAt?: DateTimeFilter<"CrowdMetrics"> | Date | string
     run?: XOR<SimulationRunRelationFilter, SimulationRunWhereInput>
-  }, "id" | "runId_assetSymbol_step">
+    runVariant?: XOR<RunVariantNullableRelationFilter, RunVariantWhereInput> | null
+  }, "id" | "runId_assetSymbol_step_runVariantId">
 
   export type CrowdMetricsOrderByWithAggregationInput = {
     id?: SortOrder
     runId?: SortOrder
+    runVariantId?: SortOrderInput | SortOrder
     assetSymbol?: SortOrder
     step?: SortOrder
     signal?: SortOrder
@@ -32318,6 +35366,7 @@ export namespace Prisma {
     NOT?: CrowdMetricsScalarWhereWithAggregatesInput | CrowdMetricsScalarWhereWithAggregatesInput[]
     id?: UuidWithAggregatesFilter<"CrowdMetrics"> | string
     runId?: UuidWithAggregatesFilter<"CrowdMetrics"> | string
+    runVariantId?: UuidNullableWithAggregatesFilter<"CrowdMetrics"> | string | null
     assetSymbol?: StringWithAggregatesFilter<"CrowdMetrics"> | string
     step?: IntWithAggregatesFilter<"CrowdMetrics"> | number
     signal?: FloatWithAggregatesFilter<"CrowdMetrics"> | number
@@ -32404,6 +35453,7 @@ export namespace Prisma {
     NOT?: AgentRewardWhereInput | AgentRewardWhereInput[]
     id?: UuidFilter<"AgentReward"> | string
     runId?: UuidFilter<"AgentReward"> | string
+    runVariantId?: UuidNullableFilter<"AgentReward"> | string | null
     agentId?: UuidFilter<"AgentReward"> | string
     assetSymbol?: StringFilter<"AgentReward"> | string
     step?: IntFilter<"AgentReward"> | number
@@ -32415,12 +35465,14 @@ export namespace Prisma {
     rewardScore?: FloatFilter<"AgentReward"> | number
     createdAt?: DateTimeFilter<"AgentReward"> | Date | string
     run?: XOR<SimulationRunRelationFilter, SimulationRunWhereInput>
+    runVariant?: XOR<RunVariantNullableRelationFilter, RunVariantWhereInput> | null
     agent?: XOR<RunAgentRelationFilter, RunAgentWhereInput>
   }
 
   export type AgentRewardOrderByWithRelationInput = {
     id?: SortOrder
     runId?: SortOrder
+    runVariantId?: SortOrderInput | SortOrder
     agentId?: SortOrder
     assetSymbol?: SortOrder
     step?: SortOrder
@@ -32432,16 +35484,18 @@ export namespace Prisma {
     rewardScore?: SortOrder
     createdAt?: SortOrder
     run?: SimulationRunOrderByWithRelationInput
+    runVariant?: RunVariantOrderByWithRelationInput
     agent?: RunAgentOrderByWithRelationInput
   }
 
   export type AgentRewardWhereUniqueInput = Prisma.AtLeast<{
     id?: string
-    runId_agentId_assetSymbol_step?: AgentRewardRunIdAgentIdAssetSymbolStepCompoundUniqueInput
+    runId_agentId_assetSymbol_step_runVariantId?: AgentRewardRunIdAgentIdAssetSymbolStepRunVariantIdCompoundUniqueInput
     AND?: AgentRewardWhereInput | AgentRewardWhereInput[]
     OR?: AgentRewardWhereInput[]
     NOT?: AgentRewardWhereInput | AgentRewardWhereInput[]
     runId?: UuidFilter<"AgentReward"> | string
+    runVariantId?: UuidNullableFilter<"AgentReward"> | string | null
     agentId?: UuidFilter<"AgentReward"> | string
     assetSymbol?: StringFilter<"AgentReward"> | string
     step?: IntFilter<"AgentReward"> | number
@@ -32453,12 +35507,14 @@ export namespace Prisma {
     rewardScore?: FloatFilter<"AgentReward"> | number
     createdAt?: DateTimeFilter<"AgentReward"> | Date | string
     run?: XOR<SimulationRunRelationFilter, SimulationRunWhereInput>
+    runVariant?: XOR<RunVariantNullableRelationFilter, RunVariantWhereInput> | null
     agent?: XOR<RunAgentRelationFilter, RunAgentWhereInput>
-  }, "id" | "runId_agentId_assetSymbol_step">
+  }, "id" | "runId_agentId_assetSymbol_step_runVariantId">
 
   export type AgentRewardOrderByWithAggregationInput = {
     id?: SortOrder
     runId?: SortOrder
+    runVariantId?: SortOrderInput | SortOrder
     agentId?: SortOrder
     assetSymbol?: SortOrder
     step?: SortOrder
@@ -32482,6 +35538,7 @@ export namespace Prisma {
     NOT?: AgentRewardScalarWhereWithAggregatesInput | AgentRewardScalarWhereWithAggregatesInput[]
     id?: UuidWithAggregatesFilter<"AgentReward"> | string
     runId?: UuidWithAggregatesFilter<"AgentReward"> | string
+    runVariantId?: UuidNullableWithAggregatesFilter<"AgentReward"> | string | null
     agentId?: UuidWithAggregatesFilter<"AgentReward"> | string
     assetSymbol?: StringWithAggregatesFilter<"AgentReward"> | string
     step?: IntWithAggregatesFilter<"AgentReward"> | number
@@ -32587,6 +35644,7 @@ export namespace Prisma {
     NOT?: AgentInfoStateWhereInput | AgentInfoStateWhereInput[]
     id?: UuidFilter<"AgentInfoState"> | string
     runId?: UuidFilter<"AgentInfoState"> | string
+    runVariantId?: UuidNullableFilter<"AgentInfoState"> | string | null
     assetSymbol?: StringFilter<"AgentInfoState"> | string
     agentId?: UuidFilter<"AgentInfoState"> | string
     step?: IntFilter<"AgentInfoState"> | number
@@ -32598,12 +35656,14 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"AgentInfoState"> | Date | string
     updatedAt?: DateTimeFilter<"AgentInfoState"> | Date | string
     run?: XOR<SimulationRunRelationFilter, SimulationRunWhereInput>
+    runVariant?: XOR<RunVariantNullableRelationFilter, RunVariantWhereInput> | null
     agent?: XOR<RunAgentRelationFilter, RunAgentWhereInput>
   }
 
   export type AgentInfoStateOrderByWithRelationInput = {
     id?: SortOrder
     runId?: SortOrder
+    runVariantId?: SortOrderInput | SortOrder
     assetSymbol?: SortOrder
     agentId?: SortOrder
     step?: SortOrder
@@ -32615,16 +35675,18 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     run?: SimulationRunOrderByWithRelationInput
+    runVariant?: RunVariantOrderByWithRelationInput
     agent?: RunAgentOrderByWithRelationInput
   }
 
   export type AgentInfoStateWhereUniqueInput = Prisma.AtLeast<{
     id?: string
-    runId_assetSymbol_agentId_step?: AgentInfoStateRunIdAssetSymbolAgentIdStepCompoundUniqueInput
+    runId_assetSymbol_agentId_step_runVariantId?: AgentInfoStateRunIdAssetSymbolAgentIdStepRunVariantIdCompoundUniqueInput
     AND?: AgentInfoStateWhereInput | AgentInfoStateWhereInput[]
     OR?: AgentInfoStateWhereInput[]
     NOT?: AgentInfoStateWhereInput | AgentInfoStateWhereInput[]
     runId?: UuidFilter<"AgentInfoState"> | string
+    runVariantId?: UuidNullableFilter<"AgentInfoState"> | string | null
     assetSymbol?: StringFilter<"AgentInfoState"> | string
     agentId?: UuidFilter<"AgentInfoState"> | string
     step?: IntFilter<"AgentInfoState"> | number
@@ -32636,12 +35698,14 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"AgentInfoState"> | Date | string
     updatedAt?: DateTimeFilter<"AgentInfoState"> | Date | string
     run?: XOR<SimulationRunRelationFilter, SimulationRunWhereInput>
+    runVariant?: XOR<RunVariantNullableRelationFilter, RunVariantWhereInput> | null
     agent?: XOR<RunAgentRelationFilter, RunAgentWhereInput>
-  }, "id" | "runId_assetSymbol_agentId_step">
+  }, "id" | "runId_assetSymbol_agentId_step_runVariantId">
 
   export type AgentInfoStateOrderByWithAggregationInput = {
     id?: SortOrder
     runId?: SortOrder
+    runVariantId?: SortOrderInput | SortOrder
     assetSymbol?: SortOrder
     agentId?: SortOrder
     step?: SortOrder
@@ -32665,6 +35729,7 @@ export namespace Prisma {
     NOT?: AgentInfoStateScalarWhereWithAggregatesInput | AgentInfoStateScalarWhereWithAggregatesInput[]
     id?: UuidWithAggregatesFilter<"AgentInfoState"> | string
     runId?: UuidWithAggregatesFilter<"AgentInfoState"> | string
+    runVariantId?: UuidNullableWithAggregatesFilter<"AgentInfoState"> | string | null
     assetSymbol?: StringWithAggregatesFilter<"AgentInfoState"> | string
     agentId?: UuidWithAggregatesFilter<"AgentInfoState"> | string
     step?: IntWithAggregatesFilter<"AgentInfoState"> | number
@@ -32683,6 +35748,7 @@ export namespace Prisma {
     NOT?: AgentStateWhereInput | AgentStateWhereInput[]
     id?: UuidFilter<"AgentState"> | string
     runId?: UuidFilter<"AgentState"> | string
+    runVariantId?: UuidNullableFilter<"AgentState"> | string | null
     assetSymbol?: StringFilter<"AgentState"> | string
     agentId?: UuidFilter<"AgentState"> | string
     step?: IntFilter<"AgentState"> | number
@@ -32694,12 +35760,14 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"AgentState"> | Date | string
     updatedAt?: DateTimeFilter<"AgentState"> | Date | string
     run?: XOR<SimulationRunRelationFilter, SimulationRunWhereInput>
+    runVariant?: XOR<RunVariantNullableRelationFilter, RunVariantWhereInput> | null
     agent?: XOR<RunAgentRelationFilter, RunAgentWhereInput>
   }
 
   export type AgentStateOrderByWithRelationInput = {
     id?: SortOrder
     runId?: SortOrder
+    runVariantId?: SortOrderInput | SortOrder
     assetSymbol?: SortOrder
     agentId?: SortOrder
     step?: SortOrder
@@ -32711,16 +35779,18 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     run?: SimulationRunOrderByWithRelationInput
+    runVariant?: RunVariantOrderByWithRelationInput
     agent?: RunAgentOrderByWithRelationInput
   }
 
   export type AgentStateWhereUniqueInput = Prisma.AtLeast<{
     id?: string
-    runId_assetSymbol_agentId_step?: AgentStateRunIdAssetSymbolAgentIdStepCompoundUniqueInput
+    runId_assetSymbol_agentId_step_runVariantId?: AgentStateRunIdAssetSymbolAgentIdStepRunVariantIdCompoundUniqueInput
     AND?: AgentStateWhereInput | AgentStateWhereInput[]
     OR?: AgentStateWhereInput[]
     NOT?: AgentStateWhereInput | AgentStateWhereInput[]
     runId?: UuidFilter<"AgentState"> | string
+    runVariantId?: UuidNullableFilter<"AgentState"> | string | null
     assetSymbol?: StringFilter<"AgentState"> | string
     agentId?: UuidFilter<"AgentState"> | string
     step?: IntFilter<"AgentState"> | number
@@ -32732,12 +35802,14 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"AgentState"> | Date | string
     updatedAt?: DateTimeFilter<"AgentState"> | Date | string
     run?: XOR<SimulationRunRelationFilter, SimulationRunWhereInput>
+    runVariant?: XOR<RunVariantNullableRelationFilter, RunVariantWhereInput> | null
     agent?: XOR<RunAgentRelationFilter, RunAgentWhereInput>
-  }, "id" | "runId_assetSymbol_agentId_step">
+  }, "id" | "runId_assetSymbol_agentId_step_runVariantId">
 
   export type AgentStateOrderByWithAggregationInput = {
     id?: SortOrder
     runId?: SortOrder
+    runVariantId?: SortOrderInput | SortOrder
     assetSymbol?: SortOrder
     agentId?: SortOrder
     step?: SortOrder
@@ -32761,6 +35833,7 @@ export namespace Prisma {
     NOT?: AgentStateScalarWhereWithAggregatesInput | AgentStateScalarWhereWithAggregatesInput[]
     id?: UuidWithAggregatesFilter<"AgentState"> | string
     runId?: UuidWithAggregatesFilter<"AgentState"> | string
+    runVariantId?: UuidNullableWithAggregatesFilter<"AgentState"> | string | null
     assetSymbol?: StringWithAggregatesFilter<"AgentState"> | string
     agentId?: UuidWithAggregatesFilter<"AgentState"> | string
     step?: IntWithAggregatesFilter<"AgentState"> | number
@@ -32887,6 +35960,7 @@ export namespace Prisma {
     NOT?: AgentExperienceWhereInput | AgentExperienceWhereInput[]
     id?: UuidFilter<"AgentExperience"> | string
     runId?: UuidFilter<"AgentExperience"> | string
+    runVariantId?: UuidNullableFilter<"AgentExperience"> | string | null
     runAgentId?: UuidFilter<"AgentExperience"> | string
     step?: IntFilter<"AgentExperience"> | number
     ts?: DateTimeFilter<"AgentExperience"> | Date | string
@@ -32899,12 +35973,14 @@ export namespace Prisma {
     stateBeforeJson?: JsonNullableFilter<"AgentExperience">
     stateAfterJson?: JsonNullableFilter<"AgentExperience">
     run?: XOR<SimulationRunRelationFilter, SimulationRunWhereInput>
+    runVariant?: XOR<RunVariantNullableRelationFilter, RunVariantWhereInput> | null
     runAgent?: XOR<RunAgentRelationFilter, RunAgentWhereInput>
   }
 
   export type AgentExperienceOrderByWithRelationInput = {
     id?: SortOrder
     runId?: SortOrder
+    runVariantId?: SortOrderInput | SortOrder
     runAgentId?: SortOrder
     step?: SortOrder
     ts?: SortOrder
@@ -32917,15 +35993,18 @@ export namespace Prisma {
     stateBeforeJson?: SortOrderInput | SortOrder
     stateAfterJson?: SortOrderInput | SortOrder
     run?: SimulationRunOrderByWithRelationInput
+    runVariant?: RunVariantOrderByWithRelationInput
     runAgent?: RunAgentOrderByWithRelationInput
   }
 
   export type AgentExperienceWhereUniqueInput = Prisma.AtLeast<{
     id?: string
+    runId_runAgentId_step_runVariantId?: AgentExperienceRunIdRunAgentIdStepRunVariantIdCompoundUniqueInput
     AND?: AgentExperienceWhereInput | AgentExperienceWhereInput[]
     OR?: AgentExperienceWhereInput[]
     NOT?: AgentExperienceWhereInput | AgentExperienceWhereInput[]
     runId?: UuidFilter<"AgentExperience"> | string
+    runVariantId?: UuidNullableFilter<"AgentExperience"> | string | null
     runAgentId?: UuidFilter<"AgentExperience"> | string
     step?: IntFilter<"AgentExperience"> | number
     ts?: DateTimeFilter<"AgentExperience"> | Date | string
@@ -32938,12 +36017,14 @@ export namespace Prisma {
     stateBeforeJson?: JsonNullableFilter<"AgentExperience">
     stateAfterJson?: JsonNullableFilter<"AgentExperience">
     run?: XOR<SimulationRunRelationFilter, SimulationRunWhereInput>
+    runVariant?: XOR<RunVariantNullableRelationFilter, RunVariantWhereInput> | null
     runAgent?: XOR<RunAgentRelationFilter, RunAgentWhereInput>
-  }, "id">
+  }, "id" | "runId_runAgentId_step_runVariantId">
 
   export type AgentExperienceOrderByWithAggregationInput = {
     id?: SortOrder
     runId?: SortOrder
+    runVariantId?: SortOrderInput | SortOrder
     runAgentId?: SortOrder
     step?: SortOrder
     ts?: SortOrder
@@ -32968,6 +36049,7 @@ export namespace Prisma {
     NOT?: AgentExperienceScalarWhereWithAggregatesInput | AgentExperienceScalarWhereWithAggregatesInput[]
     id?: UuidWithAggregatesFilter<"AgentExperience"> | string
     runId?: UuidWithAggregatesFilter<"AgentExperience"> | string
+    runVariantId?: UuidNullableWithAggregatesFilter<"AgentExperience"> | string | null
     runAgentId?: UuidWithAggregatesFilter<"AgentExperience"> | string
     step?: IntWithAggregatesFilter<"AgentExperience"> | number
     ts?: DateTimeWithAggregatesFilter<"AgentExperience"> | Date | string
@@ -33552,25 +36634,31 @@ export namespace Prisma {
     NOT?: BacktestResultWhereInput | BacktestResultWhereInput[]
     id?: UuidFilter<"BacktestResult"> | string
     runId?: UuidFilter<"BacktestResult"> | string
+    runVariantId?: UuidNullableFilter<"BacktestResult"> | string | null
     assetSymbol?: StringFilter<"BacktestResult"> | string
     seed?: IntFilter<"BacktestResult"> | number
     steps?: IntFilter<"BacktestResult"> | number
     agents?: IntFilter<"BacktestResult"> | number
+    pairsCount?: IntNullableFilter<"BacktestResult"> | number | null
     corr?: FloatNullableFilter<"BacktestResult"> | number | null
     directionalAccuracy?: FloatNullableFilter<"BacktestResult"> | number | null
     createdAt?: DateTimeFilter<"BacktestResult"> | Date | string
+    runVariant?: XOR<RunVariantNullableRelationFilter, RunVariantWhereInput> | null
   }
 
   export type BacktestResultOrderByWithRelationInput = {
     id?: SortOrder
     runId?: SortOrder
+    runVariantId?: SortOrderInput | SortOrder
     assetSymbol?: SortOrder
     seed?: SortOrder
     steps?: SortOrder
     agents?: SortOrder
+    pairsCount?: SortOrderInput | SortOrder
     corr?: SortOrderInput | SortOrder
     directionalAccuracy?: SortOrderInput | SortOrder
     createdAt?: SortOrder
+    runVariant?: RunVariantOrderByWithRelationInput
   }
 
   export type BacktestResultWhereUniqueInput = Prisma.AtLeast<{
@@ -33579,22 +36667,27 @@ export namespace Prisma {
     OR?: BacktestResultWhereInput[]
     NOT?: BacktestResultWhereInput | BacktestResultWhereInput[]
     runId?: UuidFilter<"BacktestResult"> | string
+    runVariantId?: UuidNullableFilter<"BacktestResult"> | string | null
     assetSymbol?: StringFilter<"BacktestResult"> | string
     seed?: IntFilter<"BacktestResult"> | number
     steps?: IntFilter<"BacktestResult"> | number
     agents?: IntFilter<"BacktestResult"> | number
+    pairsCount?: IntNullableFilter<"BacktestResult"> | number | null
     corr?: FloatNullableFilter<"BacktestResult"> | number | null
     directionalAccuracy?: FloatNullableFilter<"BacktestResult"> | number | null
     createdAt?: DateTimeFilter<"BacktestResult"> | Date | string
+    runVariant?: XOR<RunVariantNullableRelationFilter, RunVariantWhereInput> | null
   }, "id">
 
   export type BacktestResultOrderByWithAggregationInput = {
     id?: SortOrder
     runId?: SortOrder
+    runVariantId?: SortOrderInput | SortOrder
     assetSymbol?: SortOrder
     seed?: SortOrder
     steps?: SortOrder
     agents?: SortOrder
+    pairsCount?: SortOrderInput | SortOrder
     corr?: SortOrderInput | SortOrder
     directionalAccuracy?: SortOrderInput | SortOrder
     createdAt?: SortOrder
@@ -33611,10 +36704,12 @@ export namespace Prisma {
     NOT?: BacktestResultScalarWhereWithAggregatesInput | BacktestResultScalarWhereWithAggregatesInput[]
     id?: UuidWithAggregatesFilter<"BacktestResult"> | string
     runId?: UuidWithAggregatesFilter<"BacktestResult"> | string
+    runVariantId?: UuidNullableWithAggregatesFilter<"BacktestResult"> | string | null
     assetSymbol?: StringWithAggregatesFilter<"BacktestResult"> | string
     seed?: IntWithAggregatesFilter<"BacktestResult"> | number
     steps?: IntWithAggregatesFilter<"BacktestResult"> | number
     agents?: IntWithAggregatesFilter<"BacktestResult"> | number
+    pairsCount?: IntNullableWithAggregatesFilter<"BacktestResult"> | number | null
     corr?: FloatNullableWithAggregatesFilter<"BacktestResult"> | number | null
     directionalAccuracy?: FloatNullableWithAggregatesFilter<"BacktestResult"> | number | null
     createdAt?: DateTimeWithAggregatesFilter<"BacktestResult"> | Date | string
@@ -33950,6 +37045,7 @@ export namespace Prisma {
     agentStates?: AgentStateCreateNestedManyWithoutRunInput
     assetStepReturns?: AssetStepReturnCreateNestedManyWithoutRunInput
     agentRewards?: AgentRewardCreateNestedManyWithoutRunInput
+    runVariants?: RunVariantCreateNestedManyWithoutRunInput
   }
 
   export type SimulationRunUncheckedCreateInput = {
@@ -33979,6 +37075,7 @@ export namespace Prisma {
     agentStates?: AgentStateUncheckedCreateNestedManyWithoutRunInput
     assetStepReturns?: AssetStepReturnUncheckedCreateNestedManyWithoutRunInput
     agentRewards?: AgentRewardUncheckedCreateNestedManyWithoutRunInput
+    runVariants?: RunVariantUncheckedCreateNestedManyWithoutRunInput
   }
 
   export type SimulationRunUpdateInput = {
@@ -34008,6 +37105,7 @@ export namespace Prisma {
     agentStates?: AgentStateUpdateManyWithoutRunNestedInput
     assetStepReturns?: AssetStepReturnUpdateManyWithoutRunNestedInput
     agentRewards?: AgentRewardUpdateManyWithoutRunNestedInput
+    runVariants?: RunVariantUpdateManyWithoutRunNestedInput
   }
 
   export type SimulationRunUncheckedUpdateInput = {
@@ -34037,6 +37135,7 @@ export namespace Prisma {
     agentStates?: AgentStateUncheckedUpdateManyWithoutRunNestedInput
     assetStepReturns?: AssetStepReturnUncheckedUpdateManyWithoutRunNestedInput
     agentRewards?: AgentRewardUncheckedUpdateManyWithoutRunNestedInput
+    runVariants?: RunVariantUncheckedUpdateManyWithoutRunNestedInput
   }
 
   export type SimulationRunCreateManyInput = {
@@ -34085,6 +37184,204 @@ export namespace Prisma {
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RunVariantCreateInput = {
+    id?: string
+    assetSymbol: string
+    seed: number
+    agents: number
+    steps: number
+    label?: string | null
+    createdAt?: Date | string
+    run: SimulationRunCreateNestedOneWithoutRunVariantsInput
+    agentDecisions?: AgentDecisionCreateNestedManyWithoutRunVariantInput
+    agentInfoStates?: AgentInfoStateCreateNestedManyWithoutRunVariantInput
+    agentStates?: AgentStateCreateNestedManyWithoutRunVariantInput
+    agentExperiences?: AgentExperienceCreateNestedManyWithoutRunVariantInput
+    crowdMetrics?: CrowdMetricsCreateNestedManyWithoutRunVariantInput
+    agentRewards?: AgentRewardCreateNestedManyWithoutRunVariantInput
+    backtestResults?: BacktestResultCreateNestedManyWithoutRunVariantInput
+    summary?: RunVariantSummaryCreateNestedOneWithoutRunVariantInput
+  }
+
+  export type RunVariantUncheckedCreateInput = {
+    id?: string
+    runId: string
+    assetSymbol: string
+    seed: number
+    agents: number
+    steps: number
+    label?: string | null
+    createdAt?: Date | string
+    agentDecisions?: AgentDecisionUncheckedCreateNestedManyWithoutRunVariantInput
+    agentInfoStates?: AgentInfoStateUncheckedCreateNestedManyWithoutRunVariantInput
+    agentStates?: AgentStateUncheckedCreateNestedManyWithoutRunVariantInput
+    agentExperiences?: AgentExperienceUncheckedCreateNestedManyWithoutRunVariantInput
+    crowdMetrics?: CrowdMetricsUncheckedCreateNestedManyWithoutRunVariantInput
+    agentRewards?: AgentRewardUncheckedCreateNestedManyWithoutRunVariantInput
+    backtestResults?: BacktestResultUncheckedCreateNestedManyWithoutRunVariantInput
+    summary?: RunVariantSummaryUncheckedCreateNestedOneWithoutRunVariantInput
+  }
+
+  export type RunVariantUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    seed?: IntFieldUpdateOperationsInput | number
+    agents?: IntFieldUpdateOperationsInput | number
+    steps?: IntFieldUpdateOperationsInput | number
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    run?: SimulationRunUpdateOneRequiredWithoutRunVariantsNestedInput
+    agentDecisions?: AgentDecisionUpdateManyWithoutRunVariantNestedInput
+    agentInfoStates?: AgentInfoStateUpdateManyWithoutRunVariantNestedInput
+    agentStates?: AgentStateUpdateManyWithoutRunVariantNestedInput
+    agentExperiences?: AgentExperienceUpdateManyWithoutRunVariantNestedInput
+    crowdMetrics?: CrowdMetricsUpdateManyWithoutRunVariantNestedInput
+    agentRewards?: AgentRewardUpdateManyWithoutRunVariantNestedInput
+    backtestResults?: BacktestResultUpdateManyWithoutRunVariantNestedInput
+    summary?: RunVariantSummaryUpdateOneWithoutRunVariantNestedInput
+  }
+
+  export type RunVariantUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    seed?: IntFieldUpdateOperationsInput | number
+    agents?: IntFieldUpdateOperationsInput | number
+    steps?: IntFieldUpdateOperationsInput | number
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    agentDecisions?: AgentDecisionUncheckedUpdateManyWithoutRunVariantNestedInput
+    agentInfoStates?: AgentInfoStateUncheckedUpdateManyWithoutRunVariantNestedInput
+    agentStates?: AgentStateUncheckedUpdateManyWithoutRunVariantNestedInput
+    agentExperiences?: AgentExperienceUncheckedUpdateManyWithoutRunVariantNestedInput
+    crowdMetrics?: CrowdMetricsUncheckedUpdateManyWithoutRunVariantNestedInput
+    agentRewards?: AgentRewardUncheckedUpdateManyWithoutRunVariantNestedInput
+    backtestResults?: BacktestResultUncheckedUpdateManyWithoutRunVariantNestedInput
+    summary?: RunVariantSummaryUncheckedUpdateOneWithoutRunVariantNestedInput
+  }
+
+  export type RunVariantCreateManyInput = {
+    id?: string
+    runId: string
+    assetSymbol: string
+    seed: number
+    agents: number
+    steps: number
+    label?: string | null
+    createdAt?: Date | string
+  }
+
+  export type RunVariantUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    seed?: IntFieldUpdateOperationsInput | number
+    agents?: IntFieldUpdateOperationsInput | number
+    steps?: IntFieldUpdateOperationsInput | number
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RunVariantUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    seed?: IntFieldUpdateOperationsInput | number
+    agents?: IntFieldUpdateOperationsInput | number
+    steps?: IntFieldUpdateOperationsInput | number
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RunVariantSummaryCreateInput = {
+    id?: string
+    corr: number
+    directionalAccuracy: number
+    pairsCount: number
+    computedAt?: Date | string
+    debugDecisionCounts?: NullableJsonNullValueInput | InputJsonValue
+    debugPairsSample?: NullableJsonNullValueInput | InputJsonValue
+    debugDecisionsHash?: string | null
+    debugReturnsHash?: string | null
+    runVariant: RunVariantCreateNestedOneWithoutSummaryInput
+  }
+
+  export type RunVariantSummaryUncheckedCreateInput = {
+    id?: string
+    runVariantId: string
+    corr: number
+    directionalAccuracy: number
+    pairsCount: number
+    computedAt?: Date | string
+    debugDecisionCounts?: NullableJsonNullValueInput | InputJsonValue
+    debugPairsSample?: NullableJsonNullValueInput | InputJsonValue
+    debugDecisionsHash?: string | null
+    debugReturnsHash?: string | null
+  }
+
+  export type RunVariantSummaryUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    corr?: FloatFieldUpdateOperationsInput | number
+    directionalAccuracy?: FloatFieldUpdateOperationsInput | number
+    pairsCount?: IntFieldUpdateOperationsInput | number
+    computedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    debugDecisionCounts?: NullableJsonNullValueInput | InputJsonValue
+    debugPairsSample?: NullableJsonNullValueInput | InputJsonValue
+    debugDecisionsHash?: NullableStringFieldUpdateOperationsInput | string | null
+    debugReturnsHash?: NullableStringFieldUpdateOperationsInput | string | null
+    runVariant?: RunVariantUpdateOneRequiredWithoutSummaryNestedInput
+  }
+
+  export type RunVariantSummaryUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runVariantId?: StringFieldUpdateOperationsInput | string
+    corr?: FloatFieldUpdateOperationsInput | number
+    directionalAccuracy?: FloatFieldUpdateOperationsInput | number
+    pairsCount?: IntFieldUpdateOperationsInput | number
+    computedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    debugDecisionCounts?: NullableJsonNullValueInput | InputJsonValue
+    debugPairsSample?: NullableJsonNullValueInput | InputJsonValue
+    debugDecisionsHash?: NullableStringFieldUpdateOperationsInput | string | null
+    debugReturnsHash?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type RunVariantSummaryCreateManyInput = {
+    id?: string
+    runVariantId: string
+    corr: number
+    directionalAccuracy: number
+    pairsCount: number
+    computedAt?: Date | string
+    debugDecisionCounts?: NullableJsonNullValueInput | InputJsonValue
+    debugPairsSample?: NullableJsonNullValueInput | InputJsonValue
+    debugDecisionsHash?: string | null
+    debugReturnsHash?: string | null
+  }
+
+  export type RunVariantSummaryUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    corr?: FloatFieldUpdateOperationsInput | number
+    directionalAccuracy?: FloatFieldUpdateOperationsInput | number
+    pairsCount?: IntFieldUpdateOperationsInput | number
+    computedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    debugDecisionCounts?: NullableJsonNullValueInput | InputJsonValue
+    debugPairsSample?: NullableJsonNullValueInput | InputJsonValue
+    debugDecisionsHash?: NullableStringFieldUpdateOperationsInput | string | null
+    debugReturnsHash?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type RunVariantSummaryUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runVariantId?: StringFieldUpdateOperationsInput | string
+    corr?: FloatFieldUpdateOperationsInput | number
+    directionalAccuracy?: FloatFieldUpdateOperationsInput | number
+    pairsCount?: IntFieldUpdateOperationsInput | number
+    computedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    debugDecisionCounts?: NullableJsonNullValueInput | InputJsonValue
+    debugPairsSample?: NullableJsonNullValueInput | InputJsonValue
+    debugDecisionsHash?: NullableStringFieldUpdateOperationsInput | string | null
+    debugReturnsHash?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type RunAgentCreateInput = {
@@ -34258,12 +37555,14 @@ export namespace Prisma {
     rationale?: string | null
     createdAt?: Date | string
     run: SimulationRunCreateNestedOneWithoutAgentDecisionsInput
+    runVariant?: RunVariantCreateNestedOneWithoutAgentDecisionsInput
     agent: RunAgentCreateNestedOneWithoutDecisionsInput
   }
 
   export type AgentDecisionUncheckedCreateInput = {
     id?: string
     runId: string
+    runVariantId?: string | null
     step: number
     agentId: string
     assetSymbol?: string
@@ -34282,12 +37581,14 @@ export namespace Prisma {
     rationale?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     run?: SimulationRunUpdateOneRequiredWithoutAgentDecisionsNestedInput
+    runVariant?: RunVariantUpdateOneWithoutAgentDecisionsNestedInput
     agent?: RunAgentUpdateOneRequiredWithoutDecisionsNestedInput
   }
 
   export type AgentDecisionUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     runId?: StringFieldUpdateOperationsInput | string
+    runVariantId?: NullableStringFieldUpdateOperationsInput | string | null
     step?: IntFieldUpdateOperationsInput | number
     agentId?: StringFieldUpdateOperationsInput | string
     assetSymbol?: StringFieldUpdateOperationsInput | string
@@ -34300,6 +37601,7 @@ export namespace Prisma {
   export type AgentDecisionCreateManyInput = {
     id?: string
     runId: string
+    runVariantId?: string | null
     step: number
     agentId: string
     assetSymbol?: string
@@ -34322,6 +37624,7 @@ export namespace Prisma {
   export type AgentDecisionUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     runId?: StringFieldUpdateOperationsInput | string
+    runVariantId?: NullableStringFieldUpdateOperationsInput | string | null
     step?: IntFieldUpdateOperationsInput | number
     agentId?: StringFieldUpdateOperationsInput | string
     assetSymbol?: StringFieldUpdateOperationsInput | string
@@ -34349,11 +37652,13 @@ export namespace Prisma {
     noiseSensitivity?: number | null
     createdAt?: Date | string
     run: SimulationRunCreateNestedOneWithoutCrowdMetricsInput
+    runVariant?: RunVariantCreateNestedOneWithoutCrowdMetricsInput
   }
 
   export type CrowdMetricsUncheckedCreateInput = {
     id?: string
     runId: string
+    runVariantId?: string | null
     assetSymbol: string
     step: number
     signal: number
@@ -34389,11 +37694,13 @@ export namespace Prisma {
     noiseSensitivity?: NullableFloatFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     run?: SimulationRunUpdateOneRequiredWithoutCrowdMetricsNestedInput
+    runVariant?: RunVariantUpdateOneWithoutCrowdMetricsNestedInput
   }
 
   export type CrowdMetricsUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     runId?: StringFieldUpdateOperationsInput | string
+    runVariantId?: NullableStringFieldUpdateOperationsInput | string | null
     assetSymbol?: StringFieldUpdateOperationsInput | string
     step?: IntFieldUpdateOperationsInput | number
     signal?: FloatFieldUpdateOperationsInput | number
@@ -34414,6 +37721,7 @@ export namespace Prisma {
   export type CrowdMetricsCreateManyInput = {
     id?: string
     runId: string
+    runVariantId?: string | null
     assetSymbol: string
     step: number
     signal: number
@@ -34453,6 +37761,7 @@ export namespace Prisma {
   export type CrowdMetricsUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     runId?: StringFieldUpdateOperationsInput | string
+    runVariantId?: NullableStringFieldUpdateOperationsInput | string | null
     assetSymbol?: StringFieldUpdateOperationsInput | string
     step?: IntFieldUpdateOperationsInput | number
     signal?: FloatFieldUpdateOperationsInput | number
@@ -34544,12 +37853,14 @@ export namespace Prisma {
     rewardScore: number
     createdAt?: Date | string
     run: SimulationRunCreateNestedOneWithoutAgentRewardsInput
+    runVariant?: RunVariantCreateNestedOneWithoutAgentRewardsInput
     agent: RunAgentCreateNestedOneWithoutAgentRewardsInput
   }
 
   export type AgentRewardUncheckedCreateInput = {
     id?: string
     runId: string
+    runVariantId?: string | null
     agentId: string
     assetSymbol: string
     step: number
@@ -34574,12 +37885,14 @@ export namespace Prisma {
     rewardScore?: FloatFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     run?: SimulationRunUpdateOneRequiredWithoutAgentRewardsNestedInput
+    runVariant?: RunVariantUpdateOneWithoutAgentRewardsNestedInput
     agent?: RunAgentUpdateOneRequiredWithoutAgentRewardsNestedInput
   }
 
   export type AgentRewardUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     runId?: StringFieldUpdateOperationsInput | string
+    runVariantId?: NullableStringFieldUpdateOperationsInput | string | null
     agentId?: StringFieldUpdateOperationsInput | string
     assetSymbol?: StringFieldUpdateOperationsInput | string
     step?: IntFieldUpdateOperationsInput | number
@@ -34595,6 +37908,7 @@ export namespace Prisma {
   export type AgentRewardCreateManyInput = {
     id?: string
     runId: string
+    runVariantId?: string | null
     agentId: string
     assetSymbol: string
     step: number
@@ -34623,6 +37937,7 @@ export namespace Prisma {
   export type AgentRewardUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     runId?: StringFieldUpdateOperationsInput | string
+    runVariantId?: NullableStringFieldUpdateOperationsInput | string | null
     agentId?: StringFieldUpdateOperationsInput | string
     assetSymbol?: StringFieldUpdateOperationsInput | string
     step?: IntFieldUpdateOperationsInput | number
@@ -34744,12 +38059,14 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     run: SimulationRunCreateNestedOneWithoutAgentInfoStatesInput
+    runVariant?: RunVariantCreateNestedOneWithoutAgentInfoStatesInput
     agent: RunAgentCreateNestedOneWithoutInfoStatesInput
   }
 
   export type AgentInfoStateUncheckedCreateInput = {
     id?: string
     runId: string
+    runVariantId?: string | null
     assetSymbol: string
     agentId: string
     step: number
@@ -34774,12 +38091,14 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     run?: SimulationRunUpdateOneRequiredWithoutAgentInfoStatesNestedInput
+    runVariant?: RunVariantUpdateOneWithoutAgentInfoStatesNestedInput
     agent?: RunAgentUpdateOneRequiredWithoutInfoStatesNestedInput
   }
 
   export type AgentInfoStateUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     runId?: StringFieldUpdateOperationsInput | string
+    runVariantId?: NullableStringFieldUpdateOperationsInput | string | null
     assetSymbol?: StringFieldUpdateOperationsInput | string
     agentId?: StringFieldUpdateOperationsInput | string
     step?: IntFieldUpdateOperationsInput | number
@@ -34795,6 +38114,7 @@ export namespace Prisma {
   export type AgentInfoStateCreateManyInput = {
     id?: string
     runId: string
+    runVariantId?: string | null
     assetSymbol: string
     agentId: string
     step: number
@@ -34823,6 +38143,7 @@ export namespace Prisma {
   export type AgentInfoStateUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     runId?: StringFieldUpdateOperationsInput | string
+    runVariantId?: NullableStringFieldUpdateOperationsInput | string | null
     assetSymbol?: StringFieldUpdateOperationsInput | string
     agentId?: StringFieldUpdateOperationsInput | string
     step?: IntFieldUpdateOperationsInput | number
@@ -34847,12 +38168,14 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     run: SimulationRunCreateNestedOneWithoutAgentStatesInput
+    runVariant?: RunVariantCreateNestedOneWithoutAgentStatesInput
     agent: RunAgentCreateNestedOneWithoutAgentStatesInput
   }
 
   export type AgentStateUncheckedCreateInput = {
     id?: string
     runId: string
+    runVariantId?: string | null
     assetSymbol: string
     agentId: string
     step: number
@@ -34877,12 +38200,14 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     run?: SimulationRunUpdateOneRequiredWithoutAgentStatesNestedInput
+    runVariant?: RunVariantUpdateOneWithoutAgentStatesNestedInput
     agent?: RunAgentUpdateOneRequiredWithoutAgentStatesNestedInput
   }
 
   export type AgentStateUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     runId?: StringFieldUpdateOperationsInput | string
+    runVariantId?: NullableStringFieldUpdateOperationsInput | string | null
     assetSymbol?: StringFieldUpdateOperationsInput | string
     agentId?: StringFieldUpdateOperationsInput | string
     step?: IntFieldUpdateOperationsInput | number
@@ -34898,6 +38223,7 @@ export namespace Prisma {
   export type AgentStateCreateManyInput = {
     id?: string
     runId: string
+    runVariantId?: string | null
     assetSymbol: string
     agentId: string
     step: number
@@ -34926,6 +38252,7 @@ export namespace Prisma {
   export type AgentStateUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     runId?: StringFieldUpdateOperationsInput | string
+    runVariantId?: NullableStringFieldUpdateOperationsInput | string | null
     assetSymbol?: StringFieldUpdateOperationsInput | string
     agentId?: StringFieldUpdateOperationsInput | string
     step?: IntFieldUpdateOperationsInput | number
@@ -35054,12 +38381,14 @@ export namespace Prisma {
     stateBeforeJson?: NullableJsonNullValueInput | InputJsonValue
     stateAfterJson?: NullableJsonNullValueInput | InputJsonValue
     run: SimulationRunCreateNestedOneWithoutAgentExperiencesInput
+    runVariant?: RunVariantCreateNestedOneWithoutAgentExperiencesInput
     runAgent: RunAgentCreateNestedOneWithoutExperiencesInput
   }
 
   export type AgentExperienceUncheckedCreateInput = {
     id?: string
     runId: string
+    runVariantId?: string | null
     runAgentId: string
     step: number
     ts: Date | string
@@ -35086,12 +38415,14 @@ export namespace Prisma {
     stateBeforeJson?: NullableJsonNullValueInput | InputJsonValue
     stateAfterJson?: NullableJsonNullValueInput | InputJsonValue
     run?: SimulationRunUpdateOneRequiredWithoutAgentExperiencesNestedInput
+    runVariant?: RunVariantUpdateOneWithoutAgentExperiencesNestedInput
     runAgent?: RunAgentUpdateOneRequiredWithoutExperiencesNestedInput
   }
 
   export type AgentExperienceUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     runId?: StringFieldUpdateOperationsInput | string
+    runVariantId?: NullableStringFieldUpdateOperationsInput | string | null
     runAgentId?: StringFieldUpdateOperationsInput | string
     step?: IntFieldUpdateOperationsInput | number
     ts?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -35108,6 +38439,7 @@ export namespace Prisma {
   export type AgentExperienceCreateManyInput = {
     id?: string
     runId: string
+    runVariantId?: string | null
     runAgentId: string
     step: number
     ts: Date | string
@@ -35138,6 +38470,7 @@ export namespace Prisma {
   export type AgentExperienceUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     runId?: StringFieldUpdateOperationsInput | string
+    runVariantId?: NullableStringFieldUpdateOperationsInput | string | null
     runAgentId?: StringFieldUpdateOperationsInput | string
     step?: IntFieldUpdateOperationsInput | number
     ts?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -35774,18 +39107,22 @@ export namespace Prisma {
     seed: number
     steps: number
     agents: number
+    pairsCount?: number | null
     corr?: number | null
     directionalAccuracy?: number | null
     createdAt?: Date | string
+    runVariant?: RunVariantCreateNestedOneWithoutBacktestResultsInput
   }
 
   export type BacktestResultUncheckedCreateInput = {
     id?: string
     runId: string
+    runVariantId?: string | null
     assetSymbol: string
     seed: number
     steps: number
     agents: number
+    pairsCount?: number | null
     corr?: number | null
     directionalAccuracy?: number | null
     createdAt?: Date | string
@@ -35798,18 +39135,22 @@ export namespace Prisma {
     seed?: IntFieldUpdateOperationsInput | number
     steps?: IntFieldUpdateOperationsInput | number
     agents?: IntFieldUpdateOperationsInput | number
+    pairsCount?: NullableIntFieldUpdateOperationsInput | number | null
     corr?: NullableFloatFieldUpdateOperationsInput | number | null
     directionalAccuracy?: NullableFloatFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    runVariant?: RunVariantUpdateOneWithoutBacktestResultsNestedInput
   }
 
   export type BacktestResultUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     runId?: StringFieldUpdateOperationsInput | string
+    runVariantId?: NullableStringFieldUpdateOperationsInput | string | null
     assetSymbol?: StringFieldUpdateOperationsInput | string
     seed?: IntFieldUpdateOperationsInput | number
     steps?: IntFieldUpdateOperationsInput | number
     agents?: IntFieldUpdateOperationsInput | number
+    pairsCount?: NullableIntFieldUpdateOperationsInput | number | null
     corr?: NullableFloatFieldUpdateOperationsInput | number | null
     directionalAccuracy?: NullableFloatFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -35818,10 +39159,12 @@ export namespace Prisma {
   export type BacktestResultCreateManyInput = {
     id?: string
     runId: string
+    runVariantId?: string | null
     assetSymbol: string
     seed: number
     steps: number
     agents: number
+    pairsCount?: number | null
     corr?: number | null
     directionalAccuracy?: number | null
     createdAt?: Date | string
@@ -35834,6 +39177,7 @@ export namespace Prisma {
     seed?: IntFieldUpdateOperationsInput | number
     steps?: IntFieldUpdateOperationsInput | number
     agents?: IntFieldUpdateOperationsInput | number
+    pairsCount?: NullableIntFieldUpdateOperationsInput | number | null
     corr?: NullableFloatFieldUpdateOperationsInput | number | null
     directionalAccuracy?: NullableFloatFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -35842,10 +39186,12 @@ export namespace Prisma {
   export type BacktestResultUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     runId?: StringFieldUpdateOperationsInput | string
+    runVariantId?: NullableStringFieldUpdateOperationsInput | string | null
     assetSymbol?: StringFieldUpdateOperationsInput | string
     seed?: IntFieldUpdateOperationsInput | number
     steps?: IntFieldUpdateOperationsInput | number
     agents?: IntFieldUpdateOperationsInput | number
+    pairsCount?: NullableIntFieldUpdateOperationsInput | number | null
     corr?: NullableFloatFieldUpdateOperationsInput | number | null
     directionalAccuracy?: NullableFloatFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -36377,6 +39723,12 @@ export namespace Prisma {
     none?: AgentRewardWhereInput
   }
 
+  export type RunVariantListRelationFilter = {
+    every?: RunVariantWhereInput
+    some?: RunVariantWhereInput
+    none?: RunVariantWhereInput
+  }
+
   export type AgentExperienceOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -36418,6 +39770,10 @@ export namespace Prisma {
   }
 
   export type AgentRewardOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type RunVariantOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -36525,6 +39881,125 @@ export namespace Prisma {
     isNot?: SimulationRunWhereInput
   }
 
+  export type BacktestResultListRelationFilter = {
+    every?: BacktestResultWhereInput
+    some?: BacktestResultWhereInput
+    none?: BacktestResultWhereInput
+  }
+
+  export type RunVariantSummaryNullableRelationFilter = {
+    is?: RunVariantSummaryWhereInput | null
+    isNot?: RunVariantSummaryWhereInput | null
+  }
+
+  export type BacktestResultOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type RunVariantRunIdAssetSymbolSeedLabelCompoundUniqueInput = {
+    runId: string
+    assetSymbol: string
+    seed: number
+    label: string
+  }
+
+  export type RunVariantCountOrderByAggregateInput = {
+    id?: SortOrder
+    runId?: SortOrder
+    assetSymbol?: SortOrder
+    seed?: SortOrder
+    agents?: SortOrder
+    steps?: SortOrder
+    label?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type RunVariantAvgOrderByAggregateInput = {
+    seed?: SortOrder
+    agents?: SortOrder
+    steps?: SortOrder
+  }
+
+  export type RunVariantMaxOrderByAggregateInput = {
+    id?: SortOrder
+    runId?: SortOrder
+    assetSymbol?: SortOrder
+    seed?: SortOrder
+    agents?: SortOrder
+    steps?: SortOrder
+    label?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type RunVariantMinOrderByAggregateInput = {
+    id?: SortOrder
+    runId?: SortOrder
+    assetSymbol?: SortOrder
+    seed?: SortOrder
+    agents?: SortOrder
+    steps?: SortOrder
+    label?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type RunVariantSumOrderByAggregateInput = {
+    seed?: SortOrder
+    agents?: SortOrder
+    steps?: SortOrder
+  }
+
+  export type RunVariantRelationFilter = {
+    is?: RunVariantWhereInput
+    isNot?: RunVariantWhereInput
+  }
+
+  export type RunVariantSummaryCountOrderByAggregateInput = {
+    id?: SortOrder
+    runVariantId?: SortOrder
+    corr?: SortOrder
+    directionalAccuracy?: SortOrder
+    pairsCount?: SortOrder
+    computedAt?: SortOrder
+    debugDecisionCounts?: SortOrder
+    debugPairsSample?: SortOrder
+    debugDecisionsHash?: SortOrder
+    debugReturnsHash?: SortOrder
+  }
+
+  export type RunVariantSummaryAvgOrderByAggregateInput = {
+    corr?: SortOrder
+    directionalAccuracy?: SortOrder
+    pairsCount?: SortOrder
+  }
+
+  export type RunVariantSummaryMaxOrderByAggregateInput = {
+    id?: SortOrder
+    runVariantId?: SortOrder
+    corr?: SortOrder
+    directionalAccuracy?: SortOrder
+    pairsCount?: SortOrder
+    computedAt?: SortOrder
+    debugDecisionsHash?: SortOrder
+    debugReturnsHash?: SortOrder
+  }
+
+  export type RunVariantSummaryMinOrderByAggregateInput = {
+    id?: SortOrder
+    runVariantId?: SortOrder
+    corr?: SortOrder
+    directionalAccuracy?: SortOrder
+    pairsCount?: SortOrder
+    computedAt?: SortOrder
+    debugDecisionsHash?: SortOrder
+    debugReturnsHash?: SortOrder
+  }
+
+  export type RunVariantSummarySumOrderByAggregateInput = {
+    corr?: SortOrder
+    directionalAccuracy?: SortOrder
+    pairsCount?: SortOrder
+  }
+
   export type RunAgentTraitListRelationFilter = {
     every?: RunAgentTraitWhereInput
     some?: RunAgentTraitWhereInput
@@ -36604,6 +40079,18 @@ export namespace Prisma {
     valueNum?: SortOrder
   }
 
+  export type UuidNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedUuidNullableFilter<$PrismaModel> | string | null
+  }
+
   export type EnumAgentDecisionActionFilter<$PrismaModel = never> = {
     equals?: $Enums.AgentDecisionAction | EnumAgentDecisionActionFieldRefInput<$PrismaModel>
     in?: $Enums.AgentDecisionAction[] | ListEnumAgentDecisionActionFieldRefInput<$PrismaModel>
@@ -36611,16 +40098,23 @@ export namespace Prisma {
     not?: NestedEnumAgentDecisionActionFilter<$PrismaModel> | $Enums.AgentDecisionAction
   }
 
-  export type AgentDecisionRunIdStepAgentIdAssetSymbolCompoundUniqueInput = {
+  export type RunVariantNullableRelationFilter = {
+    is?: RunVariantWhereInput | null
+    isNot?: RunVariantWhereInput | null
+  }
+
+  export type AgentDecisionRunIdStepAgentIdAssetSymbolRunVariantIdCompoundUniqueInput = {
     runId: string
     step: number
     agentId: string
     assetSymbol: string
+    runVariantId: string
   }
 
   export type AgentDecisionCountOrderByAggregateInput = {
     id?: SortOrder
     runId?: SortOrder
+    runVariantId?: SortOrder
     step?: SortOrder
     agentId?: SortOrder
     assetSymbol?: SortOrder
@@ -36638,6 +40132,7 @@ export namespace Prisma {
   export type AgentDecisionMaxOrderByAggregateInput = {
     id?: SortOrder
     runId?: SortOrder
+    runVariantId?: SortOrder
     step?: SortOrder
     agentId?: SortOrder
     assetSymbol?: SortOrder
@@ -36650,6 +40145,7 @@ export namespace Prisma {
   export type AgentDecisionMinOrderByAggregateInput = {
     id?: SortOrder
     runId?: SortOrder
+    runVariantId?: SortOrder
     step?: SortOrder
     agentId?: SortOrder
     assetSymbol?: SortOrder
@@ -36664,6 +40160,21 @@ export namespace Prisma {
     confidence?: SortOrder
   }
 
+  export type UuidNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedUuidNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
   export type EnumAgentDecisionActionWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.AgentDecisionAction | EnumAgentDecisionActionFieldRefInput<$PrismaModel>
     in?: $Enums.AgentDecisionAction[] | ListEnumAgentDecisionActionFieldRefInput<$PrismaModel>
@@ -36674,15 +40185,17 @@ export namespace Prisma {
     _max?: NestedEnumAgentDecisionActionFilter<$PrismaModel>
   }
 
-  export type CrowdMetricsRunIdAssetSymbolStepCompoundUniqueInput = {
+  export type CrowdMetricsRunIdAssetSymbolStepRunVariantIdCompoundUniqueInput = {
     runId: string
     assetSymbol: string
     step: number
+    runVariantId: string
   }
 
   export type CrowdMetricsCountOrderByAggregateInput = {
     id?: SortOrder
     runId?: SortOrder
+    runVariantId?: SortOrder
     assetSymbol?: SortOrder
     step?: SortOrder
     signal?: SortOrder
@@ -36719,6 +40232,7 @@ export namespace Prisma {
   export type CrowdMetricsMaxOrderByAggregateInput = {
     id?: SortOrder
     runId?: SortOrder
+    runVariantId?: SortOrder
     assetSymbol?: SortOrder
     step?: SortOrder
     signal?: SortOrder
@@ -36739,6 +40253,7 @@ export namespace Prisma {
   export type CrowdMetricsMinOrderByAggregateInput = {
     id?: SortOrder
     runId?: SortOrder
+    runVariantId?: SortOrder
     assetSymbol?: SortOrder
     step?: SortOrder
     signal?: SortOrder
@@ -36815,16 +40330,18 @@ export namespace Prisma {
     stepReturn?: SortOrder
   }
 
-  export type AgentRewardRunIdAgentIdAssetSymbolStepCompoundUniqueInput = {
+  export type AgentRewardRunIdAgentIdAssetSymbolStepRunVariantIdCompoundUniqueInput = {
     runId: string
     agentId: string
     assetSymbol: string
     step: number
+    runVariantId: string
   }
 
   export type AgentRewardCountOrderByAggregateInput = {
     id?: SortOrder
     runId?: SortOrder
+    runVariantId?: SortOrder
     agentId?: SortOrder
     assetSymbol?: SortOrder
     step?: SortOrder
@@ -36849,6 +40366,7 @@ export namespace Prisma {
   export type AgentRewardMaxOrderByAggregateInput = {
     id?: SortOrder
     runId?: SortOrder
+    runVariantId?: SortOrder
     agentId?: SortOrder
     assetSymbol?: SortOrder
     step?: SortOrder
@@ -36864,6 +40382,7 @@ export namespace Prisma {
   export type AgentRewardMinOrderByAggregateInput = {
     id?: SortOrder
     runId?: SortOrder
+    runVariantId?: SortOrder
     agentId?: SortOrder
     assetSymbol?: SortOrder
     step?: SortOrder
@@ -36943,16 +40462,18 @@ export namespace Prisma {
     volatilityImpact?: SortOrder
   }
 
-  export type AgentInfoStateRunIdAssetSymbolAgentIdStepCompoundUniqueInput = {
+  export type AgentInfoStateRunIdAssetSymbolAgentIdStepRunVariantIdCompoundUniqueInput = {
     runId: string
     assetSymbol: string
     agentId: string
     step: number
+    runVariantId: string
   }
 
   export type AgentInfoStateCountOrderByAggregateInput = {
     id?: SortOrder
     runId?: SortOrder
+    runVariantId?: SortOrder
     assetSymbol?: SortOrder
     agentId?: SortOrder
     step?: SortOrder
@@ -36977,6 +40498,7 @@ export namespace Prisma {
   export type AgentInfoStateMaxOrderByAggregateInput = {
     id?: SortOrder
     runId?: SortOrder
+    runVariantId?: SortOrder
     assetSymbol?: SortOrder
     agentId?: SortOrder
     step?: SortOrder
@@ -36992,6 +40514,7 @@ export namespace Prisma {
   export type AgentInfoStateMinOrderByAggregateInput = {
     id?: SortOrder
     runId?: SortOrder
+    runVariantId?: SortOrder
     assetSymbol?: SortOrder
     agentId?: SortOrder
     step?: SortOrder
@@ -37013,16 +40536,18 @@ export namespace Prisma {
     herding?: SortOrder
   }
 
-  export type AgentStateRunIdAssetSymbolAgentIdStepCompoundUniqueInput = {
+  export type AgentStateRunIdAssetSymbolAgentIdStepRunVariantIdCompoundUniqueInput = {
     runId: string
     assetSymbol: string
     agentId: string
     step: number
+    runVariantId: string
   }
 
   export type AgentStateCountOrderByAggregateInput = {
     id?: SortOrder
     runId?: SortOrder
+    runVariantId?: SortOrder
     assetSymbol?: SortOrder
     agentId?: SortOrder
     step?: SortOrder
@@ -37047,6 +40572,7 @@ export namespace Prisma {
   export type AgentStateMaxOrderByAggregateInput = {
     id?: SortOrder
     runId?: SortOrder
+    runVariantId?: SortOrder
     assetSymbol?: SortOrder
     agentId?: SortOrder
     step?: SortOrder
@@ -37062,6 +40588,7 @@ export namespace Prisma {
   export type AgentStateMinOrderByAggregateInput = {
     id?: SortOrder
     runId?: SortOrder
+    runVariantId?: SortOrder
     assetSymbol?: SortOrder
     agentId?: SortOrder
     step?: SortOrder
@@ -37139,9 +40666,17 @@ export namespace Prisma {
     createdAt?: SortOrder
   }
 
+  export type AgentExperienceRunIdRunAgentIdStepRunVariantIdCompoundUniqueInput = {
+    runId: string
+    runAgentId: string
+    step: number
+    runVariantId: string
+  }
+
   export type AgentExperienceCountOrderByAggregateInput = {
     id?: SortOrder
     runId?: SortOrder
+    runVariantId?: SortOrder
     runAgentId?: SortOrder
     step?: SortOrder
     ts?: SortOrder
@@ -37165,6 +40700,7 @@ export namespace Prisma {
   export type AgentExperienceMaxOrderByAggregateInput = {
     id?: SortOrder
     runId?: SortOrder
+    runVariantId?: SortOrder
     runAgentId?: SortOrder
     step?: SortOrder
     ts?: SortOrder
@@ -37176,6 +40712,7 @@ export namespace Prisma {
   export type AgentExperienceMinOrderByAggregateInput = {
     id?: SortOrder
     runId?: SortOrder
+    runVariantId?: SortOrder
     runAgentId?: SortOrder
     step?: SortOrder
     ts?: SortOrder
@@ -37282,18 +40819,6 @@ export namespace Prisma {
     not?: NestedEnumWalletTransactionTypeFilter<$PrismaModel> | $Enums.WalletTransactionType
   }
 
-  export type UuidNullableFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
-    not?: NestedUuidNullableFilter<$PrismaModel> | string | null
-  }
-
   export type BetNullableRelationFilter = {
     is?: BetWhereInput | null
     isNot?: BetWhereInput | null
@@ -37348,21 +40873,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumWalletTransactionTypeFilter<$PrismaModel>
     _max?: NestedEnumWalletTransactionTypeFilter<$PrismaModel>
-  }
-
-  export type UuidNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
-    not?: NestedUuidNullableWithAggregatesFilter<$PrismaModel> | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedStringNullableFilter<$PrismaModel>
-    _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
   export type IntNullableFilter<$PrismaModel = never> = {
@@ -37659,10 +41169,12 @@ export namespace Prisma {
   export type BacktestResultCountOrderByAggregateInput = {
     id?: SortOrder
     runId?: SortOrder
+    runVariantId?: SortOrder
     assetSymbol?: SortOrder
     seed?: SortOrder
     steps?: SortOrder
     agents?: SortOrder
+    pairsCount?: SortOrder
     corr?: SortOrder
     directionalAccuracy?: SortOrder
     createdAt?: SortOrder
@@ -37672,6 +41184,7 @@ export namespace Prisma {
     seed?: SortOrder
     steps?: SortOrder
     agents?: SortOrder
+    pairsCount?: SortOrder
     corr?: SortOrder
     directionalAccuracy?: SortOrder
   }
@@ -37679,10 +41192,12 @@ export namespace Prisma {
   export type BacktestResultMaxOrderByAggregateInput = {
     id?: SortOrder
     runId?: SortOrder
+    runVariantId?: SortOrder
     assetSymbol?: SortOrder
     seed?: SortOrder
     steps?: SortOrder
     agents?: SortOrder
+    pairsCount?: SortOrder
     corr?: SortOrder
     directionalAccuracy?: SortOrder
     createdAt?: SortOrder
@@ -37691,10 +41206,12 @@ export namespace Prisma {
   export type BacktestResultMinOrderByAggregateInput = {
     id?: SortOrder
     runId?: SortOrder
+    runVariantId?: SortOrder
     assetSymbol?: SortOrder
     seed?: SortOrder
     steps?: SortOrder
     agents?: SortOrder
+    pairsCount?: SortOrder
     corr?: SortOrder
     directionalAccuracy?: SortOrder
     createdAt?: SortOrder
@@ -37704,6 +41221,7 @@ export namespace Prisma {
     seed?: SortOrder
     steps?: SortOrder
     agents?: SortOrder
+    pairsCount?: SortOrder
     corr?: SortOrder
     directionalAccuracy?: SortOrder
   }
@@ -38082,6 +41600,13 @@ export namespace Prisma {
     connect?: AgentRewardWhereUniqueInput | AgentRewardWhereUniqueInput[]
   }
 
+  export type RunVariantCreateNestedManyWithoutRunInput = {
+    create?: XOR<RunVariantCreateWithoutRunInput, RunVariantUncheckedCreateWithoutRunInput> | RunVariantCreateWithoutRunInput[] | RunVariantUncheckedCreateWithoutRunInput[]
+    connectOrCreate?: RunVariantCreateOrConnectWithoutRunInput | RunVariantCreateOrConnectWithoutRunInput[]
+    createMany?: RunVariantCreateManyRunInputEnvelope
+    connect?: RunVariantWhereUniqueInput | RunVariantWhereUniqueInput[]
+  }
+
   export type AgentExperienceUncheckedCreateNestedManyWithoutRunInput = {
     create?: XOR<AgentExperienceCreateWithoutRunInput, AgentExperienceUncheckedCreateWithoutRunInput> | AgentExperienceCreateWithoutRunInput[] | AgentExperienceUncheckedCreateWithoutRunInput[]
     connectOrCreate?: AgentExperienceCreateOrConnectWithoutRunInput | AgentExperienceCreateOrConnectWithoutRunInput[]
@@ -38170,6 +41695,13 @@ export namespace Prisma {
     connectOrCreate?: AgentRewardCreateOrConnectWithoutRunInput | AgentRewardCreateOrConnectWithoutRunInput[]
     createMany?: AgentRewardCreateManyRunInputEnvelope
     connect?: AgentRewardWhereUniqueInput | AgentRewardWhereUniqueInput[]
+  }
+
+  export type RunVariantUncheckedCreateNestedManyWithoutRunInput = {
+    create?: XOR<RunVariantCreateWithoutRunInput, RunVariantUncheckedCreateWithoutRunInput> | RunVariantCreateWithoutRunInput[] | RunVariantUncheckedCreateWithoutRunInput[]
+    connectOrCreate?: RunVariantCreateOrConnectWithoutRunInput | RunVariantCreateOrConnectWithoutRunInput[]
+    createMany?: RunVariantCreateManyRunInputEnvelope
+    connect?: RunVariantWhereUniqueInput | RunVariantWhereUniqueInput[]
   }
 
   export type EnumSimulationRunStatusFieldUpdateOperationsInput = {
@@ -38366,6 +41898,20 @@ export namespace Prisma {
     deleteMany?: AgentRewardScalarWhereInput | AgentRewardScalarWhereInput[]
   }
 
+  export type RunVariantUpdateManyWithoutRunNestedInput = {
+    create?: XOR<RunVariantCreateWithoutRunInput, RunVariantUncheckedCreateWithoutRunInput> | RunVariantCreateWithoutRunInput[] | RunVariantUncheckedCreateWithoutRunInput[]
+    connectOrCreate?: RunVariantCreateOrConnectWithoutRunInput | RunVariantCreateOrConnectWithoutRunInput[]
+    upsert?: RunVariantUpsertWithWhereUniqueWithoutRunInput | RunVariantUpsertWithWhereUniqueWithoutRunInput[]
+    createMany?: RunVariantCreateManyRunInputEnvelope
+    set?: RunVariantWhereUniqueInput | RunVariantWhereUniqueInput[]
+    disconnect?: RunVariantWhereUniqueInput | RunVariantWhereUniqueInput[]
+    delete?: RunVariantWhereUniqueInput | RunVariantWhereUniqueInput[]
+    connect?: RunVariantWhereUniqueInput | RunVariantWhereUniqueInput[]
+    update?: RunVariantUpdateWithWhereUniqueWithoutRunInput | RunVariantUpdateWithWhereUniqueWithoutRunInput[]
+    updateMany?: RunVariantUpdateManyWithWhereWithoutRunInput | RunVariantUpdateManyWithWhereWithoutRunInput[]
+    deleteMany?: RunVariantScalarWhereInput | RunVariantScalarWhereInput[]
+  }
+
   export type AgentExperienceUncheckedUpdateManyWithoutRunNestedInput = {
     create?: XOR<AgentExperienceCreateWithoutRunInput, AgentExperienceUncheckedCreateWithoutRunInput> | AgentExperienceCreateWithoutRunInput[] | AgentExperienceUncheckedCreateWithoutRunInput[]
     connectOrCreate?: AgentExperienceCreateOrConnectWithoutRunInput | AgentExperienceCreateOrConnectWithoutRunInput[]
@@ -38542,6 +42088,374 @@ export namespace Prisma {
     update?: AgentRewardUpdateWithWhereUniqueWithoutRunInput | AgentRewardUpdateWithWhereUniqueWithoutRunInput[]
     updateMany?: AgentRewardUpdateManyWithWhereWithoutRunInput | AgentRewardUpdateManyWithWhereWithoutRunInput[]
     deleteMany?: AgentRewardScalarWhereInput | AgentRewardScalarWhereInput[]
+  }
+
+  export type RunVariantUncheckedUpdateManyWithoutRunNestedInput = {
+    create?: XOR<RunVariantCreateWithoutRunInput, RunVariantUncheckedCreateWithoutRunInput> | RunVariantCreateWithoutRunInput[] | RunVariantUncheckedCreateWithoutRunInput[]
+    connectOrCreate?: RunVariantCreateOrConnectWithoutRunInput | RunVariantCreateOrConnectWithoutRunInput[]
+    upsert?: RunVariantUpsertWithWhereUniqueWithoutRunInput | RunVariantUpsertWithWhereUniqueWithoutRunInput[]
+    createMany?: RunVariantCreateManyRunInputEnvelope
+    set?: RunVariantWhereUniqueInput | RunVariantWhereUniqueInput[]
+    disconnect?: RunVariantWhereUniqueInput | RunVariantWhereUniqueInput[]
+    delete?: RunVariantWhereUniqueInput | RunVariantWhereUniqueInput[]
+    connect?: RunVariantWhereUniqueInput | RunVariantWhereUniqueInput[]
+    update?: RunVariantUpdateWithWhereUniqueWithoutRunInput | RunVariantUpdateWithWhereUniqueWithoutRunInput[]
+    updateMany?: RunVariantUpdateManyWithWhereWithoutRunInput | RunVariantUpdateManyWithWhereWithoutRunInput[]
+    deleteMany?: RunVariantScalarWhereInput | RunVariantScalarWhereInput[]
+  }
+
+  export type SimulationRunCreateNestedOneWithoutRunVariantsInput = {
+    create?: XOR<SimulationRunCreateWithoutRunVariantsInput, SimulationRunUncheckedCreateWithoutRunVariantsInput>
+    connectOrCreate?: SimulationRunCreateOrConnectWithoutRunVariantsInput
+    connect?: SimulationRunWhereUniqueInput
+  }
+
+  export type AgentDecisionCreateNestedManyWithoutRunVariantInput = {
+    create?: XOR<AgentDecisionCreateWithoutRunVariantInput, AgentDecisionUncheckedCreateWithoutRunVariantInput> | AgentDecisionCreateWithoutRunVariantInput[] | AgentDecisionUncheckedCreateWithoutRunVariantInput[]
+    connectOrCreate?: AgentDecisionCreateOrConnectWithoutRunVariantInput | AgentDecisionCreateOrConnectWithoutRunVariantInput[]
+    createMany?: AgentDecisionCreateManyRunVariantInputEnvelope
+    connect?: AgentDecisionWhereUniqueInput | AgentDecisionWhereUniqueInput[]
+  }
+
+  export type AgentInfoStateCreateNestedManyWithoutRunVariantInput = {
+    create?: XOR<AgentInfoStateCreateWithoutRunVariantInput, AgentInfoStateUncheckedCreateWithoutRunVariantInput> | AgentInfoStateCreateWithoutRunVariantInput[] | AgentInfoStateUncheckedCreateWithoutRunVariantInput[]
+    connectOrCreate?: AgentInfoStateCreateOrConnectWithoutRunVariantInput | AgentInfoStateCreateOrConnectWithoutRunVariantInput[]
+    createMany?: AgentInfoStateCreateManyRunVariantInputEnvelope
+    connect?: AgentInfoStateWhereUniqueInput | AgentInfoStateWhereUniqueInput[]
+  }
+
+  export type AgentStateCreateNestedManyWithoutRunVariantInput = {
+    create?: XOR<AgentStateCreateWithoutRunVariantInput, AgentStateUncheckedCreateWithoutRunVariantInput> | AgentStateCreateWithoutRunVariantInput[] | AgentStateUncheckedCreateWithoutRunVariantInput[]
+    connectOrCreate?: AgentStateCreateOrConnectWithoutRunVariantInput | AgentStateCreateOrConnectWithoutRunVariantInput[]
+    createMany?: AgentStateCreateManyRunVariantInputEnvelope
+    connect?: AgentStateWhereUniqueInput | AgentStateWhereUniqueInput[]
+  }
+
+  export type AgentExperienceCreateNestedManyWithoutRunVariantInput = {
+    create?: XOR<AgentExperienceCreateWithoutRunVariantInput, AgentExperienceUncheckedCreateWithoutRunVariantInput> | AgentExperienceCreateWithoutRunVariantInput[] | AgentExperienceUncheckedCreateWithoutRunVariantInput[]
+    connectOrCreate?: AgentExperienceCreateOrConnectWithoutRunVariantInput | AgentExperienceCreateOrConnectWithoutRunVariantInput[]
+    createMany?: AgentExperienceCreateManyRunVariantInputEnvelope
+    connect?: AgentExperienceWhereUniqueInput | AgentExperienceWhereUniqueInput[]
+  }
+
+  export type CrowdMetricsCreateNestedManyWithoutRunVariantInput = {
+    create?: XOR<CrowdMetricsCreateWithoutRunVariantInput, CrowdMetricsUncheckedCreateWithoutRunVariantInput> | CrowdMetricsCreateWithoutRunVariantInput[] | CrowdMetricsUncheckedCreateWithoutRunVariantInput[]
+    connectOrCreate?: CrowdMetricsCreateOrConnectWithoutRunVariantInput | CrowdMetricsCreateOrConnectWithoutRunVariantInput[]
+    createMany?: CrowdMetricsCreateManyRunVariantInputEnvelope
+    connect?: CrowdMetricsWhereUniqueInput | CrowdMetricsWhereUniqueInput[]
+  }
+
+  export type AgentRewardCreateNestedManyWithoutRunVariantInput = {
+    create?: XOR<AgentRewardCreateWithoutRunVariantInput, AgentRewardUncheckedCreateWithoutRunVariantInput> | AgentRewardCreateWithoutRunVariantInput[] | AgentRewardUncheckedCreateWithoutRunVariantInput[]
+    connectOrCreate?: AgentRewardCreateOrConnectWithoutRunVariantInput | AgentRewardCreateOrConnectWithoutRunVariantInput[]
+    createMany?: AgentRewardCreateManyRunVariantInputEnvelope
+    connect?: AgentRewardWhereUniqueInput | AgentRewardWhereUniqueInput[]
+  }
+
+  export type BacktestResultCreateNestedManyWithoutRunVariantInput = {
+    create?: XOR<BacktestResultCreateWithoutRunVariantInput, BacktestResultUncheckedCreateWithoutRunVariantInput> | BacktestResultCreateWithoutRunVariantInput[] | BacktestResultUncheckedCreateWithoutRunVariantInput[]
+    connectOrCreate?: BacktestResultCreateOrConnectWithoutRunVariantInput | BacktestResultCreateOrConnectWithoutRunVariantInput[]
+    createMany?: BacktestResultCreateManyRunVariantInputEnvelope
+    connect?: BacktestResultWhereUniqueInput | BacktestResultWhereUniqueInput[]
+  }
+
+  export type RunVariantSummaryCreateNestedOneWithoutRunVariantInput = {
+    create?: XOR<RunVariantSummaryCreateWithoutRunVariantInput, RunVariantSummaryUncheckedCreateWithoutRunVariantInput>
+    connectOrCreate?: RunVariantSummaryCreateOrConnectWithoutRunVariantInput
+    connect?: RunVariantSummaryWhereUniqueInput
+  }
+
+  export type AgentDecisionUncheckedCreateNestedManyWithoutRunVariantInput = {
+    create?: XOR<AgentDecisionCreateWithoutRunVariantInput, AgentDecisionUncheckedCreateWithoutRunVariantInput> | AgentDecisionCreateWithoutRunVariantInput[] | AgentDecisionUncheckedCreateWithoutRunVariantInput[]
+    connectOrCreate?: AgentDecisionCreateOrConnectWithoutRunVariantInput | AgentDecisionCreateOrConnectWithoutRunVariantInput[]
+    createMany?: AgentDecisionCreateManyRunVariantInputEnvelope
+    connect?: AgentDecisionWhereUniqueInput | AgentDecisionWhereUniqueInput[]
+  }
+
+  export type AgentInfoStateUncheckedCreateNestedManyWithoutRunVariantInput = {
+    create?: XOR<AgentInfoStateCreateWithoutRunVariantInput, AgentInfoStateUncheckedCreateWithoutRunVariantInput> | AgentInfoStateCreateWithoutRunVariantInput[] | AgentInfoStateUncheckedCreateWithoutRunVariantInput[]
+    connectOrCreate?: AgentInfoStateCreateOrConnectWithoutRunVariantInput | AgentInfoStateCreateOrConnectWithoutRunVariantInput[]
+    createMany?: AgentInfoStateCreateManyRunVariantInputEnvelope
+    connect?: AgentInfoStateWhereUniqueInput | AgentInfoStateWhereUniqueInput[]
+  }
+
+  export type AgentStateUncheckedCreateNestedManyWithoutRunVariantInput = {
+    create?: XOR<AgentStateCreateWithoutRunVariantInput, AgentStateUncheckedCreateWithoutRunVariantInput> | AgentStateCreateWithoutRunVariantInput[] | AgentStateUncheckedCreateWithoutRunVariantInput[]
+    connectOrCreate?: AgentStateCreateOrConnectWithoutRunVariantInput | AgentStateCreateOrConnectWithoutRunVariantInput[]
+    createMany?: AgentStateCreateManyRunVariantInputEnvelope
+    connect?: AgentStateWhereUniqueInput | AgentStateWhereUniqueInput[]
+  }
+
+  export type AgentExperienceUncheckedCreateNestedManyWithoutRunVariantInput = {
+    create?: XOR<AgentExperienceCreateWithoutRunVariantInput, AgentExperienceUncheckedCreateWithoutRunVariantInput> | AgentExperienceCreateWithoutRunVariantInput[] | AgentExperienceUncheckedCreateWithoutRunVariantInput[]
+    connectOrCreate?: AgentExperienceCreateOrConnectWithoutRunVariantInput | AgentExperienceCreateOrConnectWithoutRunVariantInput[]
+    createMany?: AgentExperienceCreateManyRunVariantInputEnvelope
+    connect?: AgentExperienceWhereUniqueInput | AgentExperienceWhereUniqueInput[]
+  }
+
+  export type CrowdMetricsUncheckedCreateNestedManyWithoutRunVariantInput = {
+    create?: XOR<CrowdMetricsCreateWithoutRunVariantInput, CrowdMetricsUncheckedCreateWithoutRunVariantInput> | CrowdMetricsCreateWithoutRunVariantInput[] | CrowdMetricsUncheckedCreateWithoutRunVariantInput[]
+    connectOrCreate?: CrowdMetricsCreateOrConnectWithoutRunVariantInput | CrowdMetricsCreateOrConnectWithoutRunVariantInput[]
+    createMany?: CrowdMetricsCreateManyRunVariantInputEnvelope
+    connect?: CrowdMetricsWhereUniqueInput | CrowdMetricsWhereUniqueInput[]
+  }
+
+  export type AgentRewardUncheckedCreateNestedManyWithoutRunVariantInput = {
+    create?: XOR<AgentRewardCreateWithoutRunVariantInput, AgentRewardUncheckedCreateWithoutRunVariantInput> | AgentRewardCreateWithoutRunVariantInput[] | AgentRewardUncheckedCreateWithoutRunVariantInput[]
+    connectOrCreate?: AgentRewardCreateOrConnectWithoutRunVariantInput | AgentRewardCreateOrConnectWithoutRunVariantInput[]
+    createMany?: AgentRewardCreateManyRunVariantInputEnvelope
+    connect?: AgentRewardWhereUniqueInput | AgentRewardWhereUniqueInput[]
+  }
+
+  export type BacktestResultUncheckedCreateNestedManyWithoutRunVariantInput = {
+    create?: XOR<BacktestResultCreateWithoutRunVariantInput, BacktestResultUncheckedCreateWithoutRunVariantInput> | BacktestResultCreateWithoutRunVariantInput[] | BacktestResultUncheckedCreateWithoutRunVariantInput[]
+    connectOrCreate?: BacktestResultCreateOrConnectWithoutRunVariantInput | BacktestResultCreateOrConnectWithoutRunVariantInput[]
+    createMany?: BacktestResultCreateManyRunVariantInputEnvelope
+    connect?: BacktestResultWhereUniqueInput | BacktestResultWhereUniqueInput[]
+  }
+
+  export type RunVariantSummaryUncheckedCreateNestedOneWithoutRunVariantInput = {
+    create?: XOR<RunVariantSummaryCreateWithoutRunVariantInput, RunVariantSummaryUncheckedCreateWithoutRunVariantInput>
+    connectOrCreate?: RunVariantSummaryCreateOrConnectWithoutRunVariantInput
+    connect?: RunVariantSummaryWhereUniqueInput
+  }
+
+  export type SimulationRunUpdateOneRequiredWithoutRunVariantsNestedInput = {
+    create?: XOR<SimulationRunCreateWithoutRunVariantsInput, SimulationRunUncheckedCreateWithoutRunVariantsInput>
+    connectOrCreate?: SimulationRunCreateOrConnectWithoutRunVariantsInput
+    upsert?: SimulationRunUpsertWithoutRunVariantsInput
+    connect?: SimulationRunWhereUniqueInput
+    update?: XOR<XOR<SimulationRunUpdateToOneWithWhereWithoutRunVariantsInput, SimulationRunUpdateWithoutRunVariantsInput>, SimulationRunUncheckedUpdateWithoutRunVariantsInput>
+  }
+
+  export type AgentDecisionUpdateManyWithoutRunVariantNestedInput = {
+    create?: XOR<AgentDecisionCreateWithoutRunVariantInput, AgentDecisionUncheckedCreateWithoutRunVariantInput> | AgentDecisionCreateWithoutRunVariantInput[] | AgentDecisionUncheckedCreateWithoutRunVariantInput[]
+    connectOrCreate?: AgentDecisionCreateOrConnectWithoutRunVariantInput | AgentDecisionCreateOrConnectWithoutRunVariantInput[]
+    upsert?: AgentDecisionUpsertWithWhereUniqueWithoutRunVariantInput | AgentDecisionUpsertWithWhereUniqueWithoutRunVariantInput[]
+    createMany?: AgentDecisionCreateManyRunVariantInputEnvelope
+    set?: AgentDecisionWhereUniqueInput | AgentDecisionWhereUniqueInput[]
+    disconnect?: AgentDecisionWhereUniqueInput | AgentDecisionWhereUniqueInput[]
+    delete?: AgentDecisionWhereUniqueInput | AgentDecisionWhereUniqueInput[]
+    connect?: AgentDecisionWhereUniqueInput | AgentDecisionWhereUniqueInput[]
+    update?: AgentDecisionUpdateWithWhereUniqueWithoutRunVariantInput | AgentDecisionUpdateWithWhereUniqueWithoutRunVariantInput[]
+    updateMany?: AgentDecisionUpdateManyWithWhereWithoutRunVariantInput | AgentDecisionUpdateManyWithWhereWithoutRunVariantInput[]
+    deleteMany?: AgentDecisionScalarWhereInput | AgentDecisionScalarWhereInput[]
+  }
+
+  export type AgentInfoStateUpdateManyWithoutRunVariantNestedInput = {
+    create?: XOR<AgentInfoStateCreateWithoutRunVariantInput, AgentInfoStateUncheckedCreateWithoutRunVariantInput> | AgentInfoStateCreateWithoutRunVariantInput[] | AgentInfoStateUncheckedCreateWithoutRunVariantInput[]
+    connectOrCreate?: AgentInfoStateCreateOrConnectWithoutRunVariantInput | AgentInfoStateCreateOrConnectWithoutRunVariantInput[]
+    upsert?: AgentInfoStateUpsertWithWhereUniqueWithoutRunVariantInput | AgentInfoStateUpsertWithWhereUniqueWithoutRunVariantInput[]
+    createMany?: AgentInfoStateCreateManyRunVariantInputEnvelope
+    set?: AgentInfoStateWhereUniqueInput | AgentInfoStateWhereUniqueInput[]
+    disconnect?: AgentInfoStateWhereUniqueInput | AgentInfoStateWhereUniqueInput[]
+    delete?: AgentInfoStateWhereUniqueInput | AgentInfoStateWhereUniqueInput[]
+    connect?: AgentInfoStateWhereUniqueInput | AgentInfoStateWhereUniqueInput[]
+    update?: AgentInfoStateUpdateWithWhereUniqueWithoutRunVariantInput | AgentInfoStateUpdateWithWhereUniqueWithoutRunVariantInput[]
+    updateMany?: AgentInfoStateUpdateManyWithWhereWithoutRunVariantInput | AgentInfoStateUpdateManyWithWhereWithoutRunVariantInput[]
+    deleteMany?: AgentInfoStateScalarWhereInput | AgentInfoStateScalarWhereInput[]
+  }
+
+  export type AgentStateUpdateManyWithoutRunVariantNestedInput = {
+    create?: XOR<AgentStateCreateWithoutRunVariantInput, AgentStateUncheckedCreateWithoutRunVariantInput> | AgentStateCreateWithoutRunVariantInput[] | AgentStateUncheckedCreateWithoutRunVariantInput[]
+    connectOrCreate?: AgentStateCreateOrConnectWithoutRunVariantInput | AgentStateCreateOrConnectWithoutRunVariantInput[]
+    upsert?: AgentStateUpsertWithWhereUniqueWithoutRunVariantInput | AgentStateUpsertWithWhereUniqueWithoutRunVariantInput[]
+    createMany?: AgentStateCreateManyRunVariantInputEnvelope
+    set?: AgentStateWhereUniqueInput | AgentStateWhereUniqueInput[]
+    disconnect?: AgentStateWhereUniqueInput | AgentStateWhereUniqueInput[]
+    delete?: AgentStateWhereUniqueInput | AgentStateWhereUniqueInput[]
+    connect?: AgentStateWhereUniqueInput | AgentStateWhereUniqueInput[]
+    update?: AgentStateUpdateWithWhereUniqueWithoutRunVariantInput | AgentStateUpdateWithWhereUniqueWithoutRunVariantInput[]
+    updateMany?: AgentStateUpdateManyWithWhereWithoutRunVariantInput | AgentStateUpdateManyWithWhereWithoutRunVariantInput[]
+    deleteMany?: AgentStateScalarWhereInput | AgentStateScalarWhereInput[]
+  }
+
+  export type AgentExperienceUpdateManyWithoutRunVariantNestedInput = {
+    create?: XOR<AgentExperienceCreateWithoutRunVariantInput, AgentExperienceUncheckedCreateWithoutRunVariantInput> | AgentExperienceCreateWithoutRunVariantInput[] | AgentExperienceUncheckedCreateWithoutRunVariantInput[]
+    connectOrCreate?: AgentExperienceCreateOrConnectWithoutRunVariantInput | AgentExperienceCreateOrConnectWithoutRunVariantInput[]
+    upsert?: AgentExperienceUpsertWithWhereUniqueWithoutRunVariantInput | AgentExperienceUpsertWithWhereUniqueWithoutRunVariantInput[]
+    createMany?: AgentExperienceCreateManyRunVariantInputEnvelope
+    set?: AgentExperienceWhereUniqueInput | AgentExperienceWhereUniqueInput[]
+    disconnect?: AgentExperienceWhereUniqueInput | AgentExperienceWhereUniqueInput[]
+    delete?: AgentExperienceWhereUniqueInput | AgentExperienceWhereUniqueInput[]
+    connect?: AgentExperienceWhereUniqueInput | AgentExperienceWhereUniqueInput[]
+    update?: AgentExperienceUpdateWithWhereUniqueWithoutRunVariantInput | AgentExperienceUpdateWithWhereUniqueWithoutRunVariantInput[]
+    updateMany?: AgentExperienceUpdateManyWithWhereWithoutRunVariantInput | AgentExperienceUpdateManyWithWhereWithoutRunVariantInput[]
+    deleteMany?: AgentExperienceScalarWhereInput | AgentExperienceScalarWhereInput[]
+  }
+
+  export type CrowdMetricsUpdateManyWithoutRunVariantNestedInput = {
+    create?: XOR<CrowdMetricsCreateWithoutRunVariantInput, CrowdMetricsUncheckedCreateWithoutRunVariantInput> | CrowdMetricsCreateWithoutRunVariantInput[] | CrowdMetricsUncheckedCreateWithoutRunVariantInput[]
+    connectOrCreate?: CrowdMetricsCreateOrConnectWithoutRunVariantInput | CrowdMetricsCreateOrConnectWithoutRunVariantInput[]
+    upsert?: CrowdMetricsUpsertWithWhereUniqueWithoutRunVariantInput | CrowdMetricsUpsertWithWhereUniqueWithoutRunVariantInput[]
+    createMany?: CrowdMetricsCreateManyRunVariantInputEnvelope
+    set?: CrowdMetricsWhereUniqueInput | CrowdMetricsWhereUniqueInput[]
+    disconnect?: CrowdMetricsWhereUniqueInput | CrowdMetricsWhereUniqueInput[]
+    delete?: CrowdMetricsWhereUniqueInput | CrowdMetricsWhereUniqueInput[]
+    connect?: CrowdMetricsWhereUniqueInput | CrowdMetricsWhereUniqueInput[]
+    update?: CrowdMetricsUpdateWithWhereUniqueWithoutRunVariantInput | CrowdMetricsUpdateWithWhereUniqueWithoutRunVariantInput[]
+    updateMany?: CrowdMetricsUpdateManyWithWhereWithoutRunVariantInput | CrowdMetricsUpdateManyWithWhereWithoutRunVariantInput[]
+    deleteMany?: CrowdMetricsScalarWhereInput | CrowdMetricsScalarWhereInput[]
+  }
+
+  export type AgentRewardUpdateManyWithoutRunVariantNestedInput = {
+    create?: XOR<AgentRewardCreateWithoutRunVariantInput, AgentRewardUncheckedCreateWithoutRunVariantInput> | AgentRewardCreateWithoutRunVariantInput[] | AgentRewardUncheckedCreateWithoutRunVariantInput[]
+    connectOrCreate?: AgentRewardCreateOrConnectWithoutRunVariantInput | AgentRewardCreateOrConnectWithoutRunVariantInput[]
+    upsert?: AgentRewardUpsertWithWhereUniqueWithoutRunVariantInput | AgentRewardUpsertWithWhereUniqueWithoutRunVariantInput[]
+    createMany?: AgentRewardCreateManyRunVariantInputEnvelope
+    set?: AgentRewardWhereUniqueInput | AgentRewardWhereUniqueInput[]
+    disconnect?: AgentRewardWhereUniqueInput | AgentRewardWhereUniqueInput[]
+    delete?: AgentRewardWhereUniqueInput | AgentRewardWhereUniqueInput[]
+    connect?: AgentRewardWhereUniqueInput | AgentRewardWhereUniqueInput[]
+    update?: AgentRewardUpdateWithWhereUniqueWithoutRunVariantInput | AgentRewardUpdateWithWhereUniqueWithoutRunVariantInput[]
+    updateMany?: AgentRewardUpdateManyWithWhereWithoutRunVariantInput | AgentRewardUpdateManyWithWhereWithoutRunVariantInput[]
+    deleteMany?: AgentRewardScalarWhereInput | AgentRewardScalarWhereInput[]
+  }
+
+  export type BacktestResultUpdateManyWithoutRunVariantNestedInput = {
+    create?: XOR<BacktestResultCreateWithoutRunVariantInput, BacktestResultUncheckedCreateWithoutRunVariantInput> | BacktestResultCreateWithoutRunVariantInput[] | BacktestResultUncheckedCreateWithoutRunVariantInput[]
+    connectOrCreate?: BacktestResultCreateOrConnectWithoutRunVariantInput | BacktestResultCreateOrConnectWithoutRunVariantInput[]
+    upsert?: BacktestResultUpsertWithWhereUniqueWithoutRunVariantInput | BacktestResultUpsertWithWhereUniqueWithoutRunVariantInput[]
+    createMany?: BacktestResultCreateManyRunVariantInputEnvelope
+    set?: BacktestResultWhereUniqueInput | BacktestResultWhereUniqueInput[]
+    disconnect?: BacktestResultWhereUniqueInput | BacktestResultWhereUniqueInput[]
+    delete?: BacktestResultWhereUniqueInput | BacktestResultWhereUniqueInput[]
+    connect?: BacktestResultWhereUniqueInput | BacktestResultWhereUniqueInput[]
+    update?: BacktestResultUpdateWithWhereUniqueWithoutRunVariantInput | BacktestResultUpdateWithWhereUniqueWithoutRunVariantInput[]
+    updateMany?: BacktestResultUpdateManyWithWhereWithoutRunVariantInput | BacktestResultUpdateManyWithWhereWithoutRunVariantInput[]
+    deleteMany?: BacktestResultScalarWhereInput | BacktestResultScalarWhereInput[]
+  }
+
+  export type RunVariantSummaryUpdateOneWithoutRunVariantNestedInput = {
+    create?: XOR<RunVariantSummaryCreateWithoutRunVariantInput, RunVariantSummaryUncheckedCreateWithoutRunVariantInput>
+    connectOrCreate?: RunVariantSummaryCreateOrConnectWithoutRunVariantInput
+    upsert?: RunVariantSummaryUpsertWithoutRunVariantInput
+    disconnect?: RunVariantSummaryWhereInput | boolean
+    delete?: RunVariantSummaryWhereInput | boolean
+    connect?: RunVariantSummaryWhereUniqueInput
+    update?: XOR<XOR<RunVariantSummaryUpdateToOneWithWhereWithoutRunVariantInput, RunVariantSummaryUpdateWithoutRunVariantInput>, RunVariantSummaryUncheckedUpdateWithoutRunVariantInput>
+  }
+
+  export type AgentDecisionUncheckedUpdateManyWithoutRunVariantNestedInput = {
+    create?: XOR<AgentDecisionCreateWithoutRunVariantInput, AgentDecisionUncheckedCreateWithoutRunVariantInput> | AgentDecisionCreateWithoutRunVariantInput[] | AgentDecisionUncheckedCreateWithoutRunVariantInput[]
+    connectOrCreate?: AgentDecisionCreateOrConnectWithoutRunVariantInput | AgentDecisionCreateOrConnectWithoutRunVariantInput[]
+    upsert?: AgentDecisionUpsertWithWhereUniqueWithoutRunVariantInput | AgentDecisionUpsertWithWhereUniqueWithoutRunVariantInput[]
+    createMany?: AgentDecisionCreateManyRunVariantInputEnvelope
+    set?: AgentDecisionWhereUniqueInput | AgentDecisionWhereUniqueInput[]
+    disconnect?: AgentDecisionWhereUniqueInput | AgentDecisionWhereUniqueInput[]
+    delete?: AgentDecisionWhereUniqueInput | AgentDecisionWhereUniqueInput[]
+    connect?: AgentDecisionWhereUniqueInput | AgentDecisionWhereUniqueInput[]
+    update?: AgentDecisionUpdateWithWhereUniqueWithoutRunVariantInput | AgentDecisionUpdateWithWhereUniqueWithoutRunVariantInput[]
+    updateMany?: AgentDecisionUpdateManyWithWhereWithoutRunVariantInput | AgentDecisionUpdateManyWithWhereWithoutRunVariantInput[]
+    deleteMany?: AgentDecisionScalarWhereInput | AgentDecisionScalarWhereInput[]
+  }
+
+  export type AgentInfoStateUncheckedUpdateManyWithoutRunVariantNestedInput = {
+    create?: XOR<AgentInfoStateCreateWithoutRunVariantInput, AgentInfoStateUncheckedCreateWithoutRunVariantInput> | AgentInfoStateCreateWithoutRunVariantInput[] | AgentInfoStateUncheckedCreateWithoutRunVariantInput[]
+    connectOrCreate?: AgentInfoStateCreateOrConnectWithoutRunVariantInput | AgentInfoStateCreateOrConnectWithoutRunVariantInput[]
+    upsert?: AgentInfoStateUpsertWithWhereUniqueWithoutRunVariantInput | AgentInfoStateUpsertWithWhereUniqueWithoutRunVariantInput[]
+    createMany?: AgentInfoStateCreateManyRunVariantInputEnvelope
+    set?: AgentInfoStateWhereUniqueInput | AgentInfoStateWhereUniqueInput[]
+    disconnect?: AgentInfoStateWhereUniqueInput | AgentInfoStateWhereUniqueInput[]
+    delete?: AgentInfoStateWhereUniqueInput | AgentInfoStateWhereUniqueInput[]
+    connect?: AgentInfoStateWhereUniqueInput | AgentInfoStateWhereUniqueInput[]
+    update?: AgentInfoStateUpdateWithWhereUniqueWithoutRunVariantInput | AgentInfoStateUpdateWithWhereUniqueWithoutRunVariantInput[]
+    updateMany?: AgentInfoStateUpdateManyWithWhereWithoutRunVariantInput | AgentInfoStateUpdateManyWithWhereWithoutRunVariantInput[]
+    deleteMany?: AgentInfoStateScalarWhereInput | AgentInfoStateScalarWhereInput[]
+  }
+
+  export type AgentStateUncheckedUpdateManyWithoutRunVariantNestedInput = {
+    create?: XOR<AgentStateCreateWithoutRunVariantInput, AgentStateUncheckedCreateWithoutRunVariantInput> | AgentStateCreateWithoutRunVariantInput[] | AgentStateUncheckedCreateWithoutRunVariantInput[]
+    connectOrCreate?: AgentStateCreateOrConnectWithoutRunVariantInput | AgentStateCreateOrConnectWithoutRunVariantInput[]
+    upsert?: AgentStateUpsertWithWhereUniqueWithoutRunVariantInput | AgentStateUpsertWithWhereUniqueWithoutRunVariantInput[]
+    createMany?: AgentStateCreateManyRunVariantInputEnvelope
+    set?: AgentStateWhereUniqueInput | AgentStateWhereUniqueInput[]
+    disconnect?: AgentStateWhereUniqueInput | AgentStateWhereUniqueInput[]
+    delete?: AgentStateWhereUniqueInput | AgentStateWhereUniqueInput[]
+    connect?: AgentStateWhereUniqueInput | AgentStateWhereUniqueInput[]
+    update?: AgentStateUpdateWithWhereUniqueWithoutRunVariantInput | AgentStateUpdateWithWhereUniqueWithoutRunVariantInput[]
+    updateMany?: AgentStateUpdateManyWithWhereWithoutRunVariantInput | AgentStateUpdateManyWithWhereWithoutRunVariantInput[]
+    deleteMany?: AgentStateScalarWhereInput | AgentStateScalarWhereInput[]
+  }
+
+  export type AgentExperienceUncheckedUpdateManyWithoutRunVariantNestedInput = {
+    create?: XOR<AgentExperienceCreateWithoutRunVariantInput, AgentExperienceUncheckedCreateWithoutRunVariantInput> | AgentExperienceCreateWithoutRunVariantInput[] | AgentExperienceUncheckedCreateWithoutRunVariantInput[]
+    connectOrCreate?: AgentExperienceCreateOrConnectWithoutRunVariantInput | AgentExperienceCreateOrConnectWithoutRunVariantInput[]
+    upsert?: AgentExperienceUpsertWithWhereUniqueWithoutRunVariantInput | AgentExperienceUpsertWithWhereUniqueWithoutRunVariantInput[]
+    createMany?: AgentExperienceCreateManyRunVariantInputEnvelope
+    set?: AgentExperienceWhereUniqueInput | AgentExperienceWhereUniqueInput[]
+    disconnect?: AgentExperienceWhereUniqueInput | AgentExperienceWhereUniqueInput[]
+    delete?: AgentExperienceWhereUniqueInput | AgentExperienceWhereUniqueInput[]
+    connect?: AgentExperienceWhereUniqueInput | AgentExperienceWhereUniqueInput[]
+    update?: AgentExperienceUpdateWithWhereUniqueWithoutRunVariantInput | AgentExperienceUpdateWithWhereUniqueWithoutRunVariantInput[]
+    updateMany?: AgentExperienceUpdateManyWithWhereWithoutRunVariantInput | AgentExperienceUpdateManyWithWhereWithoutRunVariantInput[]
+    deleteMany?: AgentExperienceScalarWhereInput | AgentExperienceScalarWhereInput[]
+  }
+
+  export type CrowdMetricsUncheckedUpdateManyWithoutRunVariantNestedInput = {
+    create?: XOR<CrowdMetricsCreateWithoutRunVariantInput, CrowdMetricsUncheckedCreateWithoutRunVariantInput> | CrowdMetricsCreateWithoutRunVariantInput[] | CrowdMetricsUncheckedCreateWithoutRunVariantInput[]
+    connectOrCreate?: CrowdMetricsCreateOrConnectWithoutRunVariantInput | CrowdMetricsCreateOrConnectWithoutRunVariantInput[]
+    upsert?: CrowdMetricsUpsertWithWhereUniqueWithoutRunVariantInput | CrowdMetricsUpsertWithWhereUniqueWithoutRunVariantInput[]
+    createMany?: CrowdMetricsCreateManyRunVariantInputEnvelope
+    set?: CrowdMetricsWhereUniqueInput | CrowdMetricsWhereUniqueInput[]
+    disconnect?: CrowdMetricsWhereUniqueInput | CrowdMetricsWhereUniqueInput[]
+    delete?: CrowdMetricsWhereUniqueInput | CrowdMetricsWhereUniqueInput[]
+    connect?: CrowdMetricsWhereUniqueInput | CrowdMetricsWhereUniqueInput[]
+    update?: CrowdMetricsUpdateWithWhereUniqueWithoutRunVariantInput | CrowdMetricsUpdateWithWhereUniqueWithoutRunVariantInput[]
+    updateMany?: CrowdMetricsUpdateManyWithWhereWithoutRunVariantInput | CrowdMetricsUpdateManyWithWhereWithoutRunVariantInput[]
+    deleteMany?: CrowdMetricsScalarWhereInput | CrowdMetricsScalarWhereInput[]
+  }
+
+  export type AgentRewardUncheckedUpdateManyWithoutRunVariantNestedInput = {
+    create?: XOR<AgentRewardCreateWithoutRunVariantInput, AgentRewardUncheckedCreateWithoutRunVariantInput> | AgentRewardCreateWithoutRunVariantInput[] | AgentRewardUncheckedCreateWithoutRunVariantInput[]
+    connectOrCreate?: AgentRewardCreateOrConnectWithoutRunVariantInput | AgentRewardCreateOrConnectWithoutRunVariantInput[]
+    upsert?: AgentRewardUpsertWithWhereUniqueWithoutRunVariantInput | AgentRewardUpsertWithWhereUniqueWithoutRunVariantInput[]
+    createMany?: AgentRewardCreateManyRunVariantInputEnvelope
+    set?: AgentRewardWhereUniqueInput | AgentRewardWhereUniqueInput[]
+    disconnect?: AgentRewardWhereUniqueInput | AgentRewardWhereUniqueInput[]
+    delete?: AgentRewardWhereUniqueInput | AgentRewardWhereUniqueInput[]
+    connect?: AgentRewardWhereUniqueInput | AgentRewardWhereUniqueInput[]
+    update?: AgentRewardUpdateWithWhereUniqueWithoutRunVariantInput | AgentRewardUpdateWithWhereUniqueWithoutRunVariantInput[]
+    updateMany?: AgentRewardUpdateManyWithWhereWithoutRunVariantInput | AgentRewardUpdateManyWithWhereWithoutRunVariantInput[]
+    deleteMany?: AgentRewardScalarWhereInput | AgentRewardScalarWhereInput[]
+  }
+
+  export type BacktestResultUncheckedUpdateManyWithoutRunVariantNestedInput = {
+    create?: XOR<BacktestResultCreateWithoutRunVariantInput, BacktestResultUncheckedCreateWithoutRunVariantInput> | BacktestResultCreateWithoutRunVariantInput[] | BacktestResultUncheckedCreateWithoutRunVariantInput[]
+    connectOrCreate?: BacktestResultCreateOrConnectWithoutRunVariantInput | BacktestResultCreateOrConnectWithoutRunVariantInput[]
+    upsert?: BacktestResultUpsertWithWhereUniqueWithoutRunVariantInput | BacktestResultUpsertWithWhereUniqueWithoutRunVariantInput[]
+    createMany?: BacktestResultCreateManyRunVariantInputEnvelope
+    set?: BacktestResultWhereUniqueInput | BacktestResultWhereUniqueInput[]
+    disconnect?: BacktestResultWhereUniqueInput | BacktestResultWhereUniqueInput[]
+    delete?: BacktestResultWhereUniqueInput | BacktestResultWhereUniqueInput[]
+    connect?: BacktestResultWhereUniqueInput | BacktestResultWhereUniqueInput[]
+    update?: BacktestResultUpdateWithWhereUniqueWithoutRunVariantInput | BacktestResultUpdateWithWhereUniqueWithoutRunVariantInput[]
+    updateMany?: BacktestResultUpdateManyWithWhereWithoutRunVariantInput | BacktestResultUpdateManyWithWhereWithoutRunVariantInput[]
+    deleteMany?: BacktestResultScalarWhereInput | BacktestResultScalarWhereInput[]
+  }
+
+  export type RunVariantSummaryUncheckedUpdateOneWithoutRunVariantNestedInput = {
+    create?: XOR<RunVariantSummaryCreateWithoutRunVariantInput, RunVariantSummaryUncheckedCreateWithoutRunVariantInput>
+    connectOrCreate?: RunVariantSummaryCreateOrConnectWithoutRunVariantInput
+    upsert?: RunVariantSummaryUpsertWithoutRunVariantInput
+    disconnect?: RunVariantSummaryWhereInput | boolean
+    delete?: RunVariantSummaryWhereInput | boolean
+    connect?: RunVariantSummaryWhereUniqueInput
+    update?: XOR<XOR<RunVariantSummaryUpdateToOneWithWhereWithoutRunVariantInput, RunVariantSummaryUpdateWithoutRunVariantInput>, RunVariantSummaryUncheckedUpdateWithoutRunVariantInput>
+  }
+
+  export type RunVariantCreateNestedOneWithoutSummaryInput = {
+    create?: XOR<RunVariantCreateWithoutSummaryInput, RunVariantUncheckedCreateWithoutSummaryInput>
+    connectOrCreate?: RunVariantCreateOrConnectWithoutSummaryInput
+    connect?: RunVariantWhereUniqueInput
+  }
+
+  export type RunVariantUpdateOneRequiredWithoutSummaryNestedInput = {
+    create?: XOR<RunVariantCreateWithoutSummaryInput, RunVariantUncheckedCreateWithoutSummaryInput>
+    connectOrCreate?: RunVariantCreateOrConnectWithoutSummaryInput
+    upsert?: RunVariantUpsertWithoutSummaryInput
+    connect?: RunVariantWhereUniqueInput
+    update?: XOR<XOR<RunVariantUpdateToOneWithWhereWithoutSummaryInput, RunVariantUpdateWithoutSummaryInput>, RunVariantUncheckedUpdateWithoutSummaryInput>
   }
 
   export type SimulationRunCreateNestedOneWithoutRunAgentsInput = {
@@ -38830,6 +42744,12 @@ export namespace Prisma {
     connect?: SimulationRunWhereUniqueInput
   }
 
+  export type RunVariantCreateNestedOneWithoutAgentDecisionsInput = {
+    create?: XOR<RunVariantCreateWithoutAgentDecisionsInput, RunVariantUncheckedCreateWithoutAgentDecisionsInput>
+    connectOrCreate?: RunVariantCreateOrConnectWithoutAgentDecisionsInput
+    connect?: RunVariantWhereUniqueInput
+  }
+
   export type RunAgentCreateNestedOneWithoutDecisionsInput = {
     create?: XOR<RunAgentCreateWithoutDecisionsInput, RunAgentUncheckedCreateWithoutDecisionsInput>
     connectOrCreate?: RunAgentCreateOrConnectWithoutDecisionsInput
@@ -38848,6 +42768,16 @@ export namespace Prisma {
     update?: XOR<XOR<SimulationRunUpdateToOneWithWhereWithoutAgentDecisionsInput, SimulationRunUpdateWithoutAgentDecisionsInput>, SimulationRunUncheckedUpdateWithoutAgentDecisionsInput>
   }
 
+  export type RunVariantUpdateOneWithoutAgentDecisionsNestedInput = {
+    create?: XOR<RunVariantCreateWithoutAgentDecisionsInput, RunVariantUncheckedCreateWithoutAgentDecisionsInput>
+    connectOrCreate?: RunVariantCreateOrConnectWithoutAgentDecisionsInput
+    upsert?: RunVariantUpsertWithoutAgentDecisionsInput
+    disconnect?: RunVariantWhereInput | boolean
+    delete?: RunVariantWhereInput | boolean
+    connect?: RunVariantWhereUniqueInput
+    update?: XOR<XOR<RunVariantUpdateToOneWithWhereWithoutAgentDecisionsInput, RunVariantUpdateWithoutAgentDecisionsInput>, RunVariantUncheckedUpdateWithoutAgentDecisionsInput>
+  }
+
   export type RunAgentUpdateOneRequiredWithoutDecisionsNestedInput = {
     create?: XOR<RunAgentCreateWithoutDecisionsInput, RunAgentUncheckedCreateWithoutDecisionsInput>
     connectOrCreate?: RunAgentCreateOrConnectWithoutDecisionsInput
@@ -38862,12 +42792,28 @@ export namespace Prisma {
     connect?: SimulationRunWhereUniqueInput
   }
 
+  export type RunVariantCreateNestedOneWithoutCrowdMetricsInput = {
+    create?: XOR<RunVariantCreateWithoutCrowdMetricsInput, RunVariantUncheckedCreateWithoutCrowdMetricsInput>
+    connectOrCreate?: RunVariantCreateOrConnectWithoutCrowdMetricsInput
+    connect?: RunVariantWhereUniqueInput
+  }
+
   export type SimulationRunUpdateOneRequiredWithoutCrowdMetricsNestedInput = {
     create?: XOR<SimulationRunCreateWithoutCrowdMetricsInput, SimulationRunUncheckedCreateWithoutCrowdMetricsInput>
     connectOrCreate?: SimulationRunCreateOrConnectWithoutCrowdMetricsInput
     upsert?: SimulationRunUpsertWithoutCrowdMetricsInput
     connect?: SimulationRunWhereUniqueInput
     update?: XOR<XOR<SimulationRunUpdateToOneWithWhereWithoutCrowdMetricsInput, SimulationRunUpdateWithoutCrowdMetricsInput>, SimulationRunUncheckedUpdateWithoutCrowdMetricsInput>
+  }
+
+  export type RunVariantUpdateOneWithoutCrowdMetricsNestedInput = {
+    create?: XOR<RunVariantCreateWithoutCrowdMetricsInput, RunVariantUncheckedCreateWithoutCrowdMetricsInput>
+    connectOrCreate?: RunVariantCreateOrConnectWithoutCrowdMetricsInput
+    upsert?: RunVariantUpsertWithoutCrowdMetricsInput
+    disconnect?: RunVariantWhereInput | boolean
+    delete?: RunVariantWhereInput | boolean
+    connect?: RunVariantWhereUniqueInput
+    update?: XOR<XOR<RunVariantUpdateToOneWithWhereWithoutCrowdMetricsInput, RunVariantUpdateWithoutCrowdMetricsInput>, RunVariantUncheckedUpdateWithoutCrowdMetricsInput>
   }
 
   export type SimulationRunCreateNestedOneWithoutAssetStepReturnsInput = {
@@ -38890,6 +42836,12 @@ export namespace Prisma {
     connect?: SimulationRunWhereUniqueInput
   }
 
+  export type RunVariantCreateNestedOneWithoutAgentRewardsInput = {
+    create?: XOR<RunVariantCreateWithoutAgentRewardsInput, RunVariantUncheckedCreateWithoutAgentRewardsInput>
+    connectOrCreate?: RunVariantCreateOrConnectWithoutAgentRewardsInput
+    connect?: RunVariantWhereUniqueInput
+  }
+
   export type RunAgentCreateNestedOneWithoutAgentRewardsInput = {
     create?: XOR<RunAgentCreateWithoutAgentRewardsInput, RunAgentUncheckedCreateWithoutAgentRewardsInput>
     connectOrCreate?: RunAgentCreateOrConnectWithoutAgentRewardsInput
@@ -38902,6 +42854,16 @@ export namespace Prisma {
     upsert?: SimulationRunUpsertWithoutAgentRewardsInput
     connect?: SimulationRunWhereUniqueInput
     update?: XOR<XOR<SimulationRunUpdateToOneWithWhereWithoutAgentRewardsInput, SimulationRunUpdateWithoutAgentRewardsInput>, SimulationRunUncheckedUpdateWithoutAgentRewardsInput>
+  }
+
+  export type RunVariantUpdateOneWithoutAgentRewardsNestedInput = {
+    create?: XOR<RunVariantCreateWithoutAgentRewardsInput, RunVariantUncheckedCreateWithoutAgentRewardsInput>
+    connectOrCreate?: RunVariantCreateOrConnectWithoutAgentRewardsInput
+    upsert?: RunVariantUpsertWithoutAgentRewardsInput
+    disconnect?: RunVariantWhereInput | boolean
+    delete?: RunVariantWhereInput | boolean
+    connect?: RunVariantWhereUniqueInput
+    update?: XOR<XOR<RunVariantUpdateToOneWithWhereWithoutAgentRewardsInput, RunVariantUpdateWithoutAgentRewardsInput>, RunVariantUncheckedUpdateWithoutAgentRewardsInput>
   }
 
   export type RunAgentUpdateOneRequiredWithoutAgentRewardsNestedInput = {
@@ -38932,6 +42894,12 @@ export namespace Prisma {
     connect?: SimulationRunWhereUniqueInput
   }
 
+  export type RunVariantCreateNestedOneWithoutAgentInfoStatesInput = {
+    create?: XOR<RunVariantCreateWithoutAgentInfoStatesInput, RunVariantUncheckedCreateWithoutAgentInfoStatesInput>
+    connectOrCreate?: RunVariantCreateOrConnectWithoutAgentInfoStatesInput
+    connect?: RunVariantWhereUniqueInput
+  }
+
   export type RunAgentCreateNestedOneWithoutInfoStatesInput = {
     create?: XOR<RunAgentCreateWithoutInfoStatesInput, RunAgentUncheckedCreateWithoutInfoStatesInput>
     connectOrCreate?: RunAgentCreateOrConnectWithoutInfoStatesInput
@@ -38944,6 +42912,16 @@ export namespace Prisma {
     upsert?: SimulationRunUpsertWithoutAgentInfoStatesInput
     connect?: SimulationRunWhereUniqueInput
     update?: XOR<XOR<SimulationRunUpdateToOneWithWhereWithoutAgentInfoStatesInput, SimulationRunUpdateWithoutAgentInfoStatesInput>, SimulationRunUncheckedUpdateWithoutAgentInfoStatesInput>
+  }
+
+  export type RunVariantUpdateOneWithoutAgentInfoStatesNestedInput = {
+    create?: XOR<RunVariantCreateWithoutAgentInfoStatesInput, RunVariantUncheckedCreateWithoutAgentInfoStatesInput>
+    connectOrCreate?: RunVariantCreateOrConnectWithoutAgentInfoStatesInput
+    upsert?: RunVariantUpsertWithoutAgentInfoStatesInput
+    disconnect?: RunVariantWhereInput | boolean
+    delete?: RunVariantWhereInput | boolean
+    connect?: RunVariantWhereUniqueInput
+    update?: XOR<XOR<RunVariantUpdateToOneWithWhereWithoutAgentInfoStatesInput, RunVariantUpdateWithoutAgentInfoStatesInput>, RunVariantUncheckedUpdateWithoutAgentInfoStatesInput>
   }
 
   export type RunAgentUpdateOneRequiredWithoutInfoStatesNestedInput = {
@@ -38960,6 +42938,12 @@ export namespace Prisma {
     connect?: SimulationRunWhereUniqueInput
   }
 
+  export type RunVariantCreateNestedOneWithoutAgentStatesInput = {
+    create?: XOR<RunVariantCreateWithoutAgentStatesInput, RunVariantUncheckedCreateWithoutAgentStatesInput>
+    connectOrCreate?: RunVariantCreateOrConnectWithoutAgentStatesInput
+    connect?: RunVariantWhereUniqueInput
+  }
+
   export type RunAgentCreateNestedOneWithoutAgentStatesInput = {
     create?: XOR<RunAgentCreateWithoutAgentStatesInput, RunAgentUncheckedCreateWithoutAgentStatesInput>
     connectOrCreate?: RunAgentCreateOrConnectWithoutAgentStatesInput
@@ -38972,6 +42956,16 @@ export namespace Prisma {
     upsert?: SimulationRunUpsertWithoutAgentStatesInput
     connect?: SimulationRunWhereUniqueInput
     update?: XOR<XOR<SimulationRunUpdateToOneWithWhereWithoutAgentStatesInput, SimulationRunUpdateWithoutAgentStatesInput>, SimulationRunUncheckedUpdateWithoutAgentStatesInput>
+  }
+
+  export type RunVariantUpdateOneWithoutAgentStatesNestedInput = {
+    create?: XOR<RunVariantCreateWithoutAgentStatesInput, RunVariantUncheckedCreateWithoutAgentStatesInput>
+    connectOrCreate?: RunVariantCreateOrConnectWithoutAgentStatesInput
+    upsert?: RunVariantUpsertWithoutAgentStatesInput
+    disconnect?: RunVariantWhereInput | boolean
+    delete?: RunVariantWhereInput | boolean
+    connect?: RunVariantWhereUniqueInput
+    update?: XOR<XOR<RunVariantUpdateToOneWithWhereWithoutAgentStatesInput, RunVariantUpdateWithoutAgentStatesInput>, RunVariantUncheckedUpdateWithoutAgentStatesInput>
   }
 
   export type RunAgentUpdateOneRequiredWithoutAgentStatesNestedInput = {
@@ -39016,6 +43010,12 @@ export namespace Prisma {
     connect?: SimulationRunWhereUniqueInput
   }
 
+  export type RunVariantCreateNestedOneWithoutAgentExperiencesInput = {
+    create?: XOR<RunVariantCreateWithoutAgentExperiencesInput, RunVariantUncheckedCreateWithoutAgentExperiencesInput>
+    connectOrCreate?: RunVariantCreateOrConnectWithoutAgentExperiencesInput
+    connect?: RunVariantWhereUniqueInput
+  }
+
   export type RunAgentCreateNestedOneWithoutExperiencesInput = {
     create?: XOR<RunAgentCreateWithoutExperiencesInput, RunAgentUncheckedCreateWithoutExperiencesInput>
     connectOrCreate?: RunAgentCreateOrConnectWithoutExperiencesInput
@@ -39028,6 +43028,16 @@ export namespace Prisma {
     upsert?: SimulationRunUpsertWithoutAgentExperiencesInput
     connect?: SimulationRunWhereUniqueInput
     update?: XOR<XOR<SimulationRunUpdateToOneWithWhereWithoutAgentExperiencesInput, SimulationRunUpdateWithoutAgentExperiencesInput>, SimulationRunUncheckedUpdateWithoutAgentExperiencesInput>
+  }
+
+  export type RunVariantUpdateOneWithoutAgentExperiencesNestedInput = {
+    create?: XOR<RunVariantCreateWithoutAgentExperiencesInput, RunVariantUncheckedCreateWithoutAgentExperiencesInput>
+    connectOrCreate?: RunVariantCreateOrConnectWithoutAgentExperiencesInput
+    upsert?: RunVariantUpsertWithoutAgentExperiencesInput
+    disconnect?: RunVariantWhereInput | boolean
+    delete?: RunVariantWhereInput | boolean
+    connect?: RunVariantWhereUniqueInput
+    update?: XOR<XOR<RunVariantUpdateToOneWithWhereWithoutAgentExperiencesInput, RunVariantUpdateWithoutAgentExperiencesInput>, RunVariantUncheckedUpdateWithoutAgentExperiencesInput>
   }
 
   export type RunAgentUpdateOneRequiredWithoutExperiencesNestedInput = {
@@ -39158,6 +43168,22 @@ export namespace Prisma {
     update?: UserWalletTransactionUpdateWithWhereUniqueWithoutBetInput | UserWalletTransactionUpdateWithWhereUniqueWithoutBetInput[]
     updateMany?: UserWalletTransactionUpdateManyWithWhereWithoutBetInput | UserWalletTransactionUpdateManyWithWhereWithoutBetInput[]
     deleteMany?: UserWalletTransactionScalarWhereInput | UserWalletTransactionScalarWhereInput[]
+  }
+
+  export type RunVariantCreateNestedOneWithoutBacktestResultsInput = {
+    create?: XOR<RunVariantCreateWithoutBacktestResultsInput, RunVariantUncheckedCreateWithoutBacktestResultsInput>
+    connectOrCreate?: RunVariantCreateOrConnectWithoutBacktestResultsInput
+    connect?: RunVariantWhereUniqueInput
+  }
+
+  export type RunVariantUpdateOneWithoutBacktestResultsNestedInput = {
+    create?: XOR<RunVariantCreateWithoutBacktestResultsInput, RunVariantUncheckedCreateWithoutBacktestResultsInput>
+    connectOrCreate?: RunVariantCreateOrConnectWithoutBacktestResultsInput
+    upsert?: RunVariantUpsertWithoutBacktestResultsInput
+    disconnect?: RunVariantWhereInput | boolean
+    delete?: RunVariantWhereInput | boolean
+    connect?: RunVariantWhereUniqueInput
+    update?: XOR<XOR<RunVariantUpdateToOneWithWhereWithoutBacktestResultsInput, RunVariantUpdateWithoutBacktestResultsInput>, RunVariantUncheckedUpdateWithoutBacktestResultsInput>
   }
 
   export type NestedUuidFilter<$PrismaModel = never> = {
@@ -39428,11 +43454,36 @@ export namespace Prisma {
     _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
+  export type NestedUuidNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedUuidNullableFilter<$PrismaModel> | string | null
+  }
+
   export type NestedEnumAgentDecisionActionFilter<$PrismaModel = never> = {
     equals?: $Enums.AgentDecisionAction | EnumAgentDecisionActionFieldRefInput<$PrismaModel>
     in?: $Enums.AgentDecisionAction[] | ListEnumAgentDecisionActionFieldRefInput<$PrismaModel>
     notIn?: $Enums.AgentDecisionAction[] | ListEnumAgentDecisionActionFieldRefInput<$PrismaModel>
     not?: NestedEnumAgentDecisionActionFilter<$PrismaModel> | $Enums.AgentDecisionAction
+  }
+
+  export type NestedUuidNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedUuidNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
   export type NestedEnumAgentDecisionActionWithAggregatesFilter<$PrismaModel = never> = {
@@ -39452,17 +43503,6 @@ export namespace Prisma {
     not?: NestedEnumWalletTransactionTypeFilter<$PrismaModel> | $Enums.WalletTransactionType
   }
 
-  export type NestedUuidNullableFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    not?: NestedUuidNullableFilter<$PrismaModel> | string | null
-  }
-
   export type NestedEnumWalletTransactionTypeWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.WalletTransactionType | EnumWalletTransactionTypeFieldRefInput<$PrismaModel>
     in?: $Enums.WalletTransactionType[] | ListEnumWalletTransactionTypeFieldRefInput<$PrismaModel>
@@ -39471,20 +43511,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumWalletTransactionTypeFilter<$PrismaModel>
     _max?: NestedEnumWalletTransactionTypeFilter<$PrismaModel>
-  }
-
-  export type NestedUuidNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    not?: NestedUuidNullableWithAggregatesFilter<$PrismaModel> | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedStringNullableFilter<$PrismaModel>
-    _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
   export type NestedEnumBetDirectionFilter<$PrismaModel = never> = {
@@ -40034,11 +44060,13 @@ export namespace Prisma {
     learningMetaJson?: NullableJsonNullValueInput | InputJsonValue
     stateBeforeJson?: NullableJsonNullValueInput | InputJsonValue
     stateAfterJson?: NullableJsonNullValueInput | InputJsonValue
+    runVariant?: RunVariantCreateNestedOneWithoutAgentExperiencesInput
     runAgent: RunAgentCreateNestedOneWithoutExperiencesInput
   }
 
   export type AgentExperienceUncheckedCreateWithoutRunInput = {
     id?: string
+    runVariantId?: string | null
     runAgentId: string
     step: number
     ts: Date | string
@@ -40227,11 +44255,13 @@ export namespace Prisma {
     confidence: number
     rationale?: string | null
     createdAt?: Date | string
+    runVariant?: RunVariantCreateNestedOneWithoutAgentDecisionsInput
     agent: RunAgentCreateNestedOneWithoutDecisionsInput
   }
 
   export type AgentDecisionUncheckedCreateWithoutRunInput = {
     id?: string
+    runVariantId?: string | null
     step: number
     agentId: string
     assetSymbol?: string
@@ -40268,10 +44298,12 @@ export namespace Prisma {
     wisdomScore?: number | null
     noiseSensitivity?: number | null
     createdAt?: Date | string
+    runVariant?: RunVariantCreateNestedOneWithoutCrowdMetricsInput
   }
 
   export type CrowdMetricsUncheckedCreateWithoutRunInput = {
     id?: string
+    runVariantId?: string | null
     assetSymbol: string
     step: number
     signal: number
@@ -40346,11 +44378,13 @@ export namespace Prisma {
     herding?: number | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    runVariant?: RunVariantCreateNestedOneWithoutAgentInfoStatesInput
     agent: RunAgentCreateNestedOneWithoutInfoStatesInput
   }
 
   export type AgentInfoStateUncheckedCreateWithoutRunInput = {
     id?: string
+    runVariantId?: string | null
     assetSymbol: string
     agentId: string
     step: number
@@ -40384,11 +44418,13 @@ export namespace Prisma {
     exposedCount: number
     createdAt?: Date | string
     updatedAt?: Date | string
+    runVariant?: RunVariantCreateNestedOneWithoutAgentStatesInput
     agent: RunAgentCreateNestedOneWithoutAgentStatesInput
   }
 
   export type AgentStateUncheckedCreateWithoutRunInput = {
     id?: string
+    runVariantId?: string | null
     assetSymbol: string
     agentId: string
     step: number
@@ -40448,11 +44484,13 @@ export namespace Prisma {
     drawdown: number
     rewardScore: number
     createdAt?: Date | string
+    runVariant?: RunVariantCreateNestedOneWithoutAgentRewardsInput
     agent: RunAgentCreateNestedOneWithoutAgentRewardsInput
   }
 
   export type AgentRewardUncheckedCreateWithoutRunInput = {
     id?: string
+    runVariantId?: string | null
     agentId: string
     assetSymbol: string
     step: number
@@ -40472,6 +44510,52 @@ export namespace Prisma {
 
   export type AgentRewardCreateManyRunInputEnvelope = {
     data: AgentRewardCreateManyRunInput | AgentRewardCreateManyRunInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type RunVariantCreateWithoutRunInput = {
+    id?: string
+    assetSymbol: string
+    seed: number
+    agents: number
+    steps: number
+    label?: string | null
+    createdAt?: Date | string
+    agentDecisions?: AgentDecisionCreateNestedManyWithoutRunVariantInput
+    agentInfoStates?: AgentInfoStateCreateNestedManyWithoutRunVariantInput
+    agentStates?: AgentStateCreateNestedManyWithoutRunVariantInput
+    agentExperiences?: AgentExperienceCreateNestedManyWithoutRunVariantInput
+    crowdMetrics?: CrowdMetricsCreateNestedManyWithoutRunVariantInput
+    agentRewards?: AgentRewardCreateNestedManyWithoutRunVariantInput
+    backtestResults?: BacktestResultCreateNestedManyWithoutRunVariantInput
+    summary?: RunVariantSummaryCreateNestedOneWithoutRunVariantInput
+  }
+
+  export type RunVariantUncheckedCreateWithoutRunInput = {
+    id?: string
+    assetSymbol: string
+    seed: number
+    agents: number
+    steps: number
+    label?: string | null
+    createdAt?: Date | string
+    agentDecisions?: AgentDecisionUncheckedCreateNestedManyWithoutRunVariantInput
+    agentInfoStates?: AgentInfoStateUncheckedCreateNestedManyWithoutRunVariantInput
+    agentStates?: AgentStateUncheckedCreateNestedManyWithoutRunVariantInput
+    agentExperiences?: AgentExperienceUncheckedCreateNestedManyWithoutRunVariantInput
+    crowdMetrics?: CrowdMetricsUncheckedCreateNestedManyWithoutRunVariantInput
+    agentRewards?: AgentRewardUncheckedCreateNestedManyWithoutRunVariantInput
+    backtestResults?: BacktestResultUncheckedCreateNestedManyWithoutRunVariantInput
+    summary?: RunVariantSummaryUncheckedCreateNestedOneWithoutRunVariantInput
+  }
+
+  export type RunVariantCreateOrConnectWithoutRunInput = {
+    where: RunVariantWhereUniqueInput
+    create: XOR<RunVariantCreateWithoutRunInput, RunVariantUncheckedCreateWithoutRunInput>
+  }
+
+  export type RunVariantCreateManyRunInputEnvelope = {
+    data: RunVariantCreateManyRunInput | RunVariantCreateManyRunInput[]
     skipDuplicates?: boolean
   }
 
@@ -40497,6 +44581,7 @@ export namespace Prisma {
     NOT?: AgentExperienceScalarWhereInput | AgentExperienceScalarWhereInput[]
     id?: UuidFilter<"AgentExperience"> | string
     runId?: UuidFilter<"AgentExperience"> | string
+    runVariantId?: UuidNullableFilter<"AgentExperience"> | string | null
     runAgentId?: UuidFilter<"AgentExperience"> | string
     step?: IntFilter<"AgentExperience"> | number
     ts?: DateTimeFilter<"AgentExperience"> | Date | string
@@ -40656,6 +44741,7 @@ export namespace Prisma {
     NOT?: AgentDecisionScalarWhereInput | AgentDecisionScalarWhereInput[]
     id?: UuidFilter<"AgentDecision"> | string
     runId?: UuidFilter<"AgentDecision"> | string
+    runVariantId?: UuidNullableFilter<"AgentDecision"> | string | null
     step?: IntFilter<"AgentDecision"> | number
     agentId?: UuidFilter<"AgentDecision"> | string
     assetSymbol?: StringFilter<"AgentDecision"> | string
@@ -40687,6 +44773,7 @@ export namespace Prisma {
     NOT?: CrowdMetricsScalarWhereInput | CrowdMetricsScalarWhereInput[]
     id?: UuidFilter<"CrowdMetrics"> | string
     runId?: UuidFilter<"CrowdMetrics"> | string
+    runVariantId?: UuidNullableFilter<"CrowdMetrics"> | string | null
     assetSymbol?: StringFilter<"CrowdMetrics"> | string
     step?: IntFilter<"CrowdMetrics"> | number
     signal?: FloatFilter<"CrowdMetrics"> | number
@@ -40759,6 +44846,7 @@ export namespace Prisma {
     NOT?: AgentInfoStateScalarWhereInput | AgentInfoStateScalarWhereInput[]
     id?: UuidFilter<"AgentInfoState"> | string
     runId?: UuidFilter<"AgentInfoState"> | string
+    runVariantId?: UuidNullableFilter<"AgentInfoState"> | string | null
     assetSymbol?: StringFilter<"AgentInfoState"> | string
     agentId?: UuidFilter<"AgentInfoState"> | string
     step?: IntFilter<"AgentInfoState"> | number
@@ -40793,6 +44881,7 @@ export namespace Prisma {
     NOT?: AgentStateScalarWhereInput | AgentStateScalarWhereInput[]
     id?: UuidFilter<"AgentState"> | string
     runId?: UuidFilter<"AgentState"> | string
+    runVariantId?: UuidNullableFilter<"AgentState"> | string | null
     assetSymbol?: StringFilter<"AgentState"> | string
     agentId?: UuidFilter<"AgentState"> | string
     step?: IntFilter<"AgentState"> | number
@@ -40855,6 +44944,7 @@ export namespace Prisma {
     NOT?: AgentRewardScalarWhereInput | AgentRewardScalarWhereInput[]
     id?: UuidFilter<"AgentReward"> | string
     runId?: UuidFilter<"AgentReward"> | string
+    runVariantId?: UuidNullableFilter<"AgentReward"> | string | null
     agentId?: UuidFilter<"AgentReward"> | string
     assetSymbol?: StringFilter<"AgentReward"> | string
     step?: IntFilter<"AgentReward"> | number
@@ -40865,6 +44955,731 @@ export namespace Prisma {
     drawdown?: FloatFilter<"AgentReward"> | number
     rewardScore?: FloatFilter<"AgentReward"> | number
     createdAt?: DateTimeFilter<"AgentReward"> | Date | string
+  }
+
+  export type RunVariantUpsertWithWhereUniqueWithoutRunInput = {
+    where: RunVariantWhereUniqueInput
+    update: XOR<RunVariantUpdateWithoutRunInput, RunVariantUncheckedUpdateWithoutRunInput>
+    create: XOR<RunVariantCreateWithoutRunInput, RunVariantUncheckedCreateWithoutRunInput>
+  }
+
+  export type RunVariantUpdateWithWhereUniqueWithoutRunInput = {
+    where: RunVariantWhereUniqueInput
+    data: XOR<RunVariantUpdateWithoutRunInput, RunVariantUncheckedUpdateWithoutRunInput>
+  }
+
+  export type RunVariantUpdateManyWithWhereWithoutRunInput = {
+    where: RunVariantScalarWhereInput
+    data: XOR<RunVariantUpdateManyMutationInput, RunVariantUncheckedUpdateManyWithoutRunInput>
+  }
+
+  export type RunVariantScalarWhereInput = {
+    AND?: RunVariantScalarWhereInput | RunVariantScalarWhereInput[]
+    OR?: RunVariantScalarWhereInput[]
+    NOT?: RunVariantScalarWhereInput | RunVariantScalarWhereInput[]
+    id?: UuidFilter<"RunVariant"> | string
+    runId?: UuidFilter<"RunVariant"> | string
+    assetSymbol?: StringFilter<"RunVariant"> | string
+    seed?: IntFilter<"RunVariant"> | number
+    agents?: IntFilter<"RunVariant"> | number
+    steps?: IntFilter<"RunVariant"> | number
+    label?: StringNullableFilter<"RunVariant"> | string | null
+    createdAt?: DateTimeFilter<"RunVariant"> | Date | string
+  }
+
+  export type SimulationRunCreateWithoutRunVariantsInput = {
+    id?: string
+    name: string
+    status?: $Enums.SimulationRunStatus
+    seed: number
+    modelVersion: string
+    datasetVersion: string
+    codeGitSha?: string | null
+    schemaVersion: string
+    startedAt?: Date | string | null
+    finishedAt?: Date | string | null
+    configJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    agentExperiences?: AgentExperienceCreateNestedManyWithoutRunInput
+    crowdSnapshots?: CrowdSnapshotCreateNestedManyWithoutRunInput
+    runDebug?: RunDebugCreateNestedOneWithoutRunInput
+    bets?: BetCreateNestedManyWithoutRunInput
+    runTimeSeries?: RunTimeSeriesCreateNestedManyWithoutRunInput
+    runAgents?: RunAgentCreateNestedManyWithoutRunInput
+    agentDecisions?: AgentDecisionCreateNestedManyWithoutRunInput
+    crowdMetrics?: CrowdMetricsCreateNestedManyWithoutRunInput
+    infoEvents?: InfoEventCreateNestedManyWithoutRunInput
+    agentInfoStates?: AgentInfoStateCreateNestedManyWithoutRunInput
+    agentStates?: AgentStateCreateNestedManyWithoutRunInput
+    assetStepReturns?: AssetStepReturnCreateNestedManyWithoutRunInput
+    agentRewards?: AgentRewardCreateNestedManyWithoutRunInput
+  }
+
+  export type SimulationRunUncheckedCreateWithoutRunVariantsInput = {
+    id?: string
+    name: string
+    status?: $Enums.SimulationRunStatus
+    seed: number
+    modelVersion: string
+    datasetVersion: string
+    codeGitSha?: string | null
+    schemaVersion: string
+    startedAt?: Date | string | null
+    finishedAt?: Date | string | null
+    configJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    agentExperiences?: AgentExperienceUncheckedCreateNestedManyWithoutRunInput
+    crowdSnapshots?: CrowdSnapshotUncheckedCreateNestedManyWithoutRunInput
+    runDebug?: RunDebugUncheckedCreateNestedOneWithoutRunInput
+    bets?: BetUncheckedCreateNestedManyWithoutRunInput
+    runTimeSeries?: RunTimeSeriesUncheckedCreateNestedManyWithoutRunInput
+    runAgents?: RunAgentUncheckedCreateNestedManyWithoutRunInput
+    agentDecisions?: AgentDecisionUncheckedCreateNestedManyWithoutRunInput
+    crowdMetrics?: CrowdMetricsUncheckedCreateNestedManyWithoutRunInput
+    infoEvents?: InfoEventUncheckedCreateNestedManyWithoutRunInput
+    agentInfoStates?: AgentInfoStateUncheckedCreateNestedManyWithoutRunInput
+    agentStates?: AgentStateUncheckedCreateNestedManyWithoutRunInput
+    assetStepReturns?: AssetStepReturnUncheckedCreateNestedManyWithoutRunInput
+    agentRewards?: AgentRewardUncheckedCreateNestedManyWithoutRunInput
+  }
+
+  export type SimulationRunCreateOrConnectWithoutRunVariantsInput = {
+    where: SimulationRunWhereUniqueInput
+    create: XOR<SimulationRunCreateWithoutRunVariantsInput, SimulationRunUncheckedCreateWithoutRunVariantsInput>
+  }
+
+  export type AgentDecisionCreateWithoutRunVariantInput = {
+    id?: string
+    step: number
+    assetSymbol?: string
+    action: $Enums.AgentDecisionAction
+    confidence: number
+    rationale?: string | null
+    createdAt?: Date | string
+    run: SimulationRunCreateNestedOneWithoutAgentDecisionsInput
+    agent: RunAgentCreateNestedOneWithoutDecisionsInput
+  }
+
+  export type AgentDecisionUncheckedCreateWithoutRunVariantInput = {
+    id?: string
+    runId: string
+    step: number
+    agentId: string
+    assetSymbol?: string
+    action: $Enums.AgentDecisionAction
+    confidence: number
+    rationale?: string | null
+    createdAt?: Date | string
+  }
+
+  export type AgentDecisionCreateOrConnectWithoutRunVariantInput = {
+    where: AgentDecisionWhereUniqueInput
+    create: XOR<AgentDecisionCreateWithoutRunVariantInput, AgentDecisionUncheckedCreateWithoutRunVariantInput>
+  }
+
+  export type AgentDecisionCreateManyRunVariantInputEnvelope = {
+    data: AgentDecisionCreateManyRunVariantInput | AgentDecisionCreateManyRunVariantInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type AgentInfoStateCreateWithoutRunVariantInput = {
+    id?: string
+    assetSymbol: string
+    step: number
+    exposedCount: number
+    infoSignal: number
+    confidence?: number | null
+    riskTolerance?: number | null
+    herding?: number | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    run: SimulationRunCreateNestedOneWithoutAgentInfoStatesInput
+    agent: RunAgentCreateNestedOneWithoutInfoStatesInput
+  }
+
+  export type AgentInfoStateUncheckedCreateWithoutRunVariantInput = {
+    id?: string
+    runId: string
+    assetSymbol: string
+    agentId: string
+    step: number
+    exposedCount: number
+    infoSignal: number
+    confidence?: number | null
+    riskTolerance?: number | null
+    herding?: number | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AgentInfoStateCreateOrConnectWithoutRunVariantInput = {
+    where: AgentInfoStateWhereUniqueInput
+    create: XOR<AgentInfoStateCreateWithoutRunVariantInput, AgentInfoStateUncheckedCreateWithoutRunVariantInput>
+  }
+
+  export type AgentInfoStateCreateManyRunVariantInputEnvelope = {
+    data: AgentInfoStateCreateManyRunVariantInput | AgentInfoStateCreateManyRunVariantInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type AgentStateCreateWithoutRunVariantInput = {
+    id?: string
+    assetSymbol: string
+    step: number
+    confidence: number
+    riskTolerance: number
+    herding: number
+    infoSignal: number
+    exposedCount: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    run: SimulationRunCreateNestedOneWithoutAgentStatesInput
+    agent: RunAgentCreateNestedOneWithoutAgentStatesInput
+  }
+
+  export type AgentStateUncheckedCreateWithoutRunVariantInput = {
+    id?: string
+    runId: string
+    assetSymbol: string
+    agentId: string
+    step: number
+    confidence: number
+    riskTolerance: number
+    herding: number
+    infoSignal: number
+    exposedCount: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AgentStateCreateOrConnectWithoutRunVariantInput = {
+    where: AgentStateWhereUniqueInput
+    create: XOR<AgentStateCreateWithoutRunVariantInput, AgentStateUncheckedCreateWithoutRunVariantInput>
+  }
+
+  export type AgentStateCreateManyRunVariantInputEnvelope = {
+    data: AgentStateCreateManyRunVariantInput | AgentStateCreateManyRunVariantInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type AgentExperienceCreateWithoutRunVariantInput = {
+    id?: string
+    step: number
+    ts: Date | string
+    actionJson?: NullableJsonNullValueInput | InputJsonValue
+    signalsJson?: NullableJsonNullValueInput | InputJsonValue
+    pnl?: number | null
+    drawdown?: number | null
+    reward?: number | null
+    learningMetaJson?: NullableJsonNullValueInput | InputJsonValue
+    stateBeforeJson?: NullableJsonNullValueInput | InputJsonValue
+    stateAfterJson?: NullableJsonNullValueInput | InputJsonValue
+    run: SimulationRunCreateNestedOneWithoutAgentExperiencesInput
+    runAgent: RunAgentCreateNestedOneWithoutExperiencesInput
+  }
+
+  export type AgentExperienceUncheckedCreateWithoutRunVariantInput = {
+    id?: string
+    runId: string
+    runAgentId: string
+    step: number
+    ts: Date | string
+    actionJson?: NullableJsonNullValueInput | InputJsonValue
+    signalsJson?: NullableJsonNullValueInput | InputJsonValue
+    pnl?: number | null
+    drawdown?: number | null
+    reward?: number | null
+    learningMetaJson?: NullableJsonNullValueInput | InputJsonValue
+    stateBeforeJson?: NullableJsonNullValueInput | InputJsonValue
+    stateAfterJson?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type AgentExperienceCreateOrConnectWithoutRunVariantInput = {
+    where: AgentExperienceWhereUniqueInput
+    create: XOR<AgentExperienceCreateWithoutRunVariantInput, AgentExperienceUncheckedCreateWithoutRunVariantInput>
+  }
+
+  export type AgentExperienceCreateManyRunVariantInputEnvelope = {
+    data: AgentExperienceCreateManyRunVariantInput | AgentExperienceCreateManyRunVariantInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type CrowdMetricsCreateWithoutRunVariantInput = {
+    id?: string
+    assetSymbol: string
+    step: number
+    signal: number
+    weightedSignal: number
+    consensus: number
+    polarization: number
+    uncertainty: number
+    minorityStrength: number
+    beliefMomentum?: number | null
+    diversityIndex?: number | null
+    independenceIndex?: number | null
+    herdingIndex?: number | null
+    wisdomScore?: number | null
+    noiseSensitivity?: number | null
+    createdAt?: Date | string
+    run: SimulationRunCreateNestedOneWithoutCrowdMetricsInput
+  }
+
+  export type CrowdMetricsUncheckedCreateWithoutRunVariantInput = {
+    id?: string
+    runId: string
+    assetSymbol: string
+    step: number
+    signal: number
+    weightedSignal: number
+    consensus: number
+    polarization: number
+    uncertainty: number
+    minorityStrength: number
+    beliefMomentum?: number | null
+    diversityIndex?: number | null
+    independenceIndex?: number | null
+    herdingIndex?: number | null
+    wisdomScore?: number | null
+    noiseSensitivity?: number | null
+    createdAt?: Date | string
+  }
+
+  export type CrowdMetricsCreateOrConnectWithoutRunVariantInput = {
+    where: CrowdMetricsWhereUniqueInput
+    create: XOR<CrowdMetricsCreateWithoutRunVariantInput, CrowdMetricsUncheckedCreateWithoutRunVariantInput>
+  }
+
+  export type CrowdMetricsCreateManyRunVariantInputEnvelope = {
+    data: CrowdMetricsCreateManyRunVariantInput | CrowdMetricsCreateManyRunVariantInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type AgentRewardCreateWithoutRunVariantInput = {
+    id?: string
+    assetSymbol: string
+    step: number
+    action: $Enums.AgentDecisionAction
+    stepReturn: number
+    pnl: number
+    regret: number
+    drawdown: number
+    rewardScore: number
+    createdAt?: Date | string
+    run: SimulationRunCreateNestedOneWithoutAgentRewardsInput
+    agent: RunAgentCreateNestedOneWithoutAgentRewardsInput
+  }
+
+  export type AgentRewardUncheckedCreateWithoutRunVariantInput = {
+    id?: string
+    runId: string
+    agentId: string
+    assetSymbol: string
+    step: number
+    action: $Enums.AgentDecisionAction
+    stepReturn: number
+    pnl: number
+    regret: number
+    drawdown: number
+    rewardScore: number
+    createdAt?: Date | string
+  }
+
+  export type AgentRewardCreateOrConnectWithoutRunVariantInput = {
+    where: AgentRewardWhereUniqueInput
+    create: XOR<AgentRewardCreateWithoutRunVariantInput, AgentRewardUncheckedCreateWithoutRunVariantInput>
+  }
+
+  export type AgentRewardCreateManyRunVariantInputEnvelope = {
+    data: AgentRewardCreateManyRunVariantInput | AgentRewardCreateManyRunVariantInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type BacktestResultCreateWithoutRunVariantInput = {
+    id?: string
+    runId: string
+    assetSymbol: string
+    seed: number
+    steps: number
+    agents: number
+    pairsCount?: number | null
+    corr?: number | null
+    directionalAccuracy?: number | null
+    createdAt?: Date | string
+  }
+
+  export type BacktestResultUncheckedCreateWithoutRunVariantInput = {
+    id?: string
+    runId: string
+    assetSymbol: string
+    seed: number
+    steps: number
+    agents: number
+    pairsCount?: number | null
+    corr?: number | null
+    directionalAccuracy?: number | null
+    createdAt?: Date | string
+  }
+
+  export type BacktestResultCreateOrConnectWithoutRunVariantInput = {
+    where: BacktestResultWhereUniqueInput
+    create: XOR<BacktestResultCreateWithoutRunVariantInput, BacktestResultUncheckedCreateWithoutRunVariantInput>
+  }
+
+  export type BacktestResultCreateManyRunVariantInputEnvelope = {
+    data: BacktestResultCreateManyRunVariantInput | BacktestResultCreateManyRunVariantInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type RunVariantSummaryCreateWithoutRunVariantInput = {
+    id?: string
+    corr: number
+    directionalAccuracy: number
+    pairsCount: number
+    computedAt?: Date | string
+    debugDecisionCounts?: NullableJsonNullValueInput | InputJsonValue
+    debugPairsSample?: NullableJsonNullValueInput | InputJsonValue
+    debugDecisionsHash?: string | null
+    debugReturnsHash?: string | null
+  }
+
+  export type RunVariantSummaryUncheckedCreateWithoutRunVariantInput = {
+    id?: string
+    corr: number
+    directionalAccuracy: number
+    pairsCount: number
+    computedAt?: Date | string
+    debugDecisionCounts?: NullableJsonNullValueInput | InputJsonValue
+    debugPairsSample?: NullableJsonNullValueInput | InputJsonValue
+    debugDecisionsHash?: string | null
+    debugReturnsHash?: string | null
+  }
+
+  export type RunVariantSummaryCreateOrConnectWithoutRunVariantInput = {
+    where: RunVariantSummaryWhereUniqueInput
+    create: XOR<RunVariantSummaryCreateWithoutRunVariantInput, RunVariantSummaryUncheckedCreateWithoutRunVariantInput>
+  }
+
+  export type SimulationRunUpsertWithoutRunVariantsInput = {
+    update: XOR<SimulationRunUpdateWithoutRunVariantsInput, SimulationRunUncheckedUpdateWithoutRunVariantsInput>
+    create: XOR<SimulationRunCreateWithoutRunVariantsInput, SimulationRunUncheckedCreateWithoutRunVariantsInput>
+    where?: SimulationRunWhereInput
+  }
+
+  export type SimulationRunUpdateToOneWithWhereWithoutRunVariantsInput = {
+    where?: SimulationRunWhereInput
+    data: XOR<SimulationRunUpdateWithoutRunVariantsInput, SimulationRunUncheckedUpdateWithoutRunVariantsInput>
+  }
+
+  export type SimulationRunUpdateWithoutRunVariantsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    status?: EnumSimulationRunStatusFieldUpdateOperationsInput | $Enums.SimulationRunStatus
+    seed?: IntFieldUpdateOperationsInput | number
+    modelVersion?: StringFieldUpdateOperationsInput | string
+    datasetVersion?: StringFieldUpdateOperationsInput | string
+    codeGitSha?: NullableStringFieldUpdateOperationsInput | string | null
+    schemaVersion?: StringFieldUpdateOperationsInput | string
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    configJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    agentExperiences?: AgentExperienceUpdateManyWithoutRunNestedInput
+    crowdSnapshots?: CrowdSnapshotUpdateManyWithoutRunNestedInput
+    runDebug?: RunDebugUpdateOneWithoutRunNestedInput
+    bets?: BetUpdateManyWithoutRunNestedInput
+    runTimeSeries?: RunTimeSeriesUpdateManyWithoutRunNestedInput
+    runAgents?: RunAgentUpdateManyWithoutRunNestedInput
+    agentDecisions?: AgentDecisionUpdateManyWithoutRunNestedInput
+    crowdMetrics?: CrowdMetricsUpdateManyWithoutRunNestedInput
+    infoEvents?: InfoEventUpdateManyWithoutRunNestedInput
+    agentInfoStates?: AgentInfoStateUpdateManyWithoutRunNestedInput
+    agentStates?: AgentStateUpdateManyWithoutRunNestedInput
+    assetStepReturns?: AssetStepReturnUpdateManyWithoutRunNestedInput
+    agentRewards?: AgentRewardUpdateManyWithoutRunNestedInput
+  }
+
+  export type SimulationRunUncheckedUpdateWithoutRunVariantsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    status?: EnumSimulationRunStatusFieldUpdateOperationsInput | $Enums.SimulationRunStatus
+    seed?: IntFieldUpdateOperationsInput | number
+    modelVersion?: StringFieldUpdateOperationsInput | string
+    datasetVersion?: StringFieldUpdateOperationsInput | string
+    codeGitSha?: NullableStringFieldUpdateOperationsInput | string | null
+    schemaVersion?: StringFieldUpdateOperationsInput | string
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    configJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    agentExperiences?: AgentExperienceUncheckedUpdateManyWithoutRunNestedInput
+    crowdSnapshots?: CrowdSnapshotUncheckedUpdateManyWithoutRunNestedInput
+    runDebug?: RunDebugUncheckedUpdateOneWithoutRunNestedInput
+    bets?: BetUncheckedUpdateManyWithoutRunNestedInput
+    runTimeSeries?: RunTimeSeriesUncheckedUpdateManyWithoutRunNestedInput
+    runAgents?: RunAgentUncheckedUpdateManyWithoutRunNestedInput
+    agentDecisions?: AgentDecisionUncheckedUpdateManyWithoutRunNestedInput
+    crowdMetrics?: CrowdMetricsUncheckedUpdateManyWithoutRunNestedInput
+    infoEvents?: InfoEventUncheckedUpdateManyWithoutRunNestedInput
+    agentInfoStates?: AgentInfoStateUncheckedUpdateManyWithoutRunNestedInput
+    agentStates?: AgentStateUncheckedUpdateManyWithoutRunNestedInput
+    assetStepReturns?: AssetStepReturnUncheckedUpdateManyWithoutRunNestedInput
+    agentRewards?: AgentRewardUncheckedUpdateManyWithoutRunNestedInput
+  }
+
+  export type AgentDecisionUpsertWithWhereUniqueWithoutRunVariantInput = {
+    where: AgentDecisionWhereUniqueInput
+    update: XOR<AgentDecisionUpdateWithoutRunVariantInput, AgentDecisionUncheckedUpdateWithoutRunVariantInput>
+    create: XOR<AgentDecisionCreateWithoutRunVariantInput, AgentDecisionUncheckedCreateWithoutRunVariantInput>
+  }
+
+  export type AgentDecisionUpdateWithWhereUniqueWithoutRunVariantInput = {
+    where: AgentDecisionWhereUniqueInput
+    data: XOR<AgentDecisionUpdateWithoutRunVariantInput, AgentDecisionUncheckedUpdateWithoutRunVariantInput>
+  }
+
+  export type AgentDecisionUpdateManyWithWhereWithoutRunVariantInput = {
+    where: AgentDecisionScalarWhereInput
+    data: XOR<AgentDecisionUpdateManyMutationInput, AgentDecisionUncheckedUpdateManyWithoutRunVariantInput>
+  }
+
+  export type AgentInfoStateUpsertWithWhereUniqueWithoutRunVariantInput = {
+    where: AgentInfoStateWhereUniqueInput
+    update: XOR<AgentInfoStateUpdateWithoutRunVariantInput, AgentInfoStateUncheckedUpdateWithoutRunVariantInput>
+    create: XOR<AgentInfoStateCreateWithoutRunVariantInput, AgentInfoStateUncheckedCreateWithoutRunVariantInput>
+  }
+
+  export type AgentInfoStateUpdateWithWhereUniqueWithoutRunVariantInput = {
+    where: AgentInfoStateWhereUniqueInput
+    data: XOR<AgentInfoStateUpdateWithoutRunVariantInput, AgentInfoStateUncheckedUpdateWithoutRunVariantInput>
+  }
+
+  export type AgentInfoStateUpdateManyWithWhereWithoutRunVariantInput = {
+    where: AgentInfoStateScalarWhereInput
+    data: XOR<AgentInfoStateUpdateManyMutationInput, AgentInfoStateUncheckedUpdateManyWithoutRunVariantInput>
+  }
+
+  export type AgentStateUpsertWithWhereUniqueWithoutRunVariantInput = {
+    where: AgentStateWhereUniqueInput
+    update: XOR<AgentStateUpdateWithoutRunVariantInput, AgentStateUncheckedUpdateWithoutRunVariantInput>
+    create: XOR<AgentStateCreateWithoutRunVariantInput, AgentStateUncheckedCreateWithoutRunVariantInput>
+  }
+
+  export type AgentStateUpdateWithWhereUniqueWithoutRunVariantInput = {
+    where: AgentStateWhereUniqueInput
+    data: XOR<AgentStateUpdateWithoutRunVariantInput, AgentStateUncheckedUpdateWithoutRunVariantInput>
+  }
+
+  export type AgentStateUpdateManyWithWhereWithoutRunVariantInput = {
+    where: AgentStateScalarWhereInput
+    data: XOR<AgentStateUpdateManyMutationInput, AgentStateUncheckedUpdateManyWithoutRunVariantInput>
+  }
+
+  export type AgentExperienceUpsertWithWhereUniqueWithoutRunVariantInput = {
+    where: AgentExperienceWhereUniqueInput
+    update: XOR<AgentExperienceUpdateWithoutRunVariantInput, AgentExperienceUncheckedUpdateWithoutRunVariantInput>
+    create: XOR<AgentExperienceCreateWithoutRunVariantInput, AgentExperienceUncheckedCreateWithoutRunVariantInput>
+  }
+
+  export type AgentExperienceUpdateWithWhereUniqueWithoutRunVariantInput = {
+    where: AgentExperienceWhereUniqueInput
+    data: XOR<AgentExperienceUpdateWithoutRunVariantInput, AgentExperienceUncheckedUpdateWithoutRunVariantInput>
+  }
+
+  export type AgentExperienceUpdateManyWithWhereWithoutRunVariantInput = {
+    where: AgentExperienceScalarWhereInput
+    data: XOR<AgentExperienceUpdateManyMutationInput, AgentExperienceUncheckedUpdateManyWithoutRunVariantInput>
+  }
+
+  export type CrowdMetricsUpsertWithWhereUniqueWithoutRunVariantInput = {
+    where: CrowdMetricsWhereUniqueInput
+    update: XOR<CrowdMetricsUpdateWithoutRunVariantInput, CrowdMetricsUncheckedUpdateWithoutRunVariantInput>
+    create: XOR<CrowdMetricsCreateWithoutRunVariantInput, CrowdMetricsUncheckedCreateWithoutRunVariantInput>
+  }
+
+  export type CrowdMetricsUpdateWithWhereUniqueWithoutRunVariantInput = {
+    where: CrowdMetricsWhereUniqueInput
+    data: XOR<CrowdMetricsUpdateWithoutRunVariantInput, CrowdMetricsUncheckedUpdateWithoutRunVariantInput>
+  }
+
+  export type CrowdMetricsUpdateManyWithWhereWithoutRunVariantInput = {
+    where: CrowdMetricsScalarWhereInput
+    data: XOR<CrowdMetricsUpdateManyMutationInput, CrowdMetricsUncheckedUpdateManyWithoutRunVariantInput>
+  }
+
+  export type AgentRewardUpsertWithWhereUniqueWithoutRunVariantInput = {
+    where: AgentRewardWhereUniqueInput
+    update: XOR<AgentRewardUpdateWithoutRunVariantInput, AgentRewardUncheckedUpdateWithoutRunVariantInput>
+    create: XOR<AgentRewardCreateWithoutRunVariantInput, AgentRewardUncheckedCreateWithoutRunVariantInput>
+  }
+
+  export type AgentRewardUpdateWithWhereUniqueWithoutRunVariantInput = {
+    where: AgentRewardWhereUniqueInput
+    data: XOR<AgentRewardUpdateWithoutRunVariantInput, AgentRewardUncheckedUpdateWithoutRunVariantInput>
+  }
+
+  export type AgentRewardUpdateManyWithWhereWithoutRunVariantInput = {
+    where: AgentRewardScalarWhereInput
+    data: XOR<AgentRewardUpdateManyMutationInput, AgentRewardUncheckedUpdateManyWithoutRunVariantInput>
+  }
+
+  export type BacktestResultUpsertWithWhereUniqueWithoutRunVariantInput = {
+    where: BacktestResultWhereUniqueInput
+    update: XOR<BacktestResultUpdateWithoutRunVariantInput, BacktestResultUncheckedUpdateWithoutRunVariantInput>
+    create: XOR<BacktestResultCreateWithoutRunVariantInput, BacktestResultUncheckedCreateWithoutRunVariantInput>
+  }
+
+  export type BacktestResultUpdateWithWhereUniqueWithoutRunVariantInput = {
+    where: BacktestResultWhereUniqueInput
+    data: XOR<BacktestResultUpdateWithoutRunVariantInput, BacktestResultUncheckedUpdateWithoutRunVariantInput>
+  }
+
+  export type BacktestResultUpdateManyWithWhereWithoutRunVariantInput = {
+    where: BacktestResultScalarWhereInput
+    data: XOR<BacktestResultUpdateManyMutationInput, BacktestResultUncheckedUpdateManyWithoutRunVariantInput>
+  }
+
+  export type BacktestResultScalarWhereInput = {
+    AND?: BacktestResultScalarWhereInput | BacktestResultScalarWhereInput[]
+    OR?: BacktestResultScalarWhereInput[]
+    NOT?: BacktestResultScalarWhereInput | BacktestResultScalarWhereInput[]
+    id?: UuidFilter<"BacktestResult"> | string
+    runId?: UuidFilter<"BacktestResult"> | string
+    runVariantId?: UuidNullableFilter<"BacktestResult"> | string | null
+    assetSymbol?: StringFilter<"BacktestResult"> | string
+    seed?: IntFilter<"BacktestResult"> | number
+    steps?: IntFilter<"BacktestResult"> | number
+    agents?: IntFilter<"BacktestResult"> | number
+    pairsCount?: IntNullableFilter<"BacktestResult"> | number | null
+    corr?: FloatNullableFilter<"BacktestResult"> | number | null
+    directionalAccuracy?: FloatNullableFilter<"BacktestResult"> | number | null
+    createdAt?: DateTimeFilter<"BacktestResult"> | Date | string
+  }
+
+  export type RunVariantSummaryUpsertWithoutRunVariantInput = {
+    update: XOR<RunVariantSummaryUpdateWithoutRunVariantInput, RunVariantSummaryUncheckedUpdateWithoutRunVariantInput>
+    create: XOR<RunVariantSummaryCreateWithoutRunVariantInput, RunVariantSummaryUncheckedCreateWithoutRunVariantInput>
+    where?: RunVariantSummaryWhereInput
+  }
+
+  export type RunVariantSummaryUpdateToOneWithWhereWithoutRunVariantInput = {
+    where?: RunVariantSummaryWhereInput
+    data: XOR<RunVariantSummaryUpdateWithoutRunVariantInput, RunVariantSummaryUncheckedUpdateWithoutRunVariantInput>
+  }
+
+  export type RunVariantSummaryUpdateWithoutRunVariantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    corr?: FloatFieldUpdateOperationsInput | number
+    directionalAccuracy?: FloatFieldUpdateOperationsInput | number
+    pairsCount?: IntFieldUpdateOperationsInput | number
+    computedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    debugDecisionCounts?: NullableJsonNullValueInput | InputJsonValue
+    debugPairsSample?: NullableJsonNullValueInput | InputJsonValue
+    debugDecisionsHash?: NullableStringFieldUpdateOperationsInput | string | null
+    debugReturnsHash?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type RunVariantSummaryUncheckedUpdateWithoutRunVariantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    corr?: FloatFieldUpdateOperationsInput | number
+    directionalAccuracy?: FloatFieldUpdateOperationsInput | number
+    pairsCount?: IntFieldUpdateOperationsInput | number
+    computedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    debugDecisionCounts?: NullableJsonNullValueInput | InputJsonValue
+    debugPairsSample?: NullableJsonNullValueInput | InputJsonValue
+    debugDecisionsHash?: NullableStringFieldUpdateOperationsInput | string | null
+    debugReturnsHash?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type RunVariantCreateWithoutSummaryInput = {
+    id?: string
+    assetSymbol: string
+    seed: number
+    agents: number
+    steps: number
+    label?: string | null
+    createdAt?: Date | string
+    run: SimulationRunCreateNestedOneWithoutRunVariantsInput
+    agentDecisions?: AgentDecisionCreateNestedManyWithoutRunVariantInput
+    agentInfoStates?: AgentInfoStateCreateNestedManyWithoutRunVariantInput
+    agentStates?: AgentStateCreateNestedManyWithoutRunVariantInput
+    agentExperiences?: AgentExperienceCreateNestedManyWithoutRunVariantInput
+    crowdMetrics?: CrowdMetricsCreateNestedManyWithoutRunVariantInput
+    agentRewards?: AgentRewardCreateNestedManyWithoutRunVariantInput
+    backtestResults?: BacktestResultCreateNestedManyWithoutRunVariantInput
+  }
+
+  export type RunVariantUncheckedCreateWithoutSummaryInput = {
+    id?: string
+    runId: string
+    assetSymbol: string
+    seed: number
+    agents: number
+    steps: number
+    label?: string | null
+    createdAt?: Date | string
+    agentDecisions?: AgentDecisionUncheckedCreateNestedManyWithoutRunVariantInput
+    agentInfoStates?: AgentInfoStateUncheckedCreateNestedManyWithoutRunVariantInput
+    agentStates?: AgentStateUncheckedCreateNestedManyWithoutRunVariantInput
+    agentExperiences?: AgentExperienceUncheckedCreateNestedManyWithoutRunVariantInput
+    crowdMetrics?: CrowdMetricsUncheckedCreateNestedManyWithoutRunVariantInput
+    agentRewards?: AgentRewardUncheckedCreateNestedManyWithoutRunVariantInput
+    backtestResults?: BacktestResultUncheckedCreateNestedManyWithoutRunVariantInput
+  }
+
+  export type RunVariantCreateOrConnectWithoutSummaryInput = {
+    where: RunVariantWhereUniqueInput
+    create: XOR<RunVariantCreateWithoutSummaryInput, RunVariantUncheckedCreateWithoutSummaryInput>
+  }
+
+  export type RunVariantUpsertWithoutSummaryInput = {
+    update: XOR<RunVariantUpdateWithoutSummaryInput, RunVariantUncheckedUpdateWithoutSummaryInput>
+    create: XOR<RunVariantCreateWithoutSummaryInput, RunVariantUncheckedCreateWithoutSummaryInput>
+    where?: RunVariantWhereInput
+  }
+
+  export type RunVariantUpdateToOneWithWhereWithoutSummaryInput = {
+    where?: RunVariantWhereInput
+    data: XOR<RunVariantUpdateWithoutSummaryInput, RunVariantUncheckedUpdateWithoutSummaryInput>
+  }
+
+  export type RunVariantUpdateWithoutSummaryInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    seed?: IntFieldUpdateOperationsInput | number
+    agents?: IntFieldUpdateOperationsInput | number
+    steps?: IntFieldUpdateOperationsInput | number
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    run?: SimulationRunUpdateOneRequiredWithoutRunVariantsNestedInput
+    agentDecisions?: AgentDecisionUpdateManyWithoutRunVariantNestedInput
+    agentInfoStates?: AgentInfoStateUpdateManyWithoutRunVariantNestedInput
+    agentStates?: AgentStateUpdateManyWithoutRunVariantNestedInput
+    agentExperiences?: AgentExperienceUpdateManyWithoutRunVariantNestedInput
+    crowdMetrics?: CrowdMetricsUpdateManyWithoutRunVariantNestedInput
+    agentRewards?: AgentRewardUpdateManyWithoutRunVariantNestedInput
+    backtestResults?: BacktestResultUpdateManyWithoutRunVariantNestedInput
+  }
+
+  export type RunVariantUncheckedUpdateWithoutSummaryInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    seed?: IntFieldUpdateOperationsInput | number
+    agents?: IntFieldUpdateOperationsInput | number
+    steps?: IntFieldUpdateOperationsInput | number
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    agentDecisions?: AgentDecisionUncheckedUpdateManyWithoutRunVariantNestedInput
+    agentInfoStates?: AgentInfoStateUncheckedUpdateManyWithoutRunVariantNestedInput
+    agentStates?: AgentStateUncheckedUpdateManyWithoutRunVariantNestedInput
+    agentExperiences?: AgentExperienceUncheckedUpdateManyWithoutRunVariantNestedInput
+    crowdMetrics?: CrowdMetricsUncheckedUpdateManyWithoutRunVariantNestedInput
+    agentRewards?: AgentRewardUncheckedUpdateManyWithoutRunVariantNestedInput
+    backtestResults?: BacktestResultUncheckedUpdateManyWithoutRunVariantNestedInput
   }
 
   export type SimulationRunCreateWithoutRunAgentsInput = {
@@ -40893,6 +45708,7 @@ export namespace Prisma {
     agentStates?: AgentStateCreateNestedManyWithoutRunInput
     assetStepReturns?: AssetStepReturnCreateNestedManyWithoutRunInput
     agentRewards?: AgentRewardCreateNestedManyWithoutRunInput
+    runVariants?: RunVariantCreateNestedManyWithoutRunInput
   }
 
   export type SimulationRunUncheckedCreateWithoutRunAgentsInput = {
@@ -40921,6 +45737,7 @@ export namespace Prisma {
     agentStates?: AgentStateUncheckedCreateNestedManyWithoutRunInput
     assetStepReturns?: AssetStepReturnUncheckedCreateNestedManyWithoutRunInput
     agentRewards?: AgentRewardUncheckedCreateNestedManyWithoutRunInput
+    runVariants?: RunVariantUncheckedCreateNestedManyWithoutRunInput
   }
 
   export type SimulationRunCreateOrConnectWithoutRunAgentsInput = {
@@ -40963,11 +45780,13 @@ export namespace Prisma {
     rationale?: string | null
     createdAt?: Date | string
     run: SimulationRunCreateNestedOneWithoutAgentDecisionsInput
+    runVariant?: RunVariantCreateNestedOneWithoutAgentDecisionsInput
   }
 
   export type AgentDecisionUncheckedCreateWithoutAgentInput = {
     id?: string
     runId: string
+    runVariantId?: string | null
     step: number
     assetSymbol?: string
     action: $Enums.AgentDecisionAction
@@ -40998,11 +45817,13 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     run: SimulationRunCreateNestedOneWithoutAgentInfoStatesInput
+    runVariant?: RunVariantCreateNestedOneWithoutAgentInfoStatesInput
   }
 
   export type AgentInfoStateUncheckedCreateWithoutAgentInput = {
     id?: string
     runId: string
+    runVariantId?: string | null
     assetSymbol: string
     step: number
     exposedCount: number
@@ -41036,11 +45857,13 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     run: SimulationRunCreateNestedOneWithoutAgentStatesInput
+    runVariant?: RunVariantCreateNestedOneWithoutAgentStatesInput
   }
 
   export type AgentStateUncheckedCreateWithoutAgentInput = {
     id?: string
     runId: string
+    runVariantId?: string | null
     assetSymbol: string
     step: number
     confidence: number
@@ -41075,11 +45898,13 @@ export namespace Prisma {
     stateBeforeJson?: NullableJsonNullValueInput | InputJsonValue
     stateAfterJson?: NullableJsonNullValueInput | InputJsonValue
     run: SimulationRunCreateNestedOneWithoutAgentExperiencesInput
+    runVariant?: RunVariantCreateNestedOneWithoutAgentExperiencesInput
   }
 
   export type AgentExperienceUncheckedCreateWithoutRunAgentInput = {
     id?: string
     runId: string
+    runVariantId?: string | null
     step: number
     ts: Date | string
     actionJson?: NullableJsonNullValueInput | InputJsonValue
@@ -41114,11 +45939,13 @@ export namespace Prisma {
     rewardScore: number
     createdAt?: Date | string
     run: SimulationRunCreateNestedOneWithoutAgentRewardsInput
+    runVariant?: RunVariantCreateNestedOneWithoutAgentRewardsInput
   }
 
   export type AgentRewardUncheckedCreateWithoutAgentInput = {
     id?: string
     runId: string
+    runVariantId?: string | null
     assetSymbol: string
     step: number
     action: $Enums.AgentDecisionAction
@@ -41177,6 +46004,7 @@ export namespace Prisma {
     agentStates?: AgentStateUpdateManyWithoutRunNestedInput
     assetStepReturns?: AssetStepReturnUpdateManyWithoutRunNestedInput
     agentRewards?: AgentRewardUpdateManyWithoutRunNestedInput
+    runVariants?: RunVariantUpdateManyWithoutRunNestedInput
   }
 
   export type SimulationRunUncheckedUpdateWithoutRunAgentsInput = {
@@ -41205,6 +46033,7 @@ export namespace Prisma {
     agentStates?: AgentStateUncheckedUpdateManyWithoutRunNestedInput
     assetStepReturns?: AssetStepReturnUncheckedUpdateManyWithoutRunNestedInput
     agentRewards?: AgentRewardUncheckedUpdateManyWithoutRunNestedInput
+    runVariants?: RunVariantUncheckedUpdateManyWithoutRunNestedInput
   }
 
   export type RunAgentTraitUpsertWithWhereUniqueWithoutAgentInput = {
@@ -41421,6 +46250,7 @@ export namespace Prisma {
     agentStates?: AgentStateCreateNestedManyWithoutRunInput
     assetStepReturns?: AssetStepReturnCreateNestedManyWithoutRunInput
     agentRewards?: AgentRewardCreateNestedManyWithoutRunInput
+    runVariants?: RunVariantCreateNestedManyWithoutRunInput
   }
 
   export type SimulationRunUncheckedCreateWithoutAgentDecisionsInput = {
@@ -41449,11 +46279,53 @@ export namespace Prisma {
     agentStates?: AgentStateUncheckedCreateNestedManyWithoutRunInput
     assetStepReturns?: AssetStepReturnUncheckedCreateNestedManyWithoutRunInput
     agentRewards?: AgentRewardUncheckedCreateNestedManyWithoutRunInput
+    runVariants?: RunVariantUncheckedCreateNestedManyWithoutRunInput
   }
 
   export type SimulationRunCreateOrConnectWithoutAgentDecisionsInput = {
     where: SimulationRunWhereUniqueInput
     create: XOR<SimulationRunCreateWithoutAgentDecisionsInput, SimulationRunUncheckedCreateWithoutAgentDecisionsInput>
+  }
+
+  export type RunVariantCreateWithoutAgentDecisionsInput = {
+    id?: string
+    assetSymbol: string
+    seed: number
+    agents: number
+    steps: number
+    label?: string | null
+    createdAt?: Date | string
+    run: SimulationRunCreateNestedOneWithoutRunVariantsInput
+    agentInfoStates?: AgentInfoStateCreateNestedManyWithoutRunVariantInput
+    agentStates?: AgentStateCreateNestedManyWithoutRunVariantInput
+    agentExperiences?: AgentExperienceCreateNestedManyWithoutRunVariantInput
+    crowdMetrics?: CrowdMetricsCreateNestedManyWithoutRunVariantInput
+    agentRewards?: AgentRewardCreateNestedManyWithoutRunVariantInput
+    backtestResults?: BacktestResultCreateNestedManyWithoutRunVariantInput
+    summary?: RunVariantSummaryCreateNestedOneWithoutRunVariantInput
+  }
+
+  export type RunVariantUncheckedCreateWithoutAgentDecisionsInput = {
+    id?: string
+    runId: string
+    assetSymbol: string
+    seed: number
+    agents: number
+    steps: number
+    label?: string | null
+    createdAt?: Date | string
+    agentInfoStates?: AgentInfoStateUncheckedCreateNestedManyWithoutRunVariantInput
+    agentStates?: AgentStateUncheckedCreateNestedManyWithoutRunVariantInput
+    agentExperiences?: AgentExperienceUncheckedCreateNestedManyWithoutRunVariantInput
+    crowdMetrics?: CrowdMetricsUncheckedCreateNestedManyWithoutRunVariantInput
+    agentRewards?: AgentRewardUncheckedCreateNestedManyWithoutRunVariantInput
+    backtestResults?: BacktestResultUncheckedCreateNestedManyWithoutRunVariantInput
+    summary?: RunVariantSummaryUncheckedCreateNestedOneWithoutRunVariantInput
+  }
+
+  export type RunVariantCreateOrConnectWithoutAgentDecisionsInput = {
+    where: RunVariantWhereUniqueInput
+    create: XOR<RunVariantCreateWithoutAgentDecisionsInput, RunVariantUncheckedCreateWithoutAgentDecisionsInput>
   }
 
   export type RunAgentCreateWithoutDecisionsInput = {
@@ -41530,6 +46402,7 @@ export namespace Prisma {
     agentStates?: AgentStateUpdateManyWithoutRunNestedInput
     assetStepReturns?: AssetStepReturnUpdateManyWithoutRunNestedInput
     agentRewards?: AgentRewardUpdateManyWithoutRunNestedInput
+    runVariants?: RunVariantUpdateManyWithoutRunNestedInput
   }
 
   export type SimulationRunUncheckedUpdateWithoutAgentDecisionsInput = {
@@ -41558,6 +46431,54 @@ export namespace Prisma {
     agentStates?: AgentStateUncheckedUpdateManyWithoutRunNestedInput
     assetStepReturns?: AssetStepReturnUncheckedUpdateManyWithoutRunNestedInput
     agentRewards?: AgentRewardUncheckedUpdateManyWithoutRunNestedInput
+    runVariants?: RunVariantUncheckedUpdateManyWithoutRunNestedInput
+  }
+
+  export type RunVariantUpsertWithoutAgentDecisionsInput = {
+    update: XOR<RunVariantUpdateWithoutAgentDecisionsInput, RunVariantUncheckedUpdateWithoutAgentDecisionsInput>
+    create: XOR<RunVariantCreateWithoutAgentDecisionsInput, RunVariantUncheckedCreateWithoutAgentDecisionsInput>
+    where?: RunVariantWhereInput
+  }
+
+  export type RunVariantUpdateToOneWithWhereWithoutAgentDecisionsInput = {
+    where?: RunVariantWhereInput
+    data: XOR<RunVariantUpdateWithoutAgentDecisionsInput, RunVariantUncheckedUpdateWithoutAgentDecisionsInput>
+  }
+
+  export type RunVariantUpdateWithoutAgentDecisionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    seed?: IntFieldUpdateOperationsInput | number
+    agents?: IntFieldUpdateOperationsInput | number
+    steps?: IntFieldUpdateOperationsInput | number
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    run?: SimulationRunUpdateOneRequiredWithoutRunVariantsNestedInput
+    agentInfoStates?: AgentInfoStateUpdateManyWithoutRunVariantNestedInput
+    agentStates?: AgentStateUpdateManyWithoutRunVariantNestedInput
+    agentExperiences?: AgentExperienceUpdateManyWithoutRunVariantNestedInput
+    crowdMetrics?: CrowdMetricsUpdateManyWithoutRunVariantNestedInput
+    agentRewards?: AgentRewardUpdateManyWithoutRunVariantNestedInput
+    backtestResults?: BacktestResultUpdateManyWithoutRunVariantNestedInput
+    summary?: RunVariantSummaryUpdateOneWithoutRunVariantNestedInput
+  }
+
+  export type RunVariantUncheckedUpdateWithoutAgentDecisionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    seed?: IntFieldUpdateOperationsInput | number
+    agents?: IntFieldUpdateOperationsInput | number
+    steps?: IntFieldUpdateOperationsInput | number
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    agentInfoStates?: AgentInfoStateUncheckedUpdateManyWithoutRunVariantNestedInput
+    agentStates?: AgentStateUncheckedUpdateManyWithoutRunVariantNestedInput
+    agentExperiences?: AgentExperienceUncheckedUpdateManyWithoutRunVariantNestedInput
+    crowdMetrics?: CrowdMetricsUncheckedUpdateManyWithoutRunVariantNestedInput
+    agentRewards?: AgentRewardUncheckedUpdateManyWithoutRunVariantNestedInput
+    backtestResults?: BacktestResultUncheckedUpdateManyWithoutRunVariantNestedInput
+    summary?: RunVariantSummaryUncheckedUpdateOneWithoutRunVariantNestedInput
   }
 
   export type RunAgentUpsertWithoutDecisionsInput = {
@@ -41629,6 +46550,7 @@ export namespace Prisma {
     agentStates?: AgentStateCreateNestedManyWithoutRunInput
     assetStepReturns?: AssetStepReturnCreateNestedManyWithoutRunInput
     agentRewards?: AgentRewardCreateNestedManyWithoutRunInput
+    runVariants?: RunVariantCreateNestedManyWithoutRunInput
   }
 
   export type SimulationRunUncheckedCreateWithoutCrowdMetricsInput = {
@@ -41657,11 +46579,53 @@ export namespace Prisma {
     agentStates?: AgentStateUncheckedCreateNestedManyWithoutRunInput
     assetStepReturns?: AssetStepReturnUncheckedCreateNestedManyWithoutRunInput
     agentRewards?: AgentRewardUncheckedCreateNestedManyWithoutRunInput
+    runVariants?: RunVariantUncheckedCreateNestedManyWithoutRunInput
   }
 
   export type SimulationRunCreateOrConnectWithoutCrowdMetricsInput = {
     where: SimulationRunWhereUniqueInput
     create: XOR<SimulationRunCreateWithoutCrowdMetricsInput, SimulationRunUncheckedCreateWithoutCrowdMetricsInput>
+  }
+
+  export type RunVariantCreateWithoutCrowdMetricsInput = {
+    id?: string
+    assetSymbol: string
+    seed: number
+    agents: number
+    steps: number
+    label?: string | null
+    createdAt?: Date | string
+    run: SimulationRunCreateNestedOneWithoutRunVariantsInput
+    agentDecisions?: AgentDecisionCreateNestedManyWithoutRunVariantInput
+    agentInfoStates?: AgentInfoStateCreateNestedManyWithoutRunVariantInput
+    agentStates?: AgentStateCreateNestedManyWithoutRunVariantInput
+    agentExperiences?: AgentExperienceCreateNestedManyWithoutRunVariantInput
+    agentRewards?: AgentRewardCreateNestedManyWithoutRunVariantInput
+    backtestResults?: BacktestResultCreateNestedManyWithoutRunVariantInput
+    summary?: RunVariantSummaryCreateNestedOneWithoutRunVariantInput
+  }
+
+  export type RunVariantUncheckedCreateWithoutCrowdMetricsInput = {
+    id?: string
+    runId: string
+    assetSymbol: string
+    seed: number
+    agents: number
+    steps: number
+    label?: string | null
+    createdAt?: Date | string
+    agentDecisions?: AgentDecisionUncheckedCreateNestedManyWithoutRunVariantInput
+    agentInfoStates?: AgentInfoStateUncheckedCreateNestedManyWithoutRunVariantInput
+    agentStates?: AgentStateUncheckedCreateNestedManyWithoutRunVariantInput
+    agentExperiences?: AgentExperienceUncheckedCreateNestedManyWithoutRunVariantInput
+    agentRewards?: AgentRewardUncheckedCreateNestedManyWithoutRunVariantInput
+    backtestResults?: BacktestResultUncheckedCreateNestedManyWithoutRunVariantInput
+    summary?: RunVariantSummaryUncheckedCreateNestedOneWithoutRunVariantInput
+  }
+
+  export type RunVariantCreateOrConnectWithoutCrowdMetricsInput = {
+    where: RunVariantWhereUniqueInput
+    create: XOR<RunVariantCreateWithoutCrowdMetricsInput, RunVariantUncheckedCreateWithoutCrowdMetricsInput>
   }
 
   export type SimulationRunUpsertWithoutCrowdMetricsInput = {
@@ -41701,6 +46665,7 @@ export namespace Prisma {
     agentStates?: AgentStateUpdateManyWithoutRunNestedInput
     assetStepReturns?: AssetStepReturnUpdateManyWithoutRunNestedInput
     agentRewards?: AgentRewardUpdateManyWithoutRunNestedInput
+    runVariants?: RunVariantUpdateManyWithoutRunNestedInput
   }
 
   export type SimulationRunUncheckedUpdateWithoutCrowdMetricsInput = {
@@ -41729,6 +46694,54 @@ export namespace Prisma {
     agentStates?: AgentStateUncheckedUpdateManyWithoutRunNestedInput
     assetStepReturns?: AssetStepReturnUncheckedUpdateManyWithoutRunNestedInput
     agentRewards?: AgentRewardUncheckedUpdateManyWithoutRunNestedInput
+    runVariants?: RunVariantUncheckedUpdateManyWithoutRunNestedInput
+  }
+
+  export type RunVariantUpsertWithoutCrowdMetricsInput = {
+    update: XOR<RunVariantUpdateWithoutCrowdMetricsInput, RunVariantUncheckedUpdateWithoutCrowdMetricsInput>
+    create: XOR<RunVariantCreateWithoutCrowdMetricsInput, RunVariantUncheckedCreateWithoutCrowdMetricsInput>
+    where?: RunVariantWhereInput
+  }
+
+  export type RunVariantUpdateToOneWithWhereWithoutCrowdMetricsInput = {
+    where?: RunVariantWhereInput
+    data: XOR<RunVariantUpdateWithoutCrowdMetricsInput, RunVariantUncheckedUpdateWithoutCrowdMetricsInput>
+  }
+
+  export type RunVariantUpdateWithoutCrowdMetricsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    seed?: IntFieldUpdateOperationsInput | number
+    agents?: IntFieldUpdateOperationsInput | number
+    steps?: IntFieldUpdateOperationsInput | number
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    run?: SimulationRunUpdateOneRequiredWithoutRunVariantsNestedInput
+    agentDecisions?: AgentDecisionUpdateManyWithoutRunVariantNestedInput
+    agentInfoStates?: AgentInfoStateUpdateManyWithoutRunVariantNestedInput
+    agentStates?: AgentStateUpdateManyWithoutRunVariantNestedInput
+    agentExperiences?: AgentExperienceUpdateManyWithoutRunVariantNestedInput
+    agentRewards?: AgentRewardUpdateManyWithoutRunVariantNestedInput
+    backtestResults?: BacktestResultUpdateManyWithoutRunVariantNestedInput
+    summary?: RunVariantSummaryUpdateOneWithoutRunVariantNestedInput
+  }
+
+  export type RunVariantUncheckedUpdateWithoutCrowdMetricsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    seed?: IntFieldUpdateOperationsInput | number
+    agents?: IntFieldUpdateOperationsInput | number
+    steps?: IntFieldUpdateOperationsInput | number
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    agentDecisions?: AgentDecisionUncheckedUpdateManyWithoutRunVariantNestedInput
+    agentInfoStates?: AgentInfoStateUncheckedUpdateManyWithoutRunVariantNestedInput
+    agentStates?: AgentStateUncheckedUpdateManyWithoutRunVariantNestedInput
+    agentExperiences?: AgentExperienceUncheckedUpdateManyWithoutRunVariantNestedInput
+    agentRewards?: AgentRewardUncheckedUpdateManyWithoutRunVariantNestedInput
+    backtestResults?: BacktestResultUncheckedUpdateManyWithoutRunVariantNestedInput
+    summary?: RunVariantSummaryUncheckedUpdateOneWithoutRunVariantNestedInput
   }
 
   export type SimulationRunCreateWithoutAssetStepReturnsInput = {
@@ -41757,6 +46770,7 @@ export namespace Prisma {
     agentInfoStates?: AgentInfoStateCreateNestedManyWithoutRunInput
     agentStates?: AgentStateCreateNestedManyWithoutRunInput
     agentRewards?: AgentRewardCreateNestedManyWithoutRunInput
+    runVariants?: RunVariantCreateNestedManyWithoutRunInput
   }
 
   export type SimulationRunUncheckedCreateWithoutAssetStepReturnsInput = {
@@ -41785,6 +46799,7 @@ export namespace Prisma {
     agentInfoStates?: AgentInfoStateUncheckedCreateNestedManyWithoutRunInput
     agentStates?: AgentStateUncheckedCreateNestedManyWithoutRunInput
     agentRewards?: AgentRewardUncheckedCreateNestedManyWithoutRunInput
+    runVariants?: RunVariantUncheckedCreateNestedManyWithoutRunInput
   }
 
   export type SimulationRunCreateOrConnectWithoutAssetStepReturnsInput = {
@@ -41829,6 +46844,7 @@ export namespace Prisma {
     agentInfoStates?: AgentInfoStateUpdateManyWithoutRunNestedInput
     agentStates?: AgentStateUpdateManyWithoutRunNestedInput
     agentRewards?: AgentRewardUpdateManyWithoutRunNestedInput
+    runVariants?: RunVariantUpdateManyWithoutRunNestedInput
   }
 
   export type SimulationRunUncheckedUpdateWithoutAssetStepReturnsInput = {
@@ -41857,6 +46873,7 @@ export namespace Prisma {
     agentInfoStates?: AgentInfoStateUncheckedUpdateManyWithoutRunNestedInput
     agentStates?: AgentStateUncheckedUpdateManyWithoutRunNestedInput
     agentRewards?: AgentRewardUncheckedUpdateManyWithoutRunNestedInput
+    runVariants?: RunVariantUncheckedUpdateManyWithoutRunNestedInput
   }
 
   export type SimulationRunCreateWithoutAgentRewardsInput = {
@@ -41885,6 +46902,7 @@ export namespace Prisma {
     agentInfoStates?: AgentInfoStateCreateNestedManyWithoutRunInput
     agentStates?: AgentStateCreateNestedManyWithoutRunInput
     assetStepReturns?: AssetStepReturnCreateNestedManyWithoutRunInput
+    runVariants?: RunVariantCreateNestedManyWithoutRunInput
   }
 
   export type SimulationRunUncheckedCreateWithoutAgentRewardsInput = {
@@ -41913,11 +46931,53 @@ export namespace Prisma {
     agentInfoStates?: AgentInfoStateUncheckedCreateNestedManyWithoutRunInput
     agentStates?: AgentStateUncheckedCreateNestedManyWithoutRunInput
     assetStepReturns?: AssetStepReturnUncheckedCreateNestedManyWithoutRunInput
+    runVariants?: RunVariantUncheckedCreateNestedManyWithoutRunInput
   }
 
   export type SimulationRunCreateOrConnectWithoutAgentRewardsInput = {
     where: SimulationRunWhereUniqueInput
     create: XOR<SimulationRunCreateWithoutAgentRewardsInput, SimulationRunUncheckedCreateWithoutAgentRewardsInput>
+  }
+
+  export type RunVariantCreateWithoutAgentRewardsInput = {
+    id?: string
+    assetSymbol: string
+    seed: number
+    agents: number
+    steps: number
+    label?: string | null
+    createdAt?: Date | string
+    run: SimulationRunCreateNestedOneWithoutRunVariantsInput
+    agentDecisions?: AgentDecisionCreateNestedManyWithoutRunVariantInput
+    agentInfoStates?: AgentInfoStateCreateNestedManyWithoutRunVariantInput
+    agentStates?: AgentStateCreateNestedManyWithoutRunVariantInput
+    agentExperiences?: AgentExperienceCreateNestedManyWithoutRunVariantInput
+    crowdMetrics?: CrowdMetricsCreateNestedManyWithoutRunVariantInput
+    backtestResults?: BacktestResultCreateNestedManyWithoutRunVariantInput
+    summary?: RunVariantSummaryCreateNestedOneWithoutRunVariantInput
+  }
+
+  export type RunVariantUncheckedCreateWithoutAgentRewardsInput = {
+    id?: string
+    runId: string
+    assetSymbol: string
+    seed: number
+    agents: number
+    steps: number
+    label?: string | null
+    createdAt?: Date | string
+    agentDecisions?: AgentDecisionUncheckedCreateNestedManyWithoutRunVariantInput
+    agentInfoStates?: AgentInfoStateUncheckedCreateNestedManyWithoutRunVariantInput
+    agentStates?: AgentStateUncheckedCreateNestedManyWithoutRunVariantInput
+    agentExperiences?: AgentExperienceUncheckedCreateNestedManyWithoutRunVariantInput
+    crowdMetrics?: CrowdMetricsUncheckedCreateNestedManyWithoutRunVariantInput
+    backtestResults?: BacktestResultUncheckedCreateNestedManyWithoutRunVariantInput
+    summary?: RunVariantSummaryUncheckedCreateNestedOneWithoutRunVariantInput
+  }
+
+  export type RunVariantCreateOrConnectWithoutAgentRewardsInput = {
+    where: RunVariantWhereUniqueInput
+    create: XOR<RunVariantCreateWithoutAgentRewardsInput, RunVariantUncheckedCreateWithoutAgentRewardsInput>
   }
 
   export type RunAgentCreateWithoutAgentRewardsInput = {
@@ -41994,6 +47054,7 @@ export namespace Prisma {
     agentInfoStates?: AgentInfoStateUpdateManyWithoutRunNestedInput
     agentStates?: AgentStateUpdateManyWithoutRunNestedInput
     assetStepReturns?: AssetStepReturnUpdateManyWithoutRunNestedInput
+    runVariants?: RunVariantUpdateManyWithoutRunNestedInput
   }
 
   export type SimulationRunUncheckedUpdateWithoutAgentRewardsInput = {
@@ -42022,6 +47083,54 @@ export namespace Prisma {
     agentInfoStates?: AgentInfoStateUncheckedUpdateManyWithoutRunNestedInput
     agentStates?: AgentStateUncheckedUpdateManyWithoutRunNestedInput
     assetStepReturns?: AssetStepReturnUncheckedUpdateManyWithoutRunNestedInput
+    runVariants?: RunVariantUncheckedUpdateManyWithoutRunNestedInput
+  }
+
+  export type RunVariantUpsertWithoutAgentRewardsInput = {
+    update: XOR<RunVariantUpdateWithoutAgentRewardsInput, RunVariantUncheckedUpdateWithoutAgentRewardsInput>
+    create: XOR<RunVariantCreateWithoutAgentRewardsInput, RunVariantUncheckedCreateWithoutAgentRewardsInput>
+    where?: RunVariantWhereInput
+  }
+
+  export type RunVariantUpdateToOneWithWhereWithoutAgentRewardsInput = {
+    where?: RunVariantWhereInput
+    data: XOR<RunVariantUpdateWithoutAgentRewardsInput, RunVariantUncheckedUpdateWithoutAgentRewardsInput>
+  }
+
+  export type RunVariantUpdateWithoutAgentRewardsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    seed?: IntFieldUpdateOperationsInput | number
+    agents?: IntFieldUpdateOperationsInput | number
+    steps?: IntFieldUpdateOperationsInput | number
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    run?: SimulationRunUpdateOneRequiredWithoutRunVariantsNestedInput
+    agentDecisions?: AgentDecisionUpdateManyWithoutRunVariantNestedInput
+    agentInfoStates?: AgentInfoStateUpdateManyWithoutRunVariantNestedInput
+    agentStates?: AgentStateUpdateManyWithoutRunVariantNestedInput
+    agentExperiences?: AgentExperienceUpdateManyWithoutRunVariantNestedInput
+    crowdMetrics?: CrowdMetricsUpdateManyWithoutRunVariantNestedInput
+    backtestResults?: BacktestResultUpdateManyWithoutRunVariantNestedInput
+    summary?: RunVariantSummaryUpdateOneWithoutRunVariantNestedInput
+  }
+
+  export type RunVariantUncheckedUpdateWithoutAgentRewardsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    seed?: IntFieldUpdateOperationsInput | number
+    agents?: IntFieldUpdateOperationsInput | number
+    steps?: IntFieldUpdateOperationsInput | number
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    agentDecisions?: AgentDecisionUncheckedUpdateManyWithoutRunVariantNestedInput
+    agentInfoStates?: AgentInfoStateUncheckedUpdateManyWithoutRunVariantNestedInput
+    agentStates?: AgentStateUncheckedUpdateManyWithoutRunVariantNestedInput
+    agentExperiences?: AgentExperienceUncheckedUpdateManyWithoutRunVariantNestedInput
+    crowdMetrics?: CrowdMetricsUncheckedUpdateManyWithoutRunVariantNestedInput
+    backtestResults?: BacktestResultUncheckedUpdateManyWithoutRunVariantNestedInput
+    summary?: RunVariantSummaryUncheckedUpdateOneWithoutRunVariantNestedInput
   }
 
   export type RunAgentUpsertWithoutAgentRewardsInput = {
@@ -42093,6 +47202,7 @@ export namespace Prisma {
     agentStates?: AgentStateCreateNestedManyWithoutRunInput
     assetStepReturns?: AssetStepReturnCreateNestedManyWithoutRunInput
     agentRewards?: AgentRewardCreateNestedManyWithoutRunInput
+    runVariants?: RunVariantCreateNestedManyWithoutRunInput
   }
 
   export type SimulationRunUncheckedCreateWithoutInfoEventsInput = {
@@ -42121,6 +47231,7 @@ export namespace Prisma {
     agentStates?: AgentStateUncheckedCreateNestedManyWithoutRunInput
     assetStepReturns?: AssetStepReturnUncheckedCreateNestedManyWithoutRunInput
     agentRewards?: AgentRewardUncheckedCreateNestedManyWithoutRunInput
+    runVariants?: RunVariantUncheckedCreateNestedManyWithoutRunInput
   }
 
   export type SimulationRunCreateOrConnectWithoutInfoEventsInput = {
@@ -42165,6 +47276,7 @@ export namespace Prisma {
     agentStates?: AgentStateUpdateManyWithoutRunNestedInput
     assetStepReturns?: AssetStepReturnUpdateManyWithoutRunNestedInput
     agentRewards?: AgentRewardUpdateManyWithoutRunNestedInput
+    runVariants?: RunVariantUpdateManyWithoutRunNestedInput
   }
 
   export type SimulationRunUncheckedUpdateWithoutInfoEventsInput = {
@@ -42193,6 +47305,7 @@ export namespace Prisma {
     agentStates?: AgentStateUncheckedUpdateManyWithoutRunNestedInput
     assetStepReturns?: AssetStepReturnUncheckedUpdateManyWithoutRunNestedInput
     agentRewards?: AgentRewardUncheckedUpdateManyWithoutRunNestedInput
+    runVariants?: RunVariantUncheckedUpdateManyWithoutRunNestedInput
   }
 
   export type SimulationRunCreateWithoutAgentInfoStatesInput = {
@@ -42221,6 +47334,7 @@ export namespace Prisma {
     agentStates?: AgentStateCreateNestedManyWithoutRunInput
     assetStepReturns?: AssetStepReturnCreateNestedManyWithoutRunInput
     agentRewards?: AgentRewardCreateNestedManyWithoutRunInput
+    runVariants?: RunVariantCreateNestedManyWithoutRunInput
   }
 
   export type SimulationRunUncheckedCreateWithoutAgentInfoStatesInput = {
@@ -42249,11 +47363,53 @@ export namespace Prisma {
     agentStates?: AgentStateUncheckedCreateNestedManyWithoutRunInput
     assetStepReturns?: AssetStepReturnUncheckedCreateNestedManyWithoutRunInput
     agentRewards?: AgentRewardUncheckedCreateNestedManyWithoutRunInput
+    runVariants?: RunVariantUncheckedCreateNestedManyWithoutRunInput
   }
 
   export type SimulationRunCreateOrConnectWithoutAgentInfoStatesInput = {
     where: SimulationRunWhereUniqueInput
     create: XOR<SimulationRunCreateWithoutAgentInfoStatesInput, SimulationRunUncheckedCreateWithoutAgentInfoStatesInput>
+  }
+
+  export type RunVariantCreateWithoutAgentInfoStatesInput = {
+    id?: string
+    assetSymbol: string
+    seed: number
+    agents: number
+    steps: number
+    label?: string | null
+    createdAt?: Date | string
+    run: SimulationRunCreateNestedOneWithoutRunVariantsInput
+    agentDecisions?: AgentDecisionCreateNestedManyWithoutRunVariantInput
+    agentStates?: AgentStateCreateNestedManyWithoutRunVariantInput
+    agentExperiences?: AgentExperienceCreateNestedManyWithoutRunVariantInput
+    crowdMetrics?: CrowdMetricsCreateNestedManyWithoutRunVariantInput
+    agentRewards?: AgentRewardCreateNestedManyWithoutRunVariantInput
+    backtestResults?: BacktestResultCreateNestedManyWithoutRunVariantInput
+    summary?: RunVariantSummaryCreateNestedOneWithoutRunVariantInput
+  }
+
+  export type RunVariantUncheckedCreateWithoutAgentInfoStatesInput = {
+    id?: string
+    runId: string
+    assetSymbol: string
+    seed: number
+    agents: number
+    steps: number
+    label?: string | null
+    createdAt?: Date | string
+    agentDecisions?: AgentDecisionUncheckedCreateNestedManyWithoutRunVariantInput
+    agentStates?: AgentStateUncheckedCreateNestedManyWithoutRunVariantInput
+    agentExperiences?: AgentExperienceUncheckedCreateNestedManyWithoutRunVariantInput
+    crowdMetrics?: CrowdMetricsUncheckedCreateNestedManyWithoutRunVariantInput
+    agentRewards?: AgentRewardUncheckedCreateNestedManyWithoutRunVariantInput
+    backtestResults?: BacktestResultUncheckedCreateNestedManyWithoutRunVariantInput
+    summary?: RunVariantSummaryUncheckedCreateNestedOneWithoutRunVariantInput
+  }
+
+  export type RunVariantCreateOrConnectWithoutAgentInfoStatesInput = {
+    where: RunVariantWhereUniqueInput
+    create: XOR<RunVariantCreateWithoutAgentInfoStatesInput, RunVariantUncheckedCreateWithoutAgentInfoStatesInput>
   }
 
   export type RunAgentCreateWithoutInfoStatesInput = {
@@ -42330,6 +47486,7 @@ export namespace Prisma {
     agentStates?: AgentStateUpdateManyWithoutRunNestedInput
     assetStepReturns?: AssetStepReturnUpdateManyWithoutRunNestedInput
     agentRewards?: AgentRewardUpdateManyWithoutRunNestedInput
+    runVariants?: RunVariantUpdateManyWithoutRunNestedInput
   }
 
   export type SimulationRunUncheckedUpdateWithoutAgentInfoStatesInput = {
@@ -42358,6 +47515,54 @@ export namespace Prisma {
     agentStates?: AgentStateUncheckedUpdateManyWithoutRunNestedInput
     assetStepReturns?: AssetStepReturnUncheckedUpdateManyWithoutRunNestedInput
     agentRewards?: AgentRewardUncheckedUpdateManyWithoutRunNestedInput
+    runVariants?: RunVariantUncheckedUpdateManyWithoutRunNestedInput
+  }
+
+  export type RunVariantUpsertWithoutAgentInfoStatesInput = {
+    update: XOR<RunVariantUpdateWithoutAgentInfoStatesInput, RunVariantUncheckedUpdateWithoutAgentInfoStatesInput>
+    create: XOR<RunVariantCreateWithoutAgentInfoStatesInput, RunVariantUncheckedCreateWithoutAgentInfoStatesInput>
+    where?: RunVariantWhereInput
+  }
+
+  export type RunVariantUpdateToOneWithWhereWithoutAgentInfoStatesInput = {
+    where?: RunVariantWhereInput
+    data: XOR<RunVariantUpdateWithoutAgentInfoStatesInput, RunVariantUncheckedUpdateWithoutAgentInfoStatesInput>
+  }
+
+  export type RunVariantUpdateWithoutAgentInfoStatesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    seed?: IntFieldUpdateOperationsInput | number
+    agents?: IntFieldUpdateOperationsInput | number
+    steps?: IntFieldUpdateOperationsInput | number
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    run?: SimulationRunUpdateOneRequiredWithoutRunVariantsNestedInput
+    agentDecisions?: AgentDecisionUpdateManyWithoutRunVariantNestedInput
+    agentStates?: AgentStateUpdateManyWithoutRunVariantNestedInput
+    agentExperiences?: AgentExperienceUpdateManyWithoutRunVariantNestedInput
+    crowdMetrics?: CrowdMetricsUpdateManyWithoutRunVariantNestedInput
+    agentRewards?: AgentRewardUpdateManyWithoutRunVariantNestedInput
+    backtestResults?: BacktestResultUpdateManyWithoutRunVariantNestedInput
+    summary?: RunVariantSummaryUpdateOneWithoutRunVariantNestedInput
+  }
+
+  export type RunVariantUncheckedUpdateWithoutAgentInfoStatesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    seed?: IntFieldUpdateOperationsInput | number
+    agents?: IntFieldUpdateOperationsInput | number
+    steps?: IntFieldUpdateOperationsInput | number
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    agentDecisions?: AgentDecisionUncheckedUpdateManyWithoutRunVariantNestedInput
+    agentStates?: AgentStateUncheckedUpdateManyWithoutRunVariantNestedInput
+    agentExperiences?: AgentExperienceUncheckedUpdateManyWithoutRunVariantNestedInput
+    crowdMetrics?: CrowdMetricsUncheckedUpdateManyWithoutRunVariantNestedInput
+    agentRewards?: AgentRewardUncheckedUpdateManyWithoutRunVariantNestedInput
+    backtestResults?: BacktestResultUncheckedUpdateManyWithoutRunVariantNestedInput
+    summary?: RunVariantSummaryUncheckedUpdateOneWithoutRunVariantNestedInput
   }
 
   export type RunAgentUpsertWithoutInfoStatesInput = {
@@ -42429,6 +47634,7 @@ export namespace Prisma {
     agentInfoStates?: AgentInfoStateCreateNestedManyWithoutRunInput
     assetStepReturns?: AssetStepReturnCreateNestedManyWithoutRunInput
     agentRewards?: AgentRewardCreateNestedManyWithoutRunInput
+    runVariants?: RunVariantCreateNestedManyWithoutRunInput
   }
 
   export type SimulationRunUncheckedCreateWithoutAgentStatesInput = {
@@ -42457,11 +47663,53 @@ export namespace Prisma {
     agentInfoStates?: AgentInfoStateUncheckedCreateNestedManyWithoutRunInput
     assetStepReturns?: AssetStepReturnUncheckedCreateNestedManyWithoutRunInput
     agentRewards?: AgentRewardUncheckedCreateNestedManyWithoutRunInput
+    runVariants?: RunVariantUncheckedCreateNestedManyWithoutRunInput
   }
 
   export type SimulationRunCreateOrConnectWithoutAgentStatesInput = {
     where: SimulationRunWhereUniqueInput
     create: XOR<SimulationRunCreateWithoutAgentStatesInput, SimulationRunUncheckedCreateWithoutAgentStatesInput>
+  }
+
+  export type RunVariantCreateWithoutAgentStatesInput = {
+    id?: string
+    assetSymbol: string
+    seed: number
+    agents: number
+    steps: number
+    label?: string | null
+    createdAt?: Date | string
+    run: SimulationRunCreateNestedOneWithoutRunVariantsInput
+    agentDecisions?: AgentDecisionCreateNestedManyWithoutRunVariantInput
+    agentInfoStates?: AgentInfoStateCreateNestedManyWithoutRunVariantInput
+    agentExperiences?: AgentExperienceCreateNestedManyWithoutRunVariantInput
+    crowdMetrics?: CrowdMetricsCreateNestedManyWithoutRunVariantInput
+    agentRewards?: AgentRewardCreateNestedManyWithoutRunVariantInput
+    backtestResults?: BacktestResultCreateNestedManyWithoutRunVariantInput
+    summary?: RunVariantSummaryCreateNestedOneWithoutRunVariantInput
+  }
+
+  export type RunVariantUncheckedCreateWithoutAgentStatesInput = {
+    id?: string
+    runId: string
+    assetSymbol: string
+    seed: number
+    agents: number
+    steps: number
+    label?: string | null
+    createdAt?: Date | string
+    agentDecisions?: AgentDecisionUncheckedCreateNestedManyWithoutRunVariantInput
+    agentInfoStates?: AgentInfoStateUncheckedCreateNestedManyWithoutRunVariantInput
+    agentExperiences?: AgentExperienceUncheckedCreateNestedManyWithoutRunVariantInput
+    crowdMetrics?: CrowdMetricsUncheckedCreateNestedManyWithoutRunVariantInput
+    agentRewards?: AgentRewardUncheckedCreateNestedManyWithoutRunVariantInput
+    backtestResults?: BacktestResultUncheckedCreateNestedManyWithoutRunVariantInput
+    summary?: RunVariantSummaryUncheckedCreateNestedOneWithoutRunVariantInput
+  }
+
+  export type RunVariantCreateOrConnectWithoutAgentStatesInput = {
+    where: RunVariantWhereUniqueInput
+    create: XOR<RunVariantCreateWithoutAgentStatesInput, RunVariantUncheckedCreateWithoutAgentStatesInput>
   }
 
   export type RunAgentCreateWithoutAgentStatesInput = {
@@ -42538,6 +47786,7 @@ export namespace Prisma {
     agentInfoStates?: AgentInfoStateUpdateManyWithoutRunNestedInput
     assetStepReturns?: AssetStepReturnUpdateManyWithoutRunNestedInput
     agentRewards?: AgentRewardUpdateManyWithoutRunNestedInput
+    runVariants?: RunVariantUpdateManyWithoutRunNestedInput
   }
 
   export type SimulationRunUncheckedUpdateWithoutAgentStatesInput = {
@@ -42566,6 +47815,54 @@ export namespace Prisma {
     agentInfoStates?: AgentInfoStateUncheckedUpdateManyWithoutRunNestedInput
     assetStepReturns?: AssetStepReturnUncheckedUpdateManyWithoutRunNestedInput
     agentRewards?: AgentRewardUncheckedUpdateManyWithoutRunNestedInput
+    runVariants?: RunVariantUncheckedUpdateManyWithoutRunNestedInput
+  }
+
+  export type RunVariantUpsertWithoutAgentStatesInput = {
+    update: XOR<RunVariantUpdateWithoutAgentStatesInput, RunVariantUncheckedUpdateWithoutAgentStatesInput>
+    create: XOR<RunVariantCreateWithoutAgentStatesInput, RunVariantUncheckedCreateWithoutAgentStatesInput>
+    where?: RunVariantWhereInput
+  }
+
+  export type RunVariantUpdateToOneWithWhereWithoutAgentStatesInput = {
+    where?: RunVariantWhereInput
+    data: XOR<RunVariantUpdateWithoutAgentStatesInput, RunVariantUncheckedUpdateWithoutAgentStatesInput>
+  }
+
+  export type RunVariantUpdateWithoutAgentStatesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    seed?: IntFieldUpdateOperationsInput | number
+    agents?: IntFieldUpdateOperationsInput | number
+    steps?: IntFieldUpdateOperationsInput | number
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    run?: SimulationRunUpdateOneRequiredWithoutRunVariantsNestedInput
+    agentDecisions?: AgentDecisionUpdateManyWithoutRunVariantNestedInput
+    agentInfoStates?: AgentInfoStateUpdateManyWithoutRunVariantNestedInput
+    agentExperiences?: AgentExperienceUpdateManyWithoutRunVariantNestedInput
+    crowdMetrics?: CrowdMetricsUpdateManyWithoutRunVariantNestedInput
+    agentRewards?: AgentRewardUpdateManyWithoutRunVariantNestedInput
+    backtestResults?: BacktestResultUpdateManyWithoutRunVariantNestedInput
+    summary?: RunVariantSummaryUpdateOneWithoutRunVariantNestedInput
+  }
+
+  export type RunVariantUncheckedUpdateWithoutAgentStatesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    seed?: IntFieldUpdateOperationsInput | number
+    agents?: IntFieldUpdateOperationsInput | number
+    steps?: IntFieldUpdateOperationsInput | number
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    agentDecisions?: AgentDecisionUncheckedUpdateManyWithoutRunVariantNestedInput
+    agentInfoStates?: AgentInfoStateUncheckedUpdateManyWithoutRunVariantNestedInput
+    agentExperiences?: AgentExperienceUncheckedUpdateManyWithoutRunVariantNestedInput
+    crowdMetrics?: CrowdMetricsUncheckedUpdateManyWithoutRunVariantNestedInput
+    agentRewards?: AgentRewardUncheckedUpdateManyWithoutRunVariantNestedInput
+    backtestResults?: BacktestResultUncheckedUpdateManyWithoutRunVariantNestedInput
+    summary?: RunVariantSummaryUncheckedUpdateOneWithoutRunVariantNestedInput
   }
 
   export type RunAgentUpsertWithoutAgentStatesInput = {
@@ -42637,6 +47934,7 @@ export namespace Prisma {
     agentStates?: AgentStateCreateNestedManyWithoutRunInput
     assetStepReturns?: AssetStepReturnCreateNestedManyWithoutRunInput
     agentRewards?: AgentRewardCreateNestedManyWithoutRunInput
+    runVariants?: RunVariantCreateNestedManyWithoutRunInput
   }
 
   export type SimulationRunUncheckedCreateWithoutRunTimeSeriesInput = {
@@ -42665,6 +47963,7 @@ export namespace Prisma {
     agentStates?: AgentStateUncheckedCreateNestedManyWithoutRunInput
     assetStepReturns?: AssetStepReturnUncheckedCreateNestedManyWithoutRunInput
     agentRewards?: AgentRewardUncheckedCreateNestedManyWithoutRunInput
+    runVariants?: RunVariantUncheckedCreateNestedManyWithoutRunInput
   }
 
   export type SimulationRunCreateOrConnectWithoutRunTimeSeriesInput = {
@@ -42709,6 +48008,7 @@ export namespace Prisma {
     agentStates?: AgentStateUpdateManyWithoutRunNestedInput
     assetStepReturns?: AssetStepReturnUpdateManyWithoutRunNestedInput
     agentRewards?: AgentRewardUpdateManyWithoutRunNestedInput
+    runVariants?: RunVariantUpdateManyWithoutRunNestedInput
   }
 
   export type SimulationRunUncheckedUpdateWithoutRunTimeSeriesInput = {
@@ -42737,6 +48037,7 @@ export namespace Prisma {
     agentStates?: AgentStateUncheckedUpdateManyWithoutRunNestedInput
     assetStepReturns?: AssetStepReturnUncheckedUpdateManyWithoutRunNestedInput
     agentRewards?: AgentRewardUncheckedUpdateManyWithoutRunNestedInput
+    runVariants?: RunVariantUncheckedUpdateManyWithoutRunNestedInput
   }
 
   export type SimulationRunCreateWithoutRunDebugInput = {
@@ -42765,6 +48066,7 @@ export namespace Prisma {
     agentStates?: AgentStateCreateNestedManyWithoutRunInput
     assetStepReturns?: AssetStepReturnCreateNestedManyWithoutRunInput
     agentRewards?: AgentRewardCreateNestedManyWithoutRunInput
+    runVariants?: RunVariantCreateNestedManyWithoutRunInput
   }
 
   export type SimulationRunUncheckedCreateWithoutRunDebugInput = {
@@ -42793,6 +48095,7 @@ export namespace Prisma {
     agentStates?: AgentStateUncheckedCreateNestedManyWithoutRunInput
     assetStepReturns?: AssetStepReturnUncheckedCreateNestedManyWithoutRunInput
     agentRewards?: AgentRewardUncheckedCreateNestedManyWithoutRunInput
+    runVariants?: RunVariantUncheckedCreateNestedManyWithoutRunInput
   }
 
   export type SimulationRunCreateOrConnectWithoutRunDebugInput = {
@@ -42837,6 +48140,7 @@ export namespace Prisma {
     agentStates?: AgentStateUpdateManyWithoutRunNestedInput
     assetStepReturns?: AssetStepReturnUpdateManyWithoutRunNestedInput
     agentRewards?: AgentRewardUpdateManyWithoutRunNestedInput
+    runVariants?: RunVariantUpdateManyWithoutRunNestedInput
   }
 
   export type SimulationRunUncheckedUpdateWithoutRunDebugInput = {
@@ -42865,6 +48169,7 @@ export namespace Prisma {
     agentStates?: AgentStateUncheckedUpdateManyWithoutRunNestedInput
     assetStepReturns?: AssetStepReturnUncheckedUpdateManyWithoutRunNestedInput
     agentRewards?: AgentRewardUncheckedUpdateManyWithoutRunNestedInput
+    runVariants?: RunVariantUncheckedUpdateManyWithoutRunNestedInput
   }
 
   export type SimulationRunCreateWithoutAgentExperiencesInput = {
@@ -42893,6 +48198,7 @@ export namespace Prisma {
     agentStates?: AgentStateCreateNestedManyWithoutRunInput
     assetStepReturns?: AssetStepReturnCreateNestedManyWithoutRunInput
     agentRewards?: AgentRewardCreateNestedManyWithoutRunInput
+    runVariants?: RunVariantCreateNestedManyWithoutRunInput
   }
 
   export type SimulationRunUncheckedCreateWithoutAgentExperiencesInput = {
@@ -42921,11 +48227,53 @@ export namespace Prisma {
     agentStates?: AgentStateUncheckedCreateNestedManyWithoutRunInput
     assetStepReturns?: AssetStepReturnUncheckedCreateNestedManyWithoutRunInput
     agentRewards?: AgentRewardUncheckedCreateNestedManyWithoutRunInput
+    runVariants?: RunVariantUncheckedCreateNestedManyWithoutRunInput
   }
 
   export type SimulationRunCreateOrConnectWithoutAgentExperiencesInput = {
     where: SimulationRunWhereUniqueInput
     create: XOR<SimulationRunCreateWithoutAgentExperiencesInput, SimulationRunUncheckedCreateWithoutAgentExperiencesInput>
+  }
+
+  export type RunVariantCreateWithoutAgentExperiencesInput = {
+    id?: string
+    assetSymbol: string
+    seed: number
+    agents: number
+    steps: number
+    label?: string | null
+    createdAt?: Date | string
+    run: SimulationRunCreateNestedOneWithoutRunVariantsInput
+    agentDecisions?: AgentDecisionCreateNestedManyWithoutRunVariantInput
+    agentInfoStates?: AgentInfoStateCreateNestedManyWithoutRunVariantInput
+    agentStates?: AgentStateCreateNestedManyWithoutRunVariantInput
+    crowdMetrics?: CrowdMetricsCreateNestedManyWithoutRunVariantInput
+    agentRewards?: AgentRewardCreateNestedManyWithoutRunVariantInput
+    backtestResults?: BacktestResultCreateNestedManyWithoutRunVariantInput
+    summary?: RunVariantSummaryCreateNestedOneWithoutRunVariantInput
+  }
+
+  export type RunVariantUncheckedCreateWithoutAgentExperiencesInput = {
+    id?: string
+    runId: string
+    assetSymbol: string
+    seed: number
+    agents: number
+    steps: number
+    label?: string | null
+    createdAt?: Date | string
+    agentDecisions?: AgentDecisionUncheckedCreateNestedManyWithoutRunVariantInput
+    agentInfoStates?: AgentInfoStateUncheckedCreateNestedManyWithoutRunVariantInput
+    agentStates?: AgentStateUncheckedCreateNestedManyWithoutRunVariantInput
+    crowdMetrics?: CrowdMetricsUncheckedCreateNestedManyWithoutRunVariantInput
+    agentRewards?: AgentRewardUncheckedCreateNestedManyWithoutRunVariantInput
+    backtestResults?: BacktestResultUncheckedCreateNestedManyWithoutRunVariantInput
+    summary?: RunVariantSummaryUncheckedCreateNestedOneWithoutRunVariantInput
+  }
+
+  export type RunVariantCreateOrConnectWithoutAgentExperiencesInput = {
+    where: RunVariantWhereUniqueInput
+    create: XOR<RunVariantCreateWithoutAgentExperiencesInput, RunVariantUncheckedCreateWithoutAgentExperiencesInput>
   }
 
   export type RunAgentCreateWithoutExperiencesInput = {
@@ -43002,6 +48350,7 @@ export namespace Prisma {
     agentStates?: AgentStateUpdateManyWithoutRunNestedInput
     assetStepReturns?: AssetStepReturnUpdateManyWithoutRunNestedInput
     agentRewards?: AgentRewardUpdateManyWithoutRunNestedInput
+    runVariants?: RunVariantUpdateManyWithoutRunNestedInput
   }
 
   export type SimulationRunUncheckedUpdateWithoutAgentExperiencesInput = {
@@ -43030,6 +48379,54 @@ export namespace Prisma {
     agentStates?: AgentStateUncheckedUpdateManyWithoutRunNestedInput
     assetStepReturns?: AssetStepReturnUncheckedUpdateManyWithoutRunNestedInput
     agentRewards?: AgentRewardUncheckedUpdateManyWithoutRunNestedInput
+    runVariants?: RunVariantUncheckedUpdateManyWithoutRunNestedInput
+  }
+
+  export type RunVariantUpsertWithoutAgentExperiencesInput = {
+    update: XOR<RunVariantUpdateWithoutAgentExperiencesInput, RunVariantUncheckedUpdateWithoutAgentExperiencesInput>
+    create: XOR<RunVariantCreateWithoutAgentExperiencesInput, RunVariantUncheckedCreateWithoutAgentExperiencesInput>
+    where?: RunVariantWhereInput
+  }
+
+  export type RunVariantUpdateToOneWithWhereWithoutAgentExperiencesInput = {
+    where?: RunVariantWhereInput
+    data: XOR<RunVariantUpdateWithoutAgentExperiencesInput, RunVariantUncheckedUpdateWithoutAgentExperiencesInput>
+  }
+
+  export type RunVariantUpdateWithoutAgentExperiencesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    seed?: IntFieldUpdateOperationsInput | number
+    agents?: IntFieldUpdateOperationsInput | number
+    steps?: IntFieldUpdateOperationsInput | number
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    run?: SimulationRunUpdateOneRequiredWithoutRunVariantsNestedInput
+    agentDecisions?: AgentDecisionUpdateManyWithoutRunVariantNestedInput
+    agentInfoStates?: AgentInfoStateUpdateManyWithoutRunVariantNestedInput
+    agentStates?: AgentStateUpdateManyWithoutRunVariantNestedInput
+    crowdMetrics?: CrowdMetricsUpdateManyWithoutRunVariantNestedInput
+    agentRewards?: AgentRewardUpdateManyWithoutRunVariantNestedInput
+    backtestResults?: BacktestResultUpdateManyWithoutRunVariantNestedInput
+    summary?: RunVariantSummaryUpdateOneWithoutRunVariantNestedInput
+  }
+
+  export type RunVariantUncheckedUpdateWithoutAgentExperiencesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    seed?: IntFieldUpdateOperationsInput | number
+    agents?: IntFieldUpdateOperationsInput | number
+    steps?: IntFieldUpdateOperationsInput | number
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    agentDecisions?: AgentDecisionUncheckedUpdateManyWithoutRunVariantNestedInput
+    agentInfoStates?: AgentInfoStateUncheckedUpdateManyWithoutRunVariantNestedInput
+    agentStates?: AgentStateUncheckedUpdateManyWithoutRunVariantNestedInput
+    crowdMetrics?: CrowdMetricsUncheckedUpdateManyWithoutRunVariantNestedInput
+    agentRewards?: AgentRewardUncheckedUpdateManyWithoutRunVariantNestedInput
+    backtestResults?: BacktestResultUncheckedUpdateManyWithoutRunVariantNestedInput
+    summary?: RunVariantSummaryUncheckedUpdateOneWithoutRunVariantNestedInput
   }
 
   export type RunAgentUpsertWithoutExperiencesInput = {
@@ -43101,6 +48498,7 @@ export namespace Prisma {
     agentStates?: AgentStateCreateNestedManyWithoutRunInput
     assetStepReturns?: AssetStepReturnCreateNestedManyWithoutRunInput
     agentRewards?: AgentRewardCreateNestedManyWithoutRunInput
+    runVariants?: RunVariantCreateNestedManyWithoutRunInput
   }
 
   export type SimulationRunUncheckedCreateWithoutCrowdSnapshotsInput = {
@@ -43129,6 +48527,7 @@ export namespace Prisma {
     agentStates?: AgentStateUncheckedCreateNestedManyWithoutRunInput
     assetStepReturns?: AssetStepReturnUncheckedCreateNestedManyWithoutRunInput
     agentRewards?: AgentRewardUncheckedCreateNestedManyWithoutRunInput
+    runVariants?: RunVariantUncheckedCreateNestedManyWithoutRunInput
   }
 
   export type SimulationRunCreateOrConnectWithoutCrowdSnapshotsInput = {
@@ -43173,6 +48572,7 @@ export namespace Prisma {
     agentStates?: AgentStateUpdateManyWithoutRunNestedInput
     assetStepReturns?: AssetStepReturnUpdateManyWithoutRunNestedInput
     agentRewards?: AgentRewardUpdateManyWithoutRunNestedInput
+    runVariants?: RunVariantUpdateManyWithoutRunNestedInput
   }
 
   export type SimulationRunUncheckedUpdateWithoutCrowdSnapshotsInput = {
@@ -43201,6 +48601,7 @@ export namespace Prisma {
     agentStates?: AgentStateUncheckedUpdateManyWithoutRunNestedInput
     assetStepReturns?: AssetStepReturnUncheckedUpdateManyWithoutRunNestedInput
     agentRewards?: AgentRewardUncheckedUpdateManyWithoutRunNestedInput
+    runVariants?: RunVariantUncheckedUpdateManyWithoutRunNestedInput
   }
 
   export type BetCreateWithoutUserWalletTransactionsInput = {
@@ -43321,6 +48722,7 @@ export namespace Prisma {
     agentStates?: AgentStateCreateNestedManyWithoutRunInput
     assetStepReturns?: AssetStepReturnCreateNestedManyWithoutRunInput
     agentRewards?: AgentRewardCreateNestedManyWithoutRunInput
+    runVariants?: RunVariantCreateNestedManyWithoutRunInput
   }
 
   export type SimulationRunUncheckedCreateWithoutBetsInput = {
@@ -43349,6 +48751,7 @@ export namespace Prisma {
     agentStates?: AgentStateUncheckedCreateNestedManyWithoutRunInput
     assetStepReturns?: AssetStepReturnUncheckedCreateNestedManyWithoutRunInput
     agentRewards?: AgentRewardUncheckedCreateNestedManyWithoutRunInput
+    runVariants?: RunVariantUncheckedCreateNestedManyWithoutRunInput
   }
 
   export type SimulationRunCreateOrConnectWithoutBetsInput = {
@@ -43448,6 +48851,7 @@ export namespace Prisma {
     agentStates?: AgentStateUpdateManyWithoutRunNestedInput
     assetStepReturns?: AssetStepReturnUpdateManyWithoutRunNestedInput
     agentRewards?: AgentRewardUpdateManyWithoutRunNestedInput
+    runVariants?: RunVariantUpdateManyWithoutRunNestedInput
   }
 
   export type SimulationRunUncheckedUpdateWithoutBetsInput = {
@@ -43476,6 +48880,7 @@ export namespace Prisma {
     agentStates?: AgentStateUncheckedUpdateManyWithoutRunNestedInput
     assetStepReturns?: AssetStepReturnUncheckedUpdateManyWithoutRunNestedInput
     agentRewards?: AgentRewardUncheckedUpdateManyWithoutRunNestedInput
+    runVariants?: RunVariantUncheckedUpdateManyWithoutRunNestedInput
   }
 
   export type AgentUpsertWithoutBetsInput = {
@@ -43537,6 +48942,94 @@ export namespace Prisma {
     runId?: UuidNullableFilter<"UserWalletTransaction"> | string | null
     note?: StringNullableFilter<"UserWalletTransaction"> | string | null
     createdAt?: DateTimeFilter<"UserWalletTransaction"> | Date | string
+  }
+
+  export type RunVariantCreateWithoutBacktestResultsInput = {
+    id?: string
+    assetSymbol: string
+    seed: number
+    agents: number
+    steps: number
+    label?: string | null
+    createdAt?: Date | string
+    run: SimulationRunCreateNestedOneWithoutRunVariantsInput
+    agentDecisions?: AgentDecisionCreateNestedManyWithoutRunVariantInput
+    agentInfoStates?: AgentInfoStateCreateNestedManyWithoutRunVariantInput
+    agentStates?: AgentStateCreateNestedManyWithoutRunVariantInput
+    agentExperiences?: AgentExperienceCreateNestedManyWithoutRunVariantInput
+    crowdMetrics?: CrowdMetricsCreateNestedManyWithoutRunVariantInput
+    agentRewards?: AgentRewardCreateNestedManyWithoutRunVariantInput
+    summary?: RunVariantSummaryCreateNestedOneWithoutRunVariantInput
+  }
+
+  export type RunVariantUncheckedCreateWithoutBacktestResultsInput = {
+    id?: string
+    runId: string
+    assetSymbol: string
+    seed: number
+    agents: number
+    steps: number
+    label?: string | null
+    createdAt?: Date | string
+    agentDecisions?: AgentDecisionUncheckedCreateNestedManyWithoutRunVariantInput
+    agentInfoStates?: AgentInfoStateUncheckedCreateNestedManyWithoutRunVariantInput
+    agentStates?: AgentStateUncheckedCreateNestedManyWithoutRunVariantInput
+    agentExperiences?: AgentExperienceUncheckedCreateNestedManyWithoutRunVariantInput
+    crowdMetrics?: CrowdMetricsUncheckedCreateNestedManyWithoutRunVariantInput
+    agentRewards?: AgentRewardUncheckedCreateNestedManyWithoutRunVariantInput
+    summary?: RunVariantSummaryUncheckedCreateNestedOneWithoutRunVariantInput
+  }
+
+  export type RunVariantCreateOrConnectWithoutBacktestResultsInput = {
+    where: RunVariantWhereUniqueInput
+    create: XOR<RunVariantCreateWithoutBacktestResultsInput, RunVariantUncheckedCreateWithoutBacktestResultsInput>
+  }
+
+  export type RunVariantUpsertWithoutBacktestResultsInput = {
+    update: XOR<RunVariantUpdateWithoutBacktestResultsInput, RunVariantUncheckedUpdateWithoutBacktestResultsInput>
+    create: XOR<RunVariantCreateWithoutBacktestResultsInput, RunVariantUncheckedCreateWithoutBacktestResultsInput>
+    where?: RunVariantWhereInput
+  }
+
+  export type RunVariantUpdateToOneWithWhereWithoutBacktestResultsInput = {
+    where?: RunVariantWhereInput
+    data: XOR<RunVariantUpdateWithoutBacktestResultsInput, RunVariantUncheckedUpdateWithoutBacktestResultsInput>
+  }
+
+  export type RunVariantUpdateWithoutBacktestResultsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    seed?: IntFieldUpdateOperationsInput | number
+    agents?: IntFieldUpdateOperationsInput | number
+    steps?: IntFieldUpdateOperationsInput | number
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    run?: SimulationRunUpdateOneRequiredWithoutRunVariantsNestedInput
+    agentDecisions?: AgentDecisionUpdateManyWithoutRunVariantNestedInput
+    agentInfoStates?: AgentInfoStateUpdateManyWithoutRunVariantNestedInput
+    agentStates?: AgentStateUpdateManyWithoutRunVariantNestedInput
+    agentExperiences?: AgentExperienceUpdateManyWithoutRunVariantNestedInput
+    crowdMetrics?: CrowdMetricsUpdateManyWithoutRunVariantNestedInput
+    agentRewards?: AgentRewardUpdateManyWithoutRunVariantNestedInput
+    summary?: RunVariantSummaryUpdateOneWithoutRunVariantNestedInput
+  }
+
+  export type RunVariantUncheckedUpdateWithoutBacktestResultsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    seed?: IntFieldUpdateOperationsInput | number
+    agents?: IntFieldUpdateOperationsInput | number
+    steps?: IntFieldUpdateOperationsInput | number
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    agentDecisions?: AgentDecisionUncheckedUpdateManyWithoutRunVariantNestedInput
+    agentInfoStates?: AgentInfoStateUncheckedUpdateManyWithoutRunVariantNestedInput
+    agentStates?: AgentStateUncheckedUpdateManyWithoutRunVariantNestedInput
+    agentExperiences?: AgentExperienceUncheckedUpdateManyWithoutRunVariantNestedInput
+    crowdMetrics?: CrowdMetricsUncheckedUpdateManyWithoutRunVariantNestedInput
+    agentRewards?: AgentRewardUncheckedUpdateManyWithoutRunVariantNestedInput
+    summary?: RunVariantSummaryUncheckedUpdateOneWithoutRunVariantNestedInput
   }
 
   export type ArchetypeTraitProfileCreateManyArchetypeInput = {
@@ -43691,6 +49184,7 @@ export namespace Prisma {
 
   export type AgentExperienceCreateManyRunInput = {
     id?: string
+    runVariantId?: string | null
     runAgentId: string
     step: number
     ts: Date | string
@@ -43749,6 +49243,7 @@ export namespace Prisma {
 
   export type AgentDecisionCreateManyRunInput = {
     id?: string
+    runVariantId?: string | null
     step: number
     agentId: string
     assetSymbol?: string
@@ -43760,6 +49255,7 @@ export namespace Prisma {
 
   export type CrowdMetricsCreateManyRunInput = {
     id?: string
+    runVariantId?: string | null
     assetSymbol: string
     step: number
     signal: number
@@ -43792,6 +49288,7 @@ export namespace Prisma {
 
   export type AgentInfoStateCreateManyRunInput = {
     id?: string
+    runVariantId?: string | null
     assetSymbol: string
     agentId: string
     step: number
@@ -43806,6 +49303,7 @@ export namespace Prisma {
 
   export type AgentStateCreateManyRunInput = {
     id?: string
+    runVariantId?: string | null
     assetSymbol: string
     agentId: string
     step: number
@@ -43828,6 +49326,7 @@ export namespace Prisma {
 
   export type AgentRewardCreateManyRunInput = {
     id?: string
+    runVariantId?: string | null
     agentId: string
     assetSymbol: string
     step: number
@@ -43837,6 +49336,16 @@ export namespace Prisma {
     regret: number
     drawdown: number
     rewardScore: number
+    createdAt?: Date | string
+  }
+
+  export type RunVariantCreateManyRunInput = {
+    id?: string
+    assetSymbol: string
+    seed: number
+    agents: number
+    steps: number
+    label?: string | null
     createdAt?: Date | string
   }
 
@@ -43852,11 +49361,13 @@ export namespace Prisma {
     learningMetaJson?: NullableJsonNullValueInput | InputJsonValue
     stateBeforeJson?: NullableJsonNullValueInput | InputJsonValue
     stateAfterJson?: NullableJsonNullValueInput | InputJsonValue
+    runVariant?: RunVariantUpdateOneWithoutAgentExperiencesNestedInput
     runAgent?: RunAgentUpdateOneRequiredWithoutExperiencesNestedInput
   }
 
   export type AgentExperienceUncheckedUpdateWithoutRunInput = {
     id?: StringFieldUpdateOperationsInput | string
+    runVariantId?: NullableStringFieldUpdateOperationsInput | string | null
     runAgentId?: StringFieldUpdateOperationsInput | string
     step?: IntFieldUpdateOperationsInput | number
     ts?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -43872,6 +49383,7 @@ export namespace Prisma {
 
   export type AgentExperienceUncheckedUpdateManyWithoutRunInput = {
     id?: StringFieldUpdateOperationsInput | string
+    runVariantId?: NullableStringFieldUpdateOperationsInput | string | null
     runAgentId?: StringFieldUpdateOperationsInput | string
     step?: IntFieldUpdateOperationsInput | number
     ts?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -44036,11 +49548,13 @@ export namespace Prisma {
     confidence?: FloatFieldUpdateOperationsInput | number
     rationale?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    runVariant?: RunVariantUpdateOneWithoutAgentDecisionsNestedInput
     agent?: RunAgentUpdateOneRequiredWithoutDecisionsNestedInput
   }
 
   export type AgentDecisionUncheckedUpdateWithoutRunInput = {
     id?: StringFieldUpdateOperationsInput | string
+    runVariantId?: NullableStringFieldUpdateOperationsInput | string | null
     step?: IntFieldUpdateOperationsInput | number
     agentId?: StringFieldUpdateOperationsInput | string
     assetSymbol?: StringFieldUpdateOperationsInput | string
@@ -44052,6 +49566,7 @@ export namespace Prisma {
 
   export type AgentDecisionUncheckedUpdateManyWithoutRunInput = {
     id?: StringFieldUpdateOperationsInput | string
+    runVariantId?: NullableStringFieldUpdateOperationsInput | string | null
     step?: IntFieldUpdateOperationsInput | number
     agentId?: StringFieldUpdateOperationsInput | string
     assetSymbol?: StringFieldUpdateOperationsInput | string
@@ -44078,10 +49593,12 @@ export namespace Prisma {
     wisdomScore?: NullableFloatFieldUpdateOperationsInput | number | null
     noiseSensitivity?: NullableFloatFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    runVariant?: RunVariantUpdateOneWithoutCrowdMetricsNestedInput
   }
 
   export type CrowdMetricsUncheckedUpdateWithoutRunInput = {
     id?: StringFieldUpdateOperationsInput | string
+    runVariantId?: NullableStringFieldUpdateOperationsInput | string | null
     assetSymbol?: StringFieldUpdateOperationsInput | string
     step?: IntFieldUpdateOperationsInput | number
     signal?: FloatFieldUpdateOperationsInput | number
@@ -44101,6 +49618,7 @@ export namespace Prisma {
 
   export type CrowdMetricsUncheckedUpdateManyWithoutRunInput = {
     id?: StringFieldUpdateOperationsInput | string
+    runVariantId?: NullableStringFieldUpdateOperationsInput | string | null
     assetSymbol?: StringFieldUpdateOperationsInput | string
     step?: IntFieldUpdateOperationsInput | number
     signal?: FloatFieldUpdateOperationsInput | number
@@ -44168,11 +49686,13 @@ export namespace Prisma {
     herding?: NullableFloatFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    runVariant?: RunVariantUpdateOneWithoutAgentInfoStatesNestedInput
     agent?: RunAgentUpdateOneRequiredWithoutInfoStatesNestedInput
   }
 
   export type AgentInfoStateUncheckedUpdateWithoutRunInput = {
     id?: StringFieldUpdateOperationsInput | string
+    runVariantId?: NullableStringFieldUpdateOperationsInput | string | null
     assetSymbol?: StringFieldUpdateOperationsInput | string
     agentId?: StringFieldUpdateOperationsInput | string
     step?: IntFieldUpdateOperationsInput | number
@@ -44187,6 +49707,7 @@ export namespace Prisma {
 
   export type AgentInfoStateUncheckedUpdateManyWithoutRunInput = {
     id?: StringFieldUpdateOperationsInput | string
+    runVariantId?: NullableStringFieldUpdateOperationsInput | string | null
     assetSymbol?: StringFieldUpdateOperationsInput | string
     agentId?: StringFieldUpdateOperationsInput | string
     step?: IntFieldUpdateOperationsInput | number
@@ -44210,11 +49731,13 @@ export namespace Prisma {
     exposedCount?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    runVariant?: RunVariantUpdateOneWithoutAgentStatesNestedInput
     agent?: RunAgentUpdateOneRequiredWithoutAgentStatesNestedInput
   }
 
   export type AgentStateUncheckedUpdateWithoutRunInput = {
     id?: StringFieldUpdateOperationsInput | string
+    runVariantId?: NullableStringFieldUpdateOperationsInput | string | null
     assetSymbol?: StringFieldUpdateOperationsInput | string
     agentId?: StringFieldUpdateOperationsInput | string
     step?: IntFieldUpdateOperationsInput | number
@@ -44229,6 +49752,7 @@ export namespace Prisma {
 
   export type AgentStateUncheckedUpdateManyWithoutRunInput = {
     id?: StringFieldUpdateOperationsInput | string
+    runVariantId?: NullableStringFieldUpdateOperationsInput | string | null
     assetSymbol?: StringFieldUpdateOperationsInput | string
     agentId?: StringFieldUpdateOperationsInput | string
     step?: IntFieldUpdateOperationsInput | number
@@ -44276,11 +49800,13 @@ export namespace Prisma {
     drawdown?: FloatFieldUpdateOperationsInput | number
     rewardScore?: FloatFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    runVariant?: RunVariantUpdateOneWithoutAgentRewardsNestedInput
     agent?: RunAgentUpdateOneRequiredWithoutAgentRewardsNestedInput
   }
 
   export type AgentRewardUncheckedUpdateWithoutRunInput = {
     id?: StringFieldUpdateOperationsInput | string
+    runVariantId?: NullableStringFieldUpdateOperationsInput | string | null
     agentId?: StringFieldUpdateOperationsInput | string
     assetSymbol?: StringFieldUpdateOperationsInput | string
     step?: IntFieldUpdateOperationsInput | number
@@ -44295,6 +49821,7 @@ export namespace Prisma {
 
   export type AgentRewardUncheckedUpdateManyWithoutRunInput = {
     id?: StringFieldUpdateOperationsInput | string
+    runVariantId?: NullableStringFieldUpdateOperationsInput | string | null
     agentId?: StringFieldUpdateOperationsInput | string
     assetSymbol?: StringFieldUpdateOperationsInput | string
     step?: IntFieldUpdateOperationsInput | number
@@ -44304,6 +49831,476 @@ export namespace Prisma {
     regret?: FloatFieldUpdateOperationsInput | number
     drawdown?: FloatFieldUpdateOperationsInput | number
     rewardScore?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RunVariantUpdateWithoutRunInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    seed?: IntFieldUpdateOperationsInput | number
+    agents?: IntFieldUpdateOperationsInput | number
+    steps?: IntFieldUpdateOperationsInput | number
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    agentDecisions?: AgentDecisionUpdateManyWithoutRunVariantNestedInput
+    agentInfoStates?: AgentInfoStateUpdateManyWithoutRunVariantNestedInput
+    agentStates?: AgentStateUpdateManyWithoutRunVariantNestedInput
+    agentExperiences?: AgentExperienceUpdateManyWithoutRunVariantNestedInput
+    crowdMetrics?: CrowdMetricsUpdateManyWithoutRunVariantNestedInput
+    agentRewards?: AgentRewardUpdateManyWithoutRunVariantNestedInput
+    backtestResults?: BacktestResultUpdateManyWithoutRunVariantNestedInput
+    summary?: RunVariantSummaryUpdateOneWithoutRunVariantNestedInput
+  }
+
+  export type RunVariantUncheckedUpdateWithoutRunInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    seed?: IntFieldUpdateOperationsInput | number
+    agents?: IntFieldUpdateOperationsInput | number
+    steps?: IntFieldUpdateOperationsInput | number
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    agentDecisions?: AgentDecisionUncheckedUpdateManyWithoutRunVariantNestedInput
+    agentInfoStates?: AgentInfoStateUncheckedUpdateManyWithoutRunVariantNestedInput
+    agentStates?: AgentStateUncheckedUpdateManyWithoutRunVariantNestedInput
+    agentExperiences?: AgentExperienceUncheckedUpdateManyWithoutRunVariantNestedInput
+    crowdMetrics?: CrowdMetricsUncheckedUpdateManyWithoutRunVariantNestedInput
+    agentRewards?: AgentRewardUncheckedUpdateManyWithoutRunVariantNestedInput
+    backtestResults?: BacktestResultUncheckedUpdateManyWithoutRunVariantNestedInput
+    summary?: RunVariantSummaryUncheckedUpdateOneWithoutRunVariantNestedInput
+  }
+
+  export type RunVariantUncheckedUpdateManyWithoutRunInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    seed?: IntFieldUpdateOperationsInput | number
+    agents?: IntFieldUpdateOperationsInput | number
+    steps?: IntFieldUpdateOperationsInput | number
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AgentDecisionCreateManyRunVariantInput = {
+    id?: string
+    runId: string
+    step: number
+    agentId: string
+    assetSymbol?: string
+    action: $Enums.AgentDecisionAction
+    confidence: number
+    rationale?: string | null
+    createdAt?: Date | string
+  }
+
+  export type AgentInfoStateCreateManyRunVariantInput = {
+    id?: string
+    runId: string
+    assetSymbol: string
+    agentId: string
+    step: number
+    exposedCount: number
+    infoSignal: number
+    confidence?: number | null
+    riskTolerance?: number | null
+    herding?: number | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AgentStateCreateManyRunVariantInput = {
+    id?: string
+    runId: string
+    assetSymbol: string
+    agentId: string
+    step: number
+    confidence: number
+    riskTolerance: number
+    herding: number
+    infoSignal: number
+    exposedCount: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AgentExperienceCreateManyRunVariantInput = {
+    id?: string
+    runId: string
+    runAgentId: string
+    step: number
+    ts: Date | string
+    actionJson?: NullableJsonNullValueInput | InputJsonValue
+    signalsJson?: NullableJsonNullValueInput | InputJsonValue
+    pnl?: number | null
+    drawdown?: number | null
+    reward?: number | null
+    learningMetaJson?: NullableJsonNullValueInput | InputJsonValue
+    stateBeforeJson?: NullableJsonNullValueInput | InputJsonValue
+    stateAfterJson?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type CrowdMetricsCreateManyRunVariantInput = {
+    id?: string
+    runId: string
+    assetSymbol: string
+    step: number
+    signal: number
+    weightedSignal: number
+    consensus: number
+    polarization: number
+    uncertainty: number
+    minorityStrength: number
+    beliefMomentum?: number | null
+    diversityIndex?: number | null
+    independenceIndex?: number | null
+    herdingIndex?: number | null
+    wisdomScore?: number | null
+    noiseSensitivity?: number | null
+    createdAt?: Date | string
+  }
+
+  export type AgentRewardCreateManyRunVariantInput = {
+    id?: string
+    runId: string
+    agentId: string
+    assetSymbol: string
+    step: number
+    action: $Enums.AgentDecisionAction
+    stepReturn: number
+    pnl: number
+    regret: number
+    drawdown: number
+    rewardScore: number
+    createdAt?: Date | string
+  }
+
+  export type BacktestResultCreateManyRunVariantInput = {
+    id?: string
+    runId: string
+    assetSymbol: string
+    seed: number
+    steps: number
+    agents: number
+    pairsCount?: number | null
+    corr?: number | null
+    directionalAccuracy?: number | null
+    createdAt?: Date | string
+  }
+
+  export type AgentDecisionUpdateWithoutRunVariantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    step?: IntFieldUpdateOperationsInput | number
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    action?: EnumAgentDecisionActionFieldUpdateOperationsInput | $Enums.AgentDecisionAction
+    confidence?: FloatFieldUpdateOperationsInput | number
+    rationale?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    run?: SimulationRunUpdateOneRequiredWithoutAgentDecisionsNestedInput
+    agent?: RunAgentUpdateOneRequiredWithoutDecisionsNestedInput
+  }
+
+  export type AgentDecisionUncheckedUpdateWithoutRunVariantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    step?: IntFieldUpdateOperationsInput | number
+    agentId?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    action?: EnumAgentDecisionActionFieldUpdateOperationsInput | $Enums.AgentDecisionAction
+    confidence?: FloatFieldUpdateOperationsInput | number
+    rationale?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AgentDecisionUncheckedUpdateManyWithoutRunVariantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    step?: IntFieldUpdateOperationsInput | number
+    agentId?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    action?: EnumAgentDecisionActionFieldUpdateOperationsInput | $Enums.AgentDecisionAction
+    confidence?: FloatFieldUpdateOperationsInput | number
+    rationale?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AgentInfoStateUpdateWithoutRunVariantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    step?: IntFieldUpdateOperationsInput | number
+    exposedCount?: IntFieldUpdateOperationsInput | number
+    infoSignal?: FloatFieldUpdateOperationsInput | number
+    confidence?: NullableFloatFieldUpdateOperationsInput | number | null
+    riskTolerance?: NullableFloatFieldUpdateOperationsInput | number | null
+    herding?: NullableFloatFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    run?: SimulationRunUpdateOneRequiredWithoutAgentInfoStatesNestedInput
+    agent?: RunAgentUpdateOneRequiredWithoutInfoStatesNestedInput
+  }
+
+  export type AgentInfoStateUncheckedUpdateWithoutRunVariantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    agentId?: StringFieldUpdateOperationsInput | string
+    step?: IntFieldUpdateOperationsInput | number
+    exposedCount?: IntFieldUpdateOperationsInput | number
+    infoSignal?: FloatFieldUpdateOperationsInput | number
+    confidence?: NullableFloatFieldUpdateOperationsInput | number | null
+    riskTolerance?: NullableFloatFieldUpdateOperationsInput | number | null
+    herding?: NullableFloatFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AgentInfoStateUncheckedUpdateManyWithoutRunVariantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    agentId?: StringFieldUpdateOperationsInput | string
+    step?: IntFieldUpdateOperationsInput | number
+    exposedCount?: IntFieldUpdateOperationsInput | number
+    infoSignal?: FloatFieldUpdateOperationsInput | number
+    confidence?: NullableFloatFieldUpdateOperationsInput | number | null
+    riskTolerance?: NullableFloatFieldUpdateOperationsInput | number | null
+    herding?: NullableFloatFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AgentStateUpdateWithoutRunVariantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    step?: IntFieldUpdateOperationsInput | number
+    confidence?: FloatFieldUpdateOperationsInput | number
+    riskTolerance?: FloatFieldUpdateOperationsInput | number
+    herding?: FloatFieldUpdateOperationsInput | number
+    infoSignal?: FloatFieldUpdateOperationsInput | number
+    exposedCount?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    run?: SimulationRunUpdateOneRequiredWithoutAgentStatesNestedInput
+    agent?: RunAgentUpdateOneRequiredWithoutAgentStatesNestedInput
+  }
+
+  export type AgentStateUncheckedUpdateWithoutRunVariantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    agentId?: StringFieldUpdateOperationsInput | string
+    step?: IntFieldUpdateOperationsInput | number
+    confidence?: FloatFieldUpdateOperationsInput | number
+    riskTolerance?: FloatFieldUpdateOperationsInput | number
+    herding?: FloatFieldUpdateOperationsInput | number
+    infoSignal?: FloatFieldUpdateOperationsInput | number
+    exposedCount?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AgentStateUncheckedUpdateManyWithoutRunVariantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    agentId?: StringFieldUpdateOperationsInput | string
+    step?: IntFieldUpdateOperationsInput | number
+    confidence?: FloatFieldUpdateOperationsInput | number
+    riskTolerance?: FloatFieldUpdateOperationsInput | number
+    herding?: FloatFieldUpdateOperationsInput | number
+    infoSignal?: FloatFieldUpdateOperationsInput | number
+    exposedCount?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AgentExperienceUpdateWithoutRunVariantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    step?: IntFieldUpdateOperationsInput | number
+    ts?: DateTimeFieldUpdateOperationsInput | Date | string
+    actionJson?: NullableJsonNullValueInput | InputJsonValue
+    signalsJson?: NullableJsonNullValueInput | InputJsonValue
+    pnl?: NullableFloatFieldUpdateOperationsInput | number | null
+    drawdown?: NullableFloatFieldUpdateOperationsInput | number | null
+    reward?: NullableFloatFieldUpdateOperationsInput | number | null
+    learningMetaJson?: NullableJsonNullValueInput | InputJsonValue
+    stateBeforeJson?: NullableJsonNullValueInput | InputJsonValue
+    stateAfterJson?: NullableJsonNullValueInput | InputJsonValue
+    run?: SimulationRunUpdateOneRequiredWithoutAgentExperiencesNestedInput
+    runAgent?: RunAgentUpdateOneRequiredWithoutExperiencesNestedInput
+  }
+
+  export type AgentExperienceUncheckedUpdateWithoutRunVariantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    runAgentId?: StringFieldUpdateOperationsInput | string
+    step?: IntFieldUpdateOperationsInput | number
+    ts?: DateTimeFieldUpdateOperationsInput | Date | string
+    actionJson?: NullableJsonNullValueInput | InputJsonValue
+    signalsJson?: NullableJsonNullValueInput | InputJsonValue
+    pnl?: NullableFloatFieldUpdateOperationsInput | number | null
+    drawdown?: NullableFloatFieldUpdateOperationsInput | number | null
+    reward?: NullableFloatFieldUpdateOperationsInput | number | null
+    learningMetaJson?: NullableJsonNullValueInput | InputJsonValue
+    stateBeforeJson?: NullableJsonNullValueInput | InputJsonValue
+    stateAfterJson?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type AgentExperienceUncheckedUpdateManyWithoutRunVariantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    runAgentId?: StringFieldUpdateOperationsInput | string
+    step?: IntFieldUpdateOperationsInput | number
+    ts?: DateTimeFieldUpdateOperationsInput | Date | string
+    actionJson?: NullableJsonNullValueInput | InputJsonValue
+    signalsJson?: NullableJsonNullValueInput | InputJsonValue
+    pnl?: NullableFloatFieldUpdateOperationsInput | number | null
+    drawdown?: NullableFloatFieldUpdateOperationsInput | number | null
+    reward?: NullableFloatFieldUpdateOperationsInput | number | null
+    learningMetaJson?: NullableJsonNullValueInput | InputJsonValue
+    stateBeforeJson?: NullableJsonNullValueInput | InputJsonValue
+    stateAfterJson?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type CrowdMetricsUpdateWithoutRunVariantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    step?: IntFieldUpdateOperationsInput | number
+    signal?: FloatFieldUpdateOperationsInput | number
+    weightedSignal?: FloatFieldUpdateOperationsInput | number
+    consensus?: FloatFieldUpdateOperationsInput | number
+    polarization?: FloatFieldUpdateOperationsInput | number
+    uncertainty?: FloatFieldUpdateOperationsInput | number
+    minorityStrength?: FloatFieldUpdateOperationsInput | number
+    beliefMomentum?: NullableFloatFieldUpdateOperationsInput | number | null
+    diversityIndex?: NullableFloatFieldUpdateOperationsInput | number | null
+    independenceIndex?: NullableFloatFieldUpdateOperationsInput | number | null
+    herdingIndex?: NullableFloatFieldUpdateOperationsInput | number | null
+    wisdomScore?: NullableFloatFieldUpdateOperationsInput | number | null
+    noiseSensitivity?: NullableFloatFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    run?: SimulationRunUpdateOneRequiredWithoutCrowdMetricsNestedInput
+  }
+
+  export type CrowdMetricsUncheckedUpdateWithoutRunVariantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    step?: IntFieldUpdateOperationsInput | number
+    signal?: FloatFieldUpdateOperationsInput | number
+    weightedSignal?: FloatFieldUpdateOperationsInput | number
+    consensus?: FloatFieldUpdateOperationsInput | number
+    polarization?: FloatFieldUpdateOperationsInput | number
+    uncertainty?: FloatFieldUpdateOperationsInput | number
+    minorityStrength?: FloatFieldUpdateOperationsInput | number
+    beliefMomentum?: NullableFloatFieldUpdateOperationsInput | number | null
+    diversityIndex?: NullableFloatFieldUpdateOperationsInput | number | null
+    independenceIndex?: NullableFloatFieldUpdateOperationsInput | number | null
+    herdingIndex?: NullableFloatFieldUpdateOperationsInput | number | null
+    wisdomScore?: NullableFloatFieldUpdateOperationsInput | number | null
+    noiseSensitivity?: NullableFloatFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CrowdMetricsUncheckedUpdateManyWithoutRunVariantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    step?: IntFieldUpdateOperationsInput | number
+    signal?: FloatFieldUpdateOperationsInput | number
+    weightedSignal?: FloatFieldUpdateOperationsInput | number
+    consensus?: FloatFieldUpdateOperationsInput | number
+    polarization?: FloatFieldUpdateOperationsInput | number
+    uncertainty?: FloatFieldUpdateOperationsInput | number
+    minorityStrength?: FloatFieldUpdateOperationsInput | number
+    beliefMomentum?: NullableFloatFieldUpdateOperationsInput | number | null
+    diversityIndex?: NullableFloatFieldUpdateOperationsInput | number | null
+    independenceIndex?: NullableFloatFieldUpdateOperationsInput | number | null
+    herdingIndex?: NullableFloatFieldUpdateOperationsInput | number | null
+    wisdomScore?: NullableFloatFieldUpdateOperationsInput | number | null
+    noiseSensitivity?: NullableFloatFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AgentRewardUpdateWithoutRunVariantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    step?: IntFieldUpdateOperationsInput | number
+    action?: EnumAgentDecisionActionFieldUpdateOperationsInput | $Enums.AgentDecisionAction
+    stepReturn?: FloatFieldUpdateOperationsInput | number
+    pnl?: FloatFieldUpdateOperationsInput | number
+    regret?: FloatFieldUpdateOperationsInput | number
+    drawdown?: FloatFieldUpdateOperationsInput | number
+    rewardScore?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    run?: SimulationRunUpdateOneRequiredWithoutAgentRewardsNestedInput
+    agent?: RunAgentUpdateOneRequiredWithoutAgentRewardsNestedInput
+  }
+
+  export type AgentRewardUncheckedUpdateWithoutRunVariantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    agentId?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    step?: IntFieldUpdateOperationsInput | number
+    action?: EnumAgentDecisionActionFieldUpdateOperationsInput | $Enums.AgentDecisionAction
+    stepReturn?: FloatFieldUpdateOperationsInput | number
+    pnl?: FloatFieldUpdateOperationsInput | number
+    regret?: FloatFieldUpdateOperationsInput | number
+    drawdown?: FloatFieldUpdateOperationsInput | number
+    rewardScore?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AgentRewardUncheckedUpdateManyWithoutRunVariantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    agentId?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    step?: IntFieldUpdateOperationsInput | number
+    action?: EnumAgentDecisionActionFieldUpdateOperationsInput | $Enums.AgentDecisionAction
+    stepReturn?: FloatFieldUpdateOperationsInput | number
+    pnl?: FloatFieldUpdateOperationsInput | number
+    regret?: FloatFieldUpdateOperationsInput | number
+    drawdown?: FloatFieldUpdateOperationsInput | number
+    rewardScore?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BacktestResultUpdateWithoutRunVariantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    seed?: IntFieldUpdateOperationsInput | number
+    steps?: IntFieldUpdateOperationsInput | number
+    agents?: IntFieldUpdateOperationsInput | number
+    pairsCount?: NullableIntFieldUpdateOperationsInput | number | null
+    corr?: NullableFloatFieldUpdateOperationsInput | number | null
+    directionalAccuracy?: NullableFloatFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BacktestResultUncheckedUpdateWithoutRunVariantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    seed?: IntFieldUpdateOperationsInput | number
+    steps?: IntFieldUpdateOperationsInput | number
+    agents?: IntFieldUpdateOperationsInput | number
+    pairsCount?: NullableIntFieldUpdateOperationsInput | number | null
+    corr?: NullableFloatFieldUpdateOperationsInput | number | null
+    directionalAccuracy?: NullableFloatFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BacktestResultUncheckedUpdateManyWithoutRunVariantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    seed?: IntFieldUpdateOperationsInput | number
+    steps?: IntFieldUpdateOperationsInput | number
+    agents?: IntFieldUpdateOperationsInput | number
+    pairsCount?: NullableIntFieldUpdateOperationsInput | number | null
+    corr?: NullableFloatFieldUpdateOperationsInput | number | null
+    directionalAccuracy?: NullableFloatFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -44318,6 +50315,7 @@ export namespace Prisma {
   export type AgentDecisionCreateManyAgentInput = {
     id?: string
     runId: string
+    runVariantId?: string | null
     step: number
     assetSymbol?: string
     action: $Enums.AgentDecisionAction
@@ -44329,6 +50327,7 @@ export namespace Prisma {
   export type AgentInfoStateCreateManyAgentInput = {
     id?: string
     runId: string
+    runVariantId?: string | null
     assetSymbol: string
     step: number
     exposedCount: number
@@ -44343,6 +50342,7 @@ export namespace Prisma {
   export type AgentStateCreateManyAgentInput = {
     id?: string
     runId: string
+    runVariantId?: string | null
     assetSymbol: string
     step: number
     confidence: number
@@ -44357,6 +50357,7 @@ export namespace Prisma {
   export type AgentExperienceCreateManyRunAgentInput = {
     id?: string
     runId: string
+    runVariantId?: string | null
     step: number
     ts: Date | string
     actionJson?: NullableJsonNullValueInput | InputJsonValue
@@ -44372,6 +50373,7 @@ export namespace Prisma {
   export type AgentRewardCreateManyAgentInput = {
     id?: string
     runId: string
+    runVariantId?: string | null
     assetSymbol: string
     step: number
     action: $Enums.AgentDecisionAction
@@ -44416,11 +50418,13 @@ export namespace Prisma {
     rationale?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     run?: SimulationRunUpdateOneRequiredWithoutAgentDecisionsNestedInput
+    runVariant?: RunVariantUpdateOneWithoutAgentDecisionsNestedInput
   }
 
   export type AgentDecisionUncheckedUpdateWithoutAgentInput = {
     id?: StringFieldUpdateOperationsInput | string
     runId?: StringFieldUpdateOperationsInput | string
+    runVariantId?: NullableStringFieldUpdateOperationsInput | string | null
     step?: IntFieldUpdateOperationsInput | number
     assetSymbol?: StringFieldUpdateOperationsInput | string
     action?: EnumAgentDecisionActionFieldUpdateOperationsInput | $Enums.AgentDecisionAction
@@ -44432,6 +50436,7 @@ export namespace Prisma {
   export type AgentDecisionUncheckedUpdateManyWithoutAgentInput = {
     id?: StringFieldUpdateOperationsInput | string
     runId?: StringFieldUpdateOperationsInput | string
+    runVariantId?: NullableStringFieldUpdateOperationsInput | string | null
     step?: IntFieldUpdateOperationsInput | number
     assetSymbol?: StringFieldUpdateOperationsInput | string
     action?: EnumAgentDecisionActionFieldUpdateOperationsInput | $Enums.AgentDecisionAction
@@ -44452,11 +50457,13 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     run?: SimulationRunUpdateOneRequiredWithoutAgentInfoStatesNestedInput
+    runVariant?: RunVariantUpdateOneWithoutAgentInfoStatesNestedInput
   }
 
   export type AgentInfoStateUncheckedUpdateWithoutAgentInput = {
     id?: StringFieldUpdateOperationsInput | string
     runId?: StringFieldUpdateOperationsInput | string
+    runVariantId?: NullableStringFieldUpdateOperationsInput | string | null
     assetSymbol?: StringFieldUpdateOperationsInput | string
     step?: IntFieldUpdateOperationsInput | number
     exposedCount?: IntFieldUpdateOperationsInput | number
@@ -44471,6 +50478,7 @@ export namespace Prisma {
   export type AgentInfoStateUncheckedUpdateManyWithoutAgentInput = {
     id?: StringFieldUpdateOperationsInput | string
     runId?: StringFieldUpdateOperationsInput | string
+    runVariantId?: NullableStringFieldUpdateOperationsInput | string | null
     assetSymbol?: StringFieldUpdateOperationsInput | string
     step?: IntFieldUpdateOperationsInput | number
     exposedCount?: IntFieldUpdateOperationsInput | number
@@ -44494,11 +50502,13 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     run?: SimulationRunUpdateOneRequiredWithoutAgentStatesNestedInput
+    runVariant?: RunVariantUpdateOneWithoutAgentStatesNestedInput
   }
 
   export type AgentStateUncheckedUpdateWithoutAgentInput = {
     id?: StringFieldUpdateOperationsInput | string
     runId?: StringFieldUpdateOperationsInput | string
+    runVariantId?: NullableStringFieldUpdateOperationsInput | string | null
     assetSymbol?: StringFieldUpdateOperationsInput | string
     step?: IntFieldUpdateOperationsInput | number
     confidence?: FloatFieldUpdateOperationsInput | number
@@ -44513,6 +50523,7 @@ export namespace Prisma {
   export type AgentStateUncheckedUpdateManyWithoutAgentInput = {
     id?: StringFieldUpdateOperationsInput | string
     runId?: StringFieldUpdateOperationsInput | string
+    runVariantId?: NullableStringFieldUpdateOperationsInput | string | null
     assetSymbol?: StringFieldUpdateOperationsInput | string
     step?: IntFieldUpdateOperationsInput | number
     confidence?: FloatFieldUpdateOperationsInput | number
@@ -44537,11 +50548,13 @@ export namespace Prisma {
     stateBeforeJson?: NullableJsonNullValueInput | InputJsonValue
     stateAfterJson?: NullableJsonNullValueInput | InputJsonValue
     run?: SimulationRunUpdateOneRequiredWithoutAgentExperiencesNestedInput
+    runVariant?: RunVariantUpdateOneWithoutAgentExperiencesNestedInput
   }
 
   export type AgentExperienceUncheckedUpdateWithoutRunAgentInput = {
     id?: StringFieldUpdateOperationsInput | string
     runId?: StringFieldUpdateOperationsInput | string
+    runVariantId?: NullableStringFieldUpdateOperationsInput | string | null
     step?: IntFieldUpdateOperationsInput | number
     ts?: DateTimeFieldUpdateOperationsInput | Date | string
     actionJson?: NullableJsonNullValueInput | InputJsonValue
@@ -44557,6 +50570,7 @@ export namespace Prisma {
   export type AgentExperienceUncheckedUpdateManyWithoutRunAgentInput = {
     id?: StringFieldUpdateOperationsInput | string
     runId?: StringFieldUpdateOperationsInput | string
+    runVariantId?: NullableStringFieldUpdateOperationsInput | string | null
     step?: IntFieldUpdateOperationsInput | number
     ts?: DateTimeFieldUpdateOperationsInput | Date | string
     actionJson?: NullableJsonNullValueInput | InputJsonValue
@@ -44581,11 +50595,13 @@ export namespace Prisma {
     rewardScore?: FloatFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     run?: SimulationRunUpdateOneRequiredWithoutAgentRewardsNestedInput
+    runVariant?: RunVariantUpdateOneWithoutAgentRewardsNestedInput
   }
 
   export type AgentRewardUncheckedUpdateWithoutAgentInput = {
     id?: StringFieldUpdateOperationsInput | string
     runId?: StringFieldUpdateOperationsInput | string
+    runVariantId?: NullableStringFieldUpdateOperationsInput | string | null
     assetSymbol?: StringFieldUpdateOperationsInput | string
     step?: IntFieldUpdateOperationsInput | number
     action?: EnumAgentDecisionActionFieldUpdateOperationsInput | $Enums.AgentDecisionAction
@@ -44600,6 +50616,7 @@ export namespace Prisma {
   export type AgentRewardUncheckedUpdateManyWithoutAgentInput = {
     id?: StringFieldUpdateOperationsInput | string
     runId?: StringFieldUpdateOperationsInput | string
+    runVariantId?: NullableStringFieldUpdateOperationsInput | string | null
     assetSymbol?: StringFieldUpdateOperationsInput | string
     step?: IntFieldUpdateOperationsInput | number
     action?: EnumAgentDecisionActionFieldUpdateOperationsInput | $Enums.AgentDecisionAction
@@ -44673,6 +50690,10 @@ export namespace Prisma {
      */
     export type SimulationRunCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = SimulationRunCountOutputTypeDefaultArgs<ExtArgs>
     /**
+     * @deprecated Use RunVariantCountOutputTypeDefaultArgs instead
+     */
+    export type RunVariantCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = RunVariantCountOutputTypeDefaultArgs<ExtArgs>
+    /**
      * @deprecated Use RunAgentCountOutputTypeDefaultArgs instead
      */
     export type RunAgentCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = RunAgentCountOutputTypeDefaultArgs<ExtArgs>
@@ -44704,6 +50725,14 @@ export namespace Prisma {
      * @deprecated Use SimulationRunDefaultArgs instead
      */
     export type SimulationRunArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = SimulationRunDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use RunVariantDefaultArgs instead
+     */
+    export type RunVariantArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = RunVariantDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use RunVariantSummaryDefaultArgs instead
+     */
+    export type RunVariantSummaryArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = RunVariantSummaryDefaultArgs<ExtArgs>
     /**
      * @deprecated Use RunAgentDefaultArgs instead
      */

@@ -108,8 +108,54 @@ model SimulationRun {
   agentStates      AgentState[]
   assetStepReturns AssetStepReturn[]
   agentRewards     AgentReward[]
+  runVariants      RunVariant[]
 
   @@unique([name, datasetVersion])
+}
+
+// ---------------------------------------------------------------------------
+// Run variant – per-seed (or label) scope for backtest; decisions/metrics keyed by runVariantId
+// ---------------------------------------------------------------------------
+
+model RunVariant {
+  id           String    @id @default(uuid()) @db.Uuid
+  runId        String    @db.Uuid
+  assetSymbol  String
+  seed         Int
+  agents       Int
+  steps        Int
+  label        String?   // optional batch tag (e.g. "smoke-variants")
+  createdAt    DateTime  @default(now())
+
+  run              SimulationRun     @relation(fields: [runId], references: [id], onDelete: Cascade)
+  agentDecisions   AgentDecision[]
+  agentInfoStates  AgentInfoState[]
+  agentStates      AgentState[]
+  agentExperiences AgentExperience[]
+  crowdMetrics     CrowdMetrics[]
+  agentRewards     AgentReward[]
+  backtestResults  BacktestResult[]
+  summary          RunVariantSummary?
+
+  @@unique([runId, assetSymbol, seed, label])
+  @@index([runId, assetSymbol])
+  @@index([runId, assetSymbol, createdAt])
+}
+
+model RunVariantSummary {
+  id                   String    @id @default(uuid()) @db.Uuid
+  runVariantId         String    @unique @db.Uuid
+  corr                 Float
+  directionalAccuracy  Float
+  pairsCount           Int
+  computedAt           DateTime  @default(now())
+  // Debug: validate seeds differ (decisionCounts, pairsSample) and hashes (decisions vs returns)
+  debugDecisionCounts  Json?     // { BUY: n, SELL: n, HOLD: n }
+  debugPairsSample     Json?     // first N pairs: [{ step, r, predictedSign, actualSign }]
+  debugDecisionsHash   String?
+  debugReturnsHash     String?
+
+  runVariant RunVariant @relation(fields: [runVariantId], references: [id], onDelete: Cascade)
 }
 
 // ---------------------------------------------------------------------------
@@ -162,21 +208,24 @@ enum AgentDecisionAction {
 }
 
 model AgentDecision {
-  id           String              @id @default(uuid()) @db.Uuid
-  runId        String              @db.Uuid
-  step         Int
-  agentId      String              @db.Uuid
-  assetSymbol  String              @default("RUN")
-  action       AgentDecisionAction
-  confidence   Float
-  rationale    String?
-  createdAt    DateTime            @default(now())
+  id             String              @id @default(uuid()) @db.Uuid
+  runId          String              @db.Uuid
+  runVariantId   String?             @db.Uuid
+  step           Int
+  agentId        String              @db.Uuid
+  assetSymbol    String              @default("RUN")
+  action         AgentDecisionAction
+  confidence     Float
+  rationale      String?
+  createdAt      DateTime            @default(now())
 
-  run   SimulationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
-  agent RunAgent      @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  run        SimulationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  runVariant RunVariant?   @relation(fields: [runVariantId], references: [id], onDelete: Cascade)
+  agent      RunAgent      @relation(fields: [agentId], references: [id], onDelete: Cascade)
 
-  @@unique([runId, step, agentId, assetSymbol])
+  @@unique([runId, step, agentId, assetSymbol, runVariantId])
   @@index([runId])
+  @@index([runVariantId])
   @@index([step])
   @@index([agentId])
 }
@@ -188,6 +237,7 @@ model AgentDecision {
 model CrowdMetrics {
   id               String   @id @default(uuid()) @db.Uuid
   runId            String   @db.Uuid
+  runVariantId     String?  @db.Uuid
   assetSymbol      String
   step             Int
   signal           Float
@@ -204,10 +254,12 @@ model CrowdMetrics {
   noiseSensitivity Float?
   createdAt        DateTime @default(now())
 
-  run SimulationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  run        SimulationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  runVariant RunVariant?    @relation(fields: [runVariantId], references: [id], onDelete: Cascade)
 
-  @@unique([runId, assetSymbol, step])
+  @@unique([runId, assetSymbol, step, runVariantId])
   @@index([runId])
+  @@index([runVariantId])
   @@index([runId, assetSymbol])
 }
 
@@ -230,24 +282,27 @@ model AssetStepReturn {
 }
 
 model AgentReward {
-  id          String              @id @default(uuid()) @db.Uuid
-  runId       String              @db.Uuid
-  agentId     String              @db.Uuid
-  assetSymbol String
-  step        Int
-  action      AgentDecisionAction
-  stepReturn  Float
-  pnl         Float
-  regret      Float
-  drawdown    Float
-  rewardScore Float
-  createdAt   DateTime            @default(now())
+  id            String              @id @default(uuid()) @db.Uuid
+  runId         String              @db.Uuid
+  runVariantId  String?             @db.Uuid
+  agentId       String              @db.Uuid
+  assetSymbol   String
+  step          Int
+  action        AgentDecisionAction
+  stepReturn    Float
+  pnl           Float
+  regret        Float
+  drawdown      Float
+  rewardScore   Float
+  createdAt     DateTime            @default(now())
 
-  run  SimulationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
-  agent RunAgent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  run        SimulationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  runVariant RunVariant?   @relation(fields: [runVariantId], references: [id], onDelete: Cascade)
+  agent      RunAgent      @relation(fields: [agentId], references: [id], onDelete: Cascade)
 
-  @@unique([runId, agentId, assetSymbol, step])
+  @@unique([runId, agentId, assetSymbol, step, runVariantId])
   @@index([runId, assetSymbol, step])
+  @@index([runVariantId])
 }
 
 // ---------------------------------------------------------------------------
@@ -276,6 +331,7 @@ model InfoEvent {
 model AgentInfoState {
   id             String    @id @default(uuid()) @db.Uuid
   runId          String    @db.Uuid
+  runVariantId   String?   @db.Uuid
   assetSymbol    String
   agentId        String    @db.Uuid
   step           Int
@@ -287,11 +343,13 @@ model AgentInfoState {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @default(now()) @updatedAt
 
-  run SimulationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
-  agent RunAgent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  run        SimulationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  runVariant RunVariant?   @relation(fields: [runVariantId], references: [id], onDelete: Cascade)
+  agent      RunAgent      @relation(fields: [agentId], references: [id], onDelete: Cascade)
 
-  @@unique([runId, assetSymbol, agentId, step])
+  @@unique([runId, assetSymbol, agentId, step, runVariantId])
   @@index([runId])
+  @@index([runVariantId])
   @@index([runId, assetSymbol])
 }
 
@@ -302,6 +360,7 @@ model AgentInfoState {
 model AgentState {
   id             String   @id @default(uuid()) @db.Uuid
   runId          String   @db.Uuid
+  runVariantId   String?  @db.Uuid
   assetSymbol    String
   agentId        String   @db.Uuid
   step           Int
@@ -313,11 +372,13 @@ model AgentState {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @default(now()) @updatedAt
 
-  run  SimulationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
-  agent RunAgent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  run        SimulationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  runVariant RunVariant?   @relation(fields: [runVariantId], references: [id], onDelete: Cascade)
+  agent      RunAgent      @relation(fields: [agentId], references: [id], onDelete: Cascade)
 
-  @@unique([runId, assetSymbol, agentId, step])
+  @@unique([runId, assetSymbol, agentId, step, runVariantId])
   @@index([runId, assetSymbol, step])
+  @@index([runVariantId])
   @@index([runId, assetSymbol, agentId])
 }
 
@@ -350,6 +411,7 @@ model RunDebug {
 model AgentExperience {
   id               String   @id @default(uuid()) @db.Uuid
   runId            String   @db.Uuid
+  runVariantId     String?  @db.Uuid
   runAgentId       String   @db.Uuid
   step             Int
   ts               DateTime
@@ -362,11 +424,14 @@ model AgentExperience {
   stateBeforeJson  Json?
   stateAfterJson   Json?
 
-  run      SimulationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
-  runAgent RunAgent      @relation(fields: [runAgentId], references: [id], onDelete: Cascade)
+  run        SimulationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  runVariant RunVariant?   @relation(fields: [runVariantId], references: [id], onDelete: Cascade)
+  runAgent   RunAgent      @relation(fields: [runAgentId], references: [id], onDelete: Cascade)
 
+  @@unique([runId, runAgentId, step, runVariantId])
   @@index([runAgentId, ts])
   @@index([runId, step])
+  @@index([runVariantId])
   @@index([runId, runAgentId, step])
 }
 
@@ -533,14 +598,20 @@ model BacktestWindowResult {
 model BacktestResult {
   id                   String    @id @default(uuid()) @db.Uuid
   runId                String    @db.Uuid
+  runVariantId         String?   @db.Uuid
   assetSymbol          String
   seed                 Int
   steps                Int
   agents               Int
+  pairsCount           Int?      // steps-1 when present (pred/ret pairs for corr)
   corr                 Float?
   directionalAccuracy  Float?
   createdAt            DateTime  @default(now())
 
+  runVariant RunVariant? @relation(fields: [runVariantId], references: [id], onDelete: Cascade)
+
   @@index([assetSymbol])
   @@index([assetSymbol, createdAt])
+  @@index([runId, assetSymbol])
+  @@index([runVariantId])
 }

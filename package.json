@@ -17,6 +17,11 @@
     }
   },
   "scripts": {
+    "db:migrate": "pnpm -C apps/api run db:deploy",
+    "db:status": "pnpm -C apps/api run db:status",
+    "db:reset": "pnpm -C packages/db run db:reset",
+    "db:resolve-applied": "pnpm -C apps/api run db:resolve-applied --",
+    "db:resolve-rolled-back": "pnpm -C apps/api run db:resolve-rolled-back --",
     "build": "turbo build",
     "dev": "echo 'Dev servers: Web http://localhost:4000 | API http://localhost:4001' && turbo dev",
     "lint": "turbo lint",
@@ -29,6 +34,7 @@
     "verify:learning-v1": "bash scripts/learning_v1_smoke.sh",
     "verify:spy-e2e": "bash scripts/spy_e2e_smoke.sh",
     "verify:backtest-e2e": "bash scripts/backtest_e2e_smoke.sh",
+    "verify:run-summary": "bash scripts/run_summary_smoke.sh",
     "verify:web": "bash scripts/web_smoke_check.sh",
     "check:runs-api": "bash scripts/check-runs-api.sh"
   },

@@ -29,7 +29,7 @@ pnpm -C apps/worker run backtest-v0 -- \
   --assetSymbol SPY \
   --steps 29 \
   --agents 200 \
-  --seeds "1,2,3,4,5" \
+  --seeds 5 \
   --csv "$CSV" \
   --priceField close
 

@@ -4,6 +4,11 @@
   "private": true,
   "scripts": {
     "build": "nest build",
+    "db:status": "pnpm -C ../../packages/db run db:status",
+    "db:deploy": "pnpm -C ../../packages/db run db:deploy",
+    "db:dev": "pnpm -C ../../packages/db run db:dev",
+    "db:resolve-applied": "pnpm -C ../../packages/db run db:resolve-applied",
+    "db:resolve-rolled-back": "pnpm -C ../../packages/db run db:resolve-rolled-back",
     "dev": "node ../../scripts/check-port.js 4001 && PORT=4001 nest start --watch",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\"",
     "start": "nest start",
@@ -15,6 +20,7 @@
   "dependencies": {
     "@crowdvest/db": "workspace:*",
     "@crowdvest/sim-core": "workspace:*",
+    "@prisma/client": "^5.22.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "@crowdvest/shared": "workspace:*",
@@ -35,6 +41,7 @@
     "@types/supertest": "^6.0.2",
     "eslint": "^9.0.0",
     "jest": "^29.7.0",
+    "prisma": "^5.22.0",
     "supertest": "^7.0.0",
     "ts-jest": "^29.2.0",
     "typescript": "^5.6.0"

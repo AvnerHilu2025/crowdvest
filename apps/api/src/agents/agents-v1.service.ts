@@ -1,9 +1,17 @@
 /**
  * Agents v1 – diverse virtual investors.
  * RunAgent + RunAgentTrait model. No decision engine.
+ * Deterministic agent IDs: same (datasetVersion, assetSymbol, seed, index) => same id across runs.
  */
+import { createHash } from "crypto";
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+
+/** Deterministic UUID from name (sha256 first 16 bytes, UUID v4 form). Same inputs => same id. */
+function uuidFromName(name: string): string {
+  const hex = createHash("sha256").update(name).digest("hex").slice(0, 32);
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-8${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
+}
 
 /** Seeded RNG – mulberry32. */
 function createSeededRng(seed: number): () => number {
@@ -28,6 +36,7 @@ function pick<T>(rng: () => number, arr: readonly T[]): T {
 export interface GenerateV1Body {
   count: number;
   seed?: number;
+  assetSymbol?: string;
   preset?: "default";
   overwrite?: boolean;
 }
@@ -75,20 +84,22 @@ export class AgentsV1Service {
     return run.id;
   }
 
-  /** Create N agents for a run with default traits. overwrite=false: no-op if agents exist; overwrite=true: delete and replace. */
+  /** Create N agents for a run with default traits. overwrite=false: no-op if agents exist; overwrite=true: delete and replace. Deterministic: same (runId, datasetVersion, assetSymbol, seed, count) => same agent ids. */
   async generate(runId: string, body: GenerateV1Body): Promise<GenerateV1Result> {
     const count = Math.min(Math.max(1, Math.floor(body.count ?? 100)), 500);
     const seed =
       typeof body.seed === "number" && Number.isFinite(body.seed)
         ? Math.floor(body.seed)
         : Math.floor(Math.random() * 0x7fffffff);
+    const assetSymbol = (body.assetSymbol ?? "RUN").trim() || "RUN";
     const overwrite = body.overwrite === true;
 
     const run = await this.prisma.simulationRun.findUnique({
       where: { id: runId },
-      select: { id: true },
+      select: { id: true, datasetVersion: true },
     });
     if (!run) throw new NotFoundException(`Run not found: ${runId}`);
+    const datasetVersion = run.datasetVersion ?? "default";
 
     const existingCount = await this.prisma.runAgent.count({ where: { runId } });
     if (!overwrite && existingCount > 0) {
@@ -121,9 +132,12 @@ export class AgentsV1Service {
         const emotionalVolatility = uniform(rng, 0, 1);
         const fatigue = uniform(rng, 0, 0.2);
 
+        const deterministicName = `${runId}:${datasetVersion}:${assetSymbol}:${seed}:${i}`;
+        const agentId = uuidFromName(deterministicName);
         const name = `Agent ${String(i + 1).padStart(pad, "0")}`;
         const agent = await tx.runAgent.create({
           data: {
+            id: agentId,
             runId,
             name,
             archetype: null,

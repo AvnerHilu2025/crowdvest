@@ -16,6 +16,7 @@ import { MeModule } from "./me/me.module";
 import { TimeseriesModule } from "./timeseries/timeseries.module";
 import { WalletModule } from "./wallet/wallet.module";
 import { InfoEventsModule } from "./info-events/info-events.module";
+import { JobsModule } from "./jobs/jobs.module";
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { InfoEventsModule } from "./info-events/info-events.module";
     TimeseriesModule,
     WalletModule,
     InfoEventsModule,
+    JobsModule,
   ],
 })
 export class AppModule {}

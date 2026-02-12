@@ -18,24 +18,15 @@ describe("GET /runs (e2e)", () => {
     await app.close();
   });
 
-  it("GET /runs/latest returns 200 with prePersistHistogram and persistedHistogram (objects with BUY/SELL/HOLD/OTHER)", async () => {
+  it("GET /runs/latest returns 200 with runId when runs exist, 404 when none", async () => {
     const res = await request(app.getHttpServer()).get("/runs/latest");
-    if (res.status === 404 && res.body?.message === "Run not found") return;
+    if (res.status === 404) {
+      expect(res.body?.message).toMatch(/no runs|run not found/i);
+      return;
+    }
     expect(res.status).toBe(200);
     expect(res.body.runId).toBeDefined();
-    expect(res.body.prePersistHistogram).toBeDefined();
-    expect(res.body.persistedHistogram).toBeDefined();
-    for (const key of ["BUY", "SELL", "HOLD", "OTHER"]) {
-      expect(typeof res.body.prePersistHistogram[key]).toBe("number");
-      expect(typeof res.body.persistedHistogram[key]).toBe("number");
-    }
-  });
-
-  it("GET /runs/latest?debug=1 includes debug", async () => {
-    const res = await request(app.getHttpServer()).get("/runs/latest?debug=1");
-    if (res.status === 404 && res.body?.message === "Run not found") return;
-    expect(res.status).toBe(200);
-    expect(res.body.debug).toBeDefined();
+    expect(typeof res.body.runId).toBe("string");
   });
 
   it("GET /runs/:id returns 200 for known run", async () => {

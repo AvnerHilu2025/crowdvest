@@ -4,7 +4,7 @@
  */
 import path from "path";
 import fs from "fs";
-import { PrismaClient } from "@crowdvest/db";
+import { PrismaClient, setRunStatus } from "@crowdvest/db";
 import {
   runStep,
   createSeededRng,
@@ -288,12 +288,11 @@ async function main(): Promise<void> {
 
   const prePersistJson = JSON.stringify(prePersistHistogram);
   const sampleJson = JSON.stringify(samplePrePersistActions);
+  await setRunStatus(prisma, runId, "COMPLETED");
   await prisma.$transaction([
     prisma.simulationRun.update({
       where: { id: runId },
       data: {
-        status: "COMPLETED",
-        finishedAt: new Date(),
         configJson: { decisionHistogram, sampleDecisions } as object,
       },
     }),

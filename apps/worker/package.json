@@ -19,6 +19,7 @@
     "compute-crowd-metrics": "tsx src/scripts/compute-crowd-metrics.ts",
     "compute-rewards": "tsx src/scripts/compute-rewards.ts",
     "backtest-v0": "tsx src/scripts/backtest-v0.ts",
+    "backtest-v0-fresh": "bash scripts/backtest-v0-fresh.sh",
     "import-market-csv": "tsx src/scripts/import-market-csv.ts",
     "settle": "tsx src/scripts/settle.ts",
     "start": "nest start",

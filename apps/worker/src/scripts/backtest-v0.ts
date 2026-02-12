@@ -13,8 +13,41 @@ import path from "path";
 import fs from "fs";
 import { createHash } from "crypto";
 import { spawnSync } from "child_process";
-import { PrismaClient } from "@crowdvest/db";
+import { PrismaClient, setRunStatus } from "@crowdvest/db";
 import { assertRunExists } from "../lib/assert-run-exists";
+
+/** Per-step decision counts for runVariantId (step -> { BUY, SELL, HOLD }). Used for predictedSign from crowd. */
+async function getPerStepDecisionCounts(
+  prisma: PrismaClient,
+  runVariantId: string,
+): Promise<Map<number, { BUY: number; SELL: number; HOLD: number }>> {
+  const rows = await prisma.agentDecision.groupBy({
+    by: ["step", "action"],
+    where: { runVariantId },
+    _count: { id: true },
+  });
+  const stepCounts = new Map<number, { BUY: number; SELL: number; HOLD: number }>();
+  for (const r of rows) {
+    let row = stepCounts.get(r.step);
+    if (!row) {
+      row = { BUY: 0, SELL: 0, HOLD: 0 };
+      stepCounts.set(r.step, row);
+    }
+    if (r.action in row) (row as Record<string, number>)[r.action] = r._count.id;
+  }
+  return stepCounts;
+}
+
+/** Majority direction per step: net = BUY - SELL => +1, -1, or 0. */
+function predictedSignFromCounts(counts: { BUY: number; SELL: number; HOLD: number }): number {
+  const net = counts.BUY - counts.SELL;
+  if (net > 0) return 1;
+  if (net < 0) return -1;
+  return 0;
+}
+
+/** Round to fixed decimal digits for stable persistence (avoids float drift in A/B diffs). */
+const round = (n: number, digits = 12) => Number(n.toFixed(digits));
 
 function loadEnv(): void {
   const cwd = process.cwd();
@@ -42,6 +75,8 @@ function loadEnv(): void {
   if (!process.env.DATABASE_URL?.trim()) throw new Error("DATABASE_URL is not set.");
 }
 
+type PersistMode = "lite" | "full";
+
 function parseArgv(): {
   runId: string;
   assetSymbol: string;
@@ -51,6 +86,8 @@ function parseArgv(): {
   agents: number;
   seeds: number[];
   label: string;
+  persistMode: PersistMode;
+  overwrite: boolean;
 } {
   const args = process.argv.slice(2);
   let runId = "";
@@ -62,6 +99,8 @@ function parseArgv(): {
   let seedsCount = 0; // required
   let seedStart = 1;
   let label = "";
+  let persistMode: PersistMode = "lite";
+  let overwrite = false;
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--runId" && args[i + 1]) {
       runId = String(args[++i]).trim();
@@ -85,11 +124,19 @@ function parseArgv(): {
       if (Number.isFinite(n)) seedStart = n;
     } else if (args[i] === "--label" && args[i + 1]) {
       label = String(args[++i]).trim();
+    } else if (args[i] === "--persist" && args[i + 1]) {
+      const v = String(args[++i]).trim().toLowerCase();
+      if (v !== "lite" && v !== "full") {
+        throw new Error(`--persist must be lite or full, got: ${v}`);
+      }
+      persistMode = v as PersistMode;
+    } else if (args[i] === "--overwrite") {
+      overwrite = true;
     }
   }
   if (seedsCount < 1) throw new Error("--seeds <count> is required (count >= 1). Example: --seeds 5");
   const seeds = Array.from({ length: seedsCount }, (_, i) => seedStart + i);
-  return { runId, assetSymbol, csv, priceField, steps, agents, seeds, label };
+  return { runId, assetSymbol, csv, priceField, steps, agents, seeds, label, persistMode, overwrite };
 }
 
 function resolveCsvPath(csvArg: string): string {
@@ -196,6 +243,12 @@ function pearson(x: number[], y: number[]): number | null {
   return den === 0 ? null : num / den;
 }
 
+const GREEN = "\x1b[32m";
+const RESET = "\x1b[0m";
+function ok(msg: string) {
+  console.log(`${GREEN}${msg}${RESET}`);
+}
+
 function runWorker(
   script: "import-market-csv" | "decide" | "compute-crowd-metrics",
   extra: string[],
@@ -211,56 +264,71 @@ function runWorker(
 async function main(): Promise<void> {
   loadEnv();
   const argv = parseArgv();
-  const repoRoot = path.resolve(process.cwd(), "..");
-  const apiBase = (process.env.API_BASE ?? "http://localhost:4001").replace(/\/$/, "");
-  const prisma = new PrismaClient();
-
-  const csvPath = argv.csv ? resolveCsvPath(argv.csv) : "";
-
-  // 1) Resolve runId: use --runId or create a new run once
-  let runId = argv.runId.trim();
-  if (!runId) {
-    const runRes = await fetch(apiBase + "/runs", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({}),
-    });
-    if (!runRes.ok) {
-      const t = await runRes.text();
-      throw new Error("POST /runs failed: " + runRes.status + " " + t);
-    }
-    const runJson = (await runRes.json()) as { id?: string };
-    runId = runJson.id ?? "";
-    if (!runId) throw new Error("POST /runs did not return id");
-    console.log("runId=" + runId + " (created; use --runId " + runId + " to reuse)");
-  } else {
-    await assertRunExists(apiBase, runId);
-    console.log("runId=" + runId + " (from --runId)");
+  const t0 = Date.now();
+  function mark(label: string) {
+    console.log(`[Perf] ${label} +${Date.now() - t0}ms`);
   }
 
-  console.log(
-    "backtest-v0 assetSymbol=" +
-      argv.assetSymbol +
-      (csvPath ? " csv=" + csvPath : "") +
-      " priceField=" +
-      argv.priceField +
-      " steps=" +
-      argv.steps +
-      " agents=" +
-      argv.agents +
-      " seeds=" +
-      argv.seeds.join(","),
-  );
+  mark("start");
+  const repoRoot = path.resolve(process.cwd(), "..");
+  const prisma = new PrismaClient();
 
-  // 2) Ensure AssetStepReturn exists for this runId (once). Never compute corr without it.
-  const n = await prisma.assetStepReturn.count({
+  let runId = "";
+  const csvPath = argv.csv ? resolveCsvPath(argv.csv) : "";
+
+  try {
+    // 1) Resolve runId: use --runId or create a new run once
+    runId = argv.runId.trim();
+    if (!runId) {
+      const apiBase = (process.env.API_BASE ?? "http://localhost:4001").replace(/\/$/, "");
+      const runRes = await fetch(apiBase + "/runs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      if (!runRes.ok) {
+        const t = await runRes.text();
+        throw new Error("POST /runs failed: " + runRes.status + " " + t);
+      }
+      const runJson = (await runRes.json()) as { id?: string };
+      runId = runJson.id ?? "";
+      if (!runId) throw new Error("POST /runs did not return id");
+      console.log("runId=" + runId + " (created; use --runId " + runId + " to reuse)");
+    } else {
+      await assertRunExists(prisma, runId);
+      console.log("runId=" + runId + " (from --runId)");
+    }
+    mark("assertRunExists done");
+
+    // 2) Set RUNNING before dataset validation (clear stale audit fields)
+    await setRunStatus(prisma, runId, "RUNNING");
+
+    console.log(
+      "backtest-v0 assetSymbol=" +
+        argv.assetSymbol +
+        (csvPath ? " csv=" + csvPath : "") +
+        " priceField=" +
+        argv.priceField +
+        " steps=" +
+        argv.steps +
+        " agents=" +
+        argv.agents +
+        " seeds=" +
+        argv.seeds.join(","),
+    );
+
+    // 3) Ensure AssetStepReturn exists for this runId (once). Never compute corr without it.
+    const n = await prisma.assetStepReturn.count({
     where: { runId, assetSymbol: argv.assetSymbol },
   });
   if (n === 0) {
     if (!argv.csv || !csvPath) {
-      throw new Error(
-        "AssetStepReturn missing for runId=" + runId + " assetSymbol=" + argv.assetSymbol + ". Provide --csv and --priceField or import data first.",
+      const apiBase = (process.env.API_BASE ?? "http://localhost:4001").replace(/\/$/, "");
+      console.error(
+        `No AssetStepReturn for runId=${runId} assetSymbol=${argv.assetSymbol}. ` +
+          `Run: curl -X POST ${apiBase}/runs/${runId}/import -H "Content-Type: application/json" -d '{"assetSymbol":"SPY","steps":${argv.steps},"source":"default"}'`,
       );
+      process.exit(1);
     }
     console.log("AssetStepReturn count=0 for runId=" + runId + " -> importing from CSV");
     await ensureAssetStepReturns(
@@ -276,18 +344,21 @@ async function main(): Promise<void> {
   const assetStepReturnRows = await prisma.assetStepReturn.count({
     where: { runId, assetSymbol: argv.assetSymbol },
   });
+  mark("dataset loaded");
   if (assetStepReturnRows !== argv.steps) {
-    throw new Error(
-      "AssetStepReturn count (" + assetStepReturnRows + ") != steps (" + argv.steps + ") for runId=" + runId + ". Import failed or wrong run.",
+    console.error(
+      `This run already has AssetStepReturn count=${assetStepReturnRows}. Re-run with --steps ${assetStepReturnRows} or create a new run.`,
     );
+    process.exit(1);
   }
 
   const variantIds: string[] = [];
 
   for (const seed of argv.seeds) {
-    // 3) Find or create RunVariant for this seed (and optional label)
-    const label = argv.label;
-    let variant = await prisma.runVariant.findUnique({
+    try {
+    // 3) Find or create RunVariant for this seed (and optional label); upsert for idempotency
+    const label = argv.label ?? "";
+    const variant = await prisma.runVariant.upsert({
       where: {
         runId_assetSymbol_seed_label: {
           runId,
@@ -296,63 +367,109 @@ async function main(): Promise<void> {
           label,
         },
       },
+      update: {
+        agents: argv.agents,
+        steps: argv.steps,
+      },
+      create: {
+        runId,
+        assetSymbol: argv.assetSymbol,
+        seed,
+        label,
+        agents: argv.agents,
+        steps: argv.steps,
+      },
       select: { id: true },
     });
-    if (!variant) {
-      variant = await prisma.runVariant.create({
-        data: {
-          runId,
-          assetSymbol: argv.assetSymbol,
-          seed,
-          label,
-          agents: argv.agents,
-          steps: argv.steps,
-        },
-        select: { id: true },
-      });
-    }
     const variantId = variant.id;
     variantIds.push(variantId);
 
-    // 4) POST /agents/generate (same runId; seed only affects randomness)
-    const genRes = await fetch(
-      apiBase + "/agents/generate?runId=" + encodeURIComponent(runId) + "&overwrite=true",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ count: argv.agents, seed, preset: "default" }),
-      },
-    );
-    if (!genRes.ok) {
-      const t = await genRes.text();
-      throw new Error("POST /agents/generate failed: " + genRes.status + " " + t);
-    }
+    // Skip entire variant if already computed (unless --overwrite)
+    if (!argv.overwrite) {
+      const summary = await prisma.runVariantSummary.findUnique({
+        where: { runVariantId: variantId },
+        select: { debugDecisionsHash: true, debugReturnsHash: true },
+      });
+      if (summary?.debugDecisionsHash && summary?.debugReturnsHash) {
+        ok(`✅ SKIP variant seed=${seed} (already computed)`);
+        // Still need to load CrowdMetrics for corr computation below; data exists from prior run
+      } else {
+        // Run decide and compute-crowd-metrics
+        if (
+          !runWorker(
+            "decide",
+            [
+              "--runVariantId", variantId,
+              "--steps", String(argv.steps),
+              "--agents", String(argv.agents),
+              "--overwrite", "false",
+              "--allowSmallCrowd",
+              "--persist", argv.persistMode,
+            ],
+            repoRoot,
+          )
+        ) {
+          throw new Error("decide failed for runId=" + runId + " variantId=" + variantId);
+        }
+        if (argv.persistMode === "full") {
+          mark("AgentInfoState persisted");
+          mark("AgentState persisted");
+          mark("AgentExperience persisted");
+        } else {
+          mark("AgentInfoState skipped (lite)");
+          mark("AgentState skipped (lite)");
+          mark("AgentExperience skipped (lite)");
+        }
 
-    // 5) decide with runVariantId, overwrite=true (only this variant)
-    if (
-      !runWorker(
-        "decide",
-        [
-          "--runVariantId", variantId,
-          "--steps", String(argv.steps),
-          "--overwrite", "true",
-          "--allowSmallCrowd",
-        ],
-        repoRoot,
-      )
-    ) {
-      throw new Error("decide failed for runId=" + runId + " variantId=" + variantId);
-    }
+        if (
+          !runWorker(
+            "compute-crowd-metrics",
+            ["--runVariantId", variantId, "--overwrite", "false"],
+            repoRoot,
+          )
+        ) {
+          throw new Error("compute-crowd-metrics failed for runId=" + runId + " variantId=" + variantId);
+        }
+        mark("CrowdMetrics persisted");
+      }
+    } else {
+      // --overwrite: run decide and compute-crowd-metrics with overwrite
+      if (
+        !runWorker(
+          "decide",
+          [
+            "--runVariantId", variantId,
+            "--steps", String(argv.steps),
+            "--agents", String(argv.agents),
+            "--overwrite", "true",
+            "--allowSmallCrowd",
+            "--persist", argv.persistMode,
+          ],
+          repoRoot,
+        )
+      ) {
+        throw new Error("decide failed for runId=" + runId + " variantId=" + variantId);
+      }
+      if (argv.persistMode === "full") {
+        mark("AgentInfoState persisted");
+        mark("AgentState persisted");
+        mark("AgentExperience persisted");
+      } else {
+        mark("AgentInfoState skipped (lite)");
+        mark("AgentState skipped (lite)");
+        mark("AgentExperience skipped (lite)");
+      }
 
-    // 6) compute-crowd-metrics with runVariantId
-    if (
-      !runWorker(
-        "compute-crowd-metrics",
-        ["--runVariantId", variantId],
-        repoRoot,
-      )
-    ) {
-      throw new Error("compute-crowd-metrics failed for runId=" + runId + " variantId=" + variantId);
+      if (
+        !runWorker(
+          "compute-crowd-metrics",
+          ["--runVariantId", variantId, "--overwrite", "true"],
+          repoRoot,
+        )
+      ) {
+        throw new Error("compute-crowd-metrics failed for runId=" + runId + " variantId=" + variantId);
+      }
+      mark("CrowdMetrics persisted");
     }
 
     // 7) Load CrowdMetrics for this variant and AssetStepReturn; build pairs for t=0..steps-2
@@ -376,6 +493,13 @@ async function main(): Promise<void> {
     const signalByStep = new Map(metrics.map((m) => [m.step, m.weightedSignal]));
     const returnByStep = new Map(stepReturns.map((r) => [r.step, r.stepReturn]));
 
+    // Per-step predictedSign from actual decision distribution (BUY/SELL/HOLD majority)
+    const perStepCounts = await getPerStepDecisionCounts(prisma, variantId);
+    const predictedSignByStep = new Map<number, number>();
+    for (const [step, counts] of perStepCounts) {
+      predictedSignByStep.set(step, predictedSignFromCounts(counts));
+    }
+
     const pred: number[] = [];
     const ret1: number[] = [];
     const stepsForPairs: number[] = [];
@@ -396,19 +520,28 @@ async function main(): Promise<void> {
     const pairsCount = pred.length;
 
     const corr: number | null = pearson(pred, ret1);
+    // directionalAccuracy: correct when predictedSign == actualSign and both non-zero (predictedSign from crowd decisions)
     let directionalAccuracy: number | null = null;
     if (pairsCount > 0) {
       let correct = 0;
-      for (let i = 0; i < pred.length; i++) {
-        if ((pred[i]! >= 0) === (ret1[i]! >= 0)) correct++;
+      for (let i = 0; i < pairsCount; i++) {
+        const step = stepsForPairs[i]!;
+        const r = ret1[i]!;
+        const predictedSign = predictedSignByStep.get(step) ?? 0;
+        const actualSign = r > 0 ? 1 : r < 0 ? -1 : 0;
+        if (predictedSign !== 0 && actualSign !== 0 && predictedSign === actualSign) correct++;
       }
       directionalAccuracy = correct / pairsCount;
     }
 
-    // One line per seed: runId, variantId, seed, corr, directionalAccuracy, pairsCount
+    const corrRounded = corr != null ? round(corr, 12) : null;
+
+    mark("simulation compute done");
+
+    // One line per seed: runId, variantId, seed, corr, directionalAccuracy, pairsCount (corr rounded so logs and DB match)
     console.log(
       "runId=" + runId + " variantId=" + variantId + " seed=" + seed +
-        " corr=" + (corr != null ? corr.toFixed(4) : "null") +
+        " corr=" + (corrRounded != null ? String(corrRounded) : "null") +
         " directionalAccuracy=" + (directionalAccuracy != null ? directionalAccuracy.toFixed(4) : "null") +
         " pairsCount=" + pairsCount,
     );
@@ -419,23 +552,26 @@ async function main(): Promise<void> {
       orderBy: [{ step: "asc" }, { agentId: "asc" }],
       select: { step: true, agentId: true, action: true },
     });
-    const decisionCounts = { BUY: 0, SELL: 0, HOLD: 0 };
+    const decisionCounts: Record<string, number> = { BUY: 0, HOLD: 0, SELL: 0 };
     for (const d of decisions) {
-      if (d.action in decisionCounts) (decisionCounts as Record<string, number>)[d.action]++;
+      if (d.action in decisionCounts) decisionCounts[d.action]++;
     }
-    const decisionsPayload = decisions.map((d) => ({ step: d.step, agentId: d.agentId, action: d.action }));
+    // Deterministic payload order: step asc, then agentId asc (pool agents; no run-scoped RunAgents)
+    const decisionsPayload = decisions
+      .map((d) => ({ step: d.step, agentId: d.agentId, action: d.action }))
+      .sort((a, b) => a.step - b.step || a.agentId.localeCompare(b.agentId));
     const decisionsHash = createHash("sha256").update(JSON.stringify(decisionsPayload)).digest("hex");
     const returnsPayload = stepReturns.map((r) => r.stepReturn);
     const returnsHash = createHash("sha256").update(JSON.stringify(returnsPayload)).digest("hex");
-    const pairsSample = stepsForPairs.slice(0, 10).map((step, i) => ({
-      step,
-      r: ret1[i],
-      predictedSign: (pred[i]! >= 0) ? 1 : -1,
-      actualSign: (ret1[i]! >= 0) ? 1 : -1,
-    }));
+    const pairsSample = stepsForPairs.slice(0, 10).map((step, i) => {
+      const r = ret1[i]!;
+      const predictedSign = predictedSignByStep.get(step) ?? 0;
+      const actualSign = r > 0 ? 1 : r < 0 ? -1 : 0;
+      return { step, r, predictedSign, actualSign };
+    });
 
     // 8) Upsert RunVariantSummary (and BacktestResult for backward compat)
-    const corrVal = corr ?? 0;
+    const corrVal = corrRounded ?? 0;
     const dirAccVal = directionalAccuracy ?? 0;
     const debugPayload = {
       debugDecisionCounts: decisionCounts,
@@ -470,13 +606,55 @@ async function main(): Promise<void> {
         steps: argv.steps,
         agents: argv.agents,
         pairsCount,
-        corr,
+        corr: corrVal,
         directionalAccuracy,
       },
     });
+    mark("RunVariant + metrics persisted");
+  } catch (e) {
+      // P2002 = unique constraint (e.g. RunVariant already exists): skip, do not fail the run
+      if ((e as { code?: string })?.code === "P2002") {
+        ok(`✅ SKIP variant seed=${seed} (already computed)`);
+        continue;
+      }
+      throw e;
+    }
   }
 
+  const completedVariants = await prisma.runVariant.count({
+    where: { runId, assetSymbol: argv.assetSymbol },
+  });
+  const expectedVariants = argv.seeds.length;
+  if (completedVariants >= expectedVariants) {
+    const result = await setRunStatus(prisma, runId, "COMPLETED");
+    if (result.count > 0) {
+      console.log(
+        `Run ${runId} finalized COMPLETED (completedVariants=${completedVariants} expectedVariants=${expectedVariants})`,
+      );
+    }
+  }
+  mark("finalized COMPLETED");
+
   console.log("backtest-v0 done. variants=" + variantIds.length);
+  } catch (e) {
+    if (runId) {
+      try {
+        const errMsg =
+          e instanceof Error ? e.message : String(e);
+        const sanitized = errMsg.replace(/\s+/g, " ").trim();
+        const result = await setRunStatus(prisma, runId, "FAILED", sanitized || undefined);
+        if (result.count > 0) {
+          console.error("Run " + runId + " status set to FAILED");
+        }
+      } catch (fe) {
+        console.error("Failed to update run status to FAILED:", fe);
+      }
+    }
+    console.error(e);
+    process.exit(1);
+  } finally {
+    await prisma.$disconnect();
+  }
 }
 
 main().catch((e) => {

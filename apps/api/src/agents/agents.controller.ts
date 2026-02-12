@@ -30,7 +30,7 @@ export class AgentsController {
   async generate(
     @Query("runId") runId: string | undefined,
     @Query("overwrite") overwriteParam: string | undefined,
-    @Body() body: { count?: number; seed?: number; preset?: "default" },
+    @Body() body: { count?: number; seed?: number; assetSymbol?: string; preset?: "default" },
   ) {
     const rid = runId?.trim();
     const resolvedRunId = rid && UUID_REGEX.test(rid)
@@ -40,6 +40,7 @@ export class AgentsController {
     return this.agentsV1Service.generate(resolvedRunId, {
       count: body.count ?? 100,
       seed: body.seed,
+      assetSymbol: body.assetSymbol,
       preset: body.preset ?? "default",
       overwrite,
     });

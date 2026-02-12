@@ -24,6 +24,7 @@
  */
 import path from "path";
 import fs from "fs";
+import { createHash } from "crypto";
 import { PrismaClient } from "@crowdvest/db";
 import {
   clamp01,
@@ -47,6 +48,7 @@ import {
   type InfoEventInput,
 } from "../lib/exposure";
 import { assertRunExists } from "../lib/assert-run-exists";
+import { chunk } from "../lib/chunk";
 
 const ALPHA = 0.35; // weight of infoSignal vs synthetic (1-ALPHA = synthetic weight)
 
@@ -113,6 +115,8 @@ function parseBool(v: unknown, defaultVal: boolean): boolean {
 
 const DEFAULT_AGENTS = 200;
 
+type PersistMode = "lite" | "full";
+
 function parseArgv(): {
   runId: string;
   runVariantId: string | undefined;
@@ -125,6 +129,7 @@ function parseArgv(): {
   autoGenerateAgents: boolean;
   minAgents: number;
   allowSmallCrowd: boolean;
+  persistMode: PersistMode;
 } {
   const args = process.argv.slice(2);
   let runId = "";
@@ -138,6 +143,7 @@ function parseArgv(): {
   let autoGenerateAgents = true;
   let minAgents = DEFAULT_MIN_AGENTS;
   let allowSmallCrowd = false;
+  let persistMode: PersistMode = "lite";
   for (let i = 0; i < args.length; i++) {
     const arg = args[i]!;
     if (arg === "--runVariantId" && args[i + 1]) {
@@ -174,18 +180,24 @@ function parseArgv(): {
       if (Number.isFinite(n) && n >= 1) minAgents = n;
     } else if (arg === "--allowSmallCrowd") {
       allowSmallCrowd = true;
+    } else if (arg === "--persist" && args[i + 1]) {
+      const v = String(args[++i]).trim().toLowerCase();
+      if (v !== "lite" && v !== "full") {
+        throw new Error(`--persist must be lite or full, got: ${v}`);
+      }
+      persistMode = v as PersistMode;
     }
   }
   if (process.env.DEBUG_ARGS === "1" || process.env.DEBUG_ARGS === "true") {
     console.log(`[DEBUG_ARGS] raw argv: ${JSON.stringify(process.argv)}`);
-    console.log(`[DEBUG_ARGS] parsed overwrite: ${overwrite} autoGenerateAgents: ${autoGenerateAgents} agents: ${agents}`);
+    console.log(`[DEBUG_ARGS] parsed overwrite: ${overwrite} autoGenerateAgents: ${autoGenerateAgents} agents: ${agents} persistMode: ${persistMode}`);
   }
   if (runVariantId) {
     if (!runId) runId = ""; // will be resolved from RunVariant
   } else {
     if (!runId) throw new Error("--runId is required (or use --runVariantId)");
   }
-  return { runId, runVariantId, steps, assetSymbol, seed, label, overwrite, agents, autoGenerateAgents, minAgents, allowSmallCrowd };
+  return { runId, runVariantId, steps, assetSymbol, seed, label, overwrite, agents, autoGenerateAgents, minAgents, allowSmallCrowd, persistMode };
 }
 
 /** Mulberry32 seeded RNG. */
@@ -206,6 +218,111 @@ function hashToSeed(s: string): number {
     h = ((h << 5) - h + s.charCodeAt(i)) | 0;
   }
   return h >>> 0;
+}
+
+/** Deterministic UUID from name (sha256 first 16 bytes, UUID v4 form). */
+function uuidFromName(name: string): string {
+  const hex = createHash("sha256").update(name).digest("hex").slice(0, 32);
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-8${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
+}
+
+function uniform(rng: () => number, min: number, max: number): number {
+  return min + rng() * (max - min);
+}
+
+function pick<T>(rng: () => number, arr: readonly T[]): T {
+  return arr[Math.floor(rng() * arr.length)]!;
+}
+
+const POOL_RUN_PREFIX = "agent-pool-";
+
+/** Ensure global agent pool has at least agentsCount RunAgents with deterministic ids. Returns pool runId. */
+async function ensureAgentPool(
+  prisma: PrismaClient,
+  datasetVersion: string,
+  agentsCount: number,
+): Promise<string> {
+  let poolRun = await prisma.simulationRun.findFirst({
+    where: { name: { startsWith: POOL_RUN_PREFIX }, datasetVersion },
+    select: { id: true },
+  });
+  if (!poolRun) {
+    poolRun = await prisma.simulationRun.create({
+      data: {
+        name: `${POOL_RUN_PREFIX}${datasetVersion.slice(0, 20)}`,
+        status: "PENDING",
+        seed: 0,
+        modelVersion: "stage1",
+        datasetVersion,
+        schemaVersion: "v1",
+        startedAt: new Date(),
+      },
+      select: { id: true },
+    });
+  }
+  const poolRunId = poolRun.id;
+  const existingCount = await prisma.runAgent.count({ where: { runId: poolRunId } });
+  if (existingCount >= agentsCount) {
+    return poolRunId;
+  }
+  const archetypes = await prisma.archetype.findMany({
+    orderBy: { id: "asc" },
+    select: { id: true, name: true },
+  });
+  const toCreate = agentsCount - existingCount;
+  const pad = String(agentsCount).length;
+  for (let i = existingCount; i < agentsCount; i++) {
+    const namespace = "crowdvest-agent-v1";
+    const name = `${datasetVersion}:${i}`;
+    const agentId = uuidFromName(`${namespace}:${name}`);
+    const rng = createSeededRng(hashToSeed(name));
+    const herding = uniform(rng, 0, 1);
+    const lossAversion = uniform(rng, 0, 1);
+    const overconfidence = uniform(rng, 0, 1);
+    const recencyBias = uniform(rng, 0, 1);
+    const confirmationBias = uniform(rng, 0, 1);
+    const fomo = uniform(rng, 0, 1);
+    const anchoring = uniform(rng, 0, 1);
+    const attentionLevel = uniform(rng, 0.3, 0.95);
+    const emotionalVolatility = uniform(rng, 0, 1);
+    const fatigue = uniform(rng, 0, 0.2);
+    const archetypeName = archetypes.length > 0 ? archetypes[i % archetypes.length]!.name : null;
+    const agentName = `Agent ${String(i + 1).padStart(pad, "0")}`;
+    await prisma.runAgent.create({
+      data: {
+        id: agentId,
+        runId: poolRunId,
+        name: agentName,
+        archetype: archetypeName,
+        biases: { herding, lossAversion, overconfidence, recencyBias, confirmationBias, fomo, anchoring },
+        humanState: { attentionLevel, emotionalVolatility, fatigue },
+      },
+    });
+    const traits: { agentId: string; key: string; valueNum: number | null; valueStr: string | null }[] = [];
+    const age = Math.round(uniform(rng, 18, 75));
+    traits.push({ agentId, key: "age", valueNum: age, valueStr: null });
+    traits.push({ agentId, key: "gender", valueNum: null, valueStr: pick(rng, ["M", "F", "X"]) });
+    traits.push({ agentId, key: "riskTolerance", valueNum: uniform(rng, 0, 1), valueStr: null });
+    traits.push({ agentId, key: "confidence", valueNum: uniform(rng, 0, 1), valueStr: null });
+    traits.push({ agentId, key: "hesitation", valueNum: uniform(rng, 0, 1), valueStr: null });
+    traits.push({ agentId, key: "impulsivity", valueNum: uniform(rng, 0, 1), valueStr: null });
+    traits.push({ agentId, key: "patience", valueNum: uniform(rng, 0, 1), valueStr: null });
+    traits.push({ agentId, key: "lossAversion", valueNum: lossAversion, valueStr: null });
+    traits.push({ agentId, key: "herding", valueNum: herding, valueStr: null });
+    traits.push({ agentId, key: "contrarian", valueNum: uniform(rng, 0, 1), valueStr: null });
+    traits.push({ agentId, key: "overconfidence", valueNum: overconfidence, valueStr: null });
+    traits.push({ agentId, key: "recencyBias", valueNum: recencyBias, valueStr: null });
+    traits.push({ agentId, key: "confirmationBias", valueNum: confirmationBias, valueStr: null });
+    traits.push({ agentId, key: "fomo", valueNum: fomo, valueStr: null });
+    traits.push({ agentId, key: "anchoring", valueNum: anchoring, valueStr: null });
+    traits.push({ agentId, key: "attentionLevel", valueNum: attentionLevel, valueStr: null });
+    traits.push({ agentId, key: "emotionalVolatility", valueNum: emotionalVolatility, valueStr: null });
+    traits.push({ agentId, key: "fatigue", valueNum: fatigue, valueStr: null });
+    traits.push({ agentId, key: "timeHorizonDays", valueNum: Math.round(uniform(rng, 7, 3650)), valueStr: null });
+    traits.push({ agentId, key: "newsSensitivity", valueNum: uniform(rng, 0, 1), valueStr: null });
+    await prisma.runAgentTrait.createMany({ data: traits });
+  }
+  return poolRunId;
 }
 
 function getTrait(traits: Map<string, number>, key: string, def = 0.5): number {
@@ -251,11 +368,11 @@ async function resolveRunVariant(
     steps: number;
     agents: number;
   },
-): Promise<{ runVariantId: string; runId: string; assetSymbol: string; steps: number }> {
+): Promise<{ runVariantId: string; runId: string; assetSymbol: string; steps: number; seed: number }> {
   if (argv.runVariantId) {
     const v = await prisma.runVariant.findUnique({
       where: { id: argv.runVariantId },
-      select: { id: true, runId: true, assetSymbol: true, steps: true },
+      select: { id: true, runId: true, assetSymbol: true, steps: true, seed: true },
     });
     if (!v) throw new Error(`RunVariant not found: ${argv.runVariantId}`);
     return {
@@ -263,6 +380,7 @@ async function resolveRunVariant(
       runId: v.runId,
       assetSymbol: v.assetSymbol,
       steps: v.steps,
+      seed: v.seed,
     };
   }
   const runId = argv.runId;
@@ -298,17 +416,17 @@ async function resolveRunVariant(
     runId: v.runId,
     assetSymbol: v.assetSymbol,
     steps: v.steps,
+    seed,
   };
 }
 
 async function main(): Promise<void> {
   loadEnv();
   const argv = parseArgv();
-  if (argv.runId) {
-    const apiBase = (process.env.API_BASE ?? "http://localhost:4001").replace(/\/$/, "");
-    await assertRunExists(apiBase, argv.runId);
-  }
   const prisma = new PrismaClient();
+  if (argv.runId) {
+    await assertRunExists(prisma, argv.runId);
+  }
 
   const variant = await resolveRunVariant(prisma, {
     runId: argv.runId,
@@ -323,49 +441,54 @@ async function main(): Promise<void> {
   const runVariantId = variant.runVariantId;
   const assetSymbol = variant.assetSymbol;
   const steps = variant.steps;
+  const seed = argv.seed ?? variant.seed ?? 0;
 
-  log(`decide runId=${runId} runVariantId=${runVariantId} steps=${steps} assetSymbol=${assetSymbol} seed=${argv.seed ?? "random"} overwrite=${argv.overwrite} agents=${argv.agents} autoGenerateAgents=${argv.autoGenerateAgents}`);
+  log(`decide runId=${runId} runVariantId=${runVariantId} steps=${steps} assetSymbol=${assetSymbol} seed=${seed} overwrite=${argv.overwrite} agents=${argv.agents} autoGenerateAgents=${argv.autoGenerateAgents}`);
+
+  if (!argv.overwrite) {
+    const decisionCount = await prisma.agentDecision.count({ where: { runVariantId } });
+    if (decisionCount > 0) {
+      const GREEN = "\x1b[32m";
+      const RESET = "\x1b[0m";
+      console.log(`${GREEN}✅ SKIP decisions (existing ${decisionCount}, overwrite=false)${RESET}`);
+      await prisma.$disconnect();
+      process.exit(0);
+    }
+  }
 
   const run = await prisma.simulationRun.findUnique({
     where: { id: runId },
-    select: { id: true, seed: true },
+    select: { id: true, datasetVersion: true },
   });
   if (!run) throw new Error(`Run not found: ${runId}`);
+  const datasetVersion = run.datasetVersion ?? "default";
 
-  let existingCount = await prisma.runAgent.count({ where: { runId } });
-  if (existingCount === 0 && argv.autoGenerateAgents) {
-    const apiBase = (process.env.API_BASE ?? "http://localhost:4001").replace(/\/$/, "");
-    const genSeed = argv.seed ?? run.seed ?? Math.floor(Math.random() * 0x7fffffff);
-    log(`No RunAgents found → generating ${argv.agents} agents...`);
-    const res = await fetch(
-      `${apiBase}/agents/generate?runId=${encodeURIComponent(runId)}&overwrite=true`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ count: argv.agents, seed: genSeed, preset: "default" }),
-      },
-    );
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`POST /agents/generate failed: ${res.status} ${text}`);
-    }
-    const json = (await res.json()) as { createdCount?: number; total?: number };
-    const created = json.createdCount ?? json.total ?? argv.agents;
-    log(`Generated ${created} agents for runId=${runId}`);
-    existingCount = created;
-  } else if (existingCount === 0) {
-    throw new Error(`No RunAgents for run ${runId}. Create agents first (POST /agents/generate) or use --autoGenerateAgents=true.`);
+  if (argv.autoGenerateAgents) {
+    await ensureAgentPool(prisma, datasetVersion, argv.agents);
   }
+  const poolRun = await prisma.simulationRun.findFirst({
+    where: { name: { startsWith: POOL_RUN_PREFIX }, datasetVersion },
+    select: { id: true },
+  });
+  if (!poolRun) throw new Error(`Agent pool not found for datasetVersion=${datasetVersion}`);
+  const poolRunId = poolRun.id;
 
   const agents = await prisma.runAgent.findMany({
-    where: { runId },
+    where: { runId: poolRunId },
+    orderBy: { id: "asc" },
+    take: argv.agents,
     include: { traits: true },
-    orderBy: { name: "asc" },
   });
+  agents.sort((a, b) => a.id.localeCompare(b.id));
 
   const crowdCheck = validateCrowdSize(agents.length, argv.minAgents, argv.allowSmallCrowd);
   if (!crowdCheck.ok) throw new Error(crowdCheck.message);
 
+  const agentIdsSorted = agents.map((a) => a.id).sort();
+  const agentIdsHash = createHash("sha256").update(agentIdsSorted.join("\n")).digest("hex");
+  const first3AgentIds = agentIdsSorted.slice(0, 3);
+  const agentSetKey = `${datasetVersion}:${assetSymbol}:${seed}:${agents.length}`;
+  log(`seed=${seed} agentSetKey=${agentSetKey} first3AgentIds=${JSON.stringify(first3AgentIds)} agentIdsHash=${agentIdsHash}`);
   log(`Loaded ${agents.length} agents`);
 
   if (argv.overwrite) {
@@ -389,7 +512,7 @@ async function main(): Promise<void> {
   ]);
   log(`experienceCount=${experienceCount} infoStateCount=${infoStateCount} overwrite=${argv.overwrite}`);
 
-  const globalSeed = argv.seed ?? run.seed ?? Math.floor(Math.random() * 0x7fffffff);
+  const globalSeed = seed;
 
   const traitMapByAgent = new Map<string, Map<string, number>>();
   for (const a of agents) {
@@ -424,7 +547,7 @@ async function main(): Promise<void> {
       prisma.agentExperience.findMany({
         where: { runId, runVariantId },
         select: { runAgentId: true, step: true, actionJson: true },
-        orderBy: { step: "asc" },
+        orderBy: [{ step: "asc" }, { runAgentId: "asc" }],
       }),
       prisma.crowdMetrics.findMany({
         where: { runId, assetSymbol, runVariantId },
@@ -585,6 +708,7 @@ async function main(): Promise<void> {
       const prevExps = await prisma.agentExperience.findMany({
         where: { runId, runVariantId, step: step - 1 },
         select: { runAgentId: true, actionJson: true },
+        orderBy: { runAgentId: "asc" },
       });
       for (const e of prevExps) {
         const meta = e.actionJson as { wasWithMajority?: boolean } | null;
@@ -635,7 +759,7 @@ async function main(): Promise<void> {
       const traits = traitMapByAgent.get(agent.id) ?? new Map();
       const biases = extractBiases(traits);
       const state = agentState.get(agent.id)!;
-      const agentSeed = hashToSeed(`${runId}-${agent.id}-${step}-${globalSeed}`);
+      const agentSeed = hashToSeed(`${datasetVersion}:${assetSymbol}:${globalSeed}:${agent.id}:${step}`);
       const rng = createSeededRng(agentSeed);
 
       const anchorSign = crowdSampleSignal !== 0 ? crowdSampleSignal : syntheticSignal;
@@ -851,94 +975,58 @@ async function main(): Promise<void> {
     );
   }
 
-  for (const s of agentInfoStates) {
-    await prisma.agentInfoState.upsert({
-      where: {
-        runId_assetSymbol_agentId_step_runVariantId: {
-          runId: s.runId,
-          assetSymbol: s.assetSymbol,
-          agentId: s.agentId,
-          step: s.step,
-          runVariantId: s.runVariantId,
-        },
-      },
-      create: s,
-      update: { exposedCount: s.exposedCount, infoSignal: s.infoSignal },
-    });
-  }
-  log(`Persisted ${agentInfoStates.length} AgentInfoState rows`);
+  // Delete + batch createMany (deterministic; no upsert overhead)
+  // lite: skip AgentInfoState, AgentState, AgentExperience (keep AgentDecision for CrowdMetrics)
+  if (argv.persistMode === "full") {
+    await prisma.agentInfoState.deleteMany({ where: { runVariantId } });
+    for (const batch of chunk(agentInfoStates, 1000)) {
+      await prisma.agentInfoState.createMany({ data: batch });
+    }
+    log(`Persisted ${agentInfoStates.length} AgentInfoState rows`);
 
-  for (const s of agentStatesToPersist) {
-    await prisma.agentState.upsert({
-      where: {
-        runId_assetSymbol_agentId_step_runVariantId: {
-          runId: s.runId,
-          assetSymbol: s.assetSymbol,
-          agentId: s.agentId,
-          step: s.step,
-          runVariantId: s.runVariantId,
-        },
-      },
-      create: s,
-      update: {
-        exposedCount: s.exposedCount,
-        infoSignal: s.infoSignal,
-        confidence: s.confidence,
-        riskTolerance: s.riskTolerance,
-        herding: s.herding,
-      },
-    });
-  }
-  log(`Persisted ${agentStatesToPersist.length} AgentState rows`);
+    await prisma.agentState.deleteMany({ where: { runVariantId } });
+    for (const batch of chunk(agentStatesToPersist, 1000)) {
+      await prisma.agentState.createMany({ data: batch });
+    }
+    log(`Persisted ${agentStatesToPersist.length} AgentState rows`);
 
-  const stepTs = new Date();
-  if (experiencesToPersist.length > 0) {
-    await prisma.agentExperience.createMany({
-      data: experiencesToPersist.map((exp) => ({
-        runId: exp.runId,
-        runVariantId: exp.runVariantId,
-        runAgentId: exp.runAgentId,
-        step: exp.step,
-        ts: stepTs,
-        actionJson: {
-          action: exp.action,
-          confidence: exp.confidence,
-          crowdSignalAtStep: exp.crowdSignalAtStep,
-          wasWithMajority: exp.wasWithMajority,
-          eventSignal: exp.eventSignal,
-        },
-      })),
-    });
+    await prisma.agentExperience.deleteMany({ where: { runVariantId } });
+    const stepTs = new Date();
+    const experienceData = experiencesToPersist.map((exp) => ({
+      runId: exp.runId,
+      runVariantId: exp.runVariantId,
+      runAgentId: exp.runAgentId,
+      step: exp.step,
+      ts: stepTs,
+      actionJson: {
+        action: exp.action,
+        confidence: exp.confidence,
+        crowdSignalAtStep: exp.crowdSignalAtStep,
+        wasWithMajority: exp.wasWithMajority,
+        eventSignal: exp.eventSignal,
+      },
+    }));
+    for (const batch of chunk(experienceData, 1000)) {
+      await prisma.agentExperience.createMany({ data: batch });
+    }
+    log(`Persisted ${experiencesToPersist.length} AgentExperience rows`);
+  } else {
+    log(`Skipped AgentInfoState/AgentState/AgentExperience (persist=lite)`);
   }
-  log(`Persisted ${experiencesToPersist.length} AgentExperience rows`);
 
-  for (const d of decisions) {
-    await prisma.agentDecision.upsert({
-      where: {
-        runId_step_agentId_assetSymbol_runVariantId: {
-          runId: d.runId,
-          step: d.step,
-          agentId: d.agentId,
-          assetSymbol: d.assetSymbol,
-          runVariantId: d.runVariantId,
-        },
-      },
-      create: {
-        runId: d.runId,
-        runVariantId: d.runVariantId,
-        step: d.step,
-        agentId: d.agentId,
-        assetSymbol: d.assetSymbol,
-        action: d.action,
-        confidence: d.confidence,
-        rationale: d.rationale,
-      },
-      update: {
-        action: d.action,
-        confidence: d.confidence,
-        rationale: d.rationale,
-      },
-    });
+  await prisma.agentDecision.deleteMany({ where: { runVariantId } });
+  const decisionData = decisions.map((d) => ({
+    runId: d.runId,
+    runVariantId: d.runVariantId,
+    step: d.step,
+    agentId: d.agentId,
+    assetSymbol: d.assetSymbol,
+    action: d.action,
+    confidence: d.confidence,
+    rationale: d.rationale,
+  }));
+  for (const batch of chunk(decisionData, 1000)) {
+    await prisma.agentDecision.createMany({ data: batch });
   }
 
   log(`Persisted ${decisions.length} decisions`);

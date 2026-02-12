@@ -1,6 +1,10 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import * as fs from "fs";
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
+import { setRunStatus } from "@crowdvest/db";
 import { PrismaService } from "../prisma/prisma.service";
 import type { RunSummaryResponse } from "./run-summary.types";
+import { getDefaultSpyCsvPath } from "../common/default-dataset";
+import { SPY29_DATASET_VERSION, SPY29_STEP_RETURNS } from "../common/spy29-returns";
 
 /** Raw aggregation row from AgentExperience GROUP BY. */
 type AggRow = { runId: string; agentCount: bigint; totalSteps: bigint; totalPnl: number };
@@ -15,6 +19,7 @@ type RunsListRunRow = {
   status: string;
   startedAt: Date | null;
   finishedAt: Date | null;
+  createdAt: Date;
   seed: number;
   modelVersion: string;
   datasetVersion: string;
@@ -42,7 +47,8 @@ export class RunsService {
     const datasetVersion = latest?.datasetVersion ?? importRun?.sourceHash ?? "default";
     const runName =
       (name ?? "").trim() || `spy-e2e-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-    const run = await this.prisma.simulationRun.create({
+    try {
+      const run = await this.prisma.simulationRun.create({
       data: {
         name: runName,
         status: "PENDING",
@@ -50,10 +56,206 @@ export class RunsService {
         modelVersion: MODEL_VERSION,
         datasetVersion,
         schemaVersion: SCHEMA_VERSION,
-        startedAt: new Date(),
+      },
+      });
+      return { id: run.id };
+    } catch (e) {
+      if (e && typeof e === "object" && (e as { code?: string }).code === "P2002") {
+        throw new ConflictException(
+          `Run with name="${runName}" and datasetVersion="${datasetVersion}" already exists`,
+        );
+      }
+      throw e;
+    }
+  }
+
+  /** Import price data into AssetStepReturn for a run. Uses default SPY CSV when source=default. */
+  async importRunPriceData(
+    runId: string,
+    assetSymbol: string,
+    steps: number,
+    source: string,
+  ): Promise<{ ok: boolean; inserted: number }> {
+    const run = await this.prisma.simulationRun.findUnique({
+      where: { id: runId },
+      select: { id: true },
+    });
+    if (!run) throw new NotFoundException("Run not found");
+
+    const csvPath = source === "default" ? getDefaultSpyCsvPath() : source;
+    if (!fs.existsSync(csvPath)) throw new NotFoundException(`CSV not found: ${csvPath}`);
+
+    const content = fs.readFileSync(csvPath, "utf8");
+    const lines = content.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    if (lines.length < 2) throw new NotFoundException("CSV has no data rows");
+    const headers = lines[0]!.split(",").map((h) => h.trim());
+    const dateIdx = headers.indexOf("date");
+    const priceIdx = headers.indexOf("close");
+    if (dateIdx === -1 || priceIdx === -1) {
+      throw new NotFoundException("CSV must have date and close columns");
+    }
+
+    const rows: { date: string; price: number }[] = [];
+    for (let i = 1; i < lines.length; i++) {
+      const cols = lines[i]!.split(",").map((c) => c.trim());
+      const date = cols[dateIdx];
+      const price = parseFloat(cols[priceIdx] ?? "");
+      if (date && Number.isFinite(price)) rows.push({ date, price });
+    }
+    rows.sort((a, b) => a.date.localeCompare(b.date));
+    if (rows.length === 0) throw new NotFoundException("No valid date/price rows");
+
+    const stepReturns: number[] = [0];
+    for (let i = 1; i < rows.length; i++) {
+      const prev = rows[i - 1]!.price;
+      const curr = rows[i]!.price;
+      stepReturns.push(prev === 0 ? 0 : (curr - prev) / prev);
+    }
+    const stepsToUpsert = Math.min(stepReturns.length, steps);
+    if (stepsToUpsert < steps) {
+      throw new NotFoundException(
+        `CSV has only ${stepReturns.length} step returns; requested ${steps}. Use fewer steps.`,
+      );
+    }
+
+    for (let step = 0; step < stepsToUpsert; step++) {
+      await this.prisma.assetStepReturn.upsert({
+        where: { runId_assetSymbol_step: { runId, assetSymbol, step } },
+        create: { runId, assetSymbol, step, stepReturn: stepReturns[step]! },
+        update: { stepReturn: stepReturns[step]! },
+      });
+    }
+    return { ok: true, inserted: stepsToUpsert };
+  }
+
+  /** POST /runs/import/spy29 — create exactly 29 AssetStepReturn rows for SPY. Idempotent: returns already:true if rows exist. */
+  async importSpy29(runId: string): Promise<{ ok: boolean; already?: boolean; count: number }> {
+    const run = await this.prisma.simulationRun.findUnique({
+      where: { id: runId },
+      select: { id: true },
+    });
+    if (!run) throw new NotFoundException("Run not found");
+
+    const existing = await this.prisma.assetStepReturn.count({
+      where: { runId, assetSymbol: "SPY" },
+    });
+    if (existing >= 29) {
+      return { ok: true, already: true, count: 29 };
+    }
+
+    const data = SPY29_STEP_RETURNS.map((stepReturn, step) => ({
+      runId,
+      assetSymbol: "SPY",
+      step,
+      stepReturn,
+    }));
+    await this.prisma.assetStepReturn.createMany({
+      data,
+      skipDuplicates: true,
+    });
+    return { ok: true, count: 29 };
+  }
+
+  /** POST /runs/import/spy29 (no body) — create run with spy29 dataset, import, return { runId, ok, count, ... }. */
+  async importSpy29OrCreate(runId?: string): Promise<{ runId: string; ok: boolean; already?: boolean; count: number }> {
+    let targetRunId = runId?.trim() ?? "";
+    if (!targetRunId) {
+      const run = await this.prisma.simulationRun.create({
+        data: {
+          name: `spy29-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+          status: "PENDING",
+          seed: Math.floor(Math.random() * 0x7fffffff),
+          modelVersion: MODEL_VERSION,
+          datasetVersion: SPY29_DATASET_VERSION,
+          schemaVersion: SCHEMA_VERSION,
+        },
+      });
+      targetRunId = run.id;
+    }
+    const result = await this.importSpy29(targetRunId);
+    return { runId: targetRunId, ...result };
+  }
+
+  /** POST /runs/create-unique — create run with unique name for lifecycle tests. */
+  async createRunUnique(opts: {
+    baseName?: string;
+    seed?: number;
+    modelVersion?: string;
+    datasetVersion?: string;
+    schemaVersion?: string;
+  }): Promise<{ id: string; runId: string; name: string; datasetVersion: string }> {
+    const latest = await this.prisma.simulationRun.findFirst({
+      orderBy: { createdAt: "desc" },
+      select: { datasetVersion: true },
+    });
+    const importRun = await this.prisma.importRun.findFirst({
+      where: { type: "archetypes" },
+      orderBy: { startedAt: "desc" },
+      select: { sourceHash: true },
+    });
+    const datasetVersion =
+      opts.datasetVersion ?? latest?.datasetVersion ?? importRun?.sourceHash ?? "default";
+    const baseName = (opts.baseName ?? "lifecycle").trim() || "lifecycle";
+    const suffix = Math.random().toString(36).slice(2, 9);
+    const name = `${baseName}-${Date.now()}-${suffix}`;
+
+    const run = await this.prisma.simulationRun.create({
+      data: {
+        name,
+        status: "PENDING",
+        seed: opts.seed ?? Math.floor(Math.random() * 0x7fffffff),
+        modelVersion: opts.modelVersion ?? MODEL_VERSION,
+        datasetVersion,
+        schemaVersion: opts.schemaVersion ?? SCHEMA_VERSION,
       },
     });
-    return { id: run.id };
+    return {
+      id: run.id,
+      runId: run.id,
+      name: run.name,
+      datasetVersion: run.datasetVersion,
+    };
+  }
+
+  /** POST /runs/:id/retry — reset FAILED run to PENDING and enqueue. Only allowed when status == FAILED. */
+  async retryRun(runId: string): Promise<{ ok: true; runId: string }> {
+    const run = await this.prisma.simulationRun.findUnique({
+      where: { id: runId },
+      select: { id: true, status: true },
+    });
+    if (!run) throw new NotFoundException("Run not found");
+    if (run.status !== "FAILED") {
+      throw new BadRequestException(`Retry not allowed: run status is ${run.status}, expected FAILED`);
+    }
+    await this.prisma.simulationRun.update({
+      where: { id: runId },
+      data: {
+        status: "PENDING",
+        failedAt: null,
+        lastError: null,
+        completedAt: null,
+      },
+    });
+    return { ok: true, runId };
+  }
+
+  /** PATCH /runs/:runId/status — update run status. Only updates if current status is PENDING or RUNNING; never overwrites FAILED. */
+  async updateRunStatus(runId: string, status: "COMPLETED" | "FAILED"): Promise<{ id: string; status: string; finishedAt: string | null }> {
+    const run = await this.prisma.simulationRun.findUnique({
+      where: { id: runId },
+      select: { id: true, status: true },
+    });
+    if (!run) throw new NotFoundException("Run not found");
+    if (run.status === "FAILED") {
+      return { id: runId, status: "FAILED", finishedAt: null };
+    }
+    const result = await setRunStatus(this.prisma, runId, status);
+    if (result.count === 0) {
+      return { id: runId, status: run.status, finishedAt: null };
+    }
+    // Backward compat: map finishedAt from completedAt (completedAt is always set for COMPLETED)
+    const completedAt = result.run?.completedAt ?? result.run?.failedAt;
+    return { id: runId, status, finishedAt: completedAt?.toISOString() ?? null };
   }
 
   /** GET /runs — lightweight list (no configJson). Each item includes metrics and warningsCount. */
@@ -62,9 +264,11 @@ export class RunsService {
     offset: number,
   ): Promise<{
     items: Array<{
+      id: string;
       runId: string;
       name: string;
       status: string;
+      createdAt: string;
       startedAt: string | null;
       finishedAt: string | null;
       seed: number;
@@ -76,7 +280,7 @@ export class RunsService {
     }>;
     total: number;
   }> {
-    const [runs, total, aggRows] = await Promise.all([
+    const [runs, total] = await Promise.all([
       this.prisma.simulationRun.findMany({
         take: limit,
         skip: offset,
@@ -85,6 +289,7 @@ export class RunsService {
           id: true,
           name: true,
           status: true,
+          createdAt: true,
           startedAt: true,
           finishedAt: true,
           seed: true,
@@ -94,33 +299,46 @@ export class RunsService {
         },
       }),
       this.prisma.simulationRun.count(),
-      this.prisma.$queryRaw<
+    ]);
+
+    let aggByRun = new Map<string, RunListMetrics>();
+    try {
+      const aggRows = await this.prisma.$queryRaw<
         { runId: string; agentCount: bigint; totalSteps: bigint; totalPnl: number }[]
       >`
         SELECT "runId",
-          COUNT(DISTINCT "agentId")::bigint AS "agentCount",
+          COUNT(DISTINCT "runAgentId")::bigint AS "agentCount",
           COUNT(*)::bigint AS "totalSteps",
           COALESCE(SUM(pnl)::float, 0) AS "totalPnl"
         FROM "AgentExperience"
         GROUP BY "runId"
-      `,
-    ]);
-    const aggByRun = new Map<string, RunListMetrics>(
-      aggRows.map((r: AggRow) => [
-        r.runId,
-        {
-          agentCount: Number(r.agentCount),
-          totalSteps: Number(r.totalSteps),
-          totalPnl: Number(r.totalPnl),
-        },
-      ]),
-    );
+      `;
+      aggByRun = new Map(
+        aggRows.map((r: AggRow) => [
+          r.runId,
+          {
+            agentCount: Number(r.agentCount),
+            totalSteps: Number(r.totalSteps),
+            totalPnl: Number(r.totalPnl),
+          },
+        ]),
+      );
+    } catch (e) {
+      console.error(
+        "[GET /runs] AgentExperience aggregation failed, using empty metrics:",
+        e instanceof Error ? e.message : String(e),
+        (e instanceof Error && e.stack) || "",
+      );
+    }
+
     const items = runs.map((r: RunsListRunRow) => {
       const m: RunListMetrics = aggByRun.get(r.id) ?? { agentCount: 0, totalSteps: 0, totalPnl: 0 };
       return {
+        id: r.id,
         runId: r.id,
         name: r.name,
         status: r.status,
+        createdAt: r.createdAt.toISOString(),
         startedAt: r.startedAt?.toISOString() ?? null,
         finishedAt: r.finishedAt?.toISOString() ?? null,
         seed: r.seed,
@@ -355,6 +573,9 @@ export class RunsService {
         steps: v.steps,
         label: v.label,
         createdAt: v.createdAt.toISOString(),
+        // Stored hashes for determinism validation (always included)
+        decisionsHash: v.summary?.debugDecisionsHash ?? null,
+        returnsHash: v.summary?.debugReturnsHash ?? null,
         summary:
           v.summary != null
             ? {
@@ -362,6 +583,10 @@ export class RunsService {
                 directionalAccuracy: v.summary.directionalAccuracy,
                 pairsCount: v.summary.pairsCount,
                 createdAt: v.summary.computedAt.toISOString(),
+                // Deterministic debug fingerprints (seed isolation validation)
+                decisionsHash: v.summary.debugDecisionsHash,
+                returnsHash: v.summary.debugReturnsHash,
+                decisionCounts: v.summary.debugDecisionCounts ?? undefined,
                 debug:
                   v.summary.debugDecisionsHash != null
                     ? {

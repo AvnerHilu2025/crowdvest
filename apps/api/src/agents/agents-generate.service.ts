@@ -3,6 +3,7 @@
  * Mirrors apps/worker sim-run logic for use by POST /agents/generate.
  */
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { setRunStatus } from "@crowdvest/db";
 import { PrismaService } from "../prisma/prisma.service";
 import {
   runStep,
@@ -286,12 +287,11 @@ export class AgentsGenerateService {
     const prePersistHistogram = { ...decisionHistogram };
     const sampleJson = JSON.stringify(sampleDecisions);
 
+    await setRunStatus(this.prisma, run.id, "COMPLETED");
     await this.prisma.$transaction([
       this.prisma.simulationRun.update({
         where: { id: run.id },
         data: {
-          status: "COMPLETED",
-          finishedAt: new Date(),
           configJson: {
             decisionHistogram,
             sampleDecisions,

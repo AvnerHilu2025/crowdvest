@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Body,
+  ConflictException,
   Controller,
   Get,
   HttpCode,
@@ -8,6 +9,7 @@ import {
   HttpException,
   NotFoundException,
   Param,
+  Patch,
   Post,
   Query,
   Req,
@@ -17,6 +19,7 @@ import { randomUUID } from "crypto";
 import { ResultsService } from "../results/results.service";
 import { TimeseriesService } from "../timeseries/timeseries.service";
 import { RunsService } from "./runs.service";
+import { RunQueueService } from "../jobs/run-queue.service";
 import { parseLimit, parseOffset } from "../common/parse-query";
 import { errorBody, isDbSchemaError } from "../common/error-response";
 
@@ -28,13 +31,138 @@ export class RunsController {
     private readonly runsService: RunsService,
     private readonly resultsService: ResultsService,
     private readonly timeseriesService: TimeseriesService,
+    private readonly runQueue: RunQueueService,
   ) {}
 
-  /** POST /runs — create a new run. Body: { name?: string }. Returns { id }. */
+  /** POST /runs — create a new run. Body: { name?: string; autoImport?: boolean; assetSymbol?: string; steps?: number; source?: string }. Returns { id }. If autoImport=true, imports default SPY price data. */
   @Post("runs")
   @HttpCode(HttpStatus.CREATED)
-  async create(@Body() body: { name?: string }) {
-    return this.runsService.createRun(body?.name);
+  async create(
+    @Body()
+    body: {
+      name?: string;
+      autoImport?: boolean;
+      assetSymbol?: string;
+      steps?: number;
+      source?: string;
+    },
+    @Req() req?: Request & { requestId?: string },
+  ) {
+    const requestId = (req?.requestId ?? req?.headers?.["x-request-id"]) as string | undefined;
+    if (body != null && typeof body !== "object") {
+      throw new BadRequestException("Body must be a JSON object");
+    }
+    try {
+      const b = body ?? {};
+      const result = await this.runsService.createRun(b.name);
+      if (b.autoImport && result.id) {
+        await this.runsService.importRunPriceData(
+          result.id,
+          b.assetSymbol ?? "SPY",
+          b.steps ?? 29,
+          b.source ?? "default",
+        );
+      }
+      return result;
+    } catch (e) {
+      if (e instanceof BadRequestException || e instanceof NotFoundException || e instanceof ConflictException) throw e;
+      if (isDbSchemaError(e)) {
+        throw new HttpException(
+          { statusCode: 503, message: "Database schema not migrated", requestId },
+          HttpStatus.SERVICE_UNAVAILABLE,
+        );
+      }
+      throw e;
+    }
+  }
+
+  /** POST /runs/import/spy29 — create 29 AssetStepReturn rows for SPY. Body: { runId? } (optional). Idempotent. If runId omitted, creates a new run with spy29 dataset and imports. Auto-enqueues backtest when dataset ready (count=29). */
+  @Post("runs/import/spy29")
+  @HttpCode(HttpStatus.OK)
+  async importSpy29(@Body() body: { runId?: string } | undefined) {
+    const runId = (body?.runId ?? "").trim();
+    if (runId && !UUID_REGEX.test(runId)) throw new BadRequestException("runId must be a UUID");
+    const result = await this.runsService.importSpy29OrCreate(runId || undefined);
+    if (result.count === 29) {
+      const enqueueResult = await this.runQueue.enqueueBacktest(result.runId, {
+        assetSymbol: "SPY",
+        steps: 29,
+        agents: 50,
+        seedStart: 1,
+        seeds: [1, 2],
+      });
+      return { ...result, enqueued: enqueueResult.enqueued ?? false };
+    }
+    return result;
+  }
+
+  /** POST /runs/create-unique — create run with unique name for lifecycle tests. Body: { baseName?, seed?, modelVersion?, datasetVersion?, schemaVersion? }. */
+  @Post("runs/create-unique")
+  @HttpCode(HttpStatus.CREATED)
+  async createUnique(
+    @Body()
+    body: {
+      baseName?: string;
+      seed?: number;
+      modelVersion?: string;
+      datasetVersion?: string;
+      schemaVersion?: string;
+    },
+  ) {
+    if (body != null && typeof body !== "object") {
+      throw new BadRequestException("Body must be a JSON object");
+    }
+    return this.runsService.createRunUnique(body ?? {});
+  }
+
+  /** POST /runs/:runId/import — import price data into AssetStepReturn. Body: { assetSymbol, steps, source }. */
+  @Post("runs/:runId/import")
+  @HttpCode(HttpStatus.OK)
+  async importPriceData(
+    @Param("runId") runId: string,
+    @Body() body: { assetSymbol?: string; steps?: number; source?: string },
+  ) {
+    const id = runId?.trim() ?? "";
+    if (id === "" || !UUID_REGEX.test(id)) throw new BadRequestException("runId must be a UUID");
+    const assetSymbol = (body?.assetSymbol ?? "SPY").trim().toUpperCase() || "SPY";
+    const steps = Math.max(2, Math.min(500, body?.steps ?? 29));
+    const source = (body?.source ?? "default").trim() || "default";
+    return this.runsService.importRunPriceData(id, assetSymbol, steps, source);
+  }
+
+  /** POST /runs/:id/retry — reset FAILED run to PENDING and enqueue. Only allowed when status == FAILED. Returns 400 for COMPLETED/PENDING/RUNNING. */
+  @Post("runs/:id/retry")
+  @HttpCode(HttpStatus.OK)
+  async retry(@Param("id") id: string) {
+    const runId = id?.trim() ?? "";
+    if (runId === "" || !UUID_REGEX.test(runId)) throw new BadRequestException("run id must be a UUID");
+    const result = await this.runsService.retryRun(runId);
+    const enqueueResult = await this.runQueue.enqueueBacktest(runId, {
+      assetSymbol: "SPY",
+      steps: 29,
+      agents: 50,
+      seedStart: 1,
+      seeds: [1, 2],
+    });
+    if (!enqueueResult.enqueued) {
+      console.warn(`[retry] enqueue returned ok=${enqueueResult.ok} reason=${enqueueResult.reason} runId=${runId}`);
+    }
+    return result;
+  }
+
+  /** PATCH /runs/:runId/status — update run status (e.g. FINISHED/FAILED). Body: { status: "COMPLETED"|"FAILED" } or { status: "FINISHED" } (FINISHED maps to COMPLETED). */
+  @Patch("runs/:runId/status")
+  async updateStatus(
+    @Param("runId") runId: string,
+    @Body() body: { status?: string },
+  ) {
+    const id = runId?.trim() ?? "";
+    if (id === "" || !UUID_REGEX.test(id)) throw new BadRequestException("runId must be a UUID");
+    const status = (body?.status ?? "").trim().toUpperCase();
+    if (status !== "COMPLETED" && status !== "FAILED" && status !== "FINISHED") {
+      throw new BadRequestException('status must be "COMPLETED", "FAILED", or "FINISHED"');
+    }
+    return this.runsService.updateRunStatus(id, status === "FINISHED" ? "COMPLETED" : status);
   }
 
   @Get("runs")
@@ -42,16 +170,50 @@ export class RunsController {
     @Query("limit") limit?: string,
     @Query("offset") offset?: string,
   ) {
-    return this.runsService.findAll(parseLimit(limit), parseOffset(offset));
+    try {
+      const lim = parseLimit(limit, 30);
+      return await this.runsService.findAll(lim, parseOffset(offset));
+    } catch (e) {
+      console.error(
+        "[GET /runs] Error:",
+        e instanceof Error ? e.message : String(e),
+        "\nquery: limit=",
+        limit,
+        "offset=",
+        offset,
+        "\nstack:",
+        e instanceof Error ? e.stack : "",
+      );
+      throw new HttpException(
+        { error: { code: "RUNS_LIST_FAILED", message: "Failed to list runs" } },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
-  /** GET /runs/latest — latest run with normalized payload. Add ?debug=1 for debug fields. */
+  /** GET /runs/latest — latest run id. Returns 404 when no runs exist. */
   @Get("runs/latest")
-  async getLatest(@Query("debug") debug?: string) {
-    const { items } = await this.resultsService.getRuns(1, 0);
-    const runId = items[0]?.id;
-    if (!runId) throw new NotFoundException("Run not found");
-    return this.resultsService.getRunPayload(runId, debug === "1");
+  async getLatest() {
+    try {
+      const { items } = await this.resultsService.getRuns(1, 0);
+      const runId = items[0]?.id;
+      if (!runId) {
+        throw new NotFoundException("No runs found. Create a run with POST /runs first.");
+      }
+      return { runId };
+    } catch (e) {
+      if (e instanceof NotFoundException) throw e;
+      console.error(
+        "[GET /runs/latest] Error:",
+        e instanceof Error ? e.message : String(e),
+        "\nstack:",
+        e instanceof Error ? e.stack : "",
+      );
+      throw new HttpException(
+        { error: { code: "RUNS_LATEST_FAILED", message: "Failed to get latest run" } },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   /** GET /runs/:id/summary?assetSymbol=SPY — read-only snapshot for run+asset (counts, latest crowd, backtest, health). */

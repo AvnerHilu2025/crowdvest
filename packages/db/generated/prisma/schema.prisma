@@ -91,6 +91,9 @@ model SimulationRun {
   schemaVersion  String
   startedAt      DateTime?
   finishedAt     DateTime?
+  completedAt    DateTime?
+  failedAt       DateTime?
+  lastError      String?             @db.VarChar(1000)
   configJson     Json?
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @updatedAt
@@ -149,11 +152,11 @@ model RunVariantSummary {
   directionalAccuracy Float
   pairsCount          Int
   computedAt          DateTime @default(now())
-  // Debug: validate seeds differ (decisionCounts, pairsSample) and hashes (decisions vs returns)
-  debugDecisionCounts Json? // { BUY: n, SELL: n, HOLD: n }
+  // Debug / validation: deterministic fingerprints for seed isolation (decisionsHash differs per seed; returnsHash identical)
+  debugDecisionCounts Json? // { BUY: n, SELL: n, HOLD: n } — exposed as summary.decisionCounts
   debugPairsSample    Json? // first N pairs: [{ step, r, predictedSign, actualSign }]
-  debugDecisionsHash  String?
-  debugReturnsHash    String?
+  debugDecisionsHash  String? // sha256(decisions ordered by step,agentId) — exposed as summary.decisionsHash
+  debugReturnsHash    String? // sha256(step returns) — exposed as summary.returnsHash
 
   runVariant RunVariant @relation(fields: [runVariantId], references: [id], onDelete: Cascade)
 }

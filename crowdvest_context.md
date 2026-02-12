@@ -1,367 +1,517 @@
-# CrowdVest — Project Context
+# 🚀 CrowdVest (VINVESTOR / VICWS)
 
-**Paste this at the start of a new ChatGPT conversation.**
+## 1. Product Vision
 
----
+CrowdVest is a Virtual Investor Crowd Wisdom System.
 
-## 🔧 Technical Project Context (Auto-updated)
+It simulates thousands of autonomous investor agents
+with archetypes and behavioral traits.
 
-### Project Identity
-- Project name: CrowdVest (aka VINVESTOR / VICWS)
-- Nature: Product-grade virtual investor crowd simulation platform
-- Stage: Active backend simulation + metrics validation (not a prototype)
+Purpose:
+- Model collective intelligence
+- Generate crowd-based forecasts
+- Analyze directional accuracy
+- Simulate market behavior
+- Measure correlation vs actual returns
+- Provide deterministic backtesting
+- Become a decision-support intelligence platform
 
-### Monorepo Structure (pnpm workspaces)
+Long-term vision:
+- Crowd-based alpha detection
+- Market regime detection
+- Agent archetype analytics
+- Commercial SaaS platform
 
-Root:
-- /crowdvest
+------------------------------------------------------------------
 
-Apps:
-- apps/api
-  - Express API (port 4001)
-  - Exposes runs, variants, results, health
-  - Reads/writes DB via @crowdvest/db
-- apps/worker
-  - Simulation engine runner (CLI scripts)
-  - Market import, backtest, decide, compute-crowd-metrics
-- apps/web
-  - Frontend (not active in current debugging flow)
+## 2. System Architecture (Monorepo)
 
-Packages:
-- packages/db
-  - Prisma schema & migrations
-  - PostgreSQL is the single source of truth
-  - All db:* commands are executed from here
-- packages/sim-core
-  - Pure simulation logic (no IO)
-- packages/shared
-  - Shared types & utilities
+Root: ~/crowdvest
 
-### Database
-- PostgreSQL (localhost:5432)
-- Prisma used for schema + migrations
-- Prisma client generated into packages/db/generated/prisma
-- Canonical migration commands:
-  - pnpm db:reset
-  - pnpm db:migrate
-  - pnpm db:status
+Package manager: pnpm
+Workspace structure: multi-app monorepo
 
-### Simulation Execution Flow (Current)
+### Apps
 
-1) Create run:
-   POST /runs  → returns runId
+apps/api        → NestJS backend (port 4001)
+apps/web        → Next.js frontend (port 4000)
+apps/worker     → TS worker scripts (backtest-v0, etc.)
 
-2) Import market data:
-   pnpm -C apps/worker run import-market-csv
-   - Writes AssetStepReturn rows
+### Packages
 
-3) Backtest:
-   pnpm -C apps/worker run backtest-v0
-   - Iterates seeds
-   - Triggers decide + metrics per seed
+packages/db     → Prisma schema + generated client
+packages/shared → shared types (if exists)
 
-4) Decide (per seed):
-   pnpm -C apps/worker run decide
-   - Decisions are seed-dependent
-   - Stored per runId + assetSymbol + seed
+------------------------------------------------------------------
 
-5) Compute crowd metrics:
-   pnpm -C apps/worker run compute-crowd-metrics
-   - Writes CrowdMetrics per step
+## 3. Ports & Services
 
-6) Variant summary:
-   - Each (runId, assetSymbol, seed) becomes a RunVariant
-   - RunVariantSummary stores corr, directionalAccuracy, pairsCount
+API:
+http://localhost:4001
+NestJS + Prisma
 
-### Active API Endpoint Under Debug
-- GET /runs/:runId/variants?assetSymbol=SPY
-- Returns all variants (seeds) with summaries
+Web:
+http://localhost:4000
+Next.js 15
 
-### Current Known Issue (IMPORTANT)
-- directionalAccuracy is identical across seeds
-- This is statistically suspicious
-- Hypotheses:
-  1) Seed not applied correctly in decision logic
-  2) Accuracy calculation reuses wrong data
-  3) Decisions differ but summary computation is incorrect
+Health endpoints:
+GET /health (API)
+GET /api/health (Web proxy)
 
-### Current Debug Strategy
-- Add debug payload to RunVariantSummary:
-  - decisionCounts (BUY/SELL/HOLD)
-  - sample of decision/return pairs
-  - deterministic hashes:
-    - decisionsHash (must differ per seed)
-    - returnsHash (should be identical across seeds)
-- This allows immediate verification of seed isolation
+------------------------------------------------------------------
 
-### Ground Rules for Assistant (MANDATORY)
-- Act as CTO + Lead Backend Architect
-- Do NOT ask user preferences
-- Always output:
-  - What file to edit
-  - Exact code or prompt
-  - CLI command to run
-  - Verification command
-- All prompts and commands in English only
-- User does not edit code manually — Cursor does
+## 4. Database
 
----
+Database: PostgreSQL
+ORM: Prisma
 
-## Workflow contract
+Core models:
 
-- **Role:** You act as **CTO + Lead Backend Architect + Cursor coding partner**. Product-first; short, surgical, execution-oriented. No theory unless asked.
-- **Outputs:** Every answer should include: (1) **Cursor prompt** (pasteable), (2) **Files** to edit, (3) **CLI/verification** command, (4) **Success criteria**. No storytelling.
-- **Authority:** You own architecture, prevent tech debt, think scalability. Avner decides business.
-- **Environment:** We develop on **WSL2** (Windows host). Prefer WSL terminal commands by default.
+- SimulationRun
+- RunVariant
+- AssetStepReturn
+- AgentDecision
+- CrowdMetrics
 
----
+Important constraints:
 
-## Product overview
+Unique index:
+(name, datasetVersion) on SimulationRun
 
-**CrowdVest (VINVESTOR / VICWS)** — Virtual Investor Crowd Wisdom System. Simulates thousands of autonomous investor agents; each has an archetype, 100+ traits, receives market data + sentiment, makes BUY/SELL/HOLD decisions, learns over time. Outputs: crowd sentiment, diversity/independence indices, wisdom score, prediction metrics, wallet evolution, bet tracking. **Goal:** crowd-based forecasting engine for financial markets.
+------------------------------------------------------------------
 
----
+## 5. Current Stable Capabilities (PRODUCTION READY)
 
-## Stack & repo defaults
+✅ Deterministic backtest-v0
+- Requires AssetStepReturn rows
+- steps must match return count
+- seeds produce deterministic variants
+- decision hashes stable
 
-| Item | Value |
-|------|--------|
-| **Backend** | Node.js + TypeScript, pnpm monorepo, Express API, worker scripts, PostgreSQL |
-| **Infra** | Docker + docker-compose; WSL2 (Windows host); Cursor / VS Code |
-| **API base URL** | `http://localhost:4001` (default for scripts and curl) |
-| **Prisma** | **ONLY** in `packages/db`. Schema: `packages/db/prisma/schema.prisma`. No Prisma at repo root. |
-| **Prisma CLI** | `pnpm -C packages/db exec prisma <cmd>` (e.g. `migrate dev`, `generate`, `migrate deploy`) |
-| **Root `pnpm prisma`** | Fails with "Command prisma not found" — do not use. |
+✅ Run lifecycle:
+POST /runs/create-unique
+POST /runs/import/spy29
+Worker backtest
+GET /runs/:id
+GET /runs/:id/variants
 
-### Monorepo structure
+Status flow:
+PENDING → COMPLETED
 
-```
-crowdvest/
-├── apps/
-│   ├── api          # Express API (results, runs, agents, etc.)
-│   ├── worker       # Scripts: decide, compute-crowd-metrics, compute-rewards, import-market-csv, backtest-v0
-│   └── web          # React dashboard
-├── packages/
-│   └── db           # @crowdvest/db — Prisma client + schema (ONLY place for Prisma)
-├── scripts/         # E2E/smoke: spy_e2e_smoke.sh, backtest_e2e_smoke.sh, learning_v1_smoke.sh, etc.
-└── docker-compose.yml
-```
+✅ Web proxy working:
+4000/api/* → 4001/*
 
----
+Runs page loads
+Run details page loads
+Variants visible
 
-## 🗺️ Repo Map & Paths (WSL) — Source of Truth
+------------------------------------------------------------------
 
-Use this section to regain orientation in a new chat. All paths are absolute-from-repo-root with leading `/`.
+## 6. Deterministic Dataset
 
-### 1) Monorepo structure (pnpm workspaces)
+SPY dataset:
+29 AssetStepReturn rows
+DatasetVersion:
+ab8cd075a60e9164d278ba1a5451f973c66def292a46b06375c9a42e8a65e96b
 
-Workspace package paths:
+Required:
+--steps 29
 
-- `/apps/api`
-- `/apps/web`
-- `/apps/worker`
-- `/packages/db`
-- `/packages/shared`
-- `/packages/sim-core`
+------------------------------------------------------------------
 
-### 2) How to run commands correctly (critical gotchas)
+## 7. Worker Commands
 
-- `pnpm -C apps/api ...` runs from `/apps/api` (path is relative to repo root).
-- `pnpm -C packages/db ...` runs from `/packages/db`.
-- Root wrapper scripts (`db:status`, `db:migrate`, etc.) call into **apps/api**, which then delegates to **packages/db** with `pnpm -C ../../packages/db run ...`. From `apps/api`, `packages/db` would resolve to `apps/api/packages/db` (wrong); hence scripts in `apps/api` use `../../packages/db`.
-
-List workspaces:
+Backtest:
 
 ```bash
-pnpm -r --depth -1 list
-pnpm -r --depth -1 list --json | jq -r '.[].path'
+pnpm -C apps/worker run backtest-v0 -- \
+  --runId <RUN_ID> \
+  --assetSymbol SPY \
+  --steps 29 \
+  --agents 50 \
+  --seedStart 1 \
+  --seeds 2
 ```
 
-### 3) DB / Prisma location and env loading
+------------------------------------------------------------------
 
-- **Prisma schema and migrations** (only location in repo):
-  - `/packages/db/prisma/schema.prisma`
-  - `/packages/db/prisma/migrations/`
-- **Prisma env** is loaded from: `/packages/db/prisma/.env`
-- **DB migrations are managed from packages/db only** (not from apps/api). Prisma CLI and migrate commands run via `packages/db` scripts (e.g. `node scripts/with-env.js migrate ...`).
+## 8. Current Status (CEO Summary)
 
-### 4) Root DB commands
+System is stable.
+Deterministic.
+Lifecycle validated.
+Web + API integrated.
+Ready to move from infrastructure to product features.
 
-| Action | Command | Expansion |
-|--------|---------|-----------|
-| Status | `pnpm db:status` | `pnpm -C apps/api run db:status` → `pnpm -C ../../packages/db run db:status` |
-| Deploy | `pnpm db:migrate` | `pnpm -C apps/api run db:deploy` → `pnpm -C ../../packages/db run db:deploy` |
-| **DEV-ONLY reset** | `pnpm db:reset` | Hard-resets local DB (drop + reapply all migrations). **Never use in prod.** Use when Prisma is blocked by failed migration P3009. |
+No blocking bugs.
 
-### 5) Known Issue: DB_NOT_READY / P3009
+------------------------------------------------------------------
 
-- **Symptom:** API endpoint returns 503 with `{"error":{"code":"DB_NOT_READY","message":"Database schema not migrated"}}`.
-- **Root cause:** A failed Prisma migration blocks deploy (e.g. `20260210200000_add_run_variant_summary`).
-- **Fix (dev):**
-  ```bash
-  pnpm db:reset
-  pnpm db:migrate
-  pnpm db:status
-  ```
-- **Verification:**
-  ```bash
-  curl -i http://localhost:4001/health
-  curl -i "$API/runs/$RUN_ID/variants?assetSymbol=$ASSET" | head -n 80
-  ```
-  Response should no longer be 503 DB_NOT_READY.
+## 9. Roadmap (Next Strategic Phase)
 
-### 6) Worker Backtest Smoke Test (exact happy path)
+Phase 2: Productization
 
-Copy-paste sequence:
+1. Real Run Status Flow
+   - PENDING → RUNNING → COMPLETED → FAILED
+   - Update status during worker execution
 
-```bash
-API=http://localhost:4001
-ASSET=SPY
-STEPS=29
-AGENTS=200
-CSV="$(pwd)/apps/worker/data/market/spy.us.daily.sample.csv"
-RUN_ID="$(curl -fsS -X POST "$API/runs" | jq -r .id)"
+2. Background Job Queue
+   - Decouple worker from manual CLI
+   - Automatic execution on run creation
 
-pnpm -C apps/worker run import-market-csv -- --runId "$RUN_ID" --assetSymbol "$ASSET" --csv "$CSV" --priceField close
-pnpm -C apps/worker run backtest-v0 -- --runId "$RUN_ID" --assetSymbol "$ASSET" --steps "$STEPS" --agents "$AGENTS" --seedStart 1 --seeds 3
-```
+3. Metrics Dashboard
+   - Correlation trend chart
+   - Directional accuracy visualization
+   - Archetype performance breakdown
 
-Note: backtest-v0 internally calls decide + compute-crowd-metrics per seed.
+4. Leaderboard Integration
+   - Rank runs by correlation
+   - Rank by directional accuracy
 
-### 7) CTO operating mode reminders
+5. Agent Behavior Analytics
+   - BUY/HOLD/SELL distribution graphs
+   - Risk heatmaps
 
-- We produce **Cursor-ready prompts only** (Avner doesn’t touch code directly).
-- Every task must include: **what file to edit**, **exact code**, **CLI command**, **verification check**.
+6. Performance Optimization
+   - 1,000+ agents
+   - Concurrency testing
 
----
+------------------------------------------------------------------
 
-## Prisma & database
+## 10. Known Constraints
 
-- **Schema path:** `packages/db/prisma/schema.prisma`
-- **Model naming:** e.g. **CrowdMetrics** (plural), not CrowdMetric.
-- **DATABASE_URL:** Often includes `?schema=public` (or other query params). That **breaks** `psql $DATABASE_URL`. Strip for psql:
-  ```bash
-  DB_URL_PSQL="${DATABASE_URL%\?*}"
-  psql "$DB_URL_PSQL"
-  ```
-- **Postgres columns:** CamelCase; must be **double-quoted** in raw SQL: `"runId"`, `"assetSymbol"`.
+- AssetStepReturn required before backtest
+- Steps must match return count
+- Unique (name,datasetVersion)
+- Web proxy must mirror API endpoints
 
----
+------------------------------------------------------------------
 
-## Reward loop v1 & Learning v1
+## 11. Developer Rules
 
-- **AgentState** is the **learning source-of-truth** (runId, assetSymbol, agentId, step, confidence, riskTolerance, herding, infoSignal, exposedCount).
-- **Decide** upserts AgentState per (runId, assetSymbol, agentId, step) with baseline from traits and infoSignal/exposedCount.
-- **compute-rewards:**
-  - `--overwrite=true`: compute rewards + ensure baseline AgentState (no learning).
-  - `--overwrite=false`: compute rewards then **per-step learning** into AgentState (prev from AgentState step-1; decay-to-baseline formulae). Use this for learning verification.
-- **API:** `GET /results/agent-rewards?runId=&assetSymbol=&agentId=&fromStep=&toStep=`. `GET /results/agent-state?runId=&assetSymbol=&agentId=&historyLimit=` — reads **AgentState**; returns **latest** (max step) and **stepHistory** (last N steps). **historyLimit** default 10, max 100.
-- **DEBUG_LEARNING=1:** worker logs prev→new for first agent once per step.
+- Determinism first
+- No hidden randomness
+- All seeds reproducible
+- All endpoints testable via curl
+- All lifecycle flows testable via WSL
 
-```bash
-# Example verification (WSL)
-export RUN_ID="<uuid>" API="http://localhost:4001" AGENT_ID="<uuid>"
-pnpm -C apps/worker run decide -- --runId "$RUN_ID" --assetSymbol RUN --overwrite true
-pnpm -C apps/worker run compute-rewards -- --runId "$RUN_ID" --assetSymbol RUN --overwrite false
-curl -fsS "$API/results/agent-state?runId=$RUN_ID&assetSymbol=RUN&agentId=$AGENT_ID" | jq '.latest, .stepHistory[0], .stepHistory[4]'
-```
+------------------------------------------------------------------
 
----
+## 12. Next Immediate Task
 
-## SPY local CSV & AssetStepReturn
+~~Implement RUNNING status transition~~ DONE.
 
-- **Path:** `apps/worker/data/market/spy.us.daily.sample.csv` (date, open, high, low, close, volume, symbol, source).
-- **import-market-csv:** Reads CSV, sorts by date asc, computes step returns, upserts **AssetStepReturn** for (runId, assetSymbol). Requires `date` column and a price column (default `close`; `--priceField` for another).
-- **Step return formula:** `stepReturn[0]=0`; for t≥1: `stepReturn[t] = (price[t]-price[t-1])/price[t-1]`.
-- **CSV path handling:** When running from `apps/worker`, pass path **relative to repo root** (e.g. `apps/worker/data/market/spy.us.daily.sample.csv`) or **absolute**; script tries cwd then repo root.
+Status transitions implemented:
+- Worker sets RUNNING when backtest starts (before dataset validation)
+- Worker sets COMPLETED on success (after all DB writes)
+- Worker sets FAILED on error (in catch, best-effort)
 
-```bash
-pnpm -C apps/worker run import-market-csv -- --runId <RUN_ID> --assetSymbol SPY --csv apps/worker/data/market/spy.us.daily.sample.csv --priceField close
-```
+------------------------------------------------------------------
 
-- **AssetStepReturn is per runId:** Each SimulationRun has its own rows (runId + assetSymbol + step). **Backtest must use the SAME runId** that has AssetStepReturn; otherwise corr/directionalAccuracy are null.
+## 13. Agent Architecture
 
----
+Each agent:
 
-## Backtest v0 (per-seed, same runId)
+- Belongs to an archetype
+- Has 100+ behavioral traits
+- Makes BUY / SELL / HOLD decisions per step
+- Can evolve in future versions
 
-- **Script:** `pnpm -C apps/worker run backtest-v0`
-- **Required/optional:** `--runId <id>` optional; if omitted, script **creates one run** and prints it. **--csv** required when AssetStepReturn count for (runId, assetSymbol) is 0 (script imports into that runId). **--priceField** default `close`.
-- **Seeds:** Same runId for all seeds; seeds only affect agent randomness (generate/decide), not run identity.
-- **Flow:** Resolve runId → ensure AssetStepReturn for (runId, assetSymbol) [if count=0 and --csv, import; else throw] → for each seed: agents/generate overwrite → decide → compute-crowd-metrics → read CrowdMetrics + AssetStepReturn from **same runId** → corr/directionalAccuracy → persist BacktestResult.
-- **Critical:** Decide **overwrite cleanup must NOT delete AssetStepReturn** (market data is input). If decide overwrite deleted AssetStepReturn, backtest later sees count=0 and fails with "AssetStepReturn count is 0 ... Import CSV first".
-- **API:** `GET /results/backtests?assetSymbol=SPY&limit=50` — items with nullable corr/directionalAccuracy.
+Archetypes:
+Currently 25 predefined archetypes.
 
-```bash
-# Smoke: create run, import CSV, then backtest with that runId
-RUN_ID=$(curl -sS -X POST http://localhost:4001/runs -H "Content-Type: application/json" -d "{}" | jq -r '.id')
-pnpm -C apps/worker run import-market-csv -- --runId "$RUN_ID" --assetSymbol SPY --csv apps/worker/data/market/spy.us.daily.sample.csv --priceField close
-pnpm -C apps/worker run backtest-v0 -- --runId "$RUN_ID" --assetSymbol SPY --steps 29 --agents 200 --seeds "1,2,3,4,5" --csv apps/worker/data/market/spy.us.daily.sample.csv --priceField close
-curl -sS "http://localhost:4001/results/backtests?assetSymbol=SPY&limit=5"
-```
+Agents are generated deterministically using:
+- seed
+- archetype definition
+- trait parameter ranges
 
----
+Future:
+Dynamic trait mutation and learning loops.
 
-## Stability gates
+------------------------------------------------------------------
 
-| Command | Script | What it does |
-|---------|--------|--------------|
-| `pnpm verify:learning-v1` | `scripts/learning_v1_smoke.sh` | Mini-flow: decide overwrite, step4 rumor, compute-crowd-metrics, compute-rewards overwrite=false. Asserts AgentReward count, AgentState progression (step0 vs step4), crowd-state step4 herdingIndex + noiseSensitivity. API_BASE default http://localhost:4001. |
-| `pnpm verify:spy-e2e` | `scripts/spy_e2e_smoke.sh` | **Always creates a NEW run** (POST /runs), imports SPY CSV, agents/generate 200, decide steps=29, compute-crowd-metrics, compute-rewards. Asserts agents count, agent-rewards total 200×29, crowd-state step28 wisdomScore, agent-state latest.step=28. Ends with "=== SPY E2E checks passed ===". |
-| `pnpm verify:backtest-e2e` | `scripts/backtest_e2e_smoke.sh` | Creates run, imports CSV, runs backtest-v0 with --runId; asserts output contains pairsCount=28, GET /results/backtests 200 and at least one non-null corr. |
+## 14. Traits System
 
----
+We maintain a structured list of 100+ investor traits.
 
-## InfoEvents & crowd metrics
+Traits include:
+- Risk tolerance
+- Time horizon
+- Volatility sensitivity
+- Momentum bias
+- Loss aversion
+- Liquidity preference
+- Reaction speed
+- Herd behavior factor
+- Confidence decay
+- Overreaction bias
+- Regime sensitivity
+- Sentiment influence
 
-- **Endpoints:** `POST /info-events`, `GET /info-events?runId=&assetSymbol=&step=`; also `POST/GET/DELETE /runs/:runId/info-events`.
-- **NoiseSensitivity:** Worker computes per step from InfoEvents (lowCredEventStrength × decisionVolatility, clamped). If API returns `noiseSensitivity: 0` while worker persisted non-zero, **fix is in API mapper**: `apps/api/src/results` — crowd-state builder must **select** and **map** `noiseSensitivity` (e.g. `noiseSensitivity: row.noiseSensitivity ?? 0` in per-step response).
+Traits are stored in DB and used by decision engine.
 
-```bash
-# Verify crowd metrics after recompute
-pnpm -C apps/worker run compute-crowd-metrics -- --runId "$RUN_ID" --assetSymbol RUN
-curl -fsS "$API/results/crowd-state?runId=$RUN_ID&assetSymbol=RUN" | jq '.perStep[4] | {herdingIndex, noiseSensitivity}'
-```
+This is core intellectual property.
 
----
+------------------------------------------------------------------
 
-## Current status
+## 15. Determinism Protocol
 
-- **Learning v1:** Checks passed; AgentState progression and compute-rewards overwrite=false verified.
-- **SPY E2E:** Checks passed after ensuring new run creation and correct agent count (200×29 rewards, crowd-state step28, agent-state latest.step=28).
-- **Backtest:** Results endpoint previously returned 500 (fixed). Then returned 200 but **corr/directionalAccuracy null** when runs had no AssetStepReturn — diagnosed via psql (count AssetStepReturn per runId). Root causes: (1) decide overwrite was deleting AssetStepReturn (bug — now fixed: decide overwrite must NOT delete AssetStepReturn). (2) Backtest must use same runId that has AssetStepReturn (single runId, import CSV into it or pass --runId of pre-imported run).
+System must be 100% reproducible.
 
----
+Validation strategy:
 
-## Next steps (actionable)
+- Fixed seeds
+- decisionsHash comparison
+- returnsHash comparison
+- Correlation delta threshold check
+- A/B repeated backtest diff must be zero
 
-1. **Decide overwrite:** Confirm decide overwrite cleanup does **not** delete AssetStepReturn (already fixed in code; verify with a run → import CSV → decide overwrite → check AssetStepReturn count still > 0).
-2. **Backtest-v0:** Ensure it uses one runId and imports CSV into that run when count=0; keep debug logs (runId, assetStepReturnRows, perStepEntries, pairsCount).
-3. **API:** Map UUID→name where useful; stabilize endpoints; add better run/summary responses.
-4. **Scripts:** Document or add a single flow script: create run → import market CSV → generate agents → decide → compute-crowd-metrics → compute-rewards → (optional) backtest-v0 with --runId.
+Floating point delta tolerance:
+~1e-15 acceptable
 
----
+Determinism is mandatory.
 
-## Known pitfalls & fixes
+------------------------------------------------------------------
 
-| Pitfall | Error / symptom | Fix / workaround |
-|---------|------------------|------------------|
-| Prisma not found | `Command prisma not found` at repo root | Prisma lives only in `packages/db`. Use `pnpm -C packages/db exec prisma <cmd>`. |
-| psql fails on DATABASE_URL | Connection or protocol error when using `psql $DATABASE_URL` | Strip query string: `DB_URL_PSQL="${DATABASE_URL%\?*}"` then `psql "$DB_URL_PSQL"`. |
-| Raw SQL column not found | Postgres "column does not exist" for runId/assetSymbol | Columns are camelCase; quote: `"runId"`, `"assetSymbol"`. |
-| noiseSensitivity 0 in API | Worker logs show non-zero CrowdMetrics.noiseSensitivity but API returns 0 | API mapper in `apps/api/src/results`: include noiseSensitivity in select and map into perStep[].noiseSensitivity. |
-| Backtest corr null | "AssetStepReturn count is 0" or pairsCount=0 → corr/directionalAccuracy null | (1) Decide overwrite must NOT delete AssetStepReturn. (2) Backtest must run on same runId that has AssetStepReturn; create run, import CSV, then run backtest-v0 with --runId. |
-| GET /results/backtests 500 | API build or runtime error on backtests endpoint | parseLimit in results controller: use single-arg signature; default 50, max 200 in parse-query. Ensure `pnpm -C apps/api build` passes. |
-| CSV not found (worker) | "CSV file not found" when running from apps/worker | Pass path relative to repo root (e.g. `apps/worker/data/market/...`) or absolute; script resolves via cwd and repo root. |
+## 16. Simulation Metrics
 
----
+Current run-level metrics:
 
-## Where to continue
+- totalPnl
+- avgPnl
+- avgRisk
+- tradeRate
+- holdRate
+- buyRate
+- sellRate
+- directionalAccuracy
+- corr
+- pairsCount
 
-- [ ] Run `pnpm -C packages/db exec prisma migrate dev` / `generate` only from packages/db context.
-- [ ] Use `API_BASE=http://localhost:4001` (or leave default) for all scripts and curl.
-- [ ] After decide with overwrite, confirm AssetStepReturn rows still exist for that runId+assetSymbol.
-- [ ] For backtest: one runId, CSV imported into that run, then backtest-v0 with that --runId (or omit --runId and pass --csv so script creates and imports).
-- [ ] Verify: `pnpm verify:learning-v1`, `pnpm verify:spy-e2e`, `pnpm verify:backtest-e2e` (if available).
+Variants include:
+- decisionCounts
+- decisionsHash
+- returnsHash
+- debug sample
 
-END CONTEXT
+Future metrics:
+- Sharpe ratio
+- Max drawdown
+- Volatility clustering
+- Regime classification
+
+------------------------------------------------------------------
+
+## 17. Leaderboard & Betting System
+
+Planned integration:
+
+- bets table
+- wallet tracking
+- ranking by:
+  - correlation
+  - directional accuracy
+  - risk-adjusted return
+
+Leaderboard must be deterministic and queryable.
+
+------------------------------------------------------------------
+
+## 18. Environment
+
+Development:
+WSL Ubuntu
+Ports 4000 / 4001
+
+All commands must run in WSL.
+
+No hidden Windows dependencies.
+
+------------------------------------------------------------------
+
+## 19. Long-Term Product Direction
+
+CrowdVest is not a toy backtester.
+
+It is:
+
+- A Crowd Intelligence Engine
+- A research platform
+- A signal generation engine
+- A SaaS product candidate
+
+Target users:
+- Quant researchers
+- Hedge funds
+- Retail analytics platforms
+- Academic research groups
+
+Future:
+- Cloud deployment
+- Multi-asset support
+- Real-time ingestion
+- Sentiment ingestion pipeline
+- Multi-run comparison dashboard
+
+------------------------------------------------------------------
+
+## 20. Organizational Model
+
+ChatGPT = CEO / System Architect
+Cursor = Lead Developer
+
+Rules:
+- CEO defines architecture
+- Cursor implements precisely
+- All changes must be reproducible
+- No undocumented decisions
+
+------------------------------------------------------------------
+
+## 21. API Surface (Current Endpoints)
+
+Runs:
+
+POST /runs
+POST /runs/create-unique
+POST /runs/import/spy29
+GET  /runs?limit=N
+GET  /runs/:id
+GET  /runs/:id/variants
+GET  /runs/:id/variants?assetSymbol=SPY
+
+Health:
+
+GET /health (API)
+GET /api/health (Web proxy)
+
+Web proxy:
+
+4000/api/* → 4001/*
+
+------------------------------------------------------------------
+
+## 22. Run Lifecycle (Current vs Target)
+
+Current:
+PENDING → COMPLETED
+
+Target:
+PENDING → RUNNING → COMPLETED → FAILED
+
+Worker must explicitly update run status.
+
+Status updates must be persisted via Prisma.
+
+------------------------------------------------------------------
+
+## 23. Dataset Rules
+
+AssetStepReturn rows are linked to runId.
+
+Rules:
+- AssetStepReturn must exist before backtest
+- steps parameter must equal AssetStepReturn count
+- Dataset import route populates AssetStepReturn
+- DatasetVersion must match imported dataset
+
+Failure to satisfy these conditions causes worker error.
+
+------------------------------------------------------------------
+
+## 24. Deterministic Validation Procedure
+
+Deterministic validation protocol:
+
+1. Run identical backtest twice
+2. Compare decisionsHash
+3. Compare returnsHash
+4. Compare corr
+5. Accept float delta <= 1e-15
+6. diff output must be empty
+
+All deterministic tests must pass before feature merge.
+
+------------------------------------------------------------------
+
+## 25. Hash Philosophy
+
+decisionsHash:
+Cryptographic hash of ordered agent decisions.
+
+returnsHash:
+Cryptographic hash of ordered AssetStepReturn rows.
+
+Purpose:
+- Ensure data integrity
+- Ensure reproducibility
+- Enable audit trail
+- Prevent silent drift
+
+Hashes are core product integrity mechanism.
+
+------------------------------------------------------------------
+
+## 26. Scaling Targets
+
+Phase 2 targets:
+
+- 1,000 agents per run
+- 10 seeds per run
+- <5 seconds execution time for 1k agents
+- Support concurrent runs
+- Determinism preserved under concurrency
+
+------------------------------------------------------------------
+
+## 27. Technology Stack
+
+Backend:
+NestJS v10
+Prisma ORM
+PostgreSQL
+
+Frontend:
+Next.js 15
+App Router
+
+Worker:
+TypeScript
+tsx execution
+
+Package manager:
+pnpm workspace
+
+Environment:
+WSL Ubuntu
+Ports 4000 / 4001
+No Docker in current phase
+
+------------------------------------------------------------------
+
+## 28. Naming Clarification
+
+CrowdVest:
+Product name.
+
+VINVESTOR:
+Concept name (Virtual Investor).
+
+VICWS:
+Technical system name (Virtual Investor Crowd Wisdom System).
+
+All refer to the same platform.
+
+## 29. Critical Invariants
+
+- SimulationRun must never mutate datasetVersion after creation
+- RunVariant must always reference valid runId
+- decisionsHash must be deterministic for identical seeds
+- returnsHash must match datasetVersion
+- Worker must fail fast if dataset invalid
+- No silent fallback to default dataset
+
+
+
+
+

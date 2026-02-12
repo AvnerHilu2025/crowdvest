@@ -4,10 +4,10 @@ const DEFAULT_OFFSET = 0;
 const DEFAULT_HISTORY_LIMIT = 10;
 const MAX_HISTORY_LIMIT = 100;
 
-export function parseLimit(limit: string | undefined): number {
-  if (limit == null || limit === "") return DEFAULT_LIMIT;
+export function parseLimit(limit: string | undefined, defaultLimit = DEFAULT_LIMIT): number {
+  if (limit == null || limit === "") return defaultLimit;
   const n = parseInt(limit, 10);
-  if (!Number.isFinite(n) || n < 1) return DEFAULT_LIMIT;
+  if (!Number.isFinite(n) || n < 1) return defaultLimit;
   return Math.min(n, MAX_LIMIT);
 }
 

@@ -109,6 +109,62 @@ export class ResultsService {
     };
   }
 
+  /** GET /results/latest?assetSymbol=SPY — latest COMPLETED run, its default variant, and variant summary. */
+  async latest(assetSymbol: string) {
+    const sym = (assetSymbol ?? "SPY").trim() || "SPY";
+
+    // 1) Find latest COMPLETED run that has at least one variant for this asset.
+    // Prefer runs with completedAt set (never return PENDING/RUNNING).
+    const run = await this.prisma.simulationRun.findFirst({
+      where: {
+        status: "COMPLETED",
+        runVariants: { some: { assetSymbol: sym } },
+        completedAt: { not: null },
+      },
+      orderBy: [{ completedAt: "desc" }, { startedAt: "desc" }],
+      select: {
+        id: true,
+        status: true,
+        startedAt: true,
+        completedAt: true,
+        failedAt: true,
+        lastError: true,
+      },
+    });
+
+    if (!run) {
+      return { run: null, defaultVariant: null, summary: null };
+    }
+
+    // 2) Get variants for asset
+    const variants = await this.prisma.runVariant.findMany({
+      where: {
+        runId: run.id,
+        assetSymbol: sym,
+      },
+      orderBy: [{ label: "asc" }, { seed: "asc" }],
+    });
+
+    if (!variants.length) {
+      return { run, defaultVariant: null, summary: null };
+    }
+
+    // Preferred variant = seed=1 and empty label, else first
+    const preferred =
+      variants.find((v) => v.seed === 1 && (v.label ?? "") === "") ?? variants[0];
+
+    // 3) Load summary
+    const summary = await this.prisma.runVariantSummary.findUnique({
+      where: { runVariantId: preferred.id },
+    });
+
+    return {
+      run,
+      defaultVariant: preferred,
+      summary,
+    };
+  }
+
   /** GET /results/crowd-state?runId=&assetSymbol= — per-step CrowdMetrics + recommendation (direction, strength, confidence, stability, explanation). */
   async getCrowdState(
     runId: string,
@@ -987,6 +1043,9 @@ export class ResultsService {
     status: string;
     startedAt: Date | null;
     finishedAt: Date | null;
+    completedAt: Date | null;
+    failedAt: Date | null;
+    lastError: string | null;
     seed: number;
     modelVersion: string;
     datasetVersion: string;
@@ -1000,6 +1059,9 @@ export class ResultsService {
         status: true,
         startedAt: true,
         finishedAt: true,
+        completedAt: true,
+        failedAt: true,
+        lastError: true,
         seed: true,
         modelVersion: true,
         datasetVersion: true,

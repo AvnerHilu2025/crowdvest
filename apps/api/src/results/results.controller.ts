@@ -33,6 +33,12 @@ function validateAgentId(agentId: string | undefined): string {
 export class ResultsController {
   constructor(private readonly resultsService: ResultsService) {}
 
+  /** GET /results/latest?assetSymbol=SPY — latest COMPLETED run, default variant, and summary. */
+  @Get("latest")
+  async latest(@Query("assetSymbol") assetSymbol = "SPY") {
+    return this.resultsService.latest(assetSymbol);
+  }
+
   /** GET /results/runs — list runs (paginated). */
   @Get("runs")
   async getRuns(

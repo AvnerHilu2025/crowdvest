@@ -8669,6 +8669,9 @@ export namespace Prisma {
     schemaVersion: string | null
     startedAt: Date | null
     finishedAt: Date | null
+    completedAt: Date | null
+    failedAt: Date | null
+    lastError: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -8684,6 +8687,9 @@ export namespace Prisma {
     schemaVersion: string | null
     startedAt: Date | null
     finishedAt: Date | null
+    completedAt: Date | null
+    failedAt: Date | null
+    lastError: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -8699,6 +8705,9 @@ export namespace Prisma {
     schemaVersion: number
     startedAt: number
     finishedAt: number
+    completedAt: number
+    failedAt: number
+    lastError: number
     configJson: number
     createdAt: number
     updatedAt: number
@@ -8725,6 +8734,9 @@ export namespace Prisma {
     schemaVersion?: true
     startedAt?: true
     finishedAt?: true
+    completedAt?: true
+    failedAt?: true
+    lastError?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -8740,6 +8752,9 @@ export namespace Prisma {
     schemaVersion?: true
     startedAt?: true
     finishedAt?: true
+    completedAt?: true
+    failedAt?: true
+    lastError?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -8755,6 +8770,9 @@ export namespace Prisma {
     schemaVersion?: true
     startedAt?: true
     finishedAt?: true
+    completedAt?: true
+    failedAt?: true
+    lastError?: true
     configJson?: true
     createdAt?: true
     updatedAt?: true
@@ -8858,6 +8876,9 @@ export namespace Prisma {
     schemaVersion: string
     startedAt: Date | null
     finishedAt: Date | null
+    completedAt: Date | null
+    failedAt: Date | null
+    lastError: string | null
     configJson: JsonValue | null
     createdAt: Date
     updatedAt: Date
@@ -8893,6 +8914,9 @@ export namespace Prisma {
     schemaVersion?: boolean
     startedAt?: boolean
     finishedAt?: boolean
+    completedAt?: boolean
+    failedAt?: boolean
+    lastError?: boolean
     configJson?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -8924,6 +8948,9 @@ export namespace Prisma {
     schemaVersion?: boolean
     startedAt?: boolean
     finishedAt?: boolean
+    completedAt?: boolean
+    failedAt?: boolean
+    lastError?: boolean
     configJson?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -8940,6 +8967,9 @@ export namespace Prisma {
     schemaVersion?: boolean
     startedAt?: boolean
     finishedAt?: boolean
+    completedAt?: boolean
+    failedAt?: boolean
+    lastError?: boolean
     configJson?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -8993,6 +9023,9 @@ export namespace Prisma {
       schemaVersion: string
       startedAt: Date | null
       finishedAt: Date | null
+      completedAt: Date | null
+      failedAt: Date | null
+      lastError: string | null
       configJson: Prisma.JsonValue | null
       createdAt: Date
       updatedAt: Date
@@ -9413,6 +9446,9 @@ export namespace Prisma {
     readonly schemaVersion: FieldRef<"SimulationRun", 'String'>
     readonly startedAt: FieldRef<"SimulationRun", 'DateTime'>
     readonly finishedAt: FieldRef<"SimulationRun", 'DateTime'>
+    readonly completedAt: FieldRef<"SimulationRun", 'DateTime'>
+    readonly failedAt: FieldRef<"SimulationRun", 'DateTime'>
+    readonly lastError: FieldRef<"SimulationRun", 'String'>
     readonly configJson: FieldRef<"SimulationRun", 'Json'>
     readonly createdAt: FieldRef<"SimulationRun", 'DateTime'>
     readonly updatedAt: FieldRef<"SimulationRun", 'DateTime'>
@@ -33862,6 +33898,9 @@ export namespace Prisma {
     schemaVersion: 'schemaVersion',
     startedAt: 'startedAt',
     finishedAt: 'finishedAt',
+    completedAt: 'completedAt',
+    failedAt: 'failedAt',
+    lastError: 'lastError',
     configJson: 'configJson',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
@@ -34717,6 +34756,9 @@ export namespace Prisma {
     schemaVersion?: StringFilter<"SimulationRun"> | string
     startedAt?: DateTimeNullableFilter<"SimulationRun"> | Date | string | null
     finishedAt?: DateTimeNullableFilter<"SimulationRun"> | Date | string | null
+    completedAt?: DateTimeNullableFilter<"SimulationRun"> | Date | string | null
+    failedAt?: DateTimeNullableFilter<"SimulationRun"> | Date | string | null
+    lastError?: StringNullableFilter<"SimulationRun"> | string | null
     configJson?: JsonNullableFilter<"SimulationRun">
     createdAt?: DateTimeFilter<"SimulationRun"> | Date | string
     updatedAt?: DateTimeFilter<"SimulationRun"> | Date | string
@@ -34747,6 +34789,9 @@ export namespace Prisma {
     schemaVersion?: SortOrder
     startedAt?: SortOrderInput | SortOrder
     finishedAt?: SortOrderInput | SortOrder
+    completedAt?: SortOrderInput | SortOrder
+    failedAt?: SortOrderInput | SortOrder
+    lastError?: SortOrderInput | SortOrder
     configJson?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -34781,6 +34826,9 @@ export namespace Prisma {
     schemaVersion?: StringFilter<"SimulationRun"> | string
     startedAt?: DateTimeNullableFilter<"SimulationRun"> | Date | string | null
     finishedAt?: DateTimeNullableFilter<"SimulationRun"> | Date | string | null
+    completedAt?: DateTimeNullableFilter<"SimulationRun"> | Date | string | null
+    failedAt?: DateTimeNullableFilter<"SimulationRun"> | Date | string | null
+    lastError?: StringNullableFilter<"SimulationRun"> | string | null
     configJson?: JsonNullableFilter<"SimulationRun">
     createdAt?: DateTimeFilter<"SimulationRun"> | Date | string
     updatedAt?: DateTimeFilter<"SimulationRun"> | Date | string
@@ -34811,6 +34859,9 @@ export namespace Prisma {
     schemaVersion?: SortOrder
     startedAt?: SortOrderInput | SortOrder
     finishedAt?: SortOrderInput | SortOrder
+    completedAt?: SortOrderInput | SortOrder
+    failedAt?: SortOrderInput | SortOrder
+    lastError?: SortOrderInput | SortOrder
     configJson?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -34835,6 +34886,9 @@ export namespace Prisma {
     schemaVersion?: StringWithAggregatesFilter<"SimulationRun"> | string
     startedAt?: DateTimeNullableWithAggregatesFilter<"SimulationRun"> | Date | string | null
     finishedAt?: DateTimeNullableWithAggregatesFilter<"SimulationRun"> | Date | string | null
+    completedAt?: DateTimeNullableWithAggregatesFilter<"SimulationRun"> | Date | string | null
+    failedAt?: DateTimeNullableWithAggregatesFilter<"SimulationRun"> | Date | string | null
+    lastError?: StringNullableWithAggregatesFilter<"SimulationRun"> | string | null
     configJson?: JsonNullableWithAggregatesFilter<"SimulationRun">
     createdAt?: DateTimeWithAggregatesFilter<"SimulationRun"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"SimulationRun"> | Date | string
@@ -37029,6 +37083,9 @@ export namespace Prisma {
     schemaVersion: string
     startedAt?: Date | string | null
     finishedAt?: Date | string | null
+    completedAt?: Date | string | null
+    failedAt?: Date | string | null
+    lastError?: string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -37059,6 +37116,9 @@ export namespace Prisma {
     schemaVersion: string
     startedAt?: Date | string | null
     finishedAt?: Date | string | null
+    completedAt?: Date | string | null
+    failedAt?: Date | string | null
+    lastError?: string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -37089,6 +37149,9 @@ export namespace Prisma {
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -37119,6 +37182,9 @@ export namespace Prisma {
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -37149,6 +37215,9 @@ export namespace Prisma {
     schemaVersion: string
     startedAt?: Date | string | null
     finishedAt?: Date | string | null
+    completedAt?: Date | string | null
+    failedAt?: Date | string | null
+    lastError?: string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -37165,6 +37234,9 @@ export namespace Prisma {
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -37181,6 +37253,9 @@ export namespace Prisma {
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -39793,6 +39868,9 @@ export namespace Prisma {
     schemaVersion?: SortOrder
     startedAt?: SortOrder
     finishedAt?: SortOrder
+    completedAt?: SortOrder
+    failedAt?: SortOrder
+    lastError?: SortOrder
     configJson?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -39813,6 +39891,9 @@ export namespace Prisma {
     schemaVersion?: SortOrder
     startedAt?: SortOrder
     finishedAt?: SortOrder
+    completedAt?: SortOrder
+    failedAt?: SortOrder
+    lastError?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -39828,6 +39909,9 @@ export namespace Prisma {
     schemaVersion?: SortOrder
     startedAt?: SortOrder
     finishedAt?: SortOrder
+    completedAt?: SortOrder
+    failedAt?: SortOrder
+    lastError?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -44998,6 +45082,9 @@ export namespace Prisma {
     schemaVersion: string
     startedAt?: Date | string | null
     finishedAt?: Date | string | null
+    completedAt?: Date | string | null
+    failedAt?: Date | string | null
+    lastError?: string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -45027,6 +45114,9 @@ export namespace Prisma {
     schemaVersion: string
     startedAt?: Date | string | null
     finishedAt?: Date | string | null
+    completedAt?: Date | string | null
+    failedAt?: Date | string | null
+    lastError?: string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -45383,6 +45473,9 @@ export namespace Prisma {
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -45412,6 +45505,9 @@ export namespace Prisma {
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -45693,6 +45789,9 @@ export namespace Prisma {
     schemaVersion: string
     startedAt?: Date | string | null
     finishedAt?: Date | string | null
+    completedAt?: Date | string | null
+    failedAt?: Date | string | null
+    lastError?: string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -45722,6 +45821,9 @@ export namespace Prisma {
     schemaVersion: string
     startedAt?: Date | string | null
     finishedAt?: Date | string | null
+    completedAt?: Date | string | null
+    failedAt?: Date | string | null
+    lastError?: string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -45989,6 +46091,9 @@ export namespace Prisma {
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -46018,6 +46123,9 @@ export namespace Prisma {
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -46235,6 +46343,9 @@ export namespace Prisma {
     schemaVersion: string
     startedAt?: Date | string | null
     finishedAt?: Date | string | null
+    completedAt?: Date | string | null
+    failedAt?: Date | string | null
+    lastError?: string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -46264,6 +46375,9 @@ export namespace Prisma {
     schemaVersion: string
     startedAt?: Date | string | null
     finishedAt?: Date | string | null
+    completedAt?: Date | string | null
+    failedAt?: Date | string | null
+    lastError?: string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -46387,6 +46501,9 @@ export namespace Prisma {
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -46416,6 +46533,9 @@ export namespace Prisma {
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -46535,6 +46655,9 @@ export namespace Prisma {
     schemaVersion: string
     startedAt?: Date | string | null
     finishedAt?: Date | string | null
+    completedAt?: Date | string | null
+    failedAt?: Date | string | null
+    lastError?: string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -46564,6 +46687,9 @@ export namespace Prisma {
     schemaVersion: string
     startedAt?: Date | string | null
     finishedAt?: Date | string | null
+    completedAt?: Date | string | null
+    failedAt?: Date | string | null
+    lastError?: string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -46650,6 +46776,9 @@ export namespace Prisma {
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -46679,6 +46808,9 @@ export namespace Prisma {
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -46755,6 +46887,9 @@ export namespace Prisma {
     schemaVersion: string
     startedAt?: Date | string | null
     finishedAt?: Date | string | null
+    completedAt?: Date | string | null
+    failedAt?: Date | string | null
+    lastError?: string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -46784,6 +46919,9 @@ export namespace Prisma {
     schemaVersion: string
     startedAt?: Date | string | null
     finishedAt?: Date | string | null
+    completedAt?: Date | string | null
+    failedAt?: Date | string | null
+    lastError?: string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -46829,6 +46967,9 @@ export namespace Prisma {
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -46858,6 +46999,9 @@ export namespace Prisma {
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -46887,6 +47031,9 @@ export namespace Prisma {
     schemaVersion: string
     startedAt?: Date | string | null
     finishedAt?: Date | string | null
+    completedAt?: Date | string | null
+    failedAt?: Date | string | null
+    lastError?: string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -46916,6 +47063,9 @@ export namespace Prisma {
     schemaVersion: string
     startedAt?: Date | string | null
     finishedAt?: Date | string | null
+    completedAt?: Date | string | null
+    failedAt?: Date | string | null
+    lastError?: string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -47039,6 +47189,9 @@ export namespace Prisma {
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -47068,6 +47221,9 @@ export namespace Prisma {
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -47187,6 +47343,9 @@ export namespace Prisma {
     schemaVersion: string
     startedAt?: Date | string | null
     finishedAt?: Date | string | null
+    completedAt?: Date | string | null
+    failedAt?: Date | string | null
+    lastError?: string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -47216,6 +47375,9 @@ export namespace Prisma {
     schemaVersion: string
     startedAt?: Date | string | null
     finishedAt?: Date | string | null
+    completedAt?: Date | string | null
+    failedAt?: Date | string | null
+    lastError?: string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -47261,6 +47423,9 @@ export namespace Prisma {
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -47290,6 +47455,9 @@ export namespace Prisma {
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -47319,6 +47487,9 @@ export namespace Prisma {
     schemaVersion: string
     startedAt?: Date | string | null
     finishedAt?: Date | string | null
+    completedAt?: Date | string | null
+    failedAt?: Date | string | null
+    lastError?: string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -47348,6 +47519,9 @@ export namespace Prisma {
     schemaVersion: string
     startedAt?: Date | string | null
     finishedAt?: Date | string | null
+    completedAt?: Date | string | null
+    failedAt?: Date | string | null
+    lastError?: string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -47471,6 +47645,9 @@ export namespace Prisma {
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -47500,6 +47677,9 @@ export namespace Prisma {
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -47619,6 +47799,9 @@ export namespace Prisma {
     schemaVersion: string
     startedAt?: Date | string | null
     finishedAt?: Date | string | null
+    completedAt?: Date | string | null
+    failedAt?: Date | string | null
+    lastError?: string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -47648,6 +47831,9 @@ export namespace Prisma {
     schemaVersion: string
     startedAt?: Date | string | null
     finishedAt?: Date | string | null
+    completedAt?: Date | string | null
+    failedAt?: Date | string | null
+    lastError?: string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -47771,6 +47957,9 @@ export namespace Prisma {
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -47800,6 +47989,9 @@ export namespace Prisma {
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -47919,6 +48111,9 @@ export namespace Prisma {
     schemaVersion: string
     startedAt?: Date | string | null
     finishedAt?: Date | string | null
+    completedAt?: Date | string | null
+    failedAt?: Date | string | null
+    lastError?: string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -47948,6 +48143,9 @@ export namespace Prisma {
     schemaVersion: string
     startedAt?: Date | string | null
     finishedAt?: Date | string | null
+    completedAt?: Date | string | null
+    failedAt?: Date | string | null
+    lastError?: string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -47993,6 +48191,9 @@ export namespace Prisma {
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -48022,6 +48223,9 @@ export namespace Prisma {
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -48051,6 +48255,9 @@ export namespace Prisma {
     schemaVersion: string
     startedAt?: Date | string | null
     finishedAt?: Date | string | null
+    completedAt?: Date | string | null
+    failedAt?: Date | string | null
+    lastError?: string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -48080,6 +48287,9 @@ export namespace Prisma {
     schemaVersion: string
     startedAt?: Date | string | null
     finishedAt?: Date | string | null
+    completedAt?: Date | string | null
+    failedAt?: Date | string | null
+    lastError?: string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -48125,6 +48335,9 @@ export namespace Prisma {
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -48154,6 +48367,9 @@ export namespace Prisma {
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -48183,6 +48399,9 @@ export namespace Prisma {
     schemaVersion: string
     startedAt?: Date | string | null
     finishedAt?: Date | string | null
+    completedAt?: Date | string | null
+    failedAt?: Date | string | null
+    lastError?: string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -48212,6 +48431,9 @@ export namespace Prisma {
     schemaVersion: string
     startedAt?: Date | string | null
     finishedAt?: Date | string | null
+    completedAt?: Date | string | null
+    failedAt?: Date | string | null
+    lastError?: string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -48335,6 +48557,9 @@ export namespace Prisma {
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -48364,6 +48589,9 @@ export namespace Prisma {
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -48483,6 +48711,9 @@ export namespace Prisma {
     schemaVersion: string
     startedAt?: Date | string | null
     finishedAt?: Date | string | null
+    completedAt?: Date | string | null
+    failedAt?: Date | string | null
+    lastError?: string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -48512,6 +48743,9 @@ export namespace Prisma {
     schemaVersion: string
     startedAt?: Date | string | null
     finishedAt?: Date | string | null
+    completedAt?: Date | string | null
+    failedAt?: Date | string | null
+    lastError?: string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -48557,6 +48791,9 @@ export namespace Prisma {
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -48586,6 +48823,9 @@ export namespace Prisma {
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -48707,6 +48947,9 @@ export namespace Prisma {
     schemaVersion: string
     startedAt?: Date | string | null
     finishedAt?: Date | string | null
+    completedAt?: Date | string | null
+    failedAt?: Date | string | null
+    lastError?: string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -48736,6 +48979,9 @@ export namespace Prisma {
     schemaVersion: string
     startedAt?: Date | string | null
     finishedAt?: Date | string | null
+    completedAt?: Date | string | null
+    failedAt?: Date | string | null
+    lastError?: string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -48836,6 +49082,9 @@ export namespace Prisma {
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -48865,6 +49114,9 @@ export namespace Prisma {
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string

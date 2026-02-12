@@ -24,6 +24,9 @@ export interface RunMeta {
   status: string;
   startedAt: Date | null;
   finishedAt: Date | null;
+  completedAt: Date | null;
+  failedAt: Date | null;
+  lastError: string | null;
   seed: number;
   modelVersion: string;
   datasetVersion: string;
@@ -45,9 +48,13 @@ export interface CompactPayload {
 }
 
 export interface NormalizedRunPayload {
+  id: string;
   runId: string;
   startedAt: string | null;
   finishedAt: string | null;
+  completedAt: string | null;
+  failedAt: string | null;
+  lastError: string | null;
   status: string;
   name: string;
   seed: number;
@@ -81,9 +88,13 @@ export function normalizeRunPayload(
         : EMPTY_HISTOGRAM;
 
   return {
-    runId: compact.runId,
+    id: runMeta.id,
+    runId: compact.runId ?? runMeta.id,
     startedAt: runMeta.startedAt?.toISOString() ?? null,
     finishedAt: runMeta.finishedAt?.toISOString() ?? null,
+    completedAt: runMeta.completedAt?.toISOString() ?? null,
+    failedAt: runMeta.failedAt?.toISOString() ?? null,
+    lastError: runMeta.lastError ?? null,
     status: runMeta.status,
     name: runMeta.name,
     seed: runMeta.seed,

@@ -174,6 +174,9 @@ exports.Prisma.SimulationRunScalarFieldEnum = {
   schemaVersion: 'schemaVersion',
   startedAt: 'startedAt',
   finishedAt: 'finishedAt',
+  completedAt: 'completedAt',
+  failedAt: 'failedAt',
+  lastError: 'lastError',
   configJson: 'configJson',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

@@ -36,6 +36,20 @@ pnpm dev
 
 If `DATABASE_URL` is missing, the API will fail at startup with a clear error telling you to add it to a root or app-level `.env`.
 
+## POST /runs/import/spy29 (create run + import, or import into existing)
+
+Without body: creates a new run with spy29 dataset and imports 29 AssetStepReturn rows. Returns `{ runId, ok, count }`.
+
+```bash
+# Create new run and import (no body)
+curl -s -X POST http://localhost:4001/runs/import/spy29 | jq
+
+# Import into existing run
+curl -s -X POST http://localhost:4001/runs/import/spy29 \
+  -H "Content-Type: application/json" \
+  -d '{"runId":"<RUN_ID>"}' | jq
+```
+
 ## Post-run verification (compact)
 
 For CI and fast post-run checks, use the compact summary endpoint:

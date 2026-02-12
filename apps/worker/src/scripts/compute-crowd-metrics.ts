@@ -2,10 +2,14 @@
  * CLI: pnpm -C apps/worker run compute-crowd-metrics -- --runId <uuid> [--assetSymbol RUN]
  * Computes CrowdMetrics from AgentDecision and persists.
  * Idempotent: upserts per (runId, assetSymbol, step).
+ *
+ * NOTE: RunVariantSummary (corr, directionalAccuracy, decisionsHash, returnsHash, decisionCounts)
+ * is NOT computed here. It is computed in backtest-v0.ts after this script runs per seed.
  */
 import path from "path";
 import fs from "fs";
 import { PrismaClient } from "@crowdvest/db";
+import { chunk } from "../lib/chunk";
 
 const DATABASE_URL_MISSING =
   "DATABASE_URL is not set. Create a .env at the repository root with DATABASE_URL=postgresql://...";
@@ -45,11 +49,12 @@ function loadEnv(): void {
   }
 }
 
-function parseArgv(): { runId: string; assetSymbol: string; runVariantId: string | undefined } {
+function parseArgv(): { runId: string; assetSymbol: string; runVariantId: string | undefined; overwrite: boolean } {
   const args = process.argv.slice(2);
   let runId = "";
   let assetSymbol = "RUN";
   let runVariantId: string | undefined;
+  let overwrite = false;
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--runVariantId" && args[i + 1]) {
       runVariantId = args[++i]!.trim();
@@ -57,6 +62,8 @@ function parseArgv(): { runId: string; assetSymbol: string; runVariantId: string
       runId = args[++i]!.trim();
     } else if (args[i] === "--assetSymbol" && args[i + 1]) {
       assetSymbol = args[++i]!.trim() || "RUN";
+    } else if (args[i] === "--overwrite" && args[i + 1]) {
+      overwrite = String(args[++i]).trim().toLowerCase() === "true";
     }
   }
   if (runVariantId) {
@@ -64,7 +71,7 @@ function parseArgv(): { runId: string; assetSymbol: string; runVariantId: string
   } else {
     if (!runId) throw new Error("--runId is required (or use --runVariantId)");
   }
-  return { runId, assetSymbol, runVariantId };
+  return { runId, assetSymbol, runVariantId, overwrite };
 }
 
 function clamp(x: number, lo: number, hi: number): number {
@@ -294,7 +301,18 @@ async function main(): Promise<void> {
   const prisma = new PrismaClient();
 
   const { runId, assetSymbol, runVariantId } = await resolveVariant(prisma, argv);
-  log(`compute-crowd-metrics runId=${runId} assetSymbol=${assetSymbol} runVariantId=${runVariantId}`);
+  log(`compute-crowd-metrics runId=${runId} assetSymbol=${assetSymbol} runVariantId=${runVariantId} overwrite=${argv.overwrite}`);
+
+  if (!argv.overwrite) {
+    const crowdCount = await prisma.crowdMetrics.count({ where: { runVariantId } });
+    if (crowdCount > 0) {
+      const GREEN = "\x1b[32m";
+      const RESET = "\x1b[0m";
+      console.log(`${GREEN}✅ SKIP crowd-metrics (existing ${crowdCount}, overwrite=false)${RESET}`);
+      await prisma.$disconnect();
+      process.exit(0);
+    }
+  }
 
   const run = await prisma.simulationRun.findUnique({
     where: { id: runId },
@@ -334,6 +352,25 @@ async function main(): Promise<void> {
   const debugCrowd = process.env.DEBUG_CROWD_METRICS === "1";
 
   let prevWeightedSignal: number | null = null;
+
+  const crowdMetricsToInsert: {
+    runId: string;
+    runVariantId: string;
+    assetSymbol: string;
+    step: number;
+    signal: number;
+    weightedSignal: number;
+    consensus: number;
+    polarization: number;
+    uncertainty: number;
+    minorityStrength: number;
+    beliefMomentum: number | null;
+    diversityIndex: number | null;
+    independenceIndex: number;
+    herdingIndex: number;
+    wisdomScore: number | null;
+    noiseSensitivity: number;
+  }[] = [];
 
   for (const step of steps) {
     const rows = byStep.get(step)!;
@@ -375,54 +412,33 @@ async function main(): Promise<void> {
       `[CrowdMetrics] step=${step}\n   diversity=${d.toFixed(3)} independence=${i.toFixed(3)} wisdom=${w.toFixed(3)} herding=${metrics.herdingIndex.toFixed(3)} noiseSens=${noiseSensitivity.toFixed(3)}`,
     );
 
-    const saved = await prisma.crowdMetrics.upsert({
-      where: {
-        runId_assetSymbol_step_runVariantId: {
-          runId,
-          assetSymbol: assetSym,
-          step,
-          runVariantId,
-        },
-      },
-      create: {
-        runId,
-        runVariantId,
-        assetSymbol: assetSym,
-        step,
-        signal: metrics.signal,
-        weightedSignal: metrics.weightedSignal,
-        consensus: metrics.consensus,
-        polarization: metrics.polarization,
-        uncertainty: metrics.uncertainty,
-        minorityStrength: metrics.minorityStrength,
-        beliefMomentum: metrics.beliefMomentum,
-        diversityIndex: metrics.diversityIndex,
-        independenceIndex: metrics.independenceIndex,
-        herdingIndex: metrics.herdingIndex,
-        wisdomScore: metrics.wisdomScore,
-        noiseSensitivity,
-      },
-      update: {
-        signal: metrics.signal,
-        weightedSignal: metrics.weightedSignal,
-        consensus: metrics.consensus,
-        polarization: metrics.polarization,
-        uncertainty: metrics.uncertainty,
-        minorityStrength: metrics.minorityStrength,
-        beliefMomentum: metrics.beliefMomentum,
-        diversityIndex: metrics.diversityIndex,
-        independenceIndex: metrics.independenceIndex,
-        herdingIndex: metrics.herdingIndex,
-        wisdomScore: metrics.wisdomScore,
-        noiseSensitivity,
-      },
+    crowdMetricsToInsert.push({
+      runId,
+      runVariantId,
+      assetSymbol: assetSym,
+      step,
+      signal: metrics.signal,
+      weightedSignal: metrics.weightedSignal,
+      consensus: metrics.consensus,
+      polarization: metrics.polarization,
+      uncertainty: metrics.uncertainty,
+      minorityStrength: metrics.minorityStrength,
+      beliefMomentum: metrics.beliefMomentum,
+      diversityIndex: metrics.diversityIndex,
+      independenceIndex: metrics.independenceIndex,
+      herdingIndex: metrics.herdingIndex,
+      wisdomScore: metrics.wisdomScore,
+      noiseSensitivity,
     });
-    console.log(
-      `[CrowdMetricsSaved] step=${step} diversity=${saved.diversityIndex} independence=${saved.independenceIndex} wisdom=${saved.wisdomScore} herding=${saved.herdingIndex} noiseSensitivity=${saved.noiseSensitivity}`,
-    );
   }
 
-  log(`Persisted ${steps.length} CrowdMetrics rows`);
+  if (argv.overwrite) {
+    await prisma.crowdMetrics.deleteMany({ where: { runVariantId } });
+  }
+  for (const batch of chunk(crowdMetricsToInsert, 1000)) {
+    await prisma.crowdMetrics.createMany({ data: batch });
+  }
+  log(`Persisted ${crowdMetricsToInsert.length} CrowdMetrics rows`);
   await prisma.$disconnect();
 }
 

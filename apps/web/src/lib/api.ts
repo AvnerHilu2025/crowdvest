@@ -1,10 +1,85 @@
 /**
- * Runs API client. Uses NEXT_PUBLIC_API_BASE or http://localhost:4001.
+ * API client. Uses NEXT_PUBLIC_API_URL (default http://localhost:4001).
  */
 
-export const API_BASE =
-  (typeof process !== "undefined" && process.env.NEXT_PUBLIC_API_BASE) ??
-  "http://localhost:4001";
+const API_BASE_RAW =
+  (typeof process !== "undefined" && process.env.NEXT_PUBLIC_API_URL) ?? "http://localhost:4001";
+export const API_BASE = String(API_BASE_RAW).replace(/\/$/, "") || "http://localhost:4001";
+
+/** Join API base URL + path safely (handles leading slash). */
+export function apiUrl(path: string): string {
+  const p = path.startsWith("/") ? path : `/${path}`;
+  return `${API_BASE}${p}`;
+}
+
+/** Fetch JSON from API path. Throws Error with status + response text on non-2xx. */
+export async function apiFetchJson<T>(path: string, init?: RequestInit): Promise<T> {
+  const url = apiUrl(path);
+  const res = await fetch(url, { ...init, cache: "no-store" });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`API ${res.status}: ${text || res.statusText}`);
+  }
+  return res.json() as Promise<T>;
+}
+
+export async function fetchJson<T>(url: string): Promise<T> {
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`API ${res.status}: ${text || res.statusText}`);
+  }
+  return res.json() as Promise<T>;
+}
+
+export interface RunsListResponse {
+  items: Array<{ runId: string; startedAt?: string | null }>;
+  total: number;
+}
+
+export interface RunVariantsResponse {
+  items: Array<{
+    id: string;
+    runId: string;
+    assetSymbol: string;
+    seed: number;
+    agents: number;
+    steps: number;
+    createdAt: string;
+    summary: {
+      corr: number | null;
+      directionalAccuracy: number | null;
+      pairsCount: number | null;
+      decisionsHash?: string;
+      returnsHash?: string;
+      createdAt: string;
+    } | null;
+  }>;
+  total: number;
+}
+
+/** Web base URL for server-side fetch of our own API routes (proxy). */
+function getWebBase(): string {
+  if (typeof window !== "undefined") return "";
+  const raw = process.env.NEXT_PUBLIC_WEB_URL ?? "http://localhost:4000";
+  return String(raw).replace(/\/$/, "") || "http://localhost:4000";
+}
+
+export async function listRuns(limit = 20): Promise<RunsListResponse> {
+  const base = getWebBase();
+  const url = base ? `${base}/api/runs?limit=${limit}` : `/api/runs?limit=${limit}`;
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`API ${res.status}: ${text || res.statusText}`);
+  }
+  return res.json() as Promise<RunsListResponse>;
+}
+
+export async function getRunVariants(runId: string, assetSymbol: string): Promise<RunVariantsResponse> {
+  const params = new URLSearchParams({ assetSymbol });
+  return apiFetchJson<RunVariantsResponse>(`/runs/${encodeURIComponent(runId)}/variants?${params.toString()}`);
+}
 
 export interface RunsListItem {
   runId: string;

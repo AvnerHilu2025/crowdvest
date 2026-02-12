@@ -13,6 +13,12 @@ CREATE TABLE "RunVariantSummary" (
 -- CreateIndex
 CREATE UNIQUE INDEX "RunVariantSummary_runVariantId_key" ON "RunVariantSummary"("runVariantId");
 
+-- AlterTable: debug columns (moved from 20260210181630_ so RunVariantSummary exists)
+ALTER TABLE "RunVariantSummary" ADD COLUMN     "debugDecisionCounts" JSONB,
+ADD COLUMN     "debugDecisionsHash" TEXT,
+ADD COLUMN     "debugPairsSample" JSONB,
+ADD COLUMN     "debugReturnsHash" TEXT;
+
 -- CreateIndex
 CREATE INDEX "RunVariant_runId_assetSymbol_createdAt_idx" ON "RunVariant"("runId", "assetSymbol", "createdAt");
 

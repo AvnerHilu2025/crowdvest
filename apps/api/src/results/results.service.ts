@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { ConflictException, Injectable, NotFoundException } from "@nestjs/common";
 import { createHash } from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
 import {
@@ -1552,6 +1552,63 @@ export class ResultsService {
         createdAt: r.createdAt,
       })),
       total,
+    };
+  }
+
+  /** GET /results/crowd-wisdom-dump — raw decisions + returns for Crowd Wisdom validation. Read-only projection. Run must be COMPLETED. */
+  async getCrowdWisdomDump(
+    runId: string,
+    assetSymbol: string,
+  ): Promise<{
+    runId: string;
+    assetSymbol: string;
+    steps: number;
+    agents: number;
+    decisions: { step: number; agentId: string; action: "BUY" | "SELL" | "HOLD" }[];
+    returns: { step: number; stepReturn: number }[];
+  }> {
+    const run = await this.prisma.simulationRun.findUnique({
+      where: { id: runId },
+      select: { id: true, status: true },
+    });
+    if (!run) throw new NotFoundException(`Run not found: ${runId}`);
+    if (run.status !== "COMPLETED") {
+      throw new ConflictException(`Run must be COMPLETED; current status: ${run.status}`);
+    }
+
+    const sym = (assetSymbol ?? "SPY").trim() || "SPY";
+    const [decisionRows, returnRows] = await Promise.all([
+      this.prisma.agentDecision.findMany({
+        where: { runId, assetSymbol: sym },
+        select: { step: true, agentId: true, action: true },
+      }),
+      this.prisma.assetStepReturn.findMany({
+        where: { runId, assetSymbol: sym },
+        select: { step: true, stepReturn: true },
+        orderBy: { step: "asc" },
+      }),
+    ]);
+
+    const maxStep = returnRows.length > 0
+      ? Math.max(...returnRows.map((r) => r.step), 0)
+      : decisionRows.length > 0
+        ? Math.max(...decisionRows.map((d) => d.step), 0)
+        : 0;
+    const steps = maxStep + 1;
+    const agentIds = new Set(decisionRows.map((d) => d.agentId));
+    const agents = agentIds.size;
+
+    return {
+      runId,
+      assetSymbol: sym,
+      steps,
+      agents,
+      decisions: decisionRows.map((d) => ({
+        step: d.step,
+        agentId: d.agentId,
+        action: d.action as "BUY" | "SELL" | "HOLD",
+      })),
+      returns: returnRows.map((r) => ({ step: r.step, stepReturn: r.stepReturn })),
     };
   }
 

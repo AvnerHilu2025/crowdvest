@@ -84,6 +84,8 @@
 - `/results/summary-compact` MUST read from `RunVariantSummary` and persisted histograms only.
 - No endpoint may recompute `corr`, `directionalAccuracy`, or hashes dynamically.
 - `AgentDecision` table is immutable once persisted (except overwrite=true explicitly).
+- AgentDecision rows must never be updated in-place.
+- overwrite=true must delete existing AgentDecision rows by runVariantId inside a single DB transaction before recomputation.
 - All performance metrics must be persisted before exposure via API.
 - Production-grade rule: Results endpoints are read-only projections over persisted state.
 
@@ -324,6 +326,46 @@ curl -s "$API/runs/$RUN_ID/variants?assetSymbol=SPY" | jq -r '.items[] | {id, se
 - Any change in simulation logic requires incrementing `modelVersion`.
 - Hashes are NOT comparable across different `modelVersion` values.
 - Reproducibility guarantees apply only within identical `(datasetVersion, modelVersion)` scope.
+
+---
+
+## Dataset Integrity Contract
+
+- `AssetStepReturn` rows are immutable once created.
+- Dataset rows must never be modified after import.
+- `datasetVersion` uniquely identifies a specific immutable dataset snapshot.
+- Backtest must validate:
+  - Row count == steps
+  - No missing step indexes
+- Worker must fail fast if dataset integrity validation fails.
+- Dataset mutation requires new `datasetVersion`.
+
+---
+
+## Variant Accounting Contract
+
+- `expectedVariants` must equal seeds parameter at run creation.
+- `expectedVariants` must be stored on SimulationRun at creation time and must not be inferred dynamically.
+- `completedVariants` increments only after successful variant persist.
+- A run is COMPLETED only when:
+  - completedVariants == expectedVariants
+  - All RunVariantSummary rows exist
+- Partial completion must keep run status RUNNING.
+
+---
+
+## Run Finalization & Atomicity Contract
+
+- Run finalization must be atomic.
+- Worker must:
+  1. Persist all RunVariant data
+  2. Persist RunVariantSummary
+  3. Persist CrowdMetrics
+  4. Then update SimulationRun.status = COMPLETED
+- If any step fails:
+  - Run status must be FAILED
+  - No partial success state allowed
+- COMPLETED runs must never be partially populated.
 
 ---
 

@@ -98,6 +98,18 @@ export class ResultsController {
     return this.resultsService.getDecisions(validRunId, step, sym);
   }
 
+  /** GET /results/crowd-wisdom-dump?runId=&assetSymbol= — raw decisions + returns for Crowd Wisdom validation. Run must be COMPLETED. */
+  @Get("crowd-wisdom-dump")
+  async getCrowdWisdomDump(
+    @Query("runId") runId: string | undefined,
+    @Query("run_id") runIdAlt: string | undefined,
+    @Query("assetSymbol") assetSymbol: string | undefined,
+  ) {
+    const validRunId = validateRunId(runId ?? runIdAlt);
+    const sym = (assetSymbol ?? "SPY").trim() || "SPY";
+    return this.resultsService.getCrowdWisdomDump(validRunId, sym);
+  }
+
   /** GET /results/crowd-state?runId=&assetSymbol= — per-step CrowdMetrics + recommendation (direction, strength, confidence, stability, explanation). */
   @Get("crowd-state")
   async getCrowdState(

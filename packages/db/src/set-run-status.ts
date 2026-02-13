@@ -88,6 +88,7 @@ export async function setRunStatus(
       data: {
         status: "FAILED",
         failedAt: now,
+        completedAt: null,
         lastError: (lastError ?? "unknown error").slice(0, 1000),
         startedAt,
       },

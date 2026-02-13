@@ -48,6 +48,99 @@ type ResultsRunRow = {
 export class ResultsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /** GET /results/runs-v2 — UI-ready runs list with variant info. */
+  async getRunsV2(
+    limit: number,
+    offset: number,
+  ): Promise<{
+    items: Array<{
+      id: string;
+      name: string;
+      createdAt: string;
+      status: "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
+      startedAt: string | null;
+      completedAt: string | null;
+      failedAt: string | null;
+      lastError: string | null;
+      assetSymbol: string | null;
+      steps: number | null;
+      agents: number | null;
+      variantsCount: number;
+    }>;
+    total: number;
+  }> {
+    const [runs, total] = await Promise.all([
+      this.prisma.simulationRun.findMany({
+        take: limit,
+        skip: offset,
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          name: true,
+          createdAt: true,
+          status: true,
+          startedAt: true,
+          completedAt: true,
+          failedAt: true,
+          lastError: true,
+        },
+      }),
+      this.prisma.simulationRun.count(),
+    ]);
+
+    const items = await Promise.all(
+      runs.map(async (r) => {
+        const variantsCount = await this.prisma.runVariant.count({ where: { runId: r.id } });
+        const defaultVariant = await this.prisma.runVariant.findFirst({
+          where: { runId: r.id, seed: 1, OR: [{ label: "" }, { label: null }] },
+          select: { assetSymbol: true, steps: true, agents: true },
+        });
+        const fallbackVariant =
+          defaultVariant ??
+          (await this.prisma.runVariant.findFirst({
+            where: { runId: r.id },
+            orderBy: { createdAt: "asc" },
+            select: { assetSymbol: true, steps: true, agents: true },
+          }));
+        const status = this.normalizeRunStatus(r.status);
+        return {
+          id: r.id,
+          name: r.name,
+          createdAt: r.createdAt.toISOString(),
+          status,
+          startedAt: r.startedAt?.toISOString() ?? null,
+          completedAt: r.completedAt?.toISOString() ?? null,
+          failedAt: r.failedAt?.toISOString() ?? null,
+          lastError: r.lastError,
+          assetSymbol: fallbackVariant?.assetSymbol ?? null,
+          steps: fallbackVariant?.steps ?? null,
+          agents: fallbackVariant?.agents ?? null,
+          variantsCount,
+        };
+      }),
+    );
+
+    return { items, total };
+  }
+
+  private normalizeRunStatus(
+    status: string | number,
+  ): "PENDING" | "RUNNING" | "COMPLETED" | "FAILED" {
+    const s = String(status).toUpperCase();
+    if (s === "PENDING" || s === "RUNNING" || s === "COMPLETED" || s === "FAILED") return s;
+    const n = Number(status);
+    if (Number.isFinite(n)) {
+      const map: Record<number, "PENDING" | "RUNNING" | "COMPLETED" | "FAILED"> = {
+        0: "PENDING",
+        1: "RUNNING",
+        2: "COMPLETED",
+        3: "FAILED",
+      };
+      return map[n] ?? "PENDING";
+    }
+    return "PENDING";
+  }
+
   /** GET /results/runs — list runs (Results Data Model shape). */
   async getRuns(limit: number, offset: number): Promise<{ items: SimulationRunResult[]; total: number }> {
     const [runs, total] = await Promise.all([
@@ -829,6 +922,28 @@ export class ResultsService {
     return { run, byArchetype, validation };
   }
 
+  /** Compute action histogram from AgentDecision for a run variant (works for persist=lite). */
+  private async computeActionHistogramForVariant(runVariantId: string): Promise<{
+    BUY: number;
+    SELL: number;
+    HOLD: number;
+    OTHER: number;
+    total: number;
+  }> {
+    const rows = await this.prisma.agentDecision.groupBy({
+      by: ["action"],
+      where: { runVariantId },
+      _count: { id: true },
+    });
+    const hist = { BUY: 0, SELL: 0, HOLD: 0, OTHER: 0 };
+    for (const r of rows) {
+      const key = r.action as "BUY" | "SELL" | "HOLD";
+      if (key in hist) hist[key] = r._count.id;
+    }
+    const total = hist.BUY + hist.SELL + hist.HOLD + hist.OTHER;
+    return { ...hist, total };
+  }
+
   /** Threshold for RISK_TOO_LOW warning (configurable via env). */
   private static readonly RISK_TOO_LOW_THRESHOLD =
     typeof process !== "undefined" && process.env.RESULTS_RISK_TOO_LOW_THRESHOLD != null
@@ -873,6 +988,24 @@ export class ResultsService {
     };
     warnings: string[];
   }> {
+    const run = await this.prisma.simulationRun.findUnique({
+      where: { id: runId },
+      select: { id: true },
+    });
+    if (!run) throw new NotFoundException(`Run not found: ${runId}`);
+
+    const defaultVariant = await this.prisma.runVariant.findFirst({
+      where: { runId, seed: 1, OR: [{ label: "" }, { label: null }] },
+      select: { id: true, steps: true, agents: true },
+    });
+    const fallbackVariant =
+      defaultVariant ??
+      (await this.prisma.runVariant.findFirst({
+        where: { runId },
+        orderBy: { seed: "asc" },
+        select: { id: true, steps: true, agents: true },
+      }));
+
     const [summaryResult, rawExperiences, simulationRun, runDebugResult] = await Promise.all([
       this.getSummary(runId),
       this.prisma.agentExperience.findMany({
@@ -891,22 +1024,78 @@ export class ResultsService {
         .catch(() => []),
     ]);
     const runDebug = Array.isArray(runDebugResult) && runDebugResult[0] ? runDebugResult[0] : null;
-    const { run, byArchetype, validation } = summaryResult;
+    const { run: runAgg, byArchetype, validation } = summaryResult;
     const agentCountSum = byArchetype.reduce((s, a) => s + a.metrics.agentCount, 0);
     const totalPnlSum = byArchetype.reduce((s, a) => s + a.metrics.totalPnl, 0);
 
-    const persistedHistogram = { BUY: 0, SELL: 0, HOLD: 0, OTHER: 0 };
-    const sampleActions: { agentId: string; step: number; action: string }[] = [];
-    for (let i = 0; i < rawExperiences.length; i++) {
-      const e = rawExperiences[i];
-      const action =
-        (e.actionJson as { action?: string } | null)?.action?.toLowerCase() ?? "hold";
-      const key =
-        action === "buy" ? "BUY" : action === "sell" ? "SELL" : action === "hold" ? "HOLD" : "OTHER";
-      persistedHistogram[key]++;
-      if (sampleActions.length < 10) {
-        sampleActions.push({ agentId: e.runAgentId, step: e.step, action: key });
+    let persistedHistogram: { BUY: number; SELL: number; HOLD: number; OTHER: number };
+    let sampleActions: { agentId: string; step: number; action: string }[];
+    let totalSteps: number;
+    let agentCount: number;
+    let totalBuy: number;
+    let totalSell: number;
+    let totalHold: number;
+
+    if (fallbackVariant) {
+      const hist = await this.computeActionHistogramForVariant(fallbackVariant.id);
+      persistedHistogram = { BUY: hist.BUY, SELL: hist.SELL, HOLD: hist.HOLD, OTHER: hist.OTHER };
+      totalSteps = fallbackVariant.steps;
+      agentCount = fallbackVariant.agents;
+      totalBuy = hist.BUY;
+      totalSell = hist.SELL;
+      totalHold = hist.HOLD;
+
+      const sampleDecs = await this.prisma.agentDecision.findMany({
+        where: { runVariantId: fallbackVariant.id },
+        select: { agentId: true, step: true, action: true },
+        orderBy: [{ step: "asc" }, { agentId: "asc" }],
+        take: 10,
+      });
+      sampleActions = sampleDecs.map((d) => ({
+        agentId: d.agentId,
+        step: d.step,
+        action: String(d.action),
+      }));
+    } else {
+      persistedHistogram = { BUY: 0, SELL: 0, HOLD: 0, OTHER: 0 };
+      sampleActions = [];
+      for (const e of rawExperiences) {
+        const action =
+          (e.actionJson as { action?: string } | null)?.action?.toLowerCase() ?? "hold";
+        const key =
+          action === "buy" ? "BUY" : action === "sell" ? "SELL" : action === "hold" ? "HOLD" : "OTHER";
+        persistedHistogram[key]++;
+        if (sampleActions.length < 10) {
+          sampleActions.push({ agentId: e.runAgentId, step: e.step, action: key });
+        }
       }
+      const m = runAgg.metrics;
+      totalSteps = Math.max(0, Number(m.totalSteps) || 0);
+      agentCount = m.agentCount;
+      totalBuy = Number(m.totalBuy) || 0;
+      totalSell = Number(m.totalSell) || 0;
+      totalHold = Number(m.totalHold) || 0;
+    }
+
+    const totalActions = persistedHistogram.BUY + persistedHistogram.SELL + persistedHistogram.HOLD + persistedHistogram.OTHER;
+    const m = runAgg.metrics;
+    const effectiveTotalSteps = totalSteps > 0 ? totalSteps : Math.max(0, Number(m.totalSteps) || 0);
+    const effectiveAgentCount = agentCount > 0 ? agentCount : m.agentCount;
+
+    let tradeRate = 0;
+    let holdRate = 0;
+    let buyRate = 0;
+    let sellRate = 0;
+    if (totalActions > 0) {
+      tradeRate = (totalBuy + totalSell) / totalActions;
+      holdRate = totalHold / totalActions;
+      buyRate = totalBuy / totalActions;
+      sellRate = totalSell / totalActions;
+    } else if (effectiveTotalSteps > 0) {
+      tradeRate = (totalBuy + totalSell) / effectiveTotalSteps;
+      holdRate = totalHold / effectiveTotalSteps;
+      buyRate = totalBuy / effectiveTotalSteps;
+      sellRate = totalSell / effectiveTotalSteps;
     }
 
     const config = (simulationRun?.configJson as Record<string, unknown> | null) ?? {};
@@ -947,47 +1136,38 @@ export class ResultsService {
     ) {
       mappingNotes = "prePersistHistogram differs from persistedHistogram; possible mapper loss";
     }
-    const m = run.metrics;
-    const warnings: string[] = [];
-    if (m.totalSell === 0) warnings.push("NO_SELL_ACTIONS");
-    if (m.totalSteps > 0) {
-      const tradeRate = (m.totalBuy + m.totalSell) / m.totalSteps;
-      if (tradeRate < 0.05) warnings.push("LOW_TRADE_RATE");
-      if (m.totalHold / m.totalSteps > 0.9) warnings.push("HIGH_HOLD_RATIO");
-    }
-    if (validation.pctProfitableAgents === 0) warnings.push("ALL_AGENTS_LOSING");
-    if (m.avgRisk < ResultsService.RISK_TOO_LOW_THRESHOLD) warnings.push("RISK_TOO_LOW");
-    if (m.totalBuy + m.totalSell === 0) warnings.push("NO_TRADES");
-    if (m.totalSell === 0 && m.totalBuy > 0 && m.totalSteps > 0 && m.totalBuy / m.totalSteps > 0.9) warnings.push("EXTREME_BUY_BIAS");
-    if (Math.abs(m.totalPnl) < 1e-6) warnings.push("VERY_LOW_PNL_MAGNITUDE");
 
-    const totalSteps = Math.max(0, Number(m.totalSteps) || 0);
-    const totalBuy = Number(m.totalBuy) || 0;
-    const totalSell = Number(m.totalSell) || 0;
-    const totalHold = Number(m.totalHold) || 0;
-    let tradeRate = 0;
-    let holdRate = 0;
-    let buyRate = 0;
-    let sellRate = 0;
-    if (totalSteps > 0) {
-      tradeRate = (totalBuy + totalSell) / totalSteps;
-      holdRate = totalHold / totalSteps;
-      buyRate = totalBuy / totalSteps;
-      sellRate = totalSell / totalSteps;
+    const warnings: string[] = [];
+    if (totalBuy + totalSell === 0) warnings.push("NO_TRADES");
+    if (totalSell === 0 && totalBuy > 0) warnings.push("NO_SELL_ACTIONS");
+    if (totalActions > 0) {
+      if (tradeRate < 0.05) warnings.push("LOW_TRADE_RATE");
+      if (holdRate > 0.9) warnings.push("HIGH_HOLD_RATIO");
+      if (totalSell === 0 && totalBuy > 0 && buyRate > 0.9) warnings.push("EXTREME_BUY_BIAS");
     }
+    if (effectiveTotalSteps > 0 && totalActions === 0) {
+      const legacyTradeRate = (m.totalBuy + m.totalSell) / effectiveTotalSteps;
+      if (legacyTradeRate < 0.05) warnings.push("LOW_TRADE_RATE");
+    }
+    if (validation.pctProfitableAgents === 0 && agentCountSum > 0) warnings.push("ALL_AGENTS_LOSING");
+    if (m.avgRisk < ResultsService.RISK_TOO_LOW_THRESHOLD && agentCountSum > 0) warnings.push("RISK_TOO_LOW");
+    if (Math.abs(m.totalPnl) < 1e-6 && agentCountSum > 0) warnings.push("VERY_LOW_PNL_MAGNITUDE");
+
+    const avgStepsPerAgent =
+      effectiveAgentCount > 0 ? effectiveTotalSteps / effectiveAgentCount : 0;
 
     return {
       runId,
       metrics: {
-        agentCount: m.agentCount,
+        agentCount: effectiveAgentCount,
         totalPnl: m.totalPnl,
         avgPnl: m.avgPnl,
         avgRisk: m.avgRisk,
-        totalSteps: m.totalSteps,
-        avgStepsPerAgent: m.avgStepsPerAgent,
-        totalBuy: m.totalBuy,
-        totalSell: m.totalSell,
-        totalHold: m.totalHold,
+        totalSteps: effectiveTotalSteps,
+        avgStepsPerAgent,
+        totalBuy,
+        totalSell,
+        totalHold,
         totalReward: m.totalReward,
         avgReward: m.avgReward,
         tradeRate,

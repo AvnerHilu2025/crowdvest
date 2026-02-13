@@ -39,6 +39,15 @@ export class ResultsController {
     return this.resultsService.latest(assetSymbol);
   }
 
+  /** GET /results/runs-v2 — UI-ready runs list with variant info. */
+  @Get("runs-v2")
+  async getRunsV2(
+    @Query("limit") limit?: string,
+    @Query("offset") offset?: string,
+  ) {
+    return this.resultsService.getRunsV2(parseLimit(limit), parseOffset(offset));
+  }
+
   /** GET /results/runs — list runs (paginated). */
   @Get("runs")
   async getRuns(

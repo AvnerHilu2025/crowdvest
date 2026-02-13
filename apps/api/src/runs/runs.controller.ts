@@ -150,11 +150,11 @@ export class RunsController {
     return result;
   }
 
-  /** PATCH /runs/:runId/status — update run status (e.g. FINISHED/FAILED). Body: { status: "COMPLETED"|"FAILED" } or { status: "FINISHED" } (FINISHED maps to COMPLETED). */
+  /** PATCH /runs/:runId/status — update run status. Body: { status: "COMPLETED"|"FAILED"|"FINISHED", lastError?: string }. FINISHED maps to COMPLETED. */
   @Patch("runs/:runId/status")
   async updateStatus(
     @Param("runId") runId: string,
-    @Body() body: { status?: string },
+    @Body() body: { status?: string; lastError?: string },
   ) {
     const id = runId?.trim() ?? "";
     if (id === "" || !UUID_REGEX.test(id)) throw new BadRequestException("runId must be a UUID");
@@ -162,7 +162,8 @@ export class RunsController {
     if (status !== "COMPLETED" && status !== "FAILED" && status !== "FINISHED") {
       throw new BadRequestException('status must be "COMPLETED", "FAILED", or "FINISHED"');
     }
-    return this.runsService.updateRunStatus(id, status === "FINISHED" ? "COMPLETED" : status);
+    const lastError = body?.lastError != null ? String(body.lastError).trim() || undefined : undefined;
+    return this.runsService.updateRunStatus(id, status === "FINISHED" ? "COMPLETED" : status, lastError);
   }
 
   @Get("runs")

@@ -1,6 +1,5 @@
 import * as fs from "fs";
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
-import { setRunStatus } from "@crowdvest/db";
 import { PrismaService } from "../prisma/prisma.service";
 import type { RunSummaryResponse } from "./run-summary.types";
 import { getDefaultSpyCsvPath } from "../common/default-dataset";
@@ -239,23 +238,62 @@ export class RunsService {
     return { ok: true, runId };
   }
 
-  /** PATCH /runs/:runId/status — update run status. Only updates if current status is PENDING or RUNNING; never overwrites FAILED. */
-  async updateRunStatus(runId: string, status: "COMPLETED" | "FAILED"): Promise<{ id: string; status: string; finishedAt: string | null }> {
+  /** PATCH /runs/:runId/status — update run status. Validates transitions, idempotent for COMPLETED/FAILED. */
+  async updateRunStatus(runId: string, status: "COMPLETED" | "FAILED", lastError?: string): Promise<{ id: string; status: string; finishedAt: string | null }> {
     const run = await this.prisma.simulationRun.findUnique({
       where: { id: runId },
-      select: { id: true, status: true },
+      select: { id: true, status: true, startedAt: true, completedAt: true, failedAt: true, lastError: true },
     });
     if (!run) throw new NotFoundException("Run not found");
-    if (run.status === "FAILED") {
-      return { id: runId, status: "FAILED", finishedAt: null };
+
+    const from = run.status;
+    const to = status;
+
+    // Block invalid transitions: COMPLETED -> anything except COMPLETED (idempotent)
+    if (from === "COMPLETED" && to !== "COMPLETED") {
+      throw new ConflictException(`Invalid status transition: ${from} -> ${to}`);
     }
-    const result = await setRunStatus(this.prisma, runId, status);
-    if (result.count === 0) {
-      return { id: runId, status: run.status, finishedAt: null };
+
+    const now = new Date();
+    let data: Record<string, unknown>;
+
+    if (to === "COMPLETED") {
+      // Idempotent: completedAt only if null; startedAt if null (defensive)
+      data = {
+        status: "COMPLETED",
+        completedAt: run.completedAt ?? now,
+        failedAt: null,
+        lastError: null,
+        startedAt: run.startedAt ?? now,
+      };
+    } else {
+      // FAILED
+      // Idempotent: failedAt only if null; lastError: use provided or keep existing
+      const effectiveLastError =
+        lastError !== undefined ? lastError.slice(0, 1000) : (run.lastError ?? "unknown error");
+      data = {
+        status: "FAILED",
+        failedAt: run.failedAt ?? now,
+        completedAt: null,
+        lastError: effectiveLastError,
+        startedAt: run.startedAt ?? now,
+      };
     }
-    // Backward compat: map finishedAt from completedAt (completedAt is always set for COMPLETED)
-    const completedAt = result.run?.completedAt ?? result.run?.failedAt;
-    return { id: runId, status, finishedAt: completedAt?.toISOString() ?? null };
+
+    const updated = await this.prisma.simulationRun.update({
+      where: { id: runId },
+      data,
+      select: { id: true, status: true, completedAt: true, failedAt: true },
+    });
+
+    const finishedAt =
+      updated.status === "COMPLETED"
+        ? updated.completedAt?.toISOString() ?? null
+        : updated.status === "FAILED"
+          ? updated.failedAt?.toISOString() ?? null
+          : null;
+
+    return { id: updated.id, status: updated.status, finishedAt };
   }
 
   /** GET /runs — lightweight list (no configJson). Each item includes metrics and warningsCount. */

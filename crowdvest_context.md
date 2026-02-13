@@ -1,128 +1,226 @@
-# 🚀 CrowdVest (VINVESTOR / VICWS)
+# CrowdVest (VINVESTOR / VICWS) — Project Context
 
-## 1. Product Vision
+> Paste at start of every new chat.
 
-CrowdVest is a Virtual Investor Crowd Wisdom System.
+---
 
-It simulates thousands of autonomous investor agents
-with archetypes and behavioral traits.
+## Role / Behavior Contract
 
-Purpose:
-- Model collective intelligence
-- Generate crowd-based forecasts
-- Analyze directional accuracy
-- Simulate market behavior
-- Measure correlation vs actual returns
-- Provide deterministic backtesting
-- Become a decision-support intelligence platform
+- **ChatGPT:** CTO + System Architect
+- **Cursor:** Lead Developer
+- **Execution style:** Every answer must include: (a) exact file(s) to edit, (b) exact code to paste, (c) exact WSL command(s), (d) verification check(s).
+- **No theory** unless explicitly asked.
+- **IMPORTANT:** When UI/UX phase begins, add a second role: **Product Designer (Modern Fintech)**. Before starting any UI/UX task, ChatGPT must explicitly say: "Switching to Designer role now" and ask for UI guidelines if not already provided. CTO role remains active always.
 
-Long-term vision:
-- Crowd-based alpha detection
-- Market regime detection
-- Agent archetype analytics
-- Commercial SaaS platform
+---
 
-------------------------------------------------------------------
+## Project Overview
 
-## 2. System Architecture (Monorepo)
+- **Product name:** CrowdVest (VINVESTOR / VICWS) — Virtual Investor Crowd Wisdom System.
+- **Purpose:** Simulate many autonomous investor agents (archetypes + behavioral traits) to produce crowd signals, run backtests, and show metrics + decisions deterministically.
+- **Monorepo:** pnpm workspace.
+- **Stack:** NestJS API + Prisma + PostgreSQL, Next.js web, TypeScript worker scripts.
 
-Root: ~/crowdvest
+---
 
-Package manager: pnpm
-Workspace structure: multi-app monorepo
+## Simulation Model Contract
 
-### Apps
+- **SimulationRun** represents:
+  - One datasetVersion
+  - One asset universe (currently SPY)
+  - One deterministic experiment container
 
-apps/api        → NestJS backend (port 4001)
-apps/web        → Next.js frontend (port 4000)
-apps/worker     → TS worker scripts (backtest-v0, etc.)
+- **RunVariant** represents:
+  - One (assetSymbol, seed, agents, steps, label) configuration
+  - Variants under same run share datasetVersion
+  - Variants are independent compute units
+  - Run completes when expectedVariants == completedVariants
 
-### Packages
+- **expectedVariants** = seeds count
+- **overwrite=true** recomputes decisions and metrics for variant only
+- **SKIP behavior:**
+  - If variant exists and overwrite=false → no delete, no recompute
+  - decisionsHash must remain unchanged
 
-packages/db     → Prisma schema + generated client
-packages/shared → shared types (if exists)
+---
 
-------------------------------------------------------------------
+## Agent Generation Model
 
-## 3. Ports & Services
+- Agents are generated per `runVariant` using `(seed, agents)` parameters.
+- Agent population must be deterministic for identical `(seed, agents)` inputs.
+- `agentIdsHash` must match across identical configurations.
+- Agents are NOT shared across different runs.
+- Changing `agents` count or `seed` changes agent population deterministically.
+- Agent generation must not depend on runtime randomness outside seeded RNG.
 
-API:
-http://localhost:4001
-NestJS + Prisma
+---
 
-Web:
-http://localhost:4000
-Next.js 15
+## Concurrency & Job Model
 
-Health endpoints:
-GET /health (API)
-GET /api/health (Web proxy)
+- Single Node worker process (current)
+- Job queue: in-memory (non-durable)
+- Only one run executes at a time (queueLen reflects backlog)
+- If process crashes → queue lost (acceptable in dev phase)
+- **Concurrency target:**
+  - Determinism preserved under concurrent run submissions
+  - Worker must not run two backtests simultaneously
 
-------------------------------------------------------------------
+---
 
-## 4. Database
+## Canonical Data Ownership
 
-Database: PostgreSQL
-ORM: Prisma
+- **RunVariantSummary** = canonical performance metrics (corr, directionalAccuracy)
+- **CrowdMetrics** = derived per-step analytics
+- **AgentDecision** = immutable once persisted
+- **AssetStepReturn** = canonical dataset
+- Hashes computed from canonical sources only
+- No endpoint may recompute corr dynamically
 
-Core models:
+---
 
-- SimulationRun
-- RunVariant
-- AssetStepReturn
-- AgentDecision
-- CrowdMetrics
+## Results Integrity Rule
 
-Important constraints:
+- `/results/latest` MUST read from `RunVariantSummary`.
+- `/results/summary-compact` MUST read from `RunVariantSummary` and persisted histograms only.
+- No endpoint may recompute `corr`, `directionalAccuracy`, or hashes dynamically.
+- `AgentDecision` table is immutable once persisted (except overwrite=true explicitly).
+- All performance metrics must be persisted before exposure via API.
+- Production-grade rule: Results endpoints are read-only projections over persisted state.
 
-Unique index:
-(name, datasetVersion) on SimulationRun
+---
 
-------------------------------------------------------------------
+## Production-Grade Run Definition
 
-## 5. Current Stable Capabilities (PRODUCTION READY)
+A run is considered production-valid only if:
 
-✅ Deterministic backtest-v0
-- Requires AssetStepReturn rows
-- steps must match return count
-- seeds produce deterministic variants
-- decision hashes stable
+- status == COMPLETED
+- completedAt != null
+- failedAt == null
+- All expectedVariants exist
+- decisionsHash != null
+- returnsHash != null
 
-✅ Run lifecycle:
-POST /runs/create-unique
-POST /runs/import/spy29
-Worker backtest
-GET /runs/:id
-GET /runs/:id/variants
+**FAILED runs must:**
+- Not appear in /results/latest
+- Not appear in leaderboard
+- Not appear in runs-v2 default list (unless explicitly requested)
 
-Status flow:
-PENDING → COMPLETED
+---
 
-✅ Web proxy working:
-4000/api/* → 4001/*
+## Repo Structure
 
-Runs page loads
-Run details page loads
-Variants visible
+- **Root:** ~/crowdvest
+- **apps/api** — NestJS, port 4001
+- **apps/web** — Next.js, port 4000
+- **apps/worker** — TS scripts (backtest-v0, decide, compute-crowd-metrics, etc.)
+- **packages/db** — Prisma schema + generated client
+- **packages/shared** — shared types
+- **packages/sim-core** — simulation core
 
-------------------------------------------------------------------
+---
 
-## 6. Deterministic Dataset
+## Environment
 
-SPY dataset:
-29 AssetStepReturn rows
-DatasetVersion:
-ab8cd075a60e9164d278ba1a5451f973c66def292a46b06375c9a42e8a65e96b
+- **WSL Ubuntu** — all commands must run in WSL.
+- **Ports:** 4000 (web), 4001 (API).
+- **Package manager:** pnpm workspace.
+- **Database:** PostgreSQL via `DATABASE_URL` in `.env`.
+- **No Docker** in current phase.
 
-Required:
---steps 29
+---
 
-------------------------------------------------------------------
+## Bootstrap Procedure (Fresh Dev Machine)
 
-## 7. Worker Commands
+1. `cd ~/crowdvest`
+2. `pnpm install`
+3. Ensure Postgres running
+4. `pnpm -C apps/api dev`
+5. `pnpm -C apps/worker dev`
+6. `curl -X POST http://localhost:4001/runs/import/spy29`
+7. Verify COMPLETED via `GET /runs/:runId`
+8. `chmod +x scripts/test-summary-compact.sh && ./scripts/test-summary-compact.sh`
 
-Backtest:
+Purpose: Allow new chat to instantly resume product work.
 
+---
+
+## DB Models / Tables (Prisma)
+
+- **SimulationRun:** id, name, status (PENDING|RUNNING|COMPLETED|FAILED), startedAt, completedAt, failedAt, lastError, seed, modelVersion, datasetVersion, createdAt
+- **RunVariant:** id, runId, assetSymbol, seed, agents, steps, label, createdAt
+- **RunVariantSummary:** runVariantId, corr, directionalAccuracy, pairsCount; debugDecisionsHash, debugReturnsHash (in summary)
+- **AgentDecision:** runId, runVariantId, step, agentId, assetSymbol, action (BUY|SELL|HOLD), confidence
+- **CrowdMetrics:** runId, runVariantId, assetSymbol, step, signal, consensus, polarization, etc.
+- **AssetStepReturn:** runId, assetSymbol, step, stepReturn
+- **RunAgent:** runId, name, archetype, biases
+- **AgentState, AgentInfoState, AgentExperience, AgentReward:** per-step agent state and rewards
+- **Archetype, TraitDefinition:** reference data
+
+**Important constraints:**
+- SimulationRun: `@@unique([name, datasetVersion])`
+- RunVariant: `@@unique([runId, assetSymbol, seed, label])` — reusing runId with same label+seed fails; must SKIP or upsert.
+
+---
+
+## Run Lifecycle (Implemented)
+
+PENDING → RUNNING → COMPLETED  
+PENDING → RUNNING → FAILED  
+
+**Rules:**
+- Worker sets RUNNING when backtest starts.
+- Worker finalizes COMPLETED on success, FAILED on error.
+- PATCH /runs/:runId/status enforces:
+  - COMPLETED → FAILED blocked (409)
+  - FAILED → COMPLETED allowed (recovery)
+  - completedAt stable (idempotent)
+  - failedAt cleared on recovery
+  - lastError cleared on recovery
+
+---
+
+## API Surface (Authoritative)
+
+**Runs**
+- POST /runs — create run
+- POST /runs/import/spy29 — create 29 AssetStepReturn rows, returns { runId }, triggers job when count=29
+- POST /runs/create-unique — create run with unique name
+- GET /runs?limit=N&offset=N — list runs
+- GET /runs/:id — one run (status, startedAt, completedAt, failedAt, lastError)
+- GET /runs/:runId/variants?assetSymbol=SPY — list variants with hashes
+- PATCH /runs/:runId/status — body: { status, lastError? }
+
+**Jobs**
+- GET /jobs/queue — queueLen, runningRunId, lastEvents
+- POST /jobs/enqueue — body: { runId }; dev-only or X-Admin-Token
+
+**Results**
+- GET /results/latest?assetSymbol=SPY — { run, defaultVariant, summary }
+- GET /results/summary-compact?run_id=RUN_ID — histogram + warnings (CI-friendly)
+- GET /results/runs-v2?limit=N&offset=N — UI-ready runs list; status matches /runs/:id
+- GET /results/summary, /results/decisions, /results/crowd-state, /results/crowd-summary
+- GET /results/agent-state, /results/agent-rewards, /results/backtests
+- GET /results/run-debug-counts — NODE_ENV !== production or X-Debug: true
+
+**Health**
+- GET /health (API)
+- GET /api/health (Web proxy)
+
+**Web Proxy**
+- 4000/api/* → 4001/*
+
+---
+
+## Worker Scripts & Key Files
+
+- `apps/worker/src/scripts/backtest-v0.ts` — main backtest; SKIPs already-computed variants (no deletes)
+- `apps/worker/src/scripts/decide.ts` — decision engine
+- `apps/worker/src/scripts/compute-crowd-metrics.ts` — crowd metrics
+- `apps/worker/src/scripts/compute-rewards.ts` — agent rewards
+- `apps/worker/src/lib/assert-run-exists.ts` — validates run exists before worker runs
+- `packages/db/src/set-run-status.ts` — central run status transitions
+
+**Worker command:**
 ```bash
 pnpm -C apps/worker run backtest-v0 -- \
   --runId <RUN_ID> \
@@ -133,385 +231,141 @@ pnpm -C apps/worker run backtest-v0 -- \
   --seeds 2
 ```
 
-------------------------------------------------------------------
+---
 
-## 8. Current Status (CEO Summary)
+## Dataset Rules
 
-System is stable.
-Deterministic.
-Lifecycle validated.
-Web + API integrated.
-Ready to move from infrastructure to product features.
+- AssetStepReturn rows linked to runId; must exist before backtest.
+- steps parameter must equal AssetStepReturn count.
+- Dataset import route populates AssetStepReturn.
+- Failure to satisfy causes worker error.
 
-No blocking bugs.
+---
 
-------------------------------------------------------------------
+## Determinism Protocol
 
-## 9. Roadmap (Next Strategic Phase)
+1. Run identical backtest twice.
+2. Compare decisionsHash, returnsHash, corr.
+3. Accept float delta <= 1e-15; diff output must be empty.
 
-Phase 2: Productization
+**Invariants:**
+- SKIP must not delete existing decisions.
+- Rerun must preserve decisionsHash + returnsHash.
+- No recompute unless overwrite=true.
 
-1. Real Run Status Flow
-   - PENDING → RUNNING → COMPLETED → FAILED
-   - Update status during worker execution
+---
 
-2. Background Job Queue
-   - Decouple worker from manual CLI
-   - Automatic execution on run creation
+## Hash Philosophy
 
-3. Metrics Dashboard
-   - Correlation trend chart
-   - Directional accuracy visualization
-   - Archetype performance breakdown
+- **decisionsHash:** ordered deterministic agent decisions (cryptographic hash).
+- **returnsHash:** ordered AssetStepReturn rows (cryptographic hash).
+- **Float tolerance:** <= 1e-15.
+- Hashes are product integrity boundary; ensure reproducibility and audit trail.
 
-4. Leaderboard Integration
-   - Rank runs by correlation
-   - Rank by directional accuracy
+---
 
-5. Agent Behavior Analytics
-   - BUY/HOLD/SELL distribution graphs
-   - Risk heatmaps
+## Observability Targets
 
-6. Performance Optimization
-   - 1,000+ agents
-   - Concurrency testing
+**Future:**
+- Persist perf timings per variant
+- Store compute duration in RunVariant
+- Add metrics table if needed
+- Add structured logging contract
 
-------------------------------------------------------------------
+---
 
-## 10. Known Constraints
+## Hardening & Verification (Completed)
 
-- AssetStepReturn required before backtest
-- Steps must match return count
-- Unique (name,datasetVersion)
-- Web proxy must mirror API endpoints
+1. **Determinism:** POST /runs/import/spy29 → wait COMPLETED → GET variants → diff hashes. Outcome: DETERMINISM_OK
+2. **Queue:** POST 3 parallel imports → /jobs/queue shows queueLen>0, runningRunId. Outcome: queue works
+3. **backtest-v0 rerun:** SKIPs already-computed variants (no deletes). Outcome: PASS_NO_DELETES, SKIP logs present
+4. **Status patch:** FAILED→COMPLETED recovery; COMPLETED→FAILED blocked 409; completedAt stable. Outcome: all pass
+5. **summary-compact:** `chmod +x scripts/test-summary-compact.sh && ./scripts/test-summary-compact.sh`. Outcome: histogram BUY+SELL+HOLD > 0
+6. **runs-v2:** `chmod +x scripts/test-runs-v2.sh && ./scripts/test-runs-v2.sh`. Outcome: PASS
+7. **High-scale (agents=2000):** runId=dba15bad-8dcb-48f5-9495-743a5772637d, variantId=271b20c9-af16-44ae-ac73-b62c1e5bcacc, seed=1, agents=2000, steps=29, label="bench-2000-1770980552". Verification:
+```bash
+API="http://localhost:4001"
+RUN_ID="dba15bad-8dcb-48f5-9495-743a5772637d"
+curl -s "$API/runs/$RUN_ID/variants?assetSymbol=SPY" | jq -r '.items[] | {id, seed, agents, steps, label}'
+```
 
-------------------------------------------------------------------
+---
 
-## 11. Developer Rules
+## Scaling Targets (Phase 2)
 
-- Determinism first
-- No hidden randomness
-- All seeds reproducible
-- All endpoints testable via curl
-- All lifecycle flows testable via WSL
+- 2000 agents per variant validated (~8s)
+- 10 seeds per run
+- Target <12s for 2000 agents
+- Support concurrent submissions with deterministic execution order
 
-------------------------------------------------------------------
+---
 
-## 12. Next Immediate Task
+## Known Pitfalls
 
-~~Implement RUNNING status transition~~ DONE.
+- Worker backtest-v0 requires runId to exist; uuidgen without creating run fails "Run not found".
+- RunVariant unique (runId, assetSymbol, seed, label): reusing runId with same label+seed causes create to fail; must SKIP or upsert.
 
-Status transitions implemented:
-- Worker sets RUNNING when backtest starts (before dataset validation)
-- Worker sets COMPLETED on success (after all DB writes)
-- Worker sets FAILED on error (in catch, best-effort)
+---
 
-------------------------------------------------------------------
+## Critical Invariants
 
-## 13. Agent Architecture
+- SimulationRun must never mutate datasetVersion after creation.
+- RunVariant must always reference valid runId.
+- decisionsHash deterministic for identical seeds; returnsHash matches datasetVersion.
+- Worker must fail fast if dataset invalid; no silent fallback to default dataset.
 
-Each agent:
+---
 
-- Belongs to an archetype
-- Has 100+ behavioral traits
-- Makes BUY / SELL / HOLD decisions per step
-- Can evolve in future versions
+## Versioning Contract
 
-Archetypes:
-Currently 25 predefined archetypes.
+- `datasetVersion` is immutable once SimulationRun is created.
+- `modelVersion` must be stored on SimulationRun.
+- `decisionsHash`, `corr`, `directionalAccuracy`, and all derived metrics are valid only for a specific `(datasetVersion, modelVersion)` pair.
+- Any change in simulation logic requires incrementing `modelVersion`.
+- Hashes are NOT comparable across different `modelVersion` values.
+- Reproducibility guarantees apply only within identical `(datasetVersion, modelVersion)` scope.
 
-Agents are generated deterministically using:
-- seed
-- archetype definition
-- trait parameter ranges
+---
 
-Future:
-Dynamic trait mutation and learning loops.
+## Long-Term Product Direction
 
-------------------------------------------------------------------
+CrowdVest is a Crowd Intelligence Engine, research platform, signal generation engine, and SaaS product candidate.
 
-## 14. Traits System
+**Target users:** Quant researchers, hedge funds, retail analytics platforms, academic research groups.
 
-We maintain a structured list of 100+ investor traits.
+**Future:** Cloud deployment, multi-asset support, real-time ingestion, sentiment ingestion pipeline, multi-run comparison dashboard.
 
-Traits include:
-- Risk tolerance
-- Time horizon
-- Volatility sensitivity
-- Momentum bias
-- Loss aversion
-- Liquidity preference
-- Reaction speed
-- Herd behavior factor
-- Confidence decay
-- Overreaction bias
-- Regime sensitivity
-- Sentiment influence
+---
 
-Traits are stored in DB and used by decision engine.
+## Future Analytics Roadmap
 
-This is core intellectual property.
-
-------------------------------------------------------------------
-
-## 15. Determinism Protocol
-
-System must be 100% reproducible.
-
-Validation strategy:
-
-- Fixed seeds
-- decisionsHash comparison
-- returnsHash comparison
-- Correlation delta threshold check
-- A/B repeated backtest diff must be zero
-
-Floating point delta tolerance:
-~1e-15 acceptable
-
-Determinism is mandatory.
-
-------------------------------------------------------------------
-
-## 16. Simulation Metrics
-
-Current run-level metrics:
-
-- totalPnl
-- avgPnl
-- avgRisk
-- tradeRate
-- holdRate
-- buyRate
-- sellRate
-- directionalAccuracy
-- corr
-- pairsCount
-
-Variants include:
-- decisionCounts
-- decisionsHash
-- returnsHash
-- debug sample
-
-Future metrics:
-- Sharpe ratio
 - Max drawdown
 - Volatility clustering
 - Regime classification
+- Leaderboard: bets table, wallet tracking, ranking by correlation / directional accuracy / risk-adjusted return (deterministic and queryable)
 
-------------------------------------------------------------------
+---
 
-## 17. Leaderboard & Betting System
+## Current Status
 
-Planned integration:
+System stable and fast. Determinism, queueing, rerun idempotency, results endpoints, status patch logic hardened. 2000-agent compute validated.
 
-- bets table
-- wallet tracking
-- ranking by:
-  - correlation
-  - directional accuracy
-  - risk-adjusted return
+---
 
-Leaderboard must be deterministic and queryable.
+## Next Steps (Engineering)
 
-------------------------------------------------------------------
+1. Ensure /results/summary-compact uses canonical decision histogram source; never return zeros for completed runs.
+2. Add standardized bench suite script (agents=50/200/1000/2000) with durations + PASS/FAIL in green.
+3. Add scripts/run-hardening-suite.sh.
+4. Improve observability: persist perf timings per runVariant (optional table).
+5. Prep for UI/UX phase: define screens + API contracts for web dashboard (do not design yet).
 
-## 18. Environment
+---
 
-Development:
-WSL Ubuntu
-Ports 4000 / 4001
+## Phase Status
 
-All commands must run in WSL.
-
-No hidden Windows dependencies.
-
-------------------------------------------------------------------
-
-## 19. Long-Term Product Direction
-
-CrowdVest is not a toy backtester.
-
-It is:
-
-- A Crowd Intelligence Engine
-- A research platform
-- A signal generation engine
-- A SaaS product candidate
-
-Target users:
-- Quant researchers
-- Hedge funds
-- Retail analytics platforms
-- Academic research groups
-
-Future:
-- Cloud deployment
-- Multi-asset support
-- Real-time ingestion
-- Sentiment ingestion pipeline
-- Multi-run comparison dashboard
-
-------------------------------------------------------------------
-
-## 20. Organizational Model
-
-ChatGPT = CEO / System Architect
-Cursor = Lead Developer
-
-Rules:
-- CEO defines architecture
-- Cursor implements precisely
-- All changes must be reproducible
-- No undocumented decisions
-
-------------------------------------------------------------------
-
-## 21. API Surface (Current Endpoints)
-
-Runs:
-
-POST /runs
-POST /runs/create-unique
-POST /runs/import/spy29
-GET  /runs?limit=N
-GET  /runs/:id
-GET  /runs/:id/variants
-GET  /runs/:id/variants?assetSymbol=SPY
-
-Health:
-
-GET /health (API)
-GET /api/health (Web proxy)
-
-Web proxy:
-
-4000/api/* → 4001/*
-
-------------------------------------------------------------------
-
-## 22. Run Lifecycle (Current vs Target)
-
-Current:
-PENDING → COMPLETED
-
-Target:
-PENDING → RUNNING → COMPLETED → FAILED
-
-Worker must explicitly update run status.
-
-Status updates must be persisted via Prisma.
-
-------------------------------------------------------------------
-
-## 23. Dataset Rules
-
-AssetStepReturn rows are linked to runId.
-
-Rules:
-- AssetStepReturn must exist before backtest
-- steps parameter must equal AssetStepReturn count
-- Dataset import route populates AssetStepReturn
-- DatasetVersion must match imported dataset
-
-Failure to satisfy these conditions causes worker error.
-
-------------------------------------------------------------------
-
-## 24. Deterministic Validation Procedure
-
-Deterministic validation protocol:
-
-1. Run identical backtest twice
-2. Compare decisionsHash
-3. Compare returnsHash
-4. Compare corr
-5. Accept float delta <= 1e-15
-6. diff output must be empty
-
-All deterministic tests must pass before feature merge.
-
-------------------------------------------------------------------
-
-## 25. Hash Philosophy
-
-decisionsHash:
-Cryptographic hash of ordered agent decisions.
-
-returnsHash:
-Cryptographic hash of ordered AssetStepReturn rows.
-
-Purpose:
-- Ensure data integrity
-- Ensure reproducibility
-- Enable audit trail
-- Prevent silent drift
-
-Hashes are core product integrity mechanism.
-
-------------------------------------------------------------------
-
-## 26. Scaling Targets
-
-Phase 2 targets:
-
-- 1,000 agents per run
-- 10 seeds per run
-- <5 seconds execution time for 1k agents
-- Support concurrent runs
-- Determinism preserved under concurrency
-
-------------------------------------------------------------------
-
-## 27. Technology Stack
-
-Backend:
-NestJS v10
-Prisma ORM
-PostgreSQL
-
-Frontend:
-Next.js 15
-App Router
-
-Worker:
-TypeScript
-tsx execution
-
-Package manager:
-pnpm workspace
-
-Environment:
-WSL Ubuntu
-Ports 4000 / 4001
-No Docker in current phase
-
-------------------------------------------------------------------
-
-## 28. Naming Clarification
-
-CrowdVest:
-Product name.
-
-VINVESTOR:
-Concept name (Virtual Investor).
-
-VICWS:
-Technical system name (Virtual Investor Crowd Wisdom System).
-
-All refer to the same platform.
-
-## 29. Critical Invariants
-
-- SimulationRun must never mutate datasetVersion after creation
-- RunVariant must always reference valid runId
-- decisionsHash must be deterministic for identical seeds
-- returnsHash must match datasetVersion
-- Worker must fail fast if dataset invalid
-- No silent fallback to default dataset
-
-
-
-
-
+Phase 1: Core Engine Hardening — COMPLETE  
+Phase 2: Observability + Bench Suite — IN PROGRESS  
+Phase 3: Product Surface (UI Contracts) — NEXT  
+Phase 4: Analytics Expansion  
+Phase 5: SaaSization

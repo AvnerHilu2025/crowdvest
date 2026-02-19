@@ -214,11 +214,13 @@ async function main() {
   }
   const medAgentDA = median(agentAcc);
 
-  // Print report
+  // Print report (agentsRequested/agentsPersisted from dump when available)
   const report = {
     runId,
     steps: steps.length,
     agentsTotal: allAgents.length,
+    agentsRequested: dump.agentsRequested ?? null,
+    agentsPersisted: dump.agentsPersisted ?? allAgents.length,
     agentsSampled: sampledAgents.length,
     independence_avgAbsCorr: Number(avgAbsCorr.toFixed(4)),
     diversity_medEntropy: Number(medEntropy.toFixed(4)),
@@ -238,6 +240,7 @@ async function main() {
     crowdAdvantage: (crowdDA - medAgentDA) >= 0.0,
   };
 
+  // stdout: exactly one JSON object (suite parses this)
   console.log(JSON.stringify({ report, PASS }, null, 2));
 
   const ok = Object.values(PASS).every(Boolean);
@@ -245,6 +248,7 @@ async function main() {
 }
 
 main().catch((e) => {
+  // stderr: errors only (never mix with stdout)
   console.error(String(e?.stack ?? e));
   process.exit(1);
 });

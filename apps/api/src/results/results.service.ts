@@ -1564,6 +1564,10 @@ export class ResultsService {
     assetSymbol: string;
     steps: number;
     agents: number;
+    agentsRequested: number | null;
+    agentsPersisted: number;
+    decisionsCount: number;
+    returnsCount: number;
     decisions: { step: number; agentId: string; action: "BUY" | "SELL" | "HOLD" }[];
     returns: { step: number; stepReturn: number }[];
   }> {
@@ -1577,7 +1581,7 @@ export class ResultsService {
     }
 
     const sym = (assetSymbol ?? "SPY").trim() || "SPY";
-    const [decisionRows, returnRows] = await Promise.all([
+    const [decisionRows, returnRows, runVariant] = await Promise.all([
       this.prisma.agentDecision.findMany({
         where: { runId, assetSymbol: sym },
         select: { step: true, agentId: true, action: true },
@@ -1586,6 +1590,11 @@ export class ResultsService {
         where: { runId, assetSymbol: sym },
         select: { step: true, stepReturn: true },
         orderBy: { step: "asc" },
+      }),
+      this.prisma.runVariant.findFirst({
+        where: { runId, assetSymbol: sym },
+        orderBy: { createdAt: "desc" },
+        select: { agents: true },
       }),
     ]);
 
@@ -1596,13 +1605,17 @@ export class ResultsService {
         : 0;
     const steps = maxStep + 1;
     const agentIds = new Set(decisionRows.map((d) => d.agentId));
-    const agents = agentIds.size;
+    const agentsPersisted = agentIds.size;
 
     return {
       runId,
       assetSymbol: sym,
       steps,
-      agents,
+      agents: agentsPersisted,
+      agentsRequested: runVariant?.agents ?? null,
+      agentsPersisted,
+      decisionsCount: decisionRows.length,
+      returnsCount: returnRows.length,
       decisions: decisionRows.map((d) => ({
         step: d.step,
         agentId: d.agentId,

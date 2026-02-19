@@ -1,0 +1,21 @@
+{
+  "report": {
+    "runId": "3c0f1e76-c9df-4a68-b265-8dc806463634",
+    "steps": 29,
+    "agentsTotal": 200,
+    "agentsRequested": 200,
+    "agentsPersisted": 200,
+    "agentsSampled": 60,
+    "independence_avgAbsCorr": 0.1691,
+    "diversity_medEntropy": 0.998,
+    "diversity_medEntropy_norm01": 0.9085,
+    "crowdDirectionalAccuracy_sampled": 0.4286,
+    "medianAgentDirectionalAccuracy_sampled": 0.4167,
+    "crowdAdvantage_delta": 0.0119
+  },
+  "PASS": {
+    "independence": true,
+    "diversity": true,
+    "crowdAdvantage": true
+  }
+}

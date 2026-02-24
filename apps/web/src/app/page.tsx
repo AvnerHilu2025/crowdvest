@@ -1,5 +1,12 @@
 import Link from "next/link";
 import { truncateMiddle } from "@/lib/ui";
+import { formatDateUTC } from "@/lib/format";
+import {
+  SectionCard,
+  MetricRows,
+  MetricRow,
+  Badge,
+} from "@/components/ui/dashboard";
 
 const WEB_BASE =
   process.env.NEXT_PUBLIC_WEB_URL ?? "http://localhost:4000";
@@ -96,40 +103,6 @@ async function fetchRunDetail(runId: string): Promise<RunDetailResponse | null> 
   }
 }
 
-function Card({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="card">
-      <h2 className="card-title">{title}</h2>
-      {children}
-    </div>
-  );
-}
-
-function Row({
-  label,
-  value,
-  accent,
-}: {
-  label: string;
-  value: React.ReactNode;
-  accent?: boolean;
-}) {
-  return (
-    <div className="card-row">
-      <span className="card-row-label">{label}</span>
-      <span className={accent ? "card-row-value-accent" : "card-row-value"}>
-        {value}
-      </span>
-    </div>
-  );
-}
-
 export default async function DashboardPage() {
   const [latestResult, queueResult] = await Promise.all([
     fetchLatest(),
@@ -156,31 +129,49 @@ export default async function DashboardPage() {
 
       <div className="dashboard-grid">
         {/* Card 1: Latest Run */}
-        <Card title="Latest Run">
+        <SectionCard title="Latest Run">
           {!latestResult.ok ? (
             <p className="card-error">{latestResult.error}</p>
           ) : !latestResult.data.run ? (
             <p className="card-empty">No completed runs yet</p>
           ) : (
             <>
-              <Row label="Run ID" value={truncateMiddle(latestResult.data.run.id)} />
-              <Row label="Status" value={latestResult.data.run.status} />
-              <Row
-                label="Completed"
-                value={
-                  latestResult.data.run.completedAt
-                    ? new Date(latestResult.data.run.completedAt).toLocaleString()
-                    : "—"
-                }
-              />
-              <Row
-                label="Dataset"
-                value={runDetail?.datasetVersion ?? "—"}
-              />
-              <Row
-                label="Model"
-                value={runDetail?.modelVersion ?? "—"}
-              />
+              <MetricRows>
+                <MetricRow
+                  label="Run ID"
+                  value={truncateMiddle(latestResult.data.run.id)}
+                />
+                <MetricRow
+                  label="Status"
+                  value={
+                    <Badge
+                      tone={
+                        latestResult.data.run.status === "COMPLETED"
+                          ? "success"
+                          : latestResult.data.run.status === "FAILED"
+                            ? "danger"
+                            : latestResult.data.run.status === "RUNNING"
+                              ? "warn"
+                              : "neutral"
+                      }
+                    >
+                      {latestResult.data.run.status}
+                    </Badge>
+                  }
+                />
+                <MetricRow
+                  label="Completed"
+                  value={formatDateUTC(latestResult.data.run.completedAt)}
+                />
+                <MetricRow
+                  label="Dataset"
+                  value={runDetail?.datasetVersion ?? "—"}
+                />
+                <MetricRow
+                  label="Model"
+                  value={runDetail?.modelVersion ?? "—"}
+                />
+              </MetricRows>
               {latestResult.data.run.id && (
                 <Link
                   href={`/runs/${latestResult.data.run.id}`}
@@ -191,17 +182,17 @@ export default async function DashboardPage() {
               )}
             </>
           )}
-        </Card>
+        </SectionCard>
 
         {/* Card 2: Performance Summary */}
-        <Card title="Performance Summary">
+        <SectionCard title="Performance Summary">
           {!latestResult.ok ? (
             <p className="card-error">{latestResult.error}</p>
           ) : !latestResult.data.summary ? (
             <p className="card-empty">No completed runs yet</p>
           ) : (
-            <>
-              <Row
+            <MetricRows>
+              <MetricRow
                 label="Correlation"
                 value={
                   latestResult.data.summary.corr != null
@@ -209,7 +200,7 @@ export default async function DashboardPage() {
                     : "—"
                 }
               />
-              <Row
+              <MetricRow
                 label="Directional accuracy"
                 value={
                   latestResult.data.summary.directionalAccuracy != null
@@ -217,7 +208,7 @@ export default async function DashboardPage() {
                     : "—"
                 }
               />
-              <Row
+              <MetricRow
                 label="Pairs count"
                 value={
                   latestResult.data.summary.pairsCount != null
@@ -225,26 +216,30 @@ export default async function DashboardPage() {
                     : "—"
                 }
               />
-            </>
+            </MetricRows>
           )}
-        </Card>
+        </SectionCard>
 
         {/* Card 3: Worker / Queue */}
-        <Card title="Worker / Queue">
+        <SectionCard title="Worker / Queue">
           {!queueResult.ok ? (
             <p className="card-error">{queueResult.error}</p>
           ) : (
             <>
-              <Row label="Queue length" value={String(queueResult.data.queueLen)} />
-              <Row
-                label="Running"
-                value={
-                  queueResult.data.runningRunId
-                    ? truncateMiddle(queueResult.data.runningRunId)
-                    : "Idle"
-                }
-                accent={!!queueResult.data.runningRunId}
-              />
+              <MetricRows>
+                <MetricRow
+                  label="Queue length"
+                  value={String(queueResult.data.queueLen)}
+                />
+                <MetricRow
+                  label="Running"
+                  value={
+                    queueResult.data.runningRunId
+                      ? truncateMiddle(queueResult.data.runningRunId)
+                      : "Idle"
+                  }
+                />
+              </MetricRows>
               {queueResult.data.lastEvents?.length > 0 && (
                 <div className="card-meta">
                   Last event: {queueResult.data.lastEvents[queueResult.data.lastEvents.length - 1]?.type ?? "—"}
@@ -252,7 +247,7 @@ export default async function DashboardPage() {
               )}
             </>
           )}
-        </Card>
+        </SectionCard>
       </div>
     </div>
   );

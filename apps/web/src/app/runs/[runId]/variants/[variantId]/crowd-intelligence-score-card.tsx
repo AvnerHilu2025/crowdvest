@@ -2,6 +2,7 @@
 
 import { useCrossRunStats } from "./cross-run-provider";
 import { computeCis } from "@/lib/cis";
+import { KpiCard, Badge } from "@/components/ui/dashboard";
 
 export function CrowdIntelligenceScoreCard({
   directionalAccuracy,
@@ -26,18 +27,24 @@ export function CrowdIntelligenceScoreCard({
 
   if (loading) {
     return (
-      <div className="card variant-card cis-card" style={{ marginTop: 24 }}>
-        <h2 className="card-title">Crowd Intelligence Score</h2>
-        <p className="card-empty">Loading…</p>
+      <div style={{ marginTop: 24 }}>
+        <KpiCard
+          title="Crowd Intelligence Score"
+          value="—"
+          label="Loading…"
+        />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="card variant-card cis-card" style={{ marginTop: 24 }}>
-        <h2 className="card-title">Crowd Intelligence Score</h2>
-        <p className="card-error">{error}</p>
+      <div style={{ marginTop: 24 }}>
+        <KpiCard
+          title="Crowd Intelligence Score"
+          value="—"
+          label={error}
+        />
       </div>
     );
   }
@@ -84,41 +91,42 @@ export function CrowdIntelligenceScoreCard({
     rating = "Weak";
   }
 
-  const ratingClass =
+  const ratingTone: "success" | "warn" | "danger" | "neutral" =
     rating === "Elite" || rating === "Strong"
-      ? "cis-rating-green"
+      ? "success"
       : rating === "Neutral"
-        ? "cis-rating-amber"
+        ? "warn"
         : rating === "Inconclusive"
-          ? "cis-rating-gray"
-          : "cis-rating-red";
+          ? "neutral"
+          : "danger";
 
   const showStabilityPenaltyBadge = stabilityPenaltyFactor < 0.9;
 
-  return (
-    <div className="card variant-card cis-card" style={{ marginTop: 24 }}>
-      <h2 className="card-title">Crowd Intelligence Score</h2>
-      <div className="cis-base-score" style={{ fontSize: 12, color: "var(--cv-muted)", marginBottom: 4 }}>
-        Base Score: {baseScore.toFixed(1)}
-      </div>
-      <div className="cis-score">{finalScore.toFixed(1)}</div>
-      <div className="cis-stability-adjusted" style={{ fontSize: 12, color: "var(--cv-muted)", marginTop: 4 }}>
-        Stability-adjusted
-      </div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
+  const badgeFooter =
+    showStabilityPenaltyBadge || signInstability || weakSignal ? (
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
         {showStabilityPenaltyBadge && (
-          <span className="badge badge-amber">Stability penalty applied</span>
+          <Badge tone="warn">Stability penalty applied</Badge>
         )}
         {signInstability && (
-          <span className="badge badge-error">Sign Instability Across Seeds</span>
+          <Badge tone="danger">Sign instability across seeds</Badge>
         )}
         {weakSignal && (
-          <span className="badge">Weak Mean Correlation</span>
+          <Badge tone="neutral">Weak Mean Correlation</Badge>
         )}
       </div>
-      <div className={`cis-rating ${ratingClass}`} style={{ marginTop: 12 }}>
-        Rating: {rating}
-      </div>
+    ) : undefined;
+
+  return (
+    <div style={{ marginTop: 24 }}>
+      <KpiCard
+        title="Crowd Intelligence Score"
+        value={finalScore.toFixed(1)}
+        label="Stability-adjusted"
+        subtle={`Base Score: ${baseScore.toFixed(1)}`}
+        badge={<Badge tone={ratingTone}>{rating}</Badge>}
+        footer={badgeFooter}
+      />
     </div>
   );
 }

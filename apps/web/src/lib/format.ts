@@ -15,7 +15,13 @@ export function formatDateUTC(iso?: string | null): string {
   if (!iso) return "—";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "—";
-  return d.toISOString().replace("T", " ").slice(0, 16);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const y = d.getUTCFullYear();
+  const m = pad(d.getUTCMonth() + 1);
+  const day = pad(d.getUTCDate());
+  const h = pad(d.getUTCHours());
+  const min = pad(d.getUTCMinutes());
+  return `${y}-${m}-${day} ${h}:${min}`;
 }
 
 export function formatPercent(value: number | null | undefined): string {

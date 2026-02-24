@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { computeCis, mean, stdDev } from "@/lib/cis";
+import { computeCis, stdDev } from "@/lib/cis";
+import { SectionCard, MetricRows, MetricRow, Badge } from "@/components/ui/dashboard";
 
 interface RunsV2Item {
   id: string;
@@ -167,65 +168,60 @@ export function StabilityCard({
     };
   }, [runId, assetSymbol, steps, agents]);
 
+  const ratingTone: "success" | "warn" | "danger" | "neutral" =
+    stats?.rating === "Stable"
+      ? "success"
+      : stats?.rating === "Moderate"
+        ? "warn"
+        : stats?.rating === "Unstable"
+          ? "danger"
+          : "neutral";
+
   if (loading) {
     return (
-      <div className="card variant-card" style={{ marginTop: 24 }}>
-        <h2 className="card-title">Stability (Comparable Runs)</h2>
-        <p className="card-empty">Computing…</p>
+      <div style={{ marginTop: 24 }}>
+        <SectionCard title="Stability (Comparable Runs)">
+          <p className="card-empty">Computing…</p>
+        </SectionCard>
       </div>
     );
   }
 
-  const ratingClass =
-    stats?.rating === "Stable"
-      ? "badge badge-success"
-      : stats?.rating === "Moderate"
-        ? "badge badge-amber"
-        : stats?.rating === "Unstable"
-          ? "badge badge-error"
-          : "badge";
-
   return (
-    <div className="card variant-card" style={{ marginTop: 24 }}>
-      <h2 className="card-title">Stability (Comparable Runs)</h2>
-      {error && (
-        <p className="card-error" style={{ fontSize: 12, marginBottom: 8 }}>
-          {error}
-        </p>
-      )}
-      {stats && (
-        <>
-          <div className="card-row">
-            <span className="card-row-label">Comparable sample size</span>
-            <span className="card-row-value">{stats.n}</span>
-          </div>
-          <div className="card-row">
-            <span className="card-row-label">Accuracy Std Dev</span>
-            <span className="card-row-value mono">
-              {(stats.accuracyStdDev * 100).toFixed(2)}%
-            </span>
-          </div>
-          <div className="card-row">
-            <span className="card-row-label">Corr Std Dev</span>
-            <span className="card-row-value mono">
-              {stats.corrStdDev.toFixed(4)}
-            </span>
-          </div>
-          <div className="card-row">
-            <span className="card-row-label">CIS Range</span>
-            <span className="card-row-value mono">
-              {(stats.cisMin * 100).toFixed(1)} – {(stats.cisMax * 100).toFixed(1)}
-            </span>
-          </div>
-          <div className="card-row" style={{ marginTop: 12 }}>
-            <span className="card-row-label">Stability</span>
-            <span className={ratingClass}>{stats.rating}</span>
-          </div>
-        </>
-      )}
-      {!stats && !loading && !error && (
-        <p className="card-empty">No comparable runs found.</p>
-      )}
+    <div style={{ marginTop: 24 }}>
+      <SectionCard
+        title="Stability (Comparable Runs)"
+        right={stats ? <Badge tone={ratingTone}>{stats.rating}</Badge> : undefined}
+      >
+        {error && (
+          <p className="card-error" style={{ fontSize: 12, marginBottom: 8 }}>
+            {error}
+          </p>
+        )}
+        {stats && (
+          <MetricRows>
+            <MetricRow label="Comparable sample size" value={stats.n} />
+            <MetricRow
+              label="Accuracy Std Dev"
+              value={`${(stats.accuracyStdDev * 100).toFixed(2)}%`}
+              mono
+            />
+            <MetricRow
+              label="Corr Std Dev"
+              value={stats.corrStdDev.toFixed(4)}
+              mono
+            />
+            <MetricRow
+              label="CIS Range"
+              value={`${(stats.cisMin * 100).toFixed(1)} – ${(stats.cisMax * 100).toFixed(1)}`}
+              mono
+            />
+          </MetricRows>
+        )}
+        {!stats && !loading && !error && (
+          <p className="card-empty">No comparable runs found.</p>
+        )}
+      </SectionCard>
     </div>
   );
 }

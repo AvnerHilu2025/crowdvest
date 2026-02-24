@@ -1,0 +1,157 @@
+.card {
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.headerLine {
+  height: 2px;
+  width: 100%;
+  background: var(--cv-accent, #00bcd4);
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+}
+
+.inner {
+  padding: 18px 18px 16px 18px;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(15, 23, 42, 0.92);
+}
+
+.subtle {
+  font-size: 12px;
+  color: rgba(15, 23, 42, 0.55);
+}
+
+.kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.kpiValue {
+  font-size: 44px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: rgba(15, 23, 42, 0.95);
+  line-height: 1.0;
+}
+
+.kpiLabelRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.kpiLabel {
+  font-size: 12px;
+  color: rgba(15, 23, 42, 0.55);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  border: 1px solid transparent;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.badgeSuccess {
+  background: rgba(16, 185, 129, 0.12);
+  color: rgba(16, 185, 129, 0.95);
+  border-color: rgba(16, 185, 129, 0.20);
+}
+
+.badgeWarn {
+  background: rgba(245, 158, 11, 0.14);
+  color: rgba(180, 83, 9, 0.95);
+  border-color: rgba(245, 158, 11, 0.22);
+}
+
+.badgeDanger {
+  background: rgba(239, 68, 68, 0.12);
+  color: rgba(239, 68, 68, 0.95);
+  border-color: rgba(239, 68, 68, 0.22);
+}
+
+.badgeNeutral {
+  background: rgba(148, 163, 184, 0.16);
+  color: rgba(15, 23, 42, 0.70);
+  border-color: rgba(148, 163, 184, 0.26);
+}
+
+.rows {
+  display: grid;
+  gap: 10px;
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.rowLabel {
+  font-size: 13px;
+  color: rgba(15, 23, 42, 0.62);
+}
+
+.rowValue {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(15, 23, 42, 0.90);
+  text-align: right;
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 12px;
+}
+
+.divider {
+  height: 1px;
+  background: rgba(15, 23, 42, 0.08);
+  margin: 10px 0;
+}
+
+.miniChart {
+  height: 34px;
+  border-radius: 8px;
+  background: linear-gradient(
+    90deg,
+    rgba(15, 23, 42, 0.05),
+    rgba(15, 23, 42, 0.03),
+    rgba(15, 23, 42, 0.05)
+  );
+  overflow: hidden;
+  position: relative;
+}
+
+.miniChartLine {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 50%;
+  height: 2px;
+  background: rgba(15, 23, 42, 0.22);
+  transform: rotate(-12deg);
+}

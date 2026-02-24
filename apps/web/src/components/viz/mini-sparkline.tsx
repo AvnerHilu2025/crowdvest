@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * MVP viz layer. Later we can replace internals with a chart-lib adapter
+ * This is our MVP viz layer. Later we can swap internals (chart-lib adapter)
  * without changing screen-level APIs.
  */
 export function MiniSparkline({
@@ -25,13 +25,7 @@ export function MiniSparkline({
   const innerW = Math.max(0, width - pad * 2);
   const innerH = Math.max(0, height - pad * 2);
 
-  if (values.length === 0) {
-    return (
-      <svg width={width} height={height} aria-hidden="true">
-        {title && <title>{title}</title>}
-      </svg>
-    );
-  }
+  if (values.length < 2) return null;
 
   const min = Math.min(...values);
   const max = Math.max(...values);
@@ -40,7 +34,7 @@ export function MiniSparkline({
   const effectiveMin = allSame ? min - 1 : min;
   const effectiveRange = allSame ? 2 : range;
 
-  const crossesZero = zeroLine && min < 0 && max > 0;
+  const crossesZero = zeroLine && min <= 0 && max >= 0;
   const zeroY =
     pad +
     innerH -

@@ -5,7 +5,14 @@ import {
   truncateMiddle,
 } from "@/lib/format";
 import { stdDev } from "@/lib/cis";
-import { MiniSparkline } from "@/components/viz/mini-sparkline";
+import {
+  SectionCard,
+  MetricRows,
+  MetricRow,
+  Badge,
+  Divider,
+  MiniChartPlaceholder,
+} from "@/components/ui/dashboard";
 import { CrossRunProvider } from "./cross-run-provider";
 import { CrossRunContextCard } from "./cross-run-context-card";
 import { CrowdIntelligenceScoreCard } from "./crowd-intelligence-score-card";
@@ -319,350 +326,227 @@ export default async function VariantDetailPage({
 
       <div className="variant-cards">
         {/* 1. Performance */}
-        <div className="card variant-card">
-          <h2 className="card-title">Performance</h2>
-          <div className="card-row">
-            <span className="card-row-label">Correlation</span>
-            <span className="card-row-value">
-              {corr != null ? corr.toFixed(4) : "—"}
-            </span>
-          </div>
-          <div className="card-row">
-            <span className="card-row-label">Directional Accuracy</span>
-            <span className="card-row-value">
-              {formatPercent(directionalAccuracy)}
-            </span>
-          </div>
-          <div className="card-row">
-            <span className="card-row-label">Pairs Count</span>
-            <span className="card-row-value">{formatNumber(pairsCount)}</span>
-          </div>
-          {(variant.decisionsHash || variant.returnsHash) && (
-            <div className="card-row" style={{ marginTop: 8 }}>
-              <span className="card-row-label">Hashes</span>
-              <span className="card-row-value mono" style={{ fontSize: 12 }}>
-                decisions: {variant.decisionsHash ? truncateMiddle(variant.decisionsHash, 8, 6) : "—"}
-                {" · "}
-                returns: {variant.returnsHash ? truncateMiddle(variant.returnsHash, 8, 6) : "—"}
-              </span>
-            </div>
-          )}
-        </div>
+        <SectionCard title="Performance">
+          <MetricRows>
+            <MetricRow
+              label="Correlation"
+              value={corr != null ? corr.toFixed(4) : "—"}
+              mono
+            />
+            <MetricRow
+              label="Directional Accuracy"
+              value={formatPercent(directionalAccuracy)}
+            />
+            <MetricRow label="Pairs Count" value={formatNumber(pairsCount)} />
+            {(variant.decisionsHash || variant.returnsHash) && (
+              <MetricRow
+                label="Hashes"
+                value={
+                  <>
+                    decisions: {variant.decisionsHash ? truncateMiddle(variant.decisionsHash, 8, 6) : "—"}
+                    {" · "}
+                    returns: {variant.returnsHash ? truncateMiddle(variant.returnsHash, 8, 6) : "—"}
+                  </>
+                }
+                mono
+              />
+            )}
+          </MetricRows>
+        </SectionCard>
 
         {/* 2. Decision Histogram */}
-        <div className="card variant-card">
-          <h2 className="card-title">Decision Histogram</h2>
-          <div className="histogram-grid">
-            <div className="histogram-item">
-              <span className="histogram-label">BUY</span>
-              <span className="histogram-value">{buyCount}</span>
-            </div>
-            <div className="histogram-item">
-              <span className="histogram-label">SELL</span>
-              <span className="histogram-value">{sellCount}</span>
-            </div>
-            <div className="histogram-item">
-              <span className="histogram-label">HOLD</span>
-              <span className="histogram-value">{holdCount}</span>
-            </div>
-          </div>
+        <SectionCard title="Decision Histogram">
+          <MetricRows>
+            <MetricRow label="BUY" value={buyCount} />
+            <MetricRow label="SELL" value={sellCount} />
+            <MetricRow label="HOLD" value={holdCount} />
+          </MetricRows>
           {decisionCounts == null && (
             <p className="card-empty" style={{ marginTop: 8 }}>
               No decision counts available
             </p>
           )}
-        </div>
+        </SectionCard>
 
         {/* 3. Crowd Wisdom */}
-        <div className="card variant-card">
-          <h2 className="card-title">Crowd Wisdom</h2>
+        <SectionCard title="Crowd Wisdom">
           {crowdDump == null ? (
             <p className="card-error">
               Failed to load crowd data. Run must be COMPLETED.
             </p>
           ) : (
             <>
-              <div className="card-row">
-                <span className="card-row-label">Agents</span>
-                <span className="card-row-value">{crowdDump.agents}</span>
-              </div>
-              <div className="card-row">
-                <span className="card-row-label">Steps</span>
-                <span className="card-row-value">{crowdDump.steps}</span>
-              </div>
-              <div className="card-row">
-                <span className="card-row-label">Decisions Count</span>
-                <span className="card-row-value">{crowdDump.decisionsCount}</span>
-              </div>
-              <div className="card-row">
-                <span className="card-row-label">Returns Count</span>
-                <span className="card-row-value">{crowdDump.returnsCount}</span>
-              </div>
+              <MetricRows>
+                <MetricRow label="Agents" value={crowdDump.agents} />
+                <MetricRow label="Steps" value={crowdDump.steps} />
+                <MetricRow label="Decisions Count" value={crowdDump.decisionsCount} />
+                <MetricRow label="Returns Count" value={crowdDump.returnsCount} />
+              </MetricRows>
               {crowdOk && (
-                <span className="badge badge-success" style={{ marginTop: 12 }}>
-                  CROWD DATA OK
-                </span>
+                <div style={{ marginTop: 12 }}>
+                  <Badge tone="success">CROWD DATA OK</Badge>
+                </div>
               )}
             </>
           )}
-        </div>
+        </SectionCard>
       </div>
 
       {/* 4. Crowd Advantage */}
-      <div className="crowd-advantage-card">
-        <h2 className="card-title">Crowd Advantage</h2>
-        <div className="crowd-advantage-grid">
-          <div className="crowd-advantage-col">
-            <div className="card-row-label" style={{ marginBottom: 8 }}>
-              Accuracy Comparison
-            </div>
-            <div className="card-row-label" style={{ fontSize: 12, marginBottom: 4 }}>
-              Directional Accuracy
-            </div>
-            <div className="card-row">
-              <span className="card-row-label">Crowd:</span>
-              <span className="card-row-value">
-                {formatPercent(crowdAccuracy)}
-              </span>
-            </div>
-            <div className="card-row">
-              <span className="card-row-label">Median Agent:</span>
-              <span className="card-row-value">
-                {formatPercent(medianAccuracy)}
-              </span>
-            </div>
-            <div className="card-row">
-              <span className="card-row-label">Delta:</span>
-              <span
-                className={
-                  crowdDelta != null
-                    ? crowdDelta > 0
-                      ? "delta-positive"
-                      : crowdDelta < 0
-                        ? "delta-negative"
-                        : ""
-                    : ""
-                }
-              >
-                {crowdDelta != null
-                  ? `${crowdDelta >= 0 ? "+" : ""}${(crowdDelta * 100).toFixed(2)}%`
-                  : "—"}
-              </span>
-            </div>
-          </div>
-          <div className="crowd-advantage-col">
-            <div className="card-row-label" style={{ marginBottom: 8 }}>
-              Correlation Signal
-            </div>
-            <div className="card-row">
-              <span className="card-row-label">Correlation</span>
-              <span className="card-row-value">
-                {corr != null ? corr.toFixed(4) : "—"}
-              </span>
-            </div>
-            {corr != null && (
-              <span
-                className={
-                  corr > 0 ? "signal-positive" : "signal-negative"
-                }
-              >
-                {corr > 0 ? "Positive Market Alignment" : "Inverse Signal"}
-              </span>
-            )}
-          </div>
-          <div className="crowd-advantage-col">
-            <div className="card-row-label" style={{ marginBottom: 8 }}>
-              Simulation Scale
-            </div>
-            <div className="card-row">
-              <span className="card-row-label">Agents</span>
-              <span className="card-row-value">{variant.agents}</span>
-            </div>
-            <div className="card-row">
-              <span className="card-row-label">Steps</span>
-              <span className="card-row-value">{variant.steps}</span>
-            </div>
-            <div className="card-row">
-              <span className="card-row-label">Total Decisions</span>
-              <span className="card-row-value">{totalDecisions}</span>
-            </div>
-            <p className="run-detail-meta" style={{ marginTop: 12 }}>
-              Simulation scale: {variant.agents} agents × {variant.steps} steps
-            </p>
-          </div>
-        </div>
+      <div style={{ marginTop: 24 }}>
+      <SectionCard title="Crowd Advantage">
+        <MetricRows>
+          <MetricRow label="Crowd" value={formatPercent(crowdAccuracy)} />
+          <MetricRow label="Median Agent" value={formatPercent(medianAccuracy)} />
+          <MetricRow
+            label="Delta"
+            value={
+              crowdDelta != null
+                ? `${crowdDelta >= 0 ? "+" : ""}${(crowdDelta * 100).toFixed(2)}%`
+                : "—"
+            }
+          />
+          <Divider />
+          <MetricRow
+            label="Correlation"
+            value={corr != null ? corr.toFixed(4) : "—"}
+            mono
+          />
+          <MetricRow
+            label="Signal"
+            value={
+              corr != null
+                ? corr > 0
+                  ? "Positive Market Alignment"
+                  : "Inverse Signal"
+                : "—"
+            }
+          />
+          <Divider />
+          <MetricRow label="Agents" value={variant.agents} />
+          <MetricRow label="Steps" value={variant.steps} />
+          <MetricRow label="Total Decisions" value={totalDecisions} />
+        </MetricRows>
+        <p className="run-detail-meta" style={{ marginTop: 12 }}>
+          Simulation scale: {variant.agents} agents × {variant.steps} steps
+        </p>
+      </SectionCard>
       </div>
 
       {/* 5. Market Regime */}
-      <div className="card variant-card regime-card" style={{ marginTop: 24 }}>
-        <h2 className="card-title">Market Regime</h2>
-        {returns.length === 0 ? (
-          <p className="card-empty">
-            Regime unavailable (pairs sample not present)
-          </p>
-        ) : (
-          <>
-            <div className="card-row">
-              <span className="card-row-label">Regime</span>
-              <span
-                className={`regime-badge regime-badge-${trend.toLowerCase()}`}
-              >
+      <div style={{ marginTop: 24 }}>
+        <SectionCard
+          title="Market Regime"
+          right={
+            returns.length > 0 ? (
+              <Badge tone={trend === "Bull" ? "success" : "danger"}>
                 {regime}
-              </span>
-            </div>
-            <div className="card-row">
-              <span className="card-row-label">Mean return</span>
-              <span className="card-row-value mono">{mu.toFixed(6)}</span>
-            </div>
-            <div className="card-row">
-              <span className="card-row-label">Volatility (σ)</span>
-              <span className="card-row-value mono">{sigma.toFixed(6)}</span>
-            </div>
-            <div className="card-row">
-              <span className="card-row-label">Up steps</span>
-              <span className="card-row-value">
-                {(upPct * 100).toFixed(1)}%
-              </span>
-            </div>
-            <div className="card-row">
-              <span className="card-row-label">Sample size</span>
-              <span className="card-row-value">{returns.length}</span>
-            </div>
-          </>
-        )}
+              </Badge>
+            ) : undefined
+          }
+        >
+          {returns.length === 0 ? (
+            <p className="card-empty">
+              Regime unavailable (pairs sample not present)
+            </p>
+          ) : (
+            <MetricRows>
+              <MetricRow label="Mean return" value={mu.toFixed(6)} mono />
+              <MetricRow label="Volatility (σ)" value={sigma.toFixed(6)} mono />
+              <MetricRow label="Up steps" value={`${(upPct * 100).toFixed(1)}%`} />
+              <MetricRow label="Sample size" value={returns.length} />
+            </MetricRows>
+          )}
+        </SectionCard>
       </div>
 
       {/* 6. Signal Calibration */}
-      <div className="card variant-card" style={{ marginTop: 24 }}>
-        <h2 className="card-title">Signal Calibration</h2>
-        <div className="card-row">
-          <span className="card-row-label">Conviction Index</span>
-          <span className="card-row-value mono">
-            {convictionIndex.toFixed(3)}
-          </span>
-        </div>
-        <div className="card-row">
-          <span className="card-row-label">Net Bias</span>
-          <span className="card-row-value">
-            {(netBias * 100).toFixed(1)}%
-          </span>
-        </div>
-        <div className="card-row">
-          <span className="card-row-label">Signal Strength</span>
-          <span className="card-row-value">{strengthLabel}</span>
-        </div>
-        <div className="card-row">
-          <span className="card-row-label">Interpretation</span>
-          <span className="card-row-value" style={{ maxWidth: 320 }}>
-            {interpretation}
-          </span>
-        </div>
+      <div style={{ marginTop: 24 }}>
+        <SectionCard
+          title="Signal Calibration"
+          right={<Badge tone={strengthLabel === "Strong" ? "success" : strengthLabel === "Moderate" ? "warn" : "neutral"}>{strengthLabel}</Badge>}
+        >
+          <MetricRows>
+            <MetricRow label="Conviction Index" value={convictionIndex.toFixed(3)} mono />
+            <MetricRow label="Net Bias" value={`${(netBias * 100).toFixed(1)}%`} />
+            <MetricRow label="Interpretation" value={interpretation} />
+          </MetricRows>
+        </SectionCard>
       </div>
 
       {/* 7. Run Integrity */}
-      <div className="card variant-card" style={{ marginTop: 24 }}>
-        <h2 className="card-title">Run Integrity</h2>
-        <div className="card-row">
-          <span className="card-row-label">Schema Version</span>
-          <span className="card-row-value">{schemaVersion}</span>
-        </div>
-        <div className="card-row">
-          <span className="card-row-label">Model Version</span>
-          <span className="card-row-value">{modelVersion}</span>
-        </div>
-        <div className="card-row">
-          <span className="card-row-label">Dataset Version</span>
-          <span className="card-row-value">{datasetVersion}</span>
-        </div>
-        <div className="card-row">
-          <span className="card-row-label">Decisions Hash</span>
-          <span className="card-row-value mono" title={decisionsHash ?? undefined}>
-            {decisionsHash ? truncateMiddle(decisionsHash, 6, 6) : "—"}
-          </span>
-        </div>
-        <div className="card-row">
-          <span className="card-row-label">Returns Hash</span>
-          <span className="card-row-value mono" title={returnsHash ?? undefined}>
-            {returnsHash ? truncateMiddle(returnsHash, 6, 6) : "—"}
-          </span>
-        </div>
-        <div className="card-row" style={{ marginTop: 12 }}>
-          <span className="card-row-label">Validation Status</span>
-          <span
-            className={
-              integrityOk
-                ? "badge badge-success"
-                : "badge badge-amber"
-            }
-          >
-            {integrityOk
-              ? "Deterministic Snapshot Verified"
-              : "Incomplete Snapshot"}
-          </span>
-        </div>
+      <div style={{ marginTop: 24 }}>
+        <SectionCard
+          title="Run Integrity"
+          right={
+            <Badge tone={integrityOk ? "success" : "warn"}>
+              {integrityOk
+                ? "Deterministic Snapshot Verified"
+                : "Incomplete Snapshot"}
+            </Badge>
+          }
+        >
+          <MetricRows>
+            <MetricRow label="Schema Version" value={schemaVersion} />
+            <MetricRow label="Model Version" value={modelVersion} />
+            <MetricRow label="Dataset Version" value={datasetVersion} />
+            <MetricRow
+              label="Decisions Hash"
+              value={decisionsHash ? truncateMiddle(decisionsHash, 6, 6) : "—"}
+              mono
+            />
+            <MetricRow
+              label="Returns Hash"
+              value={returnsHash ? truncateMiddle(returnsHash, 6, 6) : "—"}
+              mono
+            />
+          </MetricRows>
+        </SectionCard>
       </div>
 
       {/* 8. Cross-Run Context */}
       <CrossRunContextCard />
 
       {/* 9. Stability (Across Seeds) */}
-      <div className="card variant-card" style={{ marginTop: 24 }}>
-        <h2 className="card-title">Stability (Across Seeds)</h2>
-        <div className="card-row">
-          <span className="card-row-label">Seed family size (N)</span>
-          <span className="card-row-value">{nSeeds}</span>
-        </div>
-        <div className="card-row">
-          <span className="card-row-label">Accuracy Std Dev (%)</span>
-          <span className="card-row-value mono">
-            {accStd.toFixed(2)}%
-          </span>
-        </div>
-        <div className="card-row">
-          <span className="card-row-label">Corr Std Dev</span>
-          <span className="card-row-value mono">
-            {corrStd.toFixed(4)}
-          </span>
-        </div>
-        <div className="card-row">
-          <span className="card-row-label">Accuracy CI Range</span>
-          <span className="card-row-value mono">
-            {ciLow.toFixed(1)} – {ciHigh.toFixed(1)}
-          </span>
-        </div>
-        <div className="card-row" style={{ marginTop: 12 }}>
-          <span className="card-row-label">Stability</span>
-          <span
-            className={
-              seedsRating === "Stable"
-                ? "badge badge-success"
-                : seedsRating === "Moderate"
-                  ? "badge badge-amber"
-                  : "badge badge-error"
-            }
-          >
-            {seedsRating}
-          </span>
-        </div>
-        {nSeeds >= 2 && (
-          <div style={{ marginTop: 16 }}>
-            <div className="card-row-label" style={{ marginBottom: 6 }}>
-              Seeds
-            </div>
-            <MiniSparkline
-              values={[...seedsWithSummary]
-                .sort((a, b) => a.seed - b.seed)
-                .map((v) => v.summary!.corr!)}
-              title="Correlation by seed"
+      <div style={{ marginTop: 24 }}>
+        <SectionCard
+          title="Stability (Across Seeds)"
+          right={
+            <Badge
+              tone={
+                seedsRating === "Stable"
+                  ? "success"
+                  : seedsRating === "Moderate"
+                    ? "warn"
+                    : "danger"
+              }
+            >
+              {seedsRating}
+            </Badge>
+          }
+        >
+          <MetricRows>
+            <MetricRow label="Seed family size (N)" value={nSeeds} />
+            <MetricRow label="Accuracy Std Dev (%)" value={`${accStd.toFixed(2)}%`} mono />
+            <MetricRow label="Corr Std Dev" value={corrStd.toFixed(4)} mono />
+            <MetricRow
+              label="Accuracy CI Range"
+              value={`${ciLow.toFixed(1)} – ${ciHigh.toFixed(1)}`}
+              mono
             />
-            <p className="run-detail-meta" style={{ marginTop: 6, fontSize: 12 }}>
-              seed {(() => {
-                const seeds = seedsWithSummary.map((v) => v.seed).sort((a, b) => a - b);
-                return seeds.length > 1 ? `${seeds[0]}..${seeds[seeds.length - 1]}` : String(seeds[0] ?? "");
-              })()}
-            </p>
-          </div>
-        )}
+          </MetricRows>
+          {nSeeds >= 2 && (
+            <div style={{ marginTop: 16 }}>
+              <div className="run-detail-meta" style={{ marginBottom: 6, fontSize: 12 }}>
+                Seeds (seed {(() => {
+                  const seeds = seedsWithSummary.map((v) => v.seed).sort((a, b) => a - b);
+                  return seeds.length > 1 ? `${seeds[0]}..${seeds[seeds.length - 1]}` : String(seeds[0] ?? "");
+                })()})
+              </div>
+              <MiniChartPlaceholder />
+            </div>
+          )}
+        </SectionCard>
       </div>
 
       {/* 10. Stability (Comparable Runs) */}

@@ -53,16 +53,16 @@ function WalletPanel() {
   }, [load]);
 
   if (error) {
-    return <span style={{ fontSize: 14, color: "#999" }}>Wallet unavailable</span>;
+    return <span className="wallet-muted">Wallet unavailable</span>;
   }
   if (loading && !summary) {
-    return <span style={{ fontSize: 14, color: "#999" }}>Wallet: …</span>;
+    return <span className="wallet-muted">Wallet: …</span>;
   }
   if (!summary) {
     return null;
   }
   return (
-    <span style={{ fontSize: 14, color: "#666" }}>
+    <span className="wallet-summary">
       Available: {summary.available.toFixed(2)} · Locked: {summary.locked.toFixed(2)} · Total:{" "}
       {summary.total.toFixed(2)} Coins
     </span>
@@ -73,24 +73,20 @@ export function NavLinks() {
   const pathname = usePathname();
 
   return (
-    <nav style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
+    <nav className="app-nav">
       {links.map(({ href, label }) => {
         const isActive = href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(href + "/");
         return (
           <Link
             key={href}
             href={href}
-            style={{
-              color: isActive ? "#333" : "#0066cc",
-              textDecoration: "none",
-              fontWeight: isActive ? 600 : 400,
-            }}
+            className={isActive ? "app-nav-link active" : "app-nav-link"}
           >
             {label}
           </Link>
         );
       })}
-      <span style={{ marginLeft: "auto" }}>
+      <span className="app-nav-wallet">
         <WalletPanel />
       </span>
     </nav>

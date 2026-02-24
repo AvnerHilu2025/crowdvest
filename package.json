@@ -3,17 +3,17 @@
   "private": true,
   "pnpm": {
     "overrides": {
-      "@next/swc": "15.5.7",
-      "@next/swc-darwin-arm64": "15.5.7",
-      "@next/swc-darwin-x64": "15.5.7",
-      "@next/swc-linux-arm64-gnu": "15.5.7",
-      "@next/swc-linux-arm64-musl": "15.5.7",
-      "@next/swc-linux-x64-gnu": "15.5.7",
-      "@next/swc-linux-x64-musl": "15.5.7",
-      "@next/swc-wasm-nodejs": "15.5.7",
-      "@next/swc-wasm-web": "15.5.7",
-      "@next/swc-win32-arm64-msvc": "15.5.7",
-      "@next/swc-win32-x64-msvc": "15.5.7"
+      "@next/swc": "15.5.12",
+      "@next/swc-darwin-arm64": "15.5.12",
+      "@next/swc-darwin-x64": "15.5.12",
+      "@next/swc-linux-arm64-gnu": "15.5.12",
+      "@next/swc-linux-arm64-musl": "15.5.12",
+      "@next/swc-linux-x64-gnu": "15.5.12",
+      "@next/swc-linux-x64-musl": "15.5.12",
+      "@next/swc-wasm-nodejs": "15.5.12",
+      "@next/swc-wasm-web": "15.5.12",
+      "@next/swc-win32-arm64-msvc": "15.5.12",
+      "@next/swc-win32-x64-msvc": "15.5.12"
     }
   },
   "scripts": {
@@ -39,10 +39,10 @@
     "check:runs-api": "bash scripts/check-runs-api.sh"
   },
   "devDependencies": {
-    "@next/swc-linux-x64-gnu": "15.5.7",
-    "@next/swc-linux-x64-musl": "15.5.7",
-    "@next/swc-wasm-nodejs": "15.5.7",
-    "@next/swc-wasm-web": "15.5.7",
+    "@next/swc-linux-x64-gnu": "15.5.12",
+    "@next/swc-linux-x64-musl": "15.5.12",
+    "@next/swc-wasm-nodejs": "15.5.12",
+    "@next/swc-wasm-web": "15.5.12",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
     "eslint": "^9.0.0",

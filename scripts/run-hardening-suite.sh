@@ -5,10 +5,10 @@ API="http://localhost:4001"
 ASSET="SPY"
 
 AGENT_SCALES=(50 200 1000 2000)
-SEEDS=(1 2 3)
 
 echo "=============================================="
 echo "CrowdVest Hardening Suite"
+echo "Each run: 3 seeds (--seedStart 1 --seeds 3)"
 echo "=============================================="
 
 fail=0
@@ -19,16 +19,15 @@ mkdir -p .hardening_logs
 
 run_one() {
   agents=$1
-  seed=$2
 
   echo ""
   echo "----------------------------------------------"
-  echo "Agents=$agents  Seed=$seed"
+  echo "Agents=$agents (3 seeds per run)"
   echo "----------------------------------------------"
 
   start_time=$(date +%s)
 
-  RUN_NAME="hardening-${agents}-${seed}-$(date +%s)"
+  RUN_NAME="hardening-${agents}-$(date +%s)"
   RUN_ID=$(curl -s -X POST "$API/runs/create-unique" \
     -H "content-type: application/json" \
     -d "{\"baseName\":\"$RUN_NAME\",\"datasetVersion\":\"spy29\"}" \
@@ -37,7 +36,7 @@ run_one() {
   if [[ -z "$RUN_ID" || "$RUN_ID" == "null" ]]; then
     echo "ERROR: could not create runId"
     fail=1
-    FAILED_CASES+=("agents=$agents seed=$seed reason=create-run")
+    FAILED_CASES+=("agents=$agents reason=create-run")
     return 1
   fi
 
@@ -49,31 +48,38 @@ run_one() {
     -d "{\"assetSymbol\":\"$ASSET\",\"steps\":29,\"source\":\"default\"}" > /dev/null; then
     echo "ERROR: dataset import failed"
     fail=1
-    FAILED_CASES+=("agents=$agents seed=$seed runId=$RUN_ID reason=import")
+    FAILED_CASES+=("agents=$agents runId=$RUN_ID reason=import")
     return 1
   fi
 
-  worker_log=".hardening_logs/worker_agents${agents}_seed${seed}.log"
-  check_log=".hardening_logs/check_agents${agents}_seed${seed}.json"
+  worker_log=".hardening_logs/worker_agents${agents}.log"
+  check_log=".hardening_logs/check_agents${agents}.json"
 
-  # Run worker explicitly (blocking)
+  # Run worker with 3 seeds per run
   if ! pnpm -C apps/worker run backtest-v0 -- \
     --runId "$RUN_ID" \
     --assetSymbol "$ASSET" \
     --steps 29 \
     --agents "$agents" \
-    --seedStart "$seed" \
-    --seeds 1 \
+    --seedStart 1 \
+    --seeds 3 \
     --overwrite true \
     >"$worker_log" 2>&1; then
     echo "WORKER FAILED (see $worker_log)"
     fail=1
-    FAILED_CASES+=("agents=$agents seed=$seed runId=$RUN_ID reason=worker")
+    FAILED_CASES+=("agents=$agents runId=$RUN_ID reason=worker")
     return 1
   fi
 
+  # Print variantsCount and variant ids
+  VARIANTS_JSON=$(curl -s "$API/runs/$RUN_ID/variants?assetSymbol=$ASSET")
+  VARIANTS_COUNT=$(echo "$VARIANTS_JSON" | jq -r '.items | length')
+  VARIANT_IDS=$(echo "$VARIANTS_JSON" | jq -r '.items[].id' | tr '\n' ' ')
+  echo "variantsCount=$VARIANTS_COUNT"
+  echo "variantIds: $VARIANT_IDS"
+
   # Run crowd-wisdom-check (stdout to check_log, stderr to separate file)
-  check_stderr=".hardening_logs/check_stderr_agents${agents}_seed${seed}.txt"
+  check_stderr=".hardening_logs/check_stderr_agents${agents}.txt"
   RUN_ID="$RUN_ID" API="$API" ASSET="$ASSET" node scripts/crowd-wisdom-check.mjs >"$check_log" 2>"$check_stderr"
   check_exit=$?
 
@@ -83,7 +89,7 @@ run_one() {
   if [[ $check_exit -eq 1 ]]; then
     echo "CROWD CHECK THREW (see $check_stderr)"
     fail=1
-    FAILED_CASES+=("agents=$agents seed=$seed runId=$RUN_ID reason=throw")
+    FAILED_CASES+=("agents=$agents runId=$RUN_ID reason=throw")
     return 1
   fi
 
@@ -91,7 +97,7 @@ run_one() {
   if ! jq -e '.report and .PASS' "$check_log" >/dev/null 2>&1; then
     echo "FAIL: check JSON missing report or PASS (see $check_log)"
     fail=1
-    FAILED_CASES+=("agents=$agents seed=$seed runId=$RUN_ID reason=throw")
+    FAILED_CASES+=("agents=$agents runId=$RUN_ID reason=throw")
     return 1
   fi
 
@@ -108,18 +114,18 @@ run_one() {
   if [[ "$pass_ind" != "true" ]]; then
     echo "FAIL: PASS.independence=false (see $check_log)"
     fail=1
-    FAILED_CASES+=("agents=$agents seed=$seed runId=$RUN_ID reason=independence")
+    FAILED_CASES+=("agents=$agents runId=$RUN_ID reason=independence")
     return 1
   fi
   if [[ "$pass_div" != "true" ]]; then
     echo "FAIL: PASS.diversity=false (see $check_log)"
     fail=1
-    FAILED_CASES+=("agents=$agents seed=$seed runId=$RUN_ID reason=diversity")
+    FAILED_CASES+=("agents=$agents runId=$RUN_ID reason=diversity")
     return 1
   fi
 
   # Print single-line summary
-  echo "agentsRequested=${agents} agentsPersisted=${agentsPersisted} seed=${seed} duration=${duration}s independence=${independence} diversity=${diversity} advantage=${advantage} PASS={ind:${pass_ind},div:${pass_div},adv:${pass_adv}}"
+  echo "agentsRequested=${agents} agentsPersisted=${agentsPersisted} variantsCount=${VARIANTS_COUNT} duration=${duration}s independence=${independence} diversity=${diversity} advantage=${advantage} PASS={ind:${pass_ind},div:${pass_div},adv:${pass_adv}}"
 
   # agentsTotal mismatch is INFO only (persist=lite may sample)
   if [[ "$agentsPersisted" != "$agents" ]]; then
@@ -140,14 +146,12 @@ run_one() {
 
 echo ""
 echo "=============================================="
-echo "Running suite: agents=${AGENT_SCALES[*]} seeds=${SEEDS[*]}"
+echo "Running suite: agents=${AGENT_SCALES[*]} (3 seeds per run)"
 echo "Logs: .hardening_logs/"
 echo "=============================================="
 
 for agents in "${AGENT_SCALES[@]}"; do
-  for seed in "${SEEDS[@]}"; do
-    run_one "$agents" "$seed" || true
-  done
+  run_one "$agents" || true
 done
 
 echo ""

@@ -1,68 +1,101 @@
 import Link from "next/link";
-import { listRuns } from "@/lib/api";
+import { RunsTable } from "./runs-table";
 
 export const dynamic = "force-dynamic";
 
-function formatDate(s: string | null | undefined): string {
-  if (!s) return "—";
-  const d = new Date(s);
-  return d.toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" });
+const LIMIT = 20;
+const WEB_BASE =
+  process.env.NEXT_PUBLIC_WEB_URL ?? "http://localhost:4000";
+
+interface RunsV2Item {
+  id: string;
+  name: string;
+  createdAt: string;
+  status: string;
+  assetSymbol: string | null;
+  steps: number | null;
+  agents: number | null;
+  variantsCount: number;
 }
 
-export default async function RunsPage() {
-  let items: { runId: string; startedAt?: string | null }[] = [];
-  let total = 0;
-  let error: string | null = null;
+interface RunsV2Response {
+  items: RunsV2Item[];
+  total: number;
+}
 
+async function fetchRunsV2(offset: number): Promise<RunsV2Response | null> {
   try {
-    const data = await listRuns(30);
-    items = data.items ?? [];
-    total = data.total ?? 0;
-  } catch (e) {
-    error = e instanceof Error ? e.message : String(e);
-  }
-
-  if (error) {
-    return (
-      <main style={{ padding: 16, fontFamily: "system-ui, sans-serif", maxWidth: 800 }}>
-        <h1 style={{ marginBottom: 16 }}>Runs</h1>
-        <p style={{ color: "#c00", marginBottom: 12 }}>
-          Failed to load runs: {error}
-        </p>
-        <p style={{ color: "#666", marginBottom: 12, fontSize: 14 }}>
-          If GET /runs?limit=30 is not available, you can navigate directly to a run using the URL:
-        </p>
-        <p style={{ fontFamily: "monospace", fontSize: 13, backgroundColor: "#f5f5f5", padding: 12, borderRadius: 4 }}>
-          /runs/&lt;runId&gt;?assetSymbol=SPY
-        </p>
-      </main>
+    const res = await fetch(
+      `${WEB_BASE}/api/results/runs-v2?limit=${LIMIT}&offset=${offset}`,
+      { cache: "no-store" },
     );
+    if (!res.ok) return null;
+    return (await res.json()) as RunsV2Response;
+  } catch {
+    return null;
   }
+}
+
+export default async function RunsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ offset?: string }>;
+}) {
+  const { offset: offsetParam } = await searchParams;
+  const offset = Math.max(0, parseInt(offsetParam ?? "0", 10) || 0);
+
+  const data = await fetchRunsV2(offset);
+  const items = data?.items ?? [];
+  const total = data?.total ?? 0;
+
+  const from = total === 0 ? 0 : offset + 1;
+  const to = Math.min(offset + LIMIT, total);
+  const prevOffset = Math.max(0, offset - LIMIT);
+  const nextOffset = offset + LIMIT;
+  const hasPrev = offset > 0;
+  const hasNext = nextOffset < total;
 
   return (
-    <main style={{ padding: 16, fontFamily: "system-ui, sans-serif", maxWidth: 800 }}>
-      <h1 style={{ marginBottom: 16 }}>Runs</h1>
-      {items.length === 0 ? (
-        <p style={{ color: "#666" }}>No runs found.</p>
+    <div>
+      <h1 className="dashboard-title" style={{ marginBottom: 24 }}>
+        Runs
+      </h1>
+
+      {data === null ? (
+        <div className="card">
+          <p className="card-error">Failed to load runs. Check that the API is running.</p>
+        </div>
+      ) : items.length === 0 ? (
+        <div className="card">
+          <p className="card-empty">No runs found.</p>
+        </div>
       ) : (
-        <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-          {items.map((r) => (
-            <li key={r.runId} style={{ marginBottom: 8, padding: 8, border: "1px solid #ddd", borderRadius: 4 }}>
-              <Link href={`/runs/${r.runId}?assetSymbol=SPY`} style={{ color: "#0066cc", textDecoration: "none" }}>
-                {r.runId}
+        <>
+          <RunsTable items={items} />
+
+          <div className="pagination">
+            <span className="pagination-info">
+              Showing {from}–{to} of {total}
+            </span>
+            <div className="pagination-buttons">
+              <Link
+                href={hasPrev ? `/runs?offset=${prevOffset}` : "#"}
+                className={`pagination-btn ${!hasPrev ? "pagination-btn-disabled" : ""}`}
+                aria-disabled={!hasPrev}
+              >
+                Prev
               </Link>
-              {r.startedAt != null && (
-                <span style={{ marginLeft: 12, color: "#666", fontSize: 14 }}>
-                  {formatDate(r.startedAt)}
-                </span>
-              )}
-            </li>
-          ))}
-        </ul>
+              <Link
+                href={hasNext ? `/runs?offset=${nextOffset}` : "#"}
+                className={`pagination-btn ${!hasNext ? "pagination-btn-disabled" : ""}`}
+                aria-disabled={!hasNext}
+              >
+                Next
+              </Link>
+            </div>
+          </div>
+        </>
       )}
-      <p style={{ marginTop: 16, color: "#666", fontSize: 14 }}>
-        {total} run{total !== 1 ? "s" : ""}
-      </p>
-    </main>
+    </div>
   );
 }

@@ -1,35 +1,26 @@
-import { NextRequest, NextResponse } from "next/server";
-
-function getUpstreamBase(): string {
-  const raw =
-    process.env.API_URL ??
-    process.env.NEXT_PUBLIC_API_URL ??
-    "http://localhost:4001";
-  return String(raw).replace(/\/$/, "") || "http://localhost:4001";
-}
+import { NextRequest } from "next/server";
+import { getApiBase, proxyGet } from "@/lib/api-proxy";
 
 export async function GET(
   request: NextRequest,
   context: { params: Promise<{ runId: string }> },
 ) {
   const { runId } = await context.params;
-  const baseUrl = getUpstreamBase();
-  const upstreamUrl = `${baseUrl}/runs/${encodeURIComponent(runId)}`;
+  const search = request.nextUrl.search;
+  const url = `${getApiBase()}/runs/${encodeURIComponent(runId)}${search}`;
 
   try {
-    const res = await fetch(upstreamUrl, { cache: "no-store" });
-    const body = await res.json();
-    return NextResponse.json(body, {
-      status: res.status,
-      headers: { "Cache-Control": "no-store" },
-    });
+    return await proxyGet(url);
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    return NextResponse.json(
-      { error: "upstream_error", message: msg, upstream: upstreamUrl },
+    return new Response(
+      JSON.stringify({ error: "upstream_error", message: msg, upstream: url }),
       {
         status: 502,
-        headers: { "Cache-Control": "no-store" },
+        headers: {
+          "content-type": "application/json; charset=utf-8",
+          "cache-control": "no-store",
+        },
       },
     );
   }

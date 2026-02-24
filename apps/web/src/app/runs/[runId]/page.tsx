@@ -1,14 +1,92 @@
 import Link from "next/link";
-import { getRunVariants } from "@/lib/api";
+import { formatDate, truncateMiddle } from "@/lib/format";
+import { VariantsTable } from "./variants-table";
 
 export const dynamic = "force-dynamic";
 
-function formatDate(s: string): string {
-  const d = new Date(s);
-  return d.toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" });
+const WEB_BASE =
+  process.env.NEXT_PUBLIC_WEB_URL ?? "http://localhost:4000";
+
+function StatusBadge({ status }: { status: string }) {
+  const cls =
+    status === "COMPLETED"
+      ? "badge badge-success"
+      : status === "FAILED"
+        ? "badge badge-error"
+        : status === "RUNNING"
+          ? "badge badge-running"
+          : "badge";
+  return <span className={cls}>{status}</span>;
 }
 
-export default async function RunVariantsPage({
+interface RunDetailResponse {
+  id?: string;
+  runId?: string;
+  name?: string;
+  status?: string;
+  createdAt?: string | null;
+  startedAt?: string | null;
+  finishedAt?: string | null;
+  completedAt?: string | null;
+  failedAt?: string | null;
+  lastError?: string | null;
+  modelVersion?: string;
+  datasetVersion?: string;
+  metrics?: { agentCount?: number; steps?: number; [k: string]: unknown };
+}
+
+interface VariantItem {
+  id: string;
+  runId: string;
+  assetSymbol: string;
+  seed: number;
+  agents: number;
+  steps: number;
+  label: string | null;
+  createdAt: string;
+  decisionsHash: string | null;
+  returnsHash: string | null;
+  summary?: {
+    corr: number | null;
+    directionalAccuracy: number | null;
+    pairsCount: number | null;
+  } | null;
+}
+
+interface VariantsResponse {
+  items: VariantItem[];
+  total: number;
+}
+
+async function fetchRunDetail(runId: string): Promise<RunDetailResponse | null> {
+  try {
+    const res = await fetch(`${WEB_BASE}/api/runs/${encodeURIComponent(runId)}`, {
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as RunDetailResponse;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchVariants(
+  runId: string,
+  assetSymbol: string,
+): Promise<VariantsResponse | null> {
+  try {
+    const res = await fetch(
+      `${WEB_BASE}/api/runs/${encodeURIComponent(runId)}/variants?assetSymbol=${encodeURIComponent(assetSymbol)}`,
+      { cache: "no-store" },
+    );
+    if (!res.ok) return null;
+    return (await res.json()) as VariantsResponse;
+  } catch {
+    return null;
+  }
+}
+
+export default async function RunDetailPage({
   params,
   searchParams,
 }: {
@@ -18,99 +96,124 @@ export default async function RunVariantsPage({
   const { runId } = await params;
   const { assetSymbol = "SPY" } = await searchParams;
 
-  let items: Awaited<ReturnType<typeof getRunVariants>>["items"] = [];
-  let total = 0;
-  let error: string | null = null;
+  const [run, variantsData] = await Promise.all([
+    fetchRunDetail(runId),
+    fetchVariants(runId, assetSymbol),
+  ]);
 
-  try {
-    const data = await getRunVariants(runId, assetSymbol);
-    items = data.items ?? [];
-    total = data.total ?? 0;
-  } catch (e) {
-    error = e instanceof Error ? e.message : String(e);
-  }
+  const variants = variantsData?.items ?? [];
+  const variantsTotal = variantsData?.total ?? 0;
 
-  if (error) {
-    return (
-      <main style={{ padding: 16, fontFamily: "system-ui, sans-serif", maxWidth: 1200 }}>
-        <Link href="/runs" style={{ color: "#0066cc", textDecoration: "none", marginBottom: 16, display: "block" }}>
-          ← Back to Runs
-        </Link>
-        <h1 style={{ marginBottom: 16 }}>Run {runId.slice(0, 8)}…</h1>
-        <p style={{ color: "#c00" }}>Error: {error}</p>
-      </main>
-    );
-  }
+  // Timestamp fallbacks: createdAt := createdAt ?? startedAt ?? null, completedAt := completedAt ?? finishedAt ?? null
+  const createdAt =
+    run?.createdAt ?? run?.startedAt ?? null;
+  const completedAt =
+    run?.completedAt ?? run?.finishedAt ?? null;
+
+  // Steps, Agents: from metrics.agentCount or from variants summary if needed
+  const stepsFromRun =
+    run?.metrics && typeof run.metrics.steps === "number"
+      ? run.metrics.steps
+      : run?.metrics && typeof run.metrics.stepCount === "number"
+        ? run.metrics.stepCount
+        : null;
+  const agentsFromRun =
+    run?.metrics && typeof run.metrics.agentCount === "number"
+      ? run.metrics.agentCount
+      : null;
+  const steps = stepsFromRun ?? variants[0]?.steps ?? null;
+  const agents = agentsFromRun ?? variants[0]?.agents ?? null;
+
+  const variantRows = variants.map((v) => ({
+    id: v.id,
+    seed: v.seed,
+    agents: v.agents,
+    steps: v.steps,
+    label: v.label,
+    corr: v.summary?.corr ?? null,
+    directionalAccuracy: v.summary?.directionalAccuracy ?? null,
+    pairsCount: v.summary?.pairsCount ?? null,
+    decisionsHash: v.decisionsHash ?? null,
+    returnsHash: v.returnsHash ?? null,
+  }));
 
   return (
-    <main style={{ padding: 16, fontFamily: "system-ui, sans-serif", maxWidth: 1200 }}>
-      <Link href="/runs" style={{ color: "#0066cc", textDecoration: "none", marginBottom: 16, display: "block" }}>
+    <div>
+      <Link href="/runs" className="run-detail-back">
         ← Back to Runs
       </Link>
-      <h1 style={{ marginBottom: 8 }}>Run Variants</h1>
-      <p style={{ margin: 0, color: "#666", fontSize: 14, marginBottom: 16 }}>
-        runId: {runId} · assetSymbol: {assetSymbol}
-      </p>
-      <p style={{ marginBottom: 16, fontSize: 14 }}>Total: {total} variant{total !== 1 ? "s" : ""}</p>
-      <div style={{ overflowX: "auto" }}>
-        <table
-          border={1}
-          cellPadding={8}
-          cellSpacing={0}
-          style={{ borderCollapse: "collapse", minWidth: 900 }}
-        >
-          <thead>
-            <tr style={{ backgroundColor: "#f5f5f5" }}>
-              <th>seed</th>
-              <th>agents</th>
-              <th>steps</th>
-              <th>corr</th>
-              <th>directionalAccuracy</th>
-              <th>pairsCount</th>
-              <th>decisionsHash</th>
-              <th>returnsHash</th>
-              <th>createdAt</th>
-              <th>variantId</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.length === 0 ? (
-              <tr>
-                <td colSpan={10} style={{ textAlign: "center", color: "#666", padding: 24 }}>
-                  No variants found
-                </td>
-              </tr>
-            ) : (
-              items.map((v) => (
-                <tr key={v.id}>
-                  <td>{v.seed}</td>
-                  <td>{v.agents}</td>
-                  <td>{v.steps}</td>
-                  <td style={{ fontFamily: "monospace" }}>
-                    {v.summary?.corr != null ? Number(v.summary.corr).toFixed(6) : "—"}
-                  </td>
-                  <td style={{ fontFamily: "monospace" }}>
-                    {v.summary?.directionalAccuracy != null
-                      ? Number(v.summary.directionalAccuracy).toFixed(4)
-                      : "—"}
-                  </td>
-                  <td>{v.summary?.pairsCount ?? "—"}</td>
-                  <td style={{ fontFamily: "monospace", fontSize: 11 }}>
-                    {v.summary?.decisionsHash ?? "—"}
-                  </td>
-                  <td style={{ fontFamily: "monospace", fontSize: 11 }}>
-                    {v.summary?.returnsHash ?? "—"}
-                  </td>
-                  <td style={{ fontSize: 12 }}>
-                    {v.summary?.createdAt ? formatDate(v.summary.createdAt) : formatDate(v.createdAt)}
-                  </td>
-                  <td style={{ fontFamily: "monospace", fontSize: 11 }}>{v.id}</td>
-                </tr>
-              ))
+
+      <div className="card run-detail-header-card">
+        <h1 className="run-detail-title">
+          Run {truncateMiddle(runId)}
+          {run?.status && (
+            <>
+              {" "}
+              <StatusBadge status={run.status} />
+            </>
+          )}
+        </h1>
+
+        {run && (
+          <div className="run-detail-meta" style={{ marginTop: 8 }}>
+            {run.name && (
+              <p className="card-row">
+                <span className="card-row-label">Name</span>
+                <span className="card-row-value">{run.name}</span>
+              </p>
             )}
-          </tbody>
-        </table>
+            {(run.datasetVersion || run.modelVersion) && (
+              <p className="card-row">
+                <span className="card-row-label">Dataset / Model</span>
+                <span className="card-row-value">
+                  {[run.datasetVersion, run.modelVersion]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </span>
+              </p>
+            )}
+            {(steps != null || agents != null) && (
+              <p className="card-row">
+                <span className="card-row-label">Steps / Agents</span>
+                <span className="card-row-value">
+                  {steps ?? "—"} / {agents ?? "—"}
+                </span>
+              </p>
+            )}
+            <p className="card-row">
+              <span className="card-row-label">Timestamps</span>
+              <span className="card-row-value">
+                Created: {formatDate(createdAt)} · Started:{" "}
+                {formatDate(run.startedAt)} · Completed:{" "}
+                {formatDate(completedAt)}
+              </span>
+            </p>
+          </div>
+        )}
+
+        {run?.lastError && (
+          <div className="callout-error" role="alert">
+            {run.lastError}
+          </div>
+        )}
       </div>
-    </main>
+
+      <section className="variants-section card">
+        <h2 className="card-title">Variants</h2>
+        {variantsData === null ? (
+          <p className="card-error">Failed to load variants.</p>
+        ) : variants.length === 0 ? (
+          <p className="card-empty">No variants found.</p>
+        ) : (
+          <>
+            <p className="run-detail-meta" style={{ marginBottom: 12 }}>
+              {variantsTotal} variant{variantsTotal !== 1 ? "s" : ""} · Asset:{" "}
+              {assetSymbol}
+            </p>
+            <VariantsTable runId={runId} items={variantRows} />
+          </>
+        )}
+      </section>
+    </div>
   );
 }

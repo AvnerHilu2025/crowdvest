@@ -1,13 +1,9 @@
 import { NextRequest } from "next/server";
 import { getApiBase, proxyGet } from "@/lib/api-proxy";
 
-export async function GET(
-  request: NextRequest,
-  context: { params: Promise<{ runId: string }> },
-) {
-  const { runId } = await context.params;
+export async function GET(request: NextRequest) {
   const search = request.nextUrl.search;
-  const url = `${getApiBase()}/runs/${encodeURIComponent(runId)}/variants${search}`;
+  const url = `${getApiBase()}/results/crowd-wisdom-dump${search}`;
 
   try {
     return await proxyGet(url);

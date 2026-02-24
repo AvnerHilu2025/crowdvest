@@ -1,195 +1,259 @@
-"use client";
+import Link from "next/link";
+import { truncateMiddle } from "@/lib/ui";
 
-import { useCallback, useEffect, useState } from "react";
-import {
-  fetchRuns,
-  fetchAgents,
-  fetchSummary,
-  statusLabel,
-  type RunResult,
-  type AgentResult,
-  type SummaryResponse,
-} from "./results-api";
+const WEB_BASE =
+  process.env.NEXT_PUBLIC_WEB_URL ?? "http://localhost:4000";
 
-export default function Home() {
-  const [runs, setRuns] = useState<RunResult[]>([]);
-  const [total, setTotal] = useState(0);
-  const [loadingRuns, setLoadingRuns] = useState(true);
-  const [runsError, setRunsError] = useState<string | null>(null);
+interface LatestResponse {
+  run: {
+    id: string;
+    status: string;
+    startedAt: string | null;
+    completedAt: string | null;
+    failedAt: string | null;
+    lastError: string | null;
+  } | null;
+  defaultVariant: {
+    id: string;
+    runId: string;
+    assetSymbol: string;
+    seed: number;
+    agents: number;
+    steps: number;
+    label: string | null;
+    createdAt: string;
+  } | null;
+  summary: {
+    corr: number | null;
+    directionalAccuracy: number | null;
+    pairsCount: number | null;
+    computedAt: string;
+  } | null;
+}
 
-  const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
-  const [summary, setSummary] = useState<SummaryResponse | null>(null);
-  const [agents, setAgents] = useState<AgentResult[]>([]);
-  const [loadingDetail, setLoadingDetail] = useState(false);
-  const [detailError, setDetailError] = useState<string | null>(null);
+interface QueueResponse {
+  queueLen: number;
+  runningRunId: string | null;
+  lastEvents: Array<{ ts: string; type: string; runId?: string; msg?: string }>;
+}
 
-  useEffect(() => {
-    let cancelled = false;
-    setLoadingRuns(true);
-    setRunsError(null);
-    fetchRuns(50, 0)
-      .then((data) => {
-        if (!cancelled) {
-          setRuns(data.items);
-          setTotal(data.total);
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) setRunsError(err instanceof Error ? err.message : String(err));
-      })
-      .finally(() => {
-        if (!cancelled) setLoadingRuns(false);
-      });
-    return () => {
-      cancelled = true;
+interface RunDetailResponse {
+  datasetVersion?: string;
+  modelVersion?: string;
+  name?: string;
+  status?: string;
+}
+
+async function fetchLatest(): Promise<
+  { ok: true; data: LatestResponse } | { ok: false; error: string }
+> {
+  try {
+    const res = await fetch(`${WEB_BASE}/api/results/latest?assetSymbol=SPY`, {
+      cache: "no-store",
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      return { ok: false, error: data?.error ?? data?.message ?? `HTTP ${res.status}` };
+    }
+    return { ok: true, data };
+  } catch (e) {
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : String(e),
     };
-  }, []);
+  }
+}
 
-  const loadRunDetail = useCallback((runId: string) => {
-    setSelectedRunId(runId);
-    setLoadingDetail(true);
-    setDetailError(null);
-    setSummary(null);
-    setAgents([]);
-    Promise.all([fetchSummary(runId), fetchAgents(runId)])
-      .then(([s, agentsData]) => {
-        setSummary(s);
-        setAgents(agentsData.items);
-      })
-      .catch((err) => {
-        setDetailError(err instanceof Error ? err.message : String(err));
-      })
-      .finally(() => {
-        setLoadingDetail(false);
-      });
-  }, []);
+async function fetchQueue(): Promise<
+  { ok: true; data: QueueResponse } | { ok: false; error: string }
+> {
+  try {
+    const res = await fetch(`${WEB_BASE}/api/jobs/queue`, {
+      cache: "no-store",
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      return { ok: false, error: data?.error ?? data?.message ?? `HTTP ${res.status}` };
+    }
+    return { ok: true, data };
+  } catch (e) {
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : String(e),
+    };
+  }
+}
+
+async function fetchRunDetail(runId: string): Promise<RunDetailResponse | null> {
+  try {
+    const res = await fetch(`${WEB_BASE}/api/runs/${encodeURIComponent(runId)}`, {
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as RunDetailResponse;
+  } catch {
+    return null;
+  }
+}
+
+function Card({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="card">
+      <h2 className="card-title">{title}</h2>
+      {children}
+    </div>
+  );
+}
+
+function Row({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: React.ReactNode;
+  accent?: boolean;
+}) {
+  return (
+    <div className="card-row">
+      <span className="card-row-label">{label}</span>
+      <span className={accent ? "card-row-value-accent" : "card-row-value"}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
+export default async function DashboardPage() {
+  const [latestResult, queueResult] = await Promise.all([
+    fetchLatest(),
+    fetchQueue(),
+  ]);
+
+  let runDetail: RunDetailResponse | null = null;
+  if (latestResult.ok && latestResult.data.run) {
+    runDetail = await fetchRunDetail(latestResult.data.run.id);
+  }
 
   return (
-    <main style={{ padding: 16, fontFamily: "system-ui, sans-serif" }}>
-      <h1>Simulation results</h1>
+    <div>
+      <header className="dashboard-header">
+        <h1 className="dashboard-title">CrowdVest</h1>
+        <p className="dashboard-tagline">Virtual Crowd Intelligence</p>
+        <div className="dashboard-controls">
+          <span className="dashboard-controls-label">Asset:</span>
+          <select className="dashboard-select" disabled aria-label="Asset symbol (SPY only)">
+            <option value="SPY">SPY</option>
+          </select>
+        </div>
+      </header>
 
-      <section style={{ marginBottom: 24 }}>
-        <h2>Runs ({total})</h2>
-        {runsError && <p style={{ color: "red" }}>{runsError}</p>}
-        {loadingRuns && <p>Loading runs…</p>}
-        {!loadingRuns && !runsError && (
-          <table border={1} cellPadding={8} cellSpacing={0} style={{ borderCollapse: "collapse", width: "100%", maxWidth: 800 }}>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Status</th>
-                <th>Steps</th>
-                <th>Created</th>
-                <th>ID</th>
-              </tr>
-            </thead>
-            <tbody>
-              {runs.map((r) => (
-                <tr
-                  key={r.id}
-                  onClick={() => loadRunDetail(r.id)}
-                  style={{
-                    cursor: "pointer",
-                    background: selectedRunId === r.id ? "#eee" : undefined,
-                  }}
-                >
-                  <td>{r.name ?? "—"}</td>
-                  <td>{statusLabel(r.status)}</td>
-                  <td>{r.steps}</td>
-                  <td>{new Date(r.timestamp).toISOString()}</td>
-                  <td style={{ fontSize: 12 }}>{r.id.slice(0, 8)}…</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </section>
-
-      {selectedRunId && (
-        <section style={{ marginBottom: 24 }}>
-          <h2>Run detail: {selectedRunId.slice(0, 8)}…</h2>
-          {detailError && <p style={{ color: "red" }}>{detailError}</p>}
-          {loadingDetail && <p>Loading summary and agents…</p>}
-          {!loadingDetail && !detailError && summary?.run && (
+      <div className="dashboard-grid">
+        {/* Card 1: Latest Run */}
+        <Card title="Latest Run">
+          {!latestResult.ok ? (
+            <p className="card-error">{latestResult.error}</p>
+          ) : !latestResult.data.run ? (
+            <p className="card-empty">No completed runs yet</p>
+          ) : (
             <>
-              <h3>Aggregated metrics (run)</h3>
-              <table border={1} cellPadding={8} cellSpacing={0} style={{ borderCollapse: "collapse", marginBottom: 16 }}>
-                <tbody>
-                  <tr><td>Agents</td><td>{summary.run.metrics.agentCount}</td></tr>
-                  <tr><td>Total PnL</td><td>{summary.run.metrics.totalPnl.toFixed(2)}</td></tr>
-                  <tr><td>Avg PnL</td><td>{summary.run.metrics.avgPnl.toFixed(2)}</td></tr>
-                  <tr><td>Avg risk</td><td>{summary.run.metrics.avgRisk.toFixed(4)}</td></tr>
-                  <tr><td>Total steps</td><td>{summary.run.metrics.totalSteps}</td></tr>
-                  <tr><td>Total reward</td><td>{summary.run.metrics.totalReward.toFixed(2)}</td></tr>
-                  <tr><td>Actions (buy / sell / hold)</td><td>{summary.run.metrics.totalBuy} / {summary.run.metrics.totalSell} / {summary.run.metrics.totalHold}</td></tr>
-                </tbody>
-              </table>
-
-              {summary.byArchetype.length > 0 && (
-                <>
-                  <h3>By archetype</h3>
-                  <table border={1} cellPadding={8} cellSpacing={0} style={{ borderCollapse: "collapse", marginBottom: 16, width: "100%", maxWidth: 900 }}>
-                    <thead>
-                      <tr>
-                        <th>Archetype ID</th>
-                        <th>Agents</th>
-                        <th>Total PnL</th>
-                        <th>Avg PnL</th>
-                        <th>Avg risk</th>
-                        <th>Total steps</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {summary.byArchetype.map((a) => (
-                        <tr key={a.archetypeId}>
-                          <td style={{ fontSize: 12 }}>{a.archetypeId.slice(0, 8)}…</td>
-                          <td>{a.metrics.agentCount}</td>
-                          <td>{a.metrics.totalPnl.toFixed(2)}</td>
-                          <td>{a.metrics.avgPnl.toFixed(2)}</td>
-                          <td>{a.metrics.avgRisk.toFixed(4)}</td>
-                          <td>{a.metrics.totalSteps}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </>
+              <Row label="Run ID" value={truncateMiddle(latestResult.data.run.id)} />
+              <Row label="Status" value={latestResult.data.run.status} />
+              <Row
+                label="Completed"
+                value={
+                  latestResult.data.run.completedAt
+                    ? new Date(latestResult.data.run.completedAt).toLocaleString()
+                    : "—"
+                }
+              />
+              <Row
+                label="Dataset"
+                value={runDetail?.datasetVersion ?? "—"}
+              />
+              <Row
+                label="Model"
+                value={runDetail?.modelVersion ?? "—"}
+              />
+              {latestResult.data.run.id && (
+                <Link
+                  href={`/runs/${latestResult.data.run.id}`}
+                  className="card-link"
+                >
+                  View run details →
+                </Link>
               )}
-
-              <h3>Agent results ({agents.length})</h3>
-              <table border={1} cellPadding={8} cellSpacing={0} style={{ borderCollapse: "collapse", width: "100%", maxWidth: 1000 }}>
-                <thead>
-                  <tr>
-                    <th>Agent ID</th>
-                    <th>Archetype</th>
-                    <th>Steps</th>
-                    <th>PnL</th>
-                    <th>Risk</th>
-                    <th>Reward</th>
-                    <th>Buy</th>
-                    <th>Sell</th>
-                    <th>Hold</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {agents.map((a) => (
-                    <tr key={a.agentId}>
-                      <td style={{ fontSize: 12 }}>{a.agentId.slice(0, 8)}…</td>
-                      <td style={{ fontSize: 12 }}>{a.archetypeId.slice(0, 8)}…</td>
-                      <td>{a.steps}</td>
-                      <td>{a.pnl.toFixed(2)}</td>
-                      <td>{a.risk.toFixed(4)}</td>
-                      <td>{a.totalReward.toFixed(2)}</td>
-                      <td>{a.actionCounts.buy}</td>
-                      <td>{a.actionCounts.sell}</td>
-                      <td>{a.actionCounts.hold}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </>
           )}
-        </section>
-      )}
-    </main>
+        </Card>
+
+        {/* Card 2: Performance Summary */}
+        <Card title="Performance Summary">
+          {!latestResult.ok ? (
+            <p className="card-error">{latestResult.error}</p>
+          ) : !latestResult.data.summary ? (
+            <p className="card-empty">No completed runs yet</p>
+          ) : (
+            <>
+              <Row
+                label="Correlation"
+                value={
+                  latestResult.data.summary.corr != null
+                    ? latestResult.data.summary.corr.toFixed(4)
+                    : "—"
+                }
+              />
+              <Row
+                label="Directional accuracy"
+                value={
+                  latestResult.data.summary.directionalAccuracy != null
+                    ? (latestResult.data.summary.directionalAccuracy * 100).toFixed(2) + "%"
+                    : "—"
+                }
+              />
+              <Row
+                label="Pairs count"
+                value={
+                  latestResult.data.summary.pairsCount != null
+                    ? String(latestResult.data.summary.pairsCount)
+                    : "—"
+                }
+              />
+            </>
+          )}
+        </Card>
+
+        {/* Card 3: Worker / Queue */}
+        <Card title="Worker / Queue">
+          {!queueResult.ok ? (
+            <p className="card-error">{queueResult.error}</p>
+          ) : (
+            <>
+              <Row label="Queue length" value={String(queueResult.data.queueLen)} />
+              <Row
+                label="Running"
+                value={
+                  queueResult.data.runningRunId
+                    ? truncateMiddle(queueResult.data.runningRunId)
+                    : "Idle"
+                }
+                accent={!!queueResult.data.runningRunId}
+              />
+              {queueResult.data.lastEvents?.length > 0 && (
+                <div className="card-meta">
+                  Last event: {queueResult.data.lastEvents[queueResult.data.lastEvents.length - 1]?.type ?? "—"}
+                </div>
+              )}
+            </>
+          )}
+        </Card>
+      </div>
+    </div>
   );
 }

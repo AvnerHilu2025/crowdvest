@@ -1,10 +1,12 @@
 import React from "react";
 import Link from "next/link";
 import DashboardFiltersClient from "@/components/dashboard-filters.client";
-import { MiniBar, Badge } from "@/components/dashboard/mini-bar";
+import { MiniBar as ScalingMiniBar, Badge } from "@/components/dashboard/mini-bar";
+import { MiniBar, HeaderWithTip, StabilityLegend } from "@/components/dashboard/mini";
 import { getWebBase } from "@/lib/web-base";
-import { stabilityReason, fmtNum, fmtPct } from "@/lib/risk";
+import { stabilityReason } from "@/lib/risk";
 import { stabilityRiskScore, riskBand, stabilityCause } from "@/lib/stability-triage";
+import { DASH_THRESHOLDS, fmtNum, fmtPct01, clamp01 } from "@/lib/dashboardThresholds";
 
 export const dynamic = "force-dynamic";
 
@@ -51,13 +53,6 @@ function badgeKind(band: string): "stable" | "unstable" | "diverging" | "legacy"
   if (band === "DIVERGING") return "diverging";
   if (band === "LEGACY") return "legacy";
   return "stable";
-}
-
-function clamp01(x: number): number {
-  if (!Number.isFinite(x)) return 0;
-  if (x < 0) return 0;
-  if (x > 1) return 1;
-  return x;
 }
 
 export default async function DashboardPage({
@@ -286,7 +281,7 @@ export default async function DashboardPage({
                     <td style={{ padding: "12px 12px 12px 0" }}>{r.steps}</td>
                     <td style={{ padding: "12px 12px 12px 0" }}>
                       {r.runDurationMs != null ? (
-                        <MiniBar
+                        <ScalingMiniBar
                           value01={runDuration01}
                           text={`${r.runDurationMs} ms`}
                           higherIsWorse
@@ -298,7 +293,7 @@ export default async function DashboardPage({
                     </td>
                     <td style={{ padding: "12px 12px 12px 0" }}>
                       {r.decisionsPerSec != null ? (
-                        <MiniBar
+                        <ScalingMiniBar
                           value01={decisionsPerSec01}
                           text={r.decisionsPerSec.toFixed(1)}
                           title="Decisions per second (higher = better)"
@@ -312,7 +307,7 @@ export default async function DashboardPage({
                     </td>
                     <td style={{ padding: "12px 12px 12px 0" }}>
                       {r.overheadPct != null ? (
-                        <MiniBar
+                        <ScalingMiniBar
                           value01={overheadPct01}
                           text={`${r.overheadPct.toFixed(1)}%`}
                           higherIsWorse
@@ -324,7 +319,7 @@ export default async function DashboardPage({
                     </td>
                     <td style={{ padding: "12px 12px 12px 0" }}>
                       {r.efficiencyMsPerDecision != null ? (
-                        <MiniBar
+                        <ScalingMiniBar
                           value01={efficiency01}
                           text={r.efficiencyMsPerDecision.toFixed(4)}
                           higherIsWorse
@@ -367,6 +362,9 @@ export default async function DashboardPage({
         <div style={{ fontWeight: 600, marginBottom: 4 }}>Stability Watchlist</div>
         <div style={{ fontSize: 12, color: "rgba(15, 23, 42, 0.55)", marginBottom: 8 }}>
           Computed across variants (seeds) per run. Use Compare seeds to inspect divergences.
+        </div>
+        <div className="mb-3">
+          <StabilityLegend />
         </div>
         <div
           style={{
@@ -469,17 +467,56 @@ export default async function DashboardPage({
                 <th style={{ padding: "8px 12px 8px 0" }}>Cause</th>
                 <th style={{ padding: "8px 12px 8px 0" }}>Reason</th>
                 <th style={{ padding: "8px 12px 8px 0", textAlign: "right" }}>Seeds</th>
-                <th style={{ padding: "8px 12px 8px 0", textAlign: "right" }}>Corr spread</th>
-                <th style={{ padding: "8px 12px 8px 0", textAlign: "right" }}>Sign agreement</th>
-                <th style={{ padding: "8px 12px 8px 0", textAlign: "right" }}>Acc std dev</th>
+                <th style={{ padding: "8px 12px 8px 0", textAlign: "right" }}>
+                  <HeaderWithTip
+                    label="Corr spread"
+                    tip="Max(corr) - Min(corr) across seeds for this run. Higher => less stable."
+                  />
+                </th>
+                <th style={{ padding: "8px 12px 8px 0", textAlign: "right" }}>
+                  <HeaderWithTip
+                    label="Sign agreement"
+                    tip="Fraction of seeds that agree on direction (BUY/SELL/HOLD sign). Lower => instability."
+                  />
+                </th>
+                <th style={{ padding: "8px 12px 8px 0", textAlign: "right" }}>
+                  <HeaderWithTip
+                    label="Acc std dev"
+                    tip="Std deviation of accuracy across seeds. Higher => less stable."
+                  />
+                </th>
                 <th style={{ padding: "8px 12px 8px 0" }}>Link</th>
               </tr>
             </thead>
             <tbody>
               {stabilityDecorated.map((r, i) => {
-                const corrSpread01 = r.corrSpread != null ? clamp01(r.corrSpread) : null;
-                const signAgreement01 = r.signAgreementRate != null ? clamp01(r.signAgreementRate) : null;
-                const accStdDev01 = r.accStdDev != null ? clamp01(r.accStdDev) : null;
+                const corrSpread = r.corrSpread;
+                const signAgreementRate = r.signAgreementRate;
+                const accStdDev = r.accStdDev;
+
+                const corrSpreadTone =
+                  corrSpread != null
+                    ? corrSpread >= DASH_THRESHOLDS.corrSpreadHigh
+                      ? "bad"
+                      : corrSpread >= DASH_THRESHOLDS.corrSpreadWarn
+                        ? "warn"
+                        : "good"
+                    : "neutral";
+                const signAgreementTone =
+                  signAgreementRate != null
+                    ? signAgreementRate < DASH_THRESHOLDS.signAgreementWarn
+                      ? "bad"
+                      : "good"
+                    : "neutral";
+                const accStdDevTone =
+                  accStdDev != null
+                    ? accStdDev >= 0.05
+                      ? "bad"
+                      : accStdDev >= DASH_THRESHOLDS.accStdDevWarn
+                        ? "warn"
+                        : "good"
+                    : "neutral";
+
                 return (
                   <tr
                     key={r.runId}
@@ -507,35 +544,36 @@ export default async function DashboardPage({
                     </td>
                     <td style={{ padding: "12px 12px 12px 0", textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{r.variants}</td>
                     <td style={{ padding: "12px 12px 12px 0" }}>
-                      {r.corrSpread != null ? (
+                      {corrSpread != null ? (
                         <MiniBar
-                          value01={corrSpread01}
-                          text={fmtNum(r.corrSpread, 4)}
-                          higherIsWorse
+                          value01={clamp01(corrSpread / 1.0)}
+                          label={fmtNum(corrSpread, 4)}
                           title="corrSpread: higher means seeds disagree more"
+                          tone={corrSpreadTone}
                         />
                       ) : (
                         <span className="text-slate-500">—</span>
                       )}
                     </td>
                     <td style={{ padding: "12px 12px 12px 0" }}>
-                      {r.signAgreementRate != null ? (
+                      {signAgreementRate != null ? (
                         <MiniBar
-                          value01={signAgreement01}
-                          text={`${Math.round(r.signAgreementRate * 100)}%`}
+                          value01={clamp01(1 - signAgreementRate)}
+                          label={fmtPct01(signAgreementRate, 0)}
                           title="signAgreementRate: 1.0 means all seeds agree on direction"
+                          tone={signAgreementTone}
                         />
                       ) : (
                         <span className="text-slate-500">—</span>
                       )}
                     </td>
                     <td style={{ padding: "12px 12px 12px 0" }}>
-                      {r.accStdDev != null ? (
+                      {accStdDev != null ? (
                         <MiniBar
-                          value01={accStdDev01}
-                          text={`${(r.accStdDev * 100).toFixed(2)}%`}
-                          higherIsWorse
+                          value01={clamp01(accStdDev / 0.1)}
+                          label={fmtPct01(accStdDev, 2)}
                           title="accStdDev: std dev across seeds (fraction)"
+                          tone={accStdDevTone}
                         />
                       ) : (
                         <span className="text-slate-500">—</span>

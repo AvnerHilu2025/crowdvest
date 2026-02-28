@@ -6,7 +6,7 @@ import DashboardFiltersClient from "@/components/dashboard-filters.client";
 import { MiniBar as ScalingMiniBar, Badge } from "@/components/dashboard/mini-bar";
 import { MiniBar, HeaderWithTip, StabilityLegend } from "@/components/dashboard/mini";
 import { p95, normToP95 } from "@/lib/miniBars";
-import { DASH_THRESHOLDS, fmtNum, fmtPct01, clamp01 } from "@/lib/dashboardThresholds";
+import { DASH_THRESHOLDS, fmtNum, fmtPct01, clamp01, formatOverheadPct } from "@/lib/dashboardThresholds";
 import styles from "./dashboard.module.css";
 
 type ScalingRow = {
@@ -94,7 +94,10 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
   const openStabilityDrawer = (r: StabilityRow) => () => setDrawerRun({ runId: r.runId, type: "stability", row: r });
 
   const decisionsPerSecVals = scaling.map((r) => r.decisionsPerSec ?? 0).filter((v) => v > 0);
-  const overheadPctVals = scaling.map((r) => r.overheadPct ?? 0).filter((v) => v > 0);
+  const overheadPctVals = scaling
+    .map((r) => r.overheadPct ?? 0)
+    .filter((v) => v > 0)
+    .map((v) => (v > 100 ? 100 : v));
   const efficiencyVals = scaling.map((r) => r.efficiencyMsPerDecision ?? 0).filter((v) => v > 0);
 
   const p95Decisions = p95(decisionsPerSecVals);
@@ -140,7 +143,7 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
           <div style={{ border: "1px solid rgba(15, 23, 42, 0.10)", borderRadius: 10, padding: 16 }}>
             <div style={{ fontSize: 12, color: "rgba(15, 23, 42, 0.55)" }}>Overhead %</div>
             <div style={{ fontSize: 24, fontWeight: 700, marginTop: 4 }}>
-              {latestScalingRow?.overheadPct != null ? `${(latestScalingRow.overheadPct * 100).toFixed(1)}%` : "—"}
+              {formatOverheadPct(latestScalingRow?.overheadPct)}
             </div>
             <div style={{ fontSize: 12, color: "rgba(15, 23, 42, 0.5)", marginTop: 4 }}>Run wallclock vs variants</div>
           </div>
@@ -178,7 +181,8 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
             <tbody>
               {scaling.map((r) => {
                 const dpsWidth = r.decisionsPerSec != null ? normToP95(r.decisionsPerSec, p95Decisions) / 100 : 0;
-                const ohWidth = r.overheadPct != null ? normToP95(r.overheadPct, p95Overhead) / 100 : 0;
+                const ohVal = r.overheadPct != null ? (r.overheadPct > 100 ? 100 : r.overheadPct) : null;
+                const ohWidth = ohVal != null ? normToP95(ohVal, p95Overhead) / 100 : 0;
                 const effWidth = r.efficiencyMsPerDecision != null ? normToP95(r.efficiencyMsPerDecision, p95Efficiency) / 100 : 0;
                 return (
                   <tr key={r.runId} className={styles.clickable} onClick={openScalingDrawer(r)}>
@@ -214,7 +218,7 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
                       {r.overheadPct != null ? (
                         <ScalingMiniBar
                           value01={p95Overhead > 0 ? ohWidth : 0}
-                          text={`${(r.overheadPct * 100).toFixed(1)}%`}
+                          text={formatOverheadPct(r.overheadPct)}
                           higherIsWorse
                           title="Overhead % (lower = better)"
                         />

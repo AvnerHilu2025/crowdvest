@@ -20,3 +20,12 @@ export function fmtNum(x: number, digits = 4) {
   if (x == null || !Number.isFinite(x)) return "—";
   return x.toFixed(digits);
 }
+
+/**
+ * overheadPct is already percent (0.257 means 0.257%).
+ * Do NOT multiply by 100.
+ */
+export function formatOverheadPct(pct: number | null | undefined): string {
+  if (pct == null || !Number.isFinite(pct)) return "—";
+  return `${pct.toFixed(1)}%`;
+}

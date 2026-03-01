@@ -6,6 +6,10 @@
 set -euo pipefail
 WEB_BASE="${WEB_BASE:-http://localhost:4000}"
 API_BASE="${API_BASE:-http://localhost:4001}"
+export WEB_BASE
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+"$SCRIPT_DIR/assert-web-up.sh"
 
 echo "Web smoke check: WEB_BASE=$WEB_BASE API_BASE=$API_BASE"
 

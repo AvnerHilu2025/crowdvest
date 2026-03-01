@@ -16,6 +16,36 @@ Minimal web UI to view simulation results. Functionality only; no styling focus.
    ```
    Open `http://localhost:4000`.
 
+## E2E tests (Playwright)
+
+1. Ensure the dev server is running (`pnpm dev` or `pnpm -C apps/web dev`).
+2. Run E2E tests:
+   ```bash
+   pnpm -C apps/web test:e2e
+   ```
+3. Optional: run with UI mode for debugging:
+   ```bash
+   pnpm -C apps/web test:e2e:ui
+   ```
+
+### Linux deps
+
+On Ubuntu/WSL, Playwright’s Chromium needs system libraries (e.g. `libnspr4`, `libnss3`). Prefer Playwright’s built-in installer:
+
+```bash
+cd ~/crowdvest
+
+# install Playwright OS deps (preferred, covers libnspr4 and friends)
+pnpm -C apps/web exec playwright install-deps
+
+# if the above fails (no sudo / permissions), fallback:
+sudo apt-get update
+sudo apt-get install -y libnspr4 libnss3
+
+# (optional) ensure browsers exist
+pnpm -C apps/web exec playwright install chromium
+```
+
 3. (Optional) Point the UI at another API:
    ```bash
    NEXT_PUBLIC_API_BASE=http://your-api:4001 pnpm --filter web dev

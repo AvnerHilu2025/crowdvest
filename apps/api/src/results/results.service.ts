@@ -1,4 +1,10 @@
-import { ConflictException, Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from "@nestjs/common";
 import { createHash } from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
 import {
@@ -62,6 +68,7 @@ export class ResultsService {
       completedAt: string | null;
       failedAt: string | null;
       lastError: string | null;
+      runDurationMs: number | null;
       assetSymbol: string | null;
       steps: number | null;
       agents: number | null;
@@ -83,6 +90,7 @@ export class ResultsService {
           completedAt: true,
           failedAt: true,
           lastError: true,
+          runDurationMs: true,
         },
       }),
       this.prisma.simulationRun.count(),
@@ -112,6 +120,7 @@ export class ResultsService {
           completedAt: r.completedAt?.toISOString() ?? null,
           failedAt: r.failedAt?.toISOString() ?? null,
           lastError: r.lastError,
+          runDurationMs: r.runDurationMs ?? null,
           assetSymbol: fallbackVariant?.assetSymbol ?? null,
           steps: fallbackVariant?.steps ?? null,
           agents: fallbackVariant?.agents ?? null,
@@ -950,7 +959,8 @@ export class ResultsService {
       ? Number(process.env.RESULTS_RISK_TOO_LOW_THRESHOLD)
       : 1e-8;
 
-  /** GET /results/summary-compact?run_id= — compact post-run verification payload + warnings. */
+  /** GET /results/summary-compact?run_id= — compact post-run verification payload + warnings.
+   * Canonical read only: RunVariantSummary (histogram from debugDecisionCounts). No recompute. */
   async getSummaryCompact(runId: string): Promise<{
     runId: string;
     metrics: {
@@ -990,29 +1000,60 @@ export class ResultsService {
   }> {
     const run = await this.prisma.simulationRun.findUnique({
       where: { id: runId },
-      select: { id: true },
+      select: { id: true, status: true },
     });
     if (!run) throw new NotFoundException(`Run not found: ${runId}`);
 
-    const defaultVariant = await this.prisma.runVariant.findFirst({
-      where: { runId, seed: 1, OR: [{ label: "" }, { label: null }] },
-      select: { id: true, steps: true, agents: true },
-    });
-    const fallbackVariant =
-      defaultVariant ??
-      (await this.prisma.runVariant.findFirst({
-        where: { runId },
-        orderBy: { seed: "asc" },
-        select: { id: true, steps: true, agents: true },
-      }));
+    if (run.status !== "COMPLETED") {
+      throw new BadRequestException(`Run ${runId} is not COMPLETED`);
+    }
 
-    const [summaryResult, rawExperiences, simulationRun, runDebugResult] = await Promise.all([
+    const variantSummaries = await this.prisma.runVariantSummary.findMany({
+      where: { runVariant: { runId } },
+      include: { runVariant: { select: { id: true, seed: true, steps: true, agents: true } } },
+      orderBy: { runVariant: { seed: "asc" } },
+    });
+
+    if (!variantSummaries.length) {
+      throw new InternalServerErrorException(
+        `No RunVariantSummary found for COMPLETED run ${runId}`,
+      );
+    }
+
+    const firstSummary = variantSummaries[0]!;
+    const firstVariant = firstSummary.runVariant;
+
+    const rawCounts = firstSummary.debugDecisionCounts as
+      | { BUY?: number; SELL?: number; HOLD?: number; OTHER?: number }
+      | null
+      | undefined;
+    const persistedHistogram = {
+      BUY: typeof rawCounts?.BUY === "number" ? rawCounts.BUY : 0,
+      SELL: typeof rawCounts?.SELL === "number" ? rawCounts.SELL : 0,
+      HOLD: typeof rawCounts?.HOLD === "number" ? rawCounts.HOLD : 0,
+      OTHER: typeof rawCounts?.OTHER === "number" ? rawCounts.OTHER : 0,
+    };
+
+    const totalBuy = persistedHistogram.BUY;
+    const totalSell = persistedHistogram.SELL;
+    const totalHold = persistedHistogram.HOLD;
+    const totalSteps = firstVariant.steps;
+    const agentCount = firstVariant.agents;
+
+    const sampleDecs = await this.prisma.agentDecision.findMany({
+      where: { runVariantId: firstVariant.id },
+      select: { agentId: true, step: true, action: true },
+      orderBy: [{ step: "asc" }, { agentId: "asc" }],
+      take: 10,
+    });
+    const sampleActions = sampleDecs.map((d) => ({
+      agentId: d.agentId,
+      step: d.step,
+      action: String(d.action),
+    }));
+
+    const [summaryResult, simulationRun, runDebugResult] = await Promise.all([
       this.getSummary(runId),
-      this.prisma.agentExperience.findMany({
-        where: { runId },
-        select: { runAgentId: true, step: true, actionJson: true },
-        orderBy: [{ step: "asc" }, { runAgentId: "asc" }],
-      }),
       this.prisma.simulationRun.findUnique({
         where: { id: runId },
         select: { configJson: true },
@@ -1027,55 +1068,6 @@ export class ResultsService {
     const { run: runAgg, byArchetype, validation } = summaryResult;
     const agentCountSum = byArchetype.reduce((s, a) => s + a.metrics.agentCount, 0);
     const totalPnlSum = byArchetype.reduce((s, a) => s + a.metrics.totalPnl, 0);
-
-    let persistedHistogram: { BUY: number; SELL: number; HOLD: number; OTHER: number };
-    let sampleActions: { agentId: string; step: number; action: string }[];
-    let totalSteps: number;
-    let agentCount: number;
-    let totalBuy: number;
-    let totalSell: number;
-    let totalHold: number;
-
-    if (fallbackVariant) {
-      const hist = await this.computeActionHistogramForVariant(fallbackVariant.id);
-      persistedHistogram = { BUY: hist.BUY, SELL: hist.SELL, HOLD: hist.HOLD, OTHER: hist.OTHER };
-      totalSteps = fallbackVariant.steps;
-      agentCount = fallbackVariant.agents;
-      totalBuy = hist.BUY;
-      totalSell = hist.SELL;
-      totalHold = hist.HOLD;
-
-      const sampleDecs = await this.prisma.agentDecision.findMany({
-        where: { runVariantId: fallbackVariant.id },
-        select: { agentId: true, step: true, action: true },
-        orderBy: [{ step: "asc" }, { agentId: "asc" }],
-        take: 10,
-      });
-      sampleActions = sampleDecs.map((d) => ({
-        agentId: d.agentId,
-        step: d.step,
-        action: String(d.action),
-      }));
-    } else {
-      persistedHistogram = { BUY: 0, SELL: 0, HOLD: 0, OTHER: 0 };
-      sampleActions = [];
-      for (const e of rawExperiences) {
-        const action =
-          (e.actionJson as { action?: string } | null)?.action?.toLowerCase() ?? "hold";
-        const key =
-          action === "buy" ? "BUY" : action === "sell" ? "SELL" : action === "hold" ? "HOLD" : "OTHER";
-        persistedHistogram[key]++;
-        if (sampleActions.length < 10) {
-          sampleActions.push({ agentId: e.runAgentId, step: e.step, action: key });
-        }
-      }
-      const m = runAgg.metrics;
-      totalSteps = Math.max(0, Number(m.totalSteps) || 0);
-      agentCount = m.agentCount;
-      totalBuy = Number(m.totalBuy) || 0;
-      totalSell = Number(m.totalSell) || 0;
-      totalHold = Number(m.totalHold) || 0;
-    }
 
     const totalActions = persistedHistogram.BUY + persistedHistogram.SELL + persistedHistogram.HOLD + persistedHistogram.OTHER;
     const m = runAgg.metrics;
@@ -1226,6 +1218,7 @@ export class ResultsService {
     completedAt: Date | null;
     failedAt: Date | null;
     lastError: string | null;
+    runDurationMs: number | null;
     seed: number;
     modelVersion: string;
     datasetVersion: string;
@@ -1242,6 +1235,7 @@ export class ResultsService {
         completedAt: true,
         failedAt: true,
         lastError: true,
+        runDurationMs: true,
         seed: true,
         modelVersion: true,
         datasetVersion: true,

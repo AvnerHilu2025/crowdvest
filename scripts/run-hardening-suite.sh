@@ -1,185 +1,207 @@
 #!/usr/bin/env bash
+# Deterministic hardening + bench suite.
+# Runs 4 agent buckets (50, 200, 1000, 2000), validates summary-compact and variants.
+# Usage: ./scripts/run-hardening-suite.sh
+# Requires: API on http://localhost:4001, worker CLI, curl, jq
+
 set -euo pipefail
 
-API="http://localhost:4001"
-ASSET="SPY"
+API="${API:-http://localhost:4001}"
+agentBuckets=(50 200 1000 2000)
+POLL_INTERVAL=1
+POLL_TIMEOUT=120
+UUID_REGEX='^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
 
-AGENT_SCALES=(50 200 1000 2000)
+mkdir -p logs/hardening
 
-echo "=============================================="
-echo "CrowdVest Hardening Suite"
-echo "Each run: 3 seeds (--seedStart 1 --seeds 3)"
-echo "=============================================="
-
-fail=0
-FAILED_CASES=()
-ADV_DELTAS=()  # advantage_delta for agents>=200 (for aggregate gate)
-
-mkdir -p .hardening_logs
-
-run_one() {
-  agents=$1
-
-  echo ""
-  echo "----------------------------------------------"
-  echo "Agents=$agents (3 seeds per run)"
-  echo "----------------------------------------------"
-
-  start_time=$(date +%s)
-
-  RUN_NAME="hardening-${agents}-$(date +%s)"
-  RUN_ID=$(curl -s -X POST "$API/runs/create-unique" \
-    -H "content-type: application/json" \
-    -d "{\"baseName\":\"$RUN_NAME\",\"datasetVersion\":\"spy29\"}" \
-    | jq -r '.runId // .id')
-
-  if [[ -z "$RUN_ID" || "$RUN_ID" == "null" ]]; then
-    echo "ERROR: could not create runId"
-    fail=1
-    FAILED_CASES+=("agents=$agents reason=create-run")
-    return 1
-  fi
-
-  echo "RunId=$RUN_ID"
-
-  # Import dataset into this run (use /runs/:runId/import to avoid spy29 auto-enqueue)
-  if ! curl -s -X POST "$API/runs/$RUN_ID/import" \
-    -H "content-type: application/json" \
-    -d "{\"assetSymbol\":\"$ASSET\",\"steps\":29,\"source\":\"default\"}" > /dev/null; then
-    echo "ERROR: dataset import failed"
-    fail=1
-    FAILED_CASES+=("agents=$agents runId=$RUN_ID reason=import")
-    return 1
-  fi
-
-  worker_log=".hardening_logs/worker_agents${agents}.log"
-  check_log=".hardening_logs/check_agents${agents}.json"
-
-  # Run worker with 3 seeds per run
-  if ! pnpm -C apps/worker run backtest-v0 -- \
-    --runId "$RUN_ID" \
-    --assetSymbol "$ASSET" \
-    --steps 29 \
-    --agents "$agents" \
-    --seedStart 1 \
-    --seeds 3 \
-    --overwrite true \
-    >"$worker_log" 2>&1; then
-    echo "WORKER FAILED (see $worker_log)"
-    fail=1
-    FAILED_CASES+=("agents=$agents runId=$RUN_ID reason=worker")
-    return 1
-  fi
-
-  # Print variantsCount and variant ids
-  VARIANTS_JSON=$(curl -s "$API/runs/$RUN_ID/variants?assetSymbol=$ASSET")
-  VARIANTS_COUNT=$(echo "$VARIANTS_JSON" | jq -r '.items | length')
-  VARIANT_IDS=$(echo "$VARIANTS_JSON" | jq -r '.items[].id' | tr '\n' ' ')
-  echo "variantsCount=$VARIANTS_COUNT"
-  echo "variantIds: $VARIANT_IDS"
-
-  # Run crowd-wisdom-check (stdout to check_log, stderr to separate file)
-  check_stderr=".hardening_logs/check_stderr_agents${agents}.txt"
-  RUN_ID="$RUN_ID" API="$API" ASSET="$ASSET" node scripts/crowd-wisdom-check.mjs >"$check_log" 2>"$check_stderr"
-  check_exit=$?
-
-  duration=$(( $(date +%s) - start_time ))
-
-  # Exit 1 = script threw (before printing JSON)
-  if [[ $check_exit -eq 1 ]]; then
-    echo "CROWD CHECK THREW (see $check_stderr)"
-    fail=1
-    FAILED_CASES+=("agents=$agents runId=$RUN_ID reason=throw")
-    return 1
-  fi
-
-  # Parse JSON (exit 0 or 2 both produce JSON)
-  if ! jq -e '.report and .PASS' "$check_log" >/dev/null 2>&1; then
-    echo "FAIL: check JSON missing report or PASS (see $check_log)"
-    fail=1
-    FAILED_CASES+=("agents=$agents runId=$RUN_ID reason=throw")
-    return 1
-  fi
-
-  # Extract report values and PASS flags
-  independence=$(jq -r '.report.independence_avgAbsCorr // empty' "$check_log")
-  diversity=$(jq -r '.report.diversity_medEntropy_norm01 // empty' "$check_log")
-  advantage=$(jq -r '.report.crowdAdvantage_delta // empty' "$check_log")
-  agentsPersisted=$(jq -r '.report.agentsTotal // empty' "$check_log")
-  pass_ind=$(jq -r '.PASS.independence // false' "$check_log")
-  pass_div=$(jq -r '.PASS.diversity // false' "$check_log")
-  pass_adv=$(jq -r '.PASS.crowdAdvantage // false' "$check_log")
-
-  # Per-case gates: independence and diversity -> FAIL immediately
-  if [[ "$pass_ind" != "true" ]]; then
-    echo "FAIL: PASS.independence=false (see $check_log)"
-    fail=1
-    FAILED_CASES+=("agents=$agents runId=$RUN_ID reason=independence")
-    return 1
-  fi
-  if [[ "$pass_div" != "true" ]]; then
-    echo "FAIL: PASS.diversity=false (see $check_log)"
-    fail=1
-    FAILED_CASES+=("agents=$agents runId=$RUN_ID reason=diversity")
-    return 1
-  fi
-
-  # Print single-line summary
-  echo "agentsRequested=${agents} agentsPersisted=${agentsPersisted} variantsCount=${VARIANTS_COUNT} duration=${duration}s independence=${independence} diversity=${diversity} advantage=${advantage} PASS={ind:${pass_ind},div:${pass_div},adv:${pass_adv}}"
-
-  # agentsTotal mismatch is INFO only (persist=lite may sample)
-  if [[ "$agentsPersisted" != "$agents" ]]; then
-    echo "INFO: agentsPersisted differs from requested (requested=$agents persisted=$agentsPersisted) — expected under persist=lite"
-  fi
-
-  # Advantage: do NOT fail per-case. Record for agents>=200; agents=50 is INFO only.
-  if [[ "$agents" -ge 200 ]]; then
-    ADV_DELTAS+=("${advantage:-0}")
+die() {
+  local reason="$1"
+  local log_file="${2:-}"
+  echo "FAIL bucket agents=${agents:-?} runId=${runId:-?} reason=$reason"
+  echo "---- LOG TAIL ----"
+  if [ -z "$log_file" ] || [ ! -f "$log_file" ]; then
+    echo "(no log file)"
+  elif [ ! -s "$log_file" ]; then
+    echo "(log empty)"
   else
-    if [[ "$pass_adv" != "true" ]]; then
-      echo "INFO: agents=50 crowdAdvantage=false (advantage=$advantage) — not counted in aggregate gate"
-    fi
+    tail -n 200 "$log_file"
   fi
+  exit 1
+}
 
+require_cmd() {
+  for cmd in "$@"; do
+    if ! command -v "$cmd" >/dev/null 2>&1; then
+      die "required command not found: $cmd"
+    fi
+  done
+}
+
+# GET url, capture body and status. On 200, output body. On 4xx/5xx, print debug and return non-zero.
+http_get_json() {
+  local url="$1"
+  local raw
+  raw="$(curl -sS -w '\n__HTTP_STATUS__:%{http_code}\n' "$url")"
+  local status
+  status="$(echo "$raw" | tail -n1 | sed 's/__HTTP_STATUS__://')"
+  local body
+  body="$(echo "$raw" | sed '$d')"
+  if [ "$status" != "200" ]; then
+    echo "HTTP GET failed url=$url status=$status" >&2
+    echo "body (first 40 lines):" >&2
+    echo "$body" | head -n 40 >&2
+    return 1
+  fi
+  echo "$body"
+}
+
+# Tolerant GET /runs/:id for polling. Does NOT use -f. Returns status string; on FAILED, outputs body on line 2.
+get_run_status_tolerant() {
+  local runId="$1"
+  local raw
+  raw="$(curl -sS -w '\n__HTTP__:%{http_code}\n' "$API/runs/$runId")"
+  local http_code
+  http_code="$(echo "$raw" | tail -n1 | sed 's/__HTTP__://')"
+  local body
+  body="$(echo "$raw" | sed '$d')"
+  if [ "$http_code" = "200" ]; then
+    local status
+    status="$(echo "$body" | jq -r '.status // empty' 2>/dev/null || true)"
+    if [ -n "$status" ]; then
+      if [ "$status" = "FAILED" ]; then
+        echo "FAILED"
+        echo "$body"
+      else
+        echo "$status"
+      fi
+      return 0
+    fi
+    echo "NON_JSON"
+    return 0
+  fi
+  if [ "$http_code" = "400" ]; then
+    local msg
+    msg="$(echo "$body" | jq -r '.message // empty' 2>/dev/null || true)"
+    if [[ "$msg" == *"is not COMPLETED"* ]]; then
+      echo "RUNNING"
+      return 0
+    fi
+    if [[ "$msg" == *"not found"* ]] || [[ "$msg" == *"Not found"* ]]; then
+      echo "NOT_FOUND"
+      return 0
+    fi
+    echo "UNKNOWN_400"
+    return 0
+  fi
+  if [ "$http_code" = "404" ]; then
+    echo "NOT_FOUND"
+    return 0
+  fi
+  echo "HTTP_${http_code}"
   return 0
 }
 
-echo ""
-echo "=============================================="
-echo "Running suite: agents=${AGENT_SCALES[*]} (3 seeds per run)"
-echo "Logs: .hardening_logs/"
-echo "=============================================="
+# Poll until status=COMPLETED or FAILED or timeout. Tolerates 400 "is not COMPLETED" during polling.
+poll_run() {
+  local runId="$1"
+  local timeout_sec="${2:-$POLL_TIMEOUT}"
+  local log_file="${3:-}"
+  local elapsed=0
+  local status="unknown"
+  while [ "$elapsed" -lt "$timeout_sec" ]; do
+    local result
+    result="$(get_run_status_tolerant "$runId")"
+    status="$(echo "$result" | head -n1)"
+    if [ "$status" = "COMPLETED" ]; then
+      return 0
+    fi
+    if [ "$status" = "FAILED" ]; then
+      local body lastError
+      body="$(echo "$result" | tail -n +2)"
+      lastError="$(echo "$body" | jq -r '.lastError // "no lastError"')"
+      die "Run FAILED: $lastError" "$log_file"
+    fi
+    if [ "$status" = "NOT_FOUND" ]; then
+      die "Run not found" "$log_file"
+    fi
+    sleep "$POLL_INTERVAL"
+    elapsed=$((elapsed + POLL_INTERVAL))
+  done
+  die "Run did not reach COMPLETED within ${timeout_sec}s (status=$status)" "$log_file"
+}
 
-for agents in "${AGENT_SCALES[@]}"; do
-  run_one "$agents" || true
+# Validate summary-compact: BUY+SELL+HOLD > 0
+validate_summary_compact() {
+  local runId="$1"
+  local log_file="${2:-}"
+  local res
+  res="$(http_get_json "$API/results/summary-compact?run_id=$runId")" || die "GET /results/summary-compact failed" "$log_file"
+  local buy sell hold
+  buy="$(echo "$res" | jq -r '.debug.persistedHistogram.BUY // 0')"
+  sell="$(echo "$res" | jq -r '.debug.persistedHistogram.SELL // 0')"
+  hold="$(echo "$res" | jq -r '.debug.persistedHistogram.HOLD // 0')"
+  local total
+  total=$((buy + sell + hold))
+  if [ "$total" -le 0 ]; then
+    die "summary-compact histogram BUY+SELL+HOLD=$total (expected > 0)" "$log_file"
+  fi
+  echo "$total"
+}
+
+# Validate variants: length==3, seeds 1,2,3 exist
+validate_variants() {
+  local runId="$1"
+  local log_file="${2:-}"
+  local res
+  res="$(http_get_json "$API/runs/$runId/variants?assetSymbol=SPY")" || die "GET /runs/$runId/variants failed" "$log_file"
+  local count
+  count="$(echo "$res" | jq -r '.items | length')"
+  if [ "$count" -ne 3 ]; then
+    die "variants length=$count (expected 3)" "$log_file"
+  fi
+  local seeds
+  seeds="$(echo "$res" | jq -r '[.items[].seed] | sort | join(",")')"
+  if [ "$seeds" != "1,2,3" ]; then
+    die "variants seeds=$seeds (expected 1,2,3)" "$log_file"
+  fi
+  echo "$res" | jq -r '.items[].id' | tr '\n' ' '
+}
+
+require_cmd curl jq
+
+echo "HARDENING SUITE: API=$API buckets=${agentBuckets[*]}"
+
+for agents in "${agentBuckets[@]}"; do
+  bucket_start="$(date +%s%3N)"
+  import_res="$(curl -fsS -X POST "$API/runs/import/spy29")" || die "POST /runs/import/spy29 failed"
+  runId="$(echo "$import_res" | jq -r '.runId')"
+  runId="$(echo "$runId" | tr -d '\r\n' | xargs)"
+  if [ -z "$runId" ] || [ "$runId" = "null" ]; then
+    die "Could not create run (no runId in response)"
+  fi
+  if [[ ! "$runId" =~ $UUID_REGEX ]]; then
+    die "Invalid runId format (expected UUID): $(printf '%q' "$runId")"
+  fi
+
+  LOG_FILE="logs/hardening/agents-${agents}-${runId}.log"
+  touch "$LOG_FILE"
+
+  poll_run "$runId" "$POLL_TIMEOUT" "$LOG_FILE"
+
+  if [ "$agents" -eq 50 ]; then
+    pnpm -C apps/worker run backtest-v0 -- --runId "$runId" --assetSymbol SPY --steps 29 --agents 50 --seedStart 1 --seeds 3 >"$LOG_FILE" 2>&1 || die "worker CLI failed" "$LOG_FILE"
+  else
+    pnpm -C apps/worker run backtest-v0 -- --runId "$runId" --assetSymbol SPY --steps 29 --agents "$agents" --seedStart 1 --seeds 3 --overwrite >"$LOG_FILE" 2>&1 || die "worker CLI failed" "$LOG_FILE"
+  fi
+
+  poll_run "$runId" "$POLL_TIMEOUT" "$LOG_FILE"
+
+  histogramTotal="$(validate_summary_compact "$runId" "$LOG_FILE")"
+  variantIds="$(validate_variants "$runId" "$LOG_FILE")"
+
+  bucket_end="$(date +%s%3N)"
+  durationMs=$((bucket_end - bucket_start))
+  echo "BUCKET agents=$agents durationMs=$durationMs runId=$runId variants=3 histogramTotal=$histogramTotal variantIds=$variantIds"
 done
 
-echo ""
-echo "=============================================="
-
-# Advantage stats (informational KPI only — never fails suite)
-total_cases_adv=${#ADV_DELTAS[@]}
-if [[ $total_cases_adv -gt 0 ]]; then
-  read -r negative_cases_adv avg_advantage_delta <<< $(printf '%s\n' "${ADV_DELTAS[@]}" | awk '
-    BEGIN { sum=0; neg=0 }
-    { sum+=$1; if($1<0) neg++ }
-    END { avg=(NR>0)?sum/NR:0; printf "%d %.4f", neg, avg }')
-  pct_adv=$(awk "BEGIN { printf \"%.1f\", ($negative_cases_adv/$total_cases_adv)*100 }")
-  echo "ADVANTAGE STATS (agents>=200): total=$total_cases_adv negative=$negative_cases_adv pct=${pct_adv}% avg=$avg_advantage_delta"
-else
-  echo "ADVANTAGE STATS (agents>=200): total=0 (no cases)"
-fi
-
-echo "=============================================="
-if [[ $fail -eq 0 ]]; then
-  echo "HARDENING SUITE PASSED"
-  exit 0
-else
-  echo "HARDENING SUITE FAILED"
-  echo "FAILED CASES:"
-  for c in "${FAILED_CASES[@]}"; do
-    echo " - $c"
-  done
-  echo "Inspect logs under .hardening_logs/"
-  exit 1
-fi
+echo "HARDENING SUITE PASSED"

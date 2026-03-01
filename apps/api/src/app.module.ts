@@ -17,6 +17,7 @@ import { TimeseriesModule } from "./timeseries/timeseries.module";
 import { WalletModule } from "./wallet/wallet.module";
 import { InfoEventsModule } from "./info-events/info-events.module";
 import { JobsModule } from "./jobs/jobs.module";
+import { DashboardModule } from "./dashboard/dashboard.module";
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { JobsModule } from "./jobs/jobs.module";
     WalletModule,
     InfoEventsModule,
     JobsModule,
+    DashboardModule,
   ],
 })
 export class AppModule {}

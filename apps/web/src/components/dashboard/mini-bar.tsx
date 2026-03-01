@@ -54,7 +54,7 @@ export function MiniBar(props: MiniBarProps) {
 }
 
 type BadgeProps = {
-  kind: "stable" | "unstable" | "diverging" | "legacy" | "neutral";
+  kind: "stable" | "unstable" | "diverging" | "legacy" | "neutral" | "overhead-soft" | "overhead-hard";
   text: string;
 };
 
@@ -68,7 +68,11 @@ export function Badge({ kind, text }: BadgeProps) {
           ? "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
           : kind === "legacy"
             ? "bg-slate-100 text-slate-600 ring-1 ring-slate-200"
-            : "bg-slate-50 text-slate-700 ring-1 ring-slate-200";
+            : kind === "overhead-hard"
+              ? "bg-rose-100 text-rose-800 ring-1 ring-rose-300"
+              : kind === "overhead-soft"
+                ? "bg-amber-50 text-amber-800 ring-1 ring-amber-200"
+                : "bg-slate-50 text-slate-700 ring-1 ring-slate-200";
 
   return (
     <span className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-medium ${cls}`}>

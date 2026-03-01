@@ -1,13 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { truncateMiddle } from "@/lib/format";
+import { formatDurationMs, truncateMiddle } from "@/lib/format";
 
 export interface VariantRow {
   id: string;
   seed: number;
   agents: number;
   steps: number;
+  durationMs: number | null;
   label: string | null;
   corr: number | null;
   directionalAccuracy: number | null;
@@ -33,6 +34,7 @@ export function VariantsTable({
             <th>seed</th>
             <th>agents</th>
             <th>steps</th>
+            <th>Duration</th>
             <th>label</th>
             <th>corr</th>
             <th>directionalAccuracy</th>
@@ -59,6 +61,7 @@ export function VariantsTable({
               <td>{v.seed}</td>
               <td>{v.agents}</td>
               <td>{v.steps}</td>
+              <td>{formatDurationMs(v.durationMs)}</td>
               <td>{v.label ?? "—"}</td>
               <td>{v.corr != null ? v.corr.toFixed(4) : "—"}</td>
               <td>

@@ -8652,10 +8652,12 @@ export namespace Prisma {
 
   export type SimulationRunAvgAggregateOutputType = {
     seed: number | null
+    runDurationMs: number | null
   }
 
   export type SimulationRunSumAggregateOutputType = {
     seed: number | null
+    runDurationMs: number | null
   }
 
   export type SimulationRunMinAggregateOutputType = {
@@ -8672,6 +8674,7 @@ export namespace Prisma {
     completedAt: Date | null
     failedAt: Date | null
     lastError: string | null
+    runDurationMs: number | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -8690,6 +8693,7 @@ export namespace Prisma {
     completedAt: Date | null
     failedAt: Date | null
     lastError: string | null
+    runDurationMs: number | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -8708,6 +8712,7 @@ export namespace Prisma {
     completedAt: number
     failedAt: number
     lastError: number
+    runDurationMs: number
     configJson: number
     createdAt: number
     updatedAt: number
@@ -8717,10 +8722,12 @@ export namespace Prisma {
 
   export type SimulationRunAvgAggregateInputType = {
     seed?: true
+    runDurationMs?: true
   }
 
   export type SimulationRunSumAggregateInputType = {
     seed?: true
+    runDurationMs?: true
   }
 
   export type SimulationRunMinAggregateInputType = {
@@ -8737,6 +8744,7 @@ export namespace Prisma {
     completedAt?: true
     failedAt?: true
     lastError?: true
+    runDurationMs?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -8755,6 +8763,7 @@ export namespace Prisma {
     completedAt?: true
     failedAt?: true
     lastError?: true
+    runDurationMs?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -8773,6 +8782,7 @@ export namespace Prisma {
     completedAt?: true
     failedAt?: true
     lastError?: true
+    runDurationMs?: true
     configJson?: true
     createdAt?: true
     updatedAt?: true
@@ -8879,6 +8889,7 @@ export namespace Prisma {
     completedAt: Date | null
     failedAt: Date | null
     lastError: string | null
+    runDurationMs: number | null
     configJson: JsonValue | null
     createdAt: Date
     updatedAt: Date
@@ -8917,6 +8928,7 @@ export namespace Prisma {
     completedAt?: boolean
     failedAt?: boolean
     lastError?: boolean
+    runDurationMs?: boolean
     configJson?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -8951,6 +8963,7 @@ export namespace Prisma {
     completedAt?: boolean
     failedAt?: boolean
     lastError?: boolean
+    runDurationMs?: boolean
     configJson?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -8970,6 +8983,7 @@ export namespace Prisma {
     completedAt?: boolean
     failedAt?: boolean
     lastError?: boolean
+    runDurationMs?: boolean
     configJson?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -9026,6 +9040,7 @@ export namespace Prisma {
       completedAt: Date | null
       failedAt: Date | null
       lastError: string | null
+      runDurationMs: number | null
       configJson: Prisma.JsonValue | null
       createdAt: Date
       updatedAt: Date
@@ -9449,6 +9464,7 @@ export namespace Prisma {
     readonly completedAt: FieldRef<"SimulationRun", 'DateTime'>
     readonly failedAt: FieldRef<"SimulationRun", 'DateTime'>
     readonly lastError: FieldRef<"SimulationRun", 'String'>
+    readonly runDurationMs: FieldRef<"SimulationRun", 'Int'>
     readonly configJson: FieldRef<"SimulationRun", 'Json'>
     readonly createdAt: FieldRef<"SimulationRun", 'DateTime'>
     readonly updatedAt: FieldRef<"SimulationRun", 'DateTime'>
@@ -10071,12 +10087,14 @@ export namespace Prisma {
     seed: number | null
     agents: number | null
     steps: number | null
+    durationMs: number | null
   }
 
   export type RunVariantSumAggregateOutputType = {
     seed: number | null
     agents: number | null
     steps: number | null
+    durationMs: number | null
   }
 
   export type RunVariantMinAggregateOutputType = {
@@ -10088,6 +10106,9 @@ export namespace Prisma {
     steps: number | null
     label: string | null
     createdAt: Date | null
+    startedAt: Date | null
+    completedAt: Date | null
+    durationMs: number | null
   }
 
   export type RunVariantMaxAggregateOutputType = {
@@ -10099,6 +10120,9 @@ export namespace Prisma {
     steps: number | null
     label: string | null
     createdAt: Date | null
+    startedAt: Date | null
+    completedAt: Date | null
+    durationMs: number | null
   }
 
   export type RunVariantCountAggregateOutputType = {
@@ -10110,6 +10134,9 @@ export namespace Prisma {
     steps: number
     label: number
     createdAt: number
+    startedAt: number
+    completedAt: number
+    durationMs: number
     _all: number
   }
 
@@ -10118,12 +10145,14 @@ export namespace Prisma {
     seed?: true
     agents?: true
     steps?: true
+    durationMs?: true
   }
 
   export type RunVariantSumAggregateInputType = {
     seed?: true
     agents?: true
     steps?: true
+    durationMs?: true
   }
 
   export type RunVariantMinAggregateInputType = {
@@ -10135,6 +10164,9 @@ export namespace Prisma {
     steps?: true
     label?: true
     createdAt?: true
+    startedAt?: true
+    completedAt?: true
+    durationMs?: true
   }
 
   export type RunVariantMaxAggregateInputType = {
@@ -10146,6 +10178,9 @@ export namespace Prisma {
     steps?: true
     label?: true
     createdAt?: true
+    startedAt?: true
+    completedAt?: true
+    durationMs?: true
   }
 
   export type RunVariantCountAggregateInputType = {
@@ -10157,6 +10192,9 @@ export namespace Prisma {
     steps?: true
     label?: true
     createdAt?: true
+    startedAt?: true
+    completedAt?: true
+    durationMs?: true
     _all?: true
   }
 
@@ -10255,6 +10293,9 @@ export namespace Prisma {
     steps: number
     label: string | null
     createdAt: Date
+    startedAt: Date | null
+    completedAt: Date | null
+    durationMs: number | null
     _count: RunVariantCountAggregateOutputType | null
     _avg: RunVariantAvgAggregateOutputType | null
     _sum: RunVariantSumAggregateOutputType | null
@@ -10285,6 +10326,9 @@ export namespace Prisma {
     steps?: boolean
     label?: boolean
     createdAt?: boolean
+    startedAt?: boolean
+    completedAt?: boolean
+    durationMs?: boolean
     run?: boolean | SimulationRunDefaultArgs<ExtArgs>
     agentDecisions?: boolean | RunVariant$agentDecisionsArgs<ExtArgs>
     agentInfoStates?: boolean | RunVariant$agentInfoStatesArgs<ExtArgs>
@@ -10306,6 +10350,9 @@ export namespace Prisma {
     steps?: boolean
     label?: boolean
     createdAt?: boolean
+    startedAt?: boolean
+    completedAt?: boolean
+    durationMs?: boolean
     run?: boolean | SimulationRunDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["runVariant"]>
 
@@ -10318,6 +10365,9 @@ export namespace Prisma {
     steps?: boolean
     label?: boolean
     createdAt?: boolean
+    startedAt?: boolean
+    completedAt?: boolean
+    durationMs?: boolean
   }
 
   export type RunVariantInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -10358,6 +10408,9 @@ export namespace Prisma {
       steps: number
       label: string | null
       createdAt: Date
+      startedAt: Date | null
+      completedAt: Date | null
+      durationMs: number | null
     }, ExtArgs["result"]["runVariant"]>
     composites: {}
   }
@@ -10768,6 +10821,9 @@ export namespace Prisma {
     readonly steps: FieldRef<"RunVariant", 'Int'>
     readonly label: FieldRef<"RunVariant", 'String'>
     readonly createdAt: FieldRef<"RunVariant", 'DateTime'>
+    readonly startedAt: FieldRef<"RunVariant", 'DateTime'>
+    readonly completedAt: FieldRef<"RunVariant", 'DateTime'>
+    readonly durationMs: FieldRef<"RunVariant", 'Int'>
   }
     
 
@@ -33901,6 +33957,7 @@ export namespace Prisma {
     completedAt: 'completedAt',
     failedAt: 'failedAt',
     lastError: 'lastError',
+    runDurationMs: 'runDurationMs',
     configJson: 'configJson',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
@@ -33917,7 +33974,10 @@ export namespace Prisma {
     agents: 'agents',
     steps: 'steps',
     label: 'label',
-    createdAt: 'createdAt'
+    createdAt: 'createdAt',
+    startedAt: 'startedAt',
+    completedAt: 'completedAt',
+    durationMs: 'durationMs'
   };
 
   export type RunVariantScalarFieldEnum = (typeof RunVariantScalarFieldEnum)[keyof typeof RunVariantScalarFieldEnum]
@@ -34759,6 +34819,7 @@ export namespace Prisma {
     completedAt?: DateTimeNullableFilter<"SimulationRun"> | Date | string | null
     failedAt?: DateTimeNullableFilter<"SimulationRun"> | Date | string | null
     lastError?: StringNullableFilter<"SimulationRun"> | string | null
+    runDurationMs?: IntNullableFilter<"SimulationRun"> | number | null
     configJson?: JsonNullableFilter<"SimulationRun">
     createdAt?: DateTimeFilter<"SimulationRun"> | Date | string
     updatedAt?: DateTimeFilter<"SimulationRun"> | Date | string
@@ -34792,6 +34853,7 @@ export namespace Prisma {
     completedAt?: SortOrderInput | SortOrder
     failedAt?: SortOrderInput | SortOrder
     lastError?: SortOrderInput | SortOrder
+    runDurationMs?: SortOrderInput | SortOrder
     configJson?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -34829,6 +34891,7 @@ export namespace Prisma {
     completedAt?: DateTimeNullableFilter<"SimulationRun"> | Date | string | null
     failedAt?: DateTimeNullableFilter<"SimulationRun"> | Date | string | null
     lastError?: StringNullableFilter<"SimulationRun"> | string | null
+    runDurationMs?: IntNullableFilter<"SimulationRun"> | number | null
     configJson?: JsonNullableFilter<"SimulationRun">
     createdAt?: DateTimeFilter<"SimulationRun"> | Date | string
     updatedAt?: DateTimeFilter<"SimulationRun"> | Date | string
@@ -34862,6 +34925,7 @@ export namespace Prisma {
     completedAt?: SortOrderInput | SortOrder
     failedAt?: SortOrderInput | SortOrder
     lastError?: SortOrderInput | SortOrder
+    runDurationMs?: SortOrderInput | SortOrder
     configJson?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -34889,6 +34953,7 @@ export namespace Prisma {
     completedAt?: DateTimeNullableWithAggregatesFilter<"SimulationRun"> | Date | string | null
     failedAt?: DateTimeNullableWithAggregatesFilter<"SimulationRun"> | Date | string | null
     lastError?: StringNullableWithAggregatesFilter<"SimulationRun"> | string | null
+    runDurationMs?: IntNullableWithAggregatesFilter<"SimulationRun"> | number | null
     configJson?: JsonNullableWithAggregatesFilter<"SimulationRun">
     createdAt?: DateTimeWithAggregatesFilter<"SimulationRun"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"SimulationRun"> | Date | string
@@ -34906,6 +34971,9 @@ export namespace Prisma {
     steps?: IntFilter<"RunVariant"> | number
     label?: StringNullableFilter<"RunVariant"> | string | null
     createdAt?: DateTimeFilter<"RunVariant"> | Date | string
+    startedAt?: DateTimeNullableFilter<"RunVariant"> | Date | string | null
+    completedAt?: DateTimeNullableFilter<"RunVariant"> | Date | string | null
+    durationMs?: IntNullableFilter<"RunVariant"> | number | null
     run?: XOR<SimulationRunRelationFilter, SimulationRunWhereInput>
     agentDecisions?: AgentDecisionListRelationFilter
     agentInfoStates?: AgentInfoStateListRelationFilter
@@ -34926,6 +34994,9 @@ export namespace Prisma {
     steps?: SortOrder
     label?: SortOrderInput | SortOrder
     createdAt?: SortOrder
+    startedAt?: SortOrderInput | SortOrder
+    completedAt?: SortOrderInput | SortOrder
+    durationMs?: SortOrderInput | SortOrder
     run?: SimulationRunOrderByWithRelationInput
     agentDecisions?: AgentDecisionOrderByRelationAggregateInput
     agentInfoStates?: AgentInfoStateOrderByRelationAggregateInput
@@ -34950,6 +35021,9 @@ export namespace Prisma {
     steps?: IntFilter<"RunVariant"> | number
     label?: StringNullableFilter<"RunVariant"> | string | null
     createdAt?: DateTimeFilter<"RunVariant"> | Date | string
+    startedAt?: DateTimeNullableFilter<"RunVariant"> | Date | string | null
+    completedAt?: DateTimeNullableFilter<"RunVariant"> | Date | string | null
+    durationMs?: IntNullableFilter<"RunVariant"> | number | null
     run?: XOR<SimulationRunRelationFilter, SimulationRunWhereInput>
     agentDecisions?: AgentDecisionListRelationFilter
     agentInfoStates?: AgentInfoStateListRelationFilter
@@ -34970,6 +35044,9 @@ export namespace Prisma {
     steps?: SortOrder
     label?: SortOrderInput | SortOrder
     createdAt?: SortOrder
+    startedAt?: SortOrderInput | SortOrder
+    completedAt?: SortOrderInput | SortOrder
+    durationMs?: SortOrderInput | SortOrder
     _count?: RunVariantCountOrderByAggregateInput
     _avg?: RunVariantAvgOrderByAggregateInput
     _max?: RunVariantMaxOrderByAggregateInput
@@ -34989,6 +35066,9 @@ export namespace Prisma {
     steps?: IntWithAggregatesFilter<"RunVariant"> | number
     label?: StringNullableWithAggregatesFilter<"RunVariant"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"RunVariant"> | Date | string
+    startedAt?: DateTimeNullableWithAggregatesFilter<"RunVariant"> | Date | string | null
+    completedAt?: DateTimeNullableWithAggregatesFilter<"RunVariant"> | Date | string | null
+    durationMs?: IntNullableWithAggregatesFilter<"RunVariant"> | number | null
   }
 
   export type RunVariantSummaryWhereInput = {
@@ -37086,6 +37166,7 @@ export namespace Prisma {
     completedAt?: Date | string | null
     failedAt?: Date | string | null
     lastError?: string | null
+    runDurationMs?: number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -37119,6 +37200,7 @@ export namespace Prisma {
     completedAt?: Date | string | null
     failedAt?: Date | string | null
     lastError?: string | null
+    runDurationMs?: number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -37152,6 +37234,7 @@ export namespace Prisma {
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    runDurationMs?: NullableIntFieldUpdateOperationsInput | number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -37185,6 +37268,7 @@ export namespace Prisma {
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    runDurationMs?: NullableIntFieldUpdateOperationsInput | number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -37218,6 +37302,7 @@ export namespace Prisma {
     completedAt?: Date | string | null
     failedAt?: Date | string | null
     lastError?: string | null
+    runDurationMs?: number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -37237,6 +37322,7 @@ export namespace Prisma {
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    runDurationMs?: NullableIntFieldUpdateOperationsInput | number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -37256,6 +37342,7 @@ export namespace Prisma {
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    runDurationMs?: NullableIntFieldUpdateOperationsInput | number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -37269,6 +37356,9 @@ export namespace Prisma {
     steps: number
     label?: string | null
     createdAt?: Date | string
+    startedAt?: Date | string | null
+    completedAt?: Date | string | null
+    durationMs?: number | null
     run: SimulationRunCreateNestedOneWithoutRunVariantsInput
     agentDecisions?: AgentDecisionCreateNestedManyWithoutRunVariantInput
     agentInfoStates?: AgentInfoStateCreateNestedManyWithoutRunVariantInput
@@ -37289,6 +37379,9 @@ export namespace Prisma {
     steps: number
     label?: string | null
     createdAt?: Date | string
+    startedAt?: Date | string | null
+    completedAt?: Date | string | null
+    durationMs?: number | null
     agentDecisions?: AgentDecisionUncheckedCreateNestedManyWithoutRunVariantInput
     agentInfoStates?: AgentInfoStateUncheckedCreateNestedManyWithoutRunVariantInput
     agentStates?: AgentStateUncheckedCreateNestedManyWithoutRunVariantInput
@@ -37307,6 +37400,9 @@ export namespace Prisma {
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationMs?: NullableIntFieldUpdateOperationsInput | number | null
     run?: SimulationRunUpdateOneRequiredWithoutRunVariantsNestedInput
     agentDecisions?: AgentDecisionUpdateManyWithoutRunVariantNestedInput
     agentInfoStates?: AgentInfoStateUpdateManyWithoutRunVariantNestedInput
@@ -37327,6 +37423,9 @@ export namespace Prisma {
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationMs?: NullableIntFieldUpdateOperationsInput | number | null
     agentDecisions?: AgentDecisionUncheckedUpdateManyWithoutRunVariantNestedInput
     agentInfoStates?: AgentInfoStateUncheckedUpdateManyWithoutRunVariantNestedInput
     agentStates?: AgentStateUncheckedUpdateManyWithoutRunVariantNestedInput
@@ -37346,6 +37445,9 @@ export namespace Prisma {
     steps: number
     label?: string | null
     createdAt?: Date | string
+    startedAt?: Date | string | null
+    completedAt?: Date | string | null
+    durationMs?: number | null
   }
 
   export type RunVariantUpdateManyMutationInput = {
@@ -37356,6 +37458,9 @@ export namespace Prisma {
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationMs?: NullableIntFieldUpdateOperationsInput | number | null
   }
 
   export type RunVariantUncheckedUpdateManyInput = {
@@ -37367,6 +37472,9 @@ export namespace Prisma {
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationMs?: NullableIntFieldUpdateOperationsInput | number | null
   }
 
   export type RunVariantSummaryCreateInput = {
@@ -39727,6 +39835,17 @@ export namespace Prisma {
     not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
   }
 
+  export type IntNullableFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableFilter<$PrismaModel> | number | null
+  }
+
   export type AgentExperienceListRelationFilter = {
     every?: AgentExperienceWhereInput
     some?: AgentExperienceWhereInput
@@ -39871,6 +39990,7 @@ export namespace Prisma {
     completedAt?: SortOrder
     failedAt?: SortOrder
     lastError?: SortOrder
+    runDurationMs?: SortOrder
     configJson?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -39878,6 +39998,7 @@ export namespace Prisma {
 
   export type SimulationRunAvgOrderByAggregateInput = {
     seed?: SortOrder
+    runDurationMs?: SortOrder
   }
 
   export type SimulationRunMaxOrderByAggregateInput = {
@@ -39894,6 +40015,7 @@ export namespace Prisma {
     completedAt?: SortOrder
     failedAt?: SortOrder
     lastError?: SortOrder
+    runDurationMs?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -39912,12 +40034,14 @@ export namespace Prisma {
     completedAt?: SortOrder
     failedAt?: SortOrder
     lastError?: SortOrder
+    runDurationMs?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
 
   export type SimulationRunSumOrderByAggregateInput = {
     seed?: SortOrder
+    runDurationMs?: SortOrder
   }
 
   export type EnumSimulationRunStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -39960,6 +40084,22 @@ export namespace Prisma {
     _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
+  export type IntNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedIntNullableFilter<$PrismaModel>
+    _max?: NestedIntNullableFilter<$PrismaModel>
+  }
+
   export type SimulationRunRelationFilter = {
     is?: SimulationRunWhereInput
     isNot?: SimulationRunWhereInput
@@ -39996,12 +40136,16 @@ export namespace Prisma {
     steps?: SortOrder
     label?: SortOrder
     createdAt?: SortOrder
+    startedAt?: SortOrder
+    completedAt?: SortOrder
+    durationMs?: SortOrder
   }
 
   export type RunVariantAvgOrderByAggregateInput = {
     seed?: SortOrder
     agents?: SortOrder
     steps?: SortOrder
+    durationMs?: SortOrder
   }
 
   export type RunVariantMaxOrderByAggregateInput = {
@@ -40013,6 +40157,9 @@ export namespace Prisma {
     steps?: SortOrder
     label?: SortOrder
     createdAt?: SortOrder
+    startedAt?: SortOrder
+    completedAt?: SortOrder
+    durationMs?: SortOrder
   }
 
   export type RunVariantMinOrderByAggregateInput = {
@@ -40024,12 +40171,16 @@ export namespace Prisma {
     steps?: SortOrder
     label?: SortOrder
     createdAt?: SortOrder
+    startedAt?: SortOrder
+    completedAt?: SortOrder
+    durationMs?: SortOrder
   }
 
   export type RunVariantSumOrderByAggregateInput = {
     seed?: SortOrder
     agents?: SortOrder
     steps?: SortOrder
+    durationMs?: SortOrder
   }
 
   export type RunVariantRelationFilter = {
@@ -40959,17 +41110,6 @@ export namespace Prisma {
     _max?: NestedEnumWalletTransactionTypeFilter<$PrismaModel>
   }
 
-  export type IntNullableFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel> | null
-    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntNullableFilter<$PrismaModel> | number | null
-  }
-
   export type EnumBetDirectionFilter<$PrismaModel = never> = {
     equals?: $Enums.BetDirection | EnumBetDirectionFieldRefInput<$PrismaModel>
     in?: $Enums.BetDirection[] | ListEnumBetDirectionFieldRefInput<$PrismaModel>
@@ -41074,22 +41214,6 @@ export namespace Prisma {
     closePrice?: SortOrder
     closeStep?: SortOrder
     pnl?: SortOrder
-  }
-
-  export type IntNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel> | null
-    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _avg?: NestedFloatNullableFilter<$PrismaModel>
-    _sum?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedIntNullableFilter<$PrismaModel>
-    _max?: NestedIntNullableFilter<$PrismaModel>
   }
 
   export type EnumBetDirectionWithAggregatesFilter<$PrismaModel = never> = {
@@ -41802,6 +41926,14 @@ export namespace Prisma {
 
   export type NullableDateTimeFieldUpdateOperationsInput = {
     set?: Date | string | null
+  }
+
+  export type NullableIntFieldUpdateOperationsInput = {
+    set?: number | null
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
   }
 
   export type AgentExperienceUpdateManyWithoutRunNestedInput = {
@@ -43192,14 +43324,6 @@ export namespace Prisma {
     connect?: UserWalletTransactionWhereUniqueInput | UserWalletTransactionWhereUniqueInput[]
   }
 
-  export type NullableIntFieldUpdateOperationsInput = {
-    set?: number | null
-    increment?: number
-    decrement?: number
-    multiply?: number
-    divide?: number
-  }
-
   export type EnumBetDirectionFieldUpdateOperationsInput = {
     set?: $Enums.BetDirection
   }
@@ -43538,6 +43662,22 @@ export namespace Prisma {
     _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
+  export type NestedIntNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedIntNullableFilter<$PrismaModel>
+    _max?: NestedIntNullableFilter<$PrismaModel>
+  }
+
   export type NestedUuidNullableFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel> | null
     in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
@@ -43609,22 +43749,6 @@ export namespace Prisma {
     in?: $Enums.BetStatus[] | ListEnumBetStatusFieldRefInput<$PrismaModel>
     notIn?: $Enums.BetStatus[] | ListEnumBetStatusFieldRefInput<$PrismaModel>
     not?: NestedEnumBetStatusFilter<$PrismaModel> | $Enums.BetStatus
-  }
-
-  export type NestedIntNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel> | null
-    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _avg?: NestedFloatNullableFilter<$PrismaModel>
-    _sum?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedIntNullableFilter<$PrismaModel>
-    _max?: NestedIntNullableFilter<$PrismaModel>
   }
 
   export type NestedEnumBetDirectionWithAggregatesFilter<$PrismaModel = never> = {
@@ -44605,6 +44729,9 @@ export namespace Prisma {
     steps: number
     label?: string | null
     createdAt?: Date | string
+    startedAt?: Date | string | null
+    completedAt?: Date | string | null
+    durationMs?: number | null
     agentDecisions?: AgentDecisionCreateNestedManyWithoutRunVariantInput
     agentInfoStates?: AgentInfoStateCreateNestedManyWithoutRunVariantInput
     agentStates?: AgentStateCreateNestedManyWithoutRunVariantInput
@@ -44623,6 +44750,9 @@ export namespace Prisma {
     steps: number
     label?: string | null
     createdAt?: Date | string
+    startedAt?: Date | string | null
+    completedAt?: Date | string | null
+    durationMs?: number | null
     agentDecisions?: AgentDecisionUncheckedCreateNestedManyWithoutRunVariantInput
     agentInfoStates?: AgentInfoStateUncheckedCreateNestedManyWithoutRunVariantInput
     agentStates?: AgentStateUncheckedCreateNestedManyWithoutRunVariantInput
@@ -45069,6 +45199,9 @@ export namespace Prisma {
     steps?: IntFilter<"RunVariant"> | number
     label?: StringNullableFilter<"RunVariant"> | string | null
     createdAt?: DateTimeFilter<"RunVariant"> | Date | string
+    startedAt?: DateTimeNullableFilter<"RunVariant"> | Date | string | null
+    completedAt?: DateTimeNullableFilter<"RunVariant"> | Date | string | null
+    durationMs?: IntNullableFilter<"RunVariant"> | number | null
   }
 
   export type SimulationRunCreateWithoutRunVariantsInput = {
@@ -45085,6 +45218,7 @@ export namespace Prisma {
     completedAt?: Date | string | null
     failedAt?: Date | string | null
     lastError?: string | null
+    runDurationMs?: number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -45117,6 +45251,7 @@ export namespace Prisma {
     completedAt?: Date | string | null
     failedAt?: Date | string | null
     lastError?: string | null
+    runDurationMs?: number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -45476,6 +45611,7 @@ export namespace Prisma {
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    runDurationMs?: NullableIntFieldUpdateOperationsInput | number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -45508,6 +45644,7 @@ export namespace Prisma {
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    runDurationMs?: NullableIntFieldUpdateOperationsInput | number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -45698,6 +45835,9 @@ export namespace Prisma {
     steps: number
     label?: string | null
     createdAt?: Date | string
+    startedAt?: Date | string | null
+    completedAt?: Date | string | null
+    durationMs?: number | null
     run: SimulationRunCreateNestedOneWithoutRunVariantsInput
     agentDecisions?: AgentDecisionCreateNestedManyWithoutRunVariantInput
     agentInfoStates?: AgentInfoStateCreateNestedManyWithoutRunVariantInput
@@ -45717,6 +45857,9 @@ export namespace Prisma {
     steps: number
     label?: string | null
     createdAt?: Date | string
+    startedAt?: Date | string | null
+    completedAt?: Date | string | null
+    durationMs?: number | null
     agentDecisions?: AgentDecisionUncheckedCreateNestedManyWithoutRunVariantInput
     agentInfoStates?: AgentInfoStateUncheckedCreateNestedManyWithoutRunVariantInput
     agentStates?: AgentStateUncheckedCreateNestedManyWithoutRunVariantInput
@@ -45750,6 +45893,9 @@ export namespace Prisma {
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationMs?: NullableIntFieldUpdateOperationsInput | number | null
     run?: SimulationRunUpdateOneRequiredWithoutRunVariantsNestedInput
     agentDecisions?: AgentDecisionUpdateManyWithoutRunVariantNestedInput
     agentInfoStates?: AgentInfoStateUpdateManyWithoutRunVariantNestedInput
@@ -45769,6 +45915,9 @@ export namespace Prisma {
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationMs?: NullableIntFieldUpdateOperationsInput | number | null
     agentDecisions?: AgentDecisionUncheckedUpdateManyWithoutRunVariantNestedInput
     agentInfoStates?: AgentInfoStateUncheckedUpdateManyWithoutRunVariantNestedInput
     agentStates?: AgentStateUncheckedUpdateManyWithoutRunVariantNestedInput
@@ -45792,6 +45941,7 @@ export namespace Prisma {
     completedAt?: Date | string | null
     failedAt?: Date | string | null
     lastError?: string | null
+    runDurationMs?: number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -45824,6 +45974,7 @@ export namespace Prisma {
     completedAt?: Date | string | null
     failedAt?: Date | string | null
     lastError?: string | null
+    runDurationMs?: number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -46094,6 +46245,7 @@ export namespace Prisma {
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    runDurationMs?: NullableIntFieldUpdateOperationsInput | number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -46126,6 +46278,7 @@ export namespace Prisma {
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    runDurationMs?: NullableIntFieldUpdateOperationsInput | number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -46346,6 +46499,7 @@ export namespace Prisma {
     completedAt?: Date | string | null
     failedAt?: Date | string | null
     lastError?: string | null
+    runDurationMs?: number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -46378,6 +46532,7 @@ export namespace Prisma {
     completedAt?: Date | string | null
     failedAt?: Date | string | null
     lastError?: string | null
+    runDurationMs?: number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -46409,6 +46564,9 @@ export namespace Prisma {
     steps: number
     label?: string | null
     createdAt?: Date | string
+    startedAt?: Date | string | null
+    completedAt?: Date | string | null
+    durationMs?: number | null
     run: SimulationRunCreateNestedOneWithoutRunVariantsInput
     agentInfoStates?: AgentInfoStateCreateNestedManyWithoutRunVariantInput
     agentStates?: AgentStateCreateNestedManyWithoutRunVariantInput
@@ -46428,6 +46586,9 @@ export namespace Prisma {
     steps: number
     label?: string | null
     createdAt?: Date | string
+    startedAt?: Date | string | null
+    completedAt?: Date | string | null
+    durationMs?: number | null
     agentInfoStates?: AgentInfoStateUncheckedCreateNestedManyWithoutRunVariantInput
     agentStates?: AgentStateUncheckedCreateNestedManyWithoutRunVariantInput
     agentExperiences?: AgentExperienceUncheckedCreateNestedManyWithoutRunVariantInput
@@ -46504,6 +46665,7 @@ export namespace Prisma {
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    runDurationMs?: NullableIntFieldUpdateOperationsInput | number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -46536,6 +46698,7 @@ export namespace Prisma {
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    runDurationMs?: NullableIntFieldUpdateOperationsInput | number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -46573,6 +46736,9 @@ export namespace Prisma {
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationMs?: NullableIntFieldUpdateOperationsInput | number | null
     run?: SimulationRunUpdateOneRequiredWithoutRunVariantsNestedInput
     agentInfoStates?: AgentInfoStateUpdateManyWithoutRunVariantNestedInput
     agentStates?: AgentStateUpdateManyWithoutRunVariantNestedInput
@@ -46592,6 +46758,9 @@ export namespace Prisma {
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationMs?: NullableIntFieldUpdateOperationsInput | number | null
     agentInfoStates?: AgentInfoStateUncheckedUpdateManyWithoutRunVariantNestedInput
     agentStates?: AgentStateUncheckedUpdateManyWithoutRunVariantNestedInput
     agentExperiences?: AgentExperienceUncheckedUpdateManyWithoutRunVariantNestedInput
@@ -46658,6 +46827,7 @@ export namespace Prisma {
     completedAt?: Date | string | null
     failedAt?: Date | string | null
     lastError?: string | null
+    runDurationMs?: number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -46690,6 +46860,7 @@ export namespace Prisma {
     completedAt?: Date | string | null
     failedAt?: Date | string | null
     lastError?: string | null
+    runDurationMs?: number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -46721,6 +46892,9 @@ export namespace Prisma {
     steps: number
     label?: string | null
     createdAt?: Date | string
+    startedAt?: Date | string | null
+    completedAt?: Date | string | null
+    durationMs?: number | null
     run: SimulationRunCreateNestedOneWithoutRunVariantsInput
     agentDecisions?: AgentDecisionCreateNestedManyWithoutRunVariantInput
     agentInfoStates?: AgentInfoStateCreateNestedManyWithoutRunVariantInput
@@ -46740,6 +46914,9 @@ export namespace Prisma {
     steps: number
     label?: string | null
     createdAt?: Date | string
+    startedAt?: Date | string | null
+    completedAt?: Date | string | null
+    durationMs?: number | null
     agentDecisions?: AgentDecisionUncheckedCreateNestedManyWithoutRunVariantInput
     agentInfoStates?: AgentInfoStateUncheckedCreateNestedManyWithoutRunVariantInput
     agentStates?: AgentStateUncheckedCreateNestedManyWithoutRunVariantInput
@@ -46779,6 +46956,7 @@ export namespace Prisma {
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    runDurationMs?: NullableIntFieldUpdateOperationsInput | number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -46811,6 +46989,7 @@ export namespace Prisma {
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    runDurationMs?: NullableIntFieldUpdateOperationsInput | number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -46848,6 +47027,9 @@ export namespace Prisma {
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationMs?: NullableIntFieldUpdateOperationsInput | number | null
     run?: SimulationRunUpdateOneRequiredWithoutRunVariantsNestedInput
     agentDecisions?: AgentDecisionUpdateManyWithoutRunVariantNestedInput
     agentInfoStates?: AgentInfoStateUpdateManyWithoutRunVariantNestedInput
@@ -46867,6 +47049,9 @@ export namespace Prisma {
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationMs?: NullableIntFieldUpdateOperationsInput | number | null
     agentDecisions?: AgentDecisionUncheckedUpdateManyWithoutRunVariantNestedInput
     agentInfoStates?: AgentInfoStateUncheckedUpdateManyWithoutRunVariantNestedInput
     agentStates?: AgentStateUncheckedUpdateManyWithoutRunVariantNestedInput
@@ -46890,6 +47075,7 @@ export namespace Prisma {
     completedAt?: Date | string | null
     failedAt?: Date | string | null
     lastError?: string | null
+    runDurationMs?: number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -46922,6 +47108,7 @@ export namespace Prisma {
     completedAt?: Date | string | null
     failedAt?: Date | string | null
     lastError?: string | null
+    runDurationMs?: number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -46970,6 +47157,7 @@ export namespace Prisma {
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    runDurationMs?: NullableIntFieldUpdateOperationsInput | number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -47002,6 +47190,7 @@ export namespace Prisma {
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    runDurationMs?: NullableIntFieldUpdateOperationsInput | number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -47034,6 +47223,7 @@ export namespace Prisma {
     completedAt?: Date | string | null
     failedAt?: Date | string | null
     lastError?: string | null
+    runDurationMs?: number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -47066,6 +47256,7 @@ export namespace Prisma {
     completedAt?: Date | string | null
     failedAt?: Date | string | null
     lastError?: string | null
+    runDurationMs?: number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -47097,6 +47288,9 @@ export namespace Prisma {
     steps: number
     label?: string | null
     createdAt?: Date | string
+    startedAt?: Date | string | null
+    completedAt?: Date | string | null
+    durationMs?: number | null
     run: SimulationRunCreateNestedOneWithoutRunVariantsInput
     agentDecisions?: AgentDecisionCreateNestedManyWithoutRunVariantInput
     agentInfoStates?: AgentInfoStateCreateNestedManyWithoutRunVariantInput
@@ -47116,6 +47310,9 @@ export namespace Prisma {
     steps: number
     label?: string | null
     createdAt?: Date | string
+    startedAt?: Date | string | null
+    completedAt?: Date | string | null
+    durationMs?: number | null
     agentDecisions?: AgentDecisionUncheckedCreateNestedManyWithoutRunVariantInput
     agentInfoStates?: AgentInfoStateUncheckedCreateNestedManyWithoutRunVariantInput
     agentStates?: AgentStateUncheckedCreateNestedManyWithoutRunVariantInput
@@ -47192,6 +47389,7 @@ export namespace Prisma {
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    runDurationMs?: NullableIntFieldUpdateOperationsInput | number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -47224,6 +47422,7 @@ export namespace Prisma {
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    runDurationMs?: NullableIntFieldUpdateOperationsInput | number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -47261,6 +47460,9 @@ export namespace Prisma {
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationMs?: NullableIntFieldUpdateOperationsInput | number | null
     run?: SimulationRunUpdateOneRequiredWithoutRunVariantsNestedInput
     agentDecisions?: AgentDecisionUpdateManyWithoutRunVariantNestedInput
     agentInfoStates?: AgentInfoStateUpdateManyWithoutRunVariantNestedInput
@@ -47280,6 +47482,9 @@ export namespace Prisma {
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationMs?: NullableIntFieldUpdateOperationsInput | number | null
     agentDecisions?: AgentDecisionUncheckedUpdateManyWithoutRunVariantNestedInput
     agentInfoStates?: AgentInfoStateUncheckedUpdateManyWithoutRunVariantNestedInput
     agentStates?: AgentStateUncheckedUpdateManyWithoutRunVariantNestedInput
@@ -47346,6 +47551,7 @@ export namespace Prisma {
     completedAt?: Date | string | null
     failedAt?: Date | string | null
     lastError?: string | null
+    runDurationMs?: number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -47378,6 +47584,7 @@ export namespace Prisma {
     completedAt?: Date | string | null
     failedAt?: Date | string | null
     lastError?: string | null
+    runDurationMs?: number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -47426,6 +47633,7 @@ export namespace Prisma {
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    runDurationMs?: NullableIntFieldUpdateOperationsInput | number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -47458,6 +47666,7 @@ export namespace Prisma {
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    runDurationMs?: NullableIntFieldUpdateOperationsInput | number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -47490,6 +47699,7 @@ export namespace Prisma {
     completedAt?: Date | string | null
     failedAt?: Date | string | null
     lastError?: string | null
+    runDurationMs?: number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -47522,6 +47732,7 @@ export namespace Prisma {
     completedAt?: Date | string | null
     failedAt?: Date | string | null
     lastError?: string | null
+    runDurationMs?: number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -47553,6 +47764,9 @@ export namespace Prisma {
     steps: number
     label?: string | null
     createdAt?: Date | string
+    startedAt?: Date | string | null
+    completedAt?: Date | string | null
+    durationMs?: number | null
     run: SimulationRunCreateNestedOneWithoutRunVariantsInput
     agentDecisions?: AgentDecisionCreateNestedManyWithoutRunVariantInput
     agentStates?: AgentStateCreateNestedManyWithoutRunVariantInput
@@ -47572,6 +47786,9 @@ export namespace Prisma {
     steps: number
     label?: string | null
     createdAt?: Date | string
+    startedAt?: Date | string | null
+    completedAt?: Date | string | null
+    durationMs?: number | null
     agentDecisions?: AgentDecisionUncheckedCreateNestedManyWithoutRunVariantInput
     agentStates?: AgentStateUncheckedCreateNestedManyWithoutRunVariantInput
     agentExperiences?: AgentExperienceUncheckedCreateNestedManyWithoutRunVariantInput
@@ -47648,6 +47865,7 @@ export namespace Prisma {
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    runDurationMs?: NullableIntFieldUpdateOperationsInput | number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -47680,6 +47898,7 @@ export namespace Prisma {
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    runDurationMs?: NullableIntFieldUpdateOperationsInput | number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -47717,6 +47936,9 @@ export namespace Prisma {
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationMs?: NullableIntFieldUpdateOperationsInput | number | null
     run?: SimulationRunUpdateOneRequiredWithoutRunVariantsNestedInput
     agentDecisions?: AgentDecisionUpdateManyWithoutRunVariantNestedInput
     agentStates?: AgentStateUpdateManyWithoutRunVariantNestedInput
@@ -47736,6 +47958,9 @@ export namespace Prisma {
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationMs?: NullableIntFieldUpdateOperationsInput | number | null
     agentDecisions?: AgentDecisionUncheckedUpdateManyWithoutRunVariantNestedInput
     agentStates?: AgentStateUncheckedUpdateManyWithoutRunVariantNestedInput
     agentExperiences?: AgentExperienceUncheckedUpdateManyWithoutRunVariantNestedInput
@@ -47802,6 +48027,7 @@ export namespace Prisma {
     completedAt?: Date | string | null
     failedAt?: Date | string | null
     lastError?: string | null
+    runDurationMs?: number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -47834,6 +48060,7 @@ export namespace Prisma {
     completedAt?: Date | string | null
     failedAt?: Date | string | null
     lastError?: string | null
+    runDurationMs?: number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -47865,6 +48092,9 @@ export namespace Prisma {
     steps: number
     label?: string | null
     createdAt?: Date | string
+    startedAt?: Date | string | null
+    completedAt?: Date | string | null
+    durationMs?: number | null
     run: SimulationRunCreateNestedOneWithoutRunVariantsInput
     agentDecisions?: AgentDecisionCreateNestedManyWithoutRunVariantInput
     agentInfoStates?: AgentInfoStateCreateNestedManyWithoutRunVariantInput
@@ -47884,6 +48114,9 @@ export namespace Prisma {
     steps: number
     label?: string | null
     createdAt?: Date | string
+    startedAt?: Date | string | null
+    completedAt?: Date | string | null
+    durationMs?: number | null
     agentDecisions?: AgentDecisionUncheckedCreateNestedManyWithoutRunVariantInput
     agentInfoStates?: AgentInfoStateUncheckedCreateNestedManyWithoutRunVariantInput
     agentExperiences?: AgentExperienceUncheckedCreateNestedManyWithoutRunVariantInput
@@ -47960,6 +48193,7 @@ export namespace Prisma {
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    runDurationMs?: NullableIntFieldUpdateOperationsInput | number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -47992,6 +48226,7 @@ export namespace Prisma {
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    runDurationMs?: NullableIntFieldUpdateOperationsInput | number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -48029,6 +48264,9 @@ export namespace Prisma {
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationMs?: NullableIntFieldUpdateOperationsInput | number | null
     run?: SimulationRunUpdateOneRequiredWithoutRunVariantsNestedInput
     agentDecisions?: AgentDecisionUpdateManyWithoutRunVariantNestedInput
     agentInfoStates?: AgentInfoStateUpdateManyWithoutRunVariantNestedInput
@@ -48048,6 +48286,9 @@ export namespace Prisma {
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationMs?: NullableIntFieldUpdateOperationsInput | number | null
     agentDecisions?: AgentDecisionUncheckedUpdateManyWithoutRunVariantNestedInput
     agentInfoStates?: AgentInfoStateUncheckedUpdateManyWithoutRunVariantNestedInput
     agentExperiences?: AgentExperienceUncheckedUpdateManyWithoutRunVariantNestedInput
@@ -48114,6 +48355,7 @@ export namespace Prisma {
     completedAt?: Date | string | null
     failedAt?: Date | string | null
     lastError?: string | null
+    runDurationMs?: number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -48146,6 +48388,7 @@ export namespace Prisma {
     completedAt?: Date | string | null
     failedAt?: Date | string | null
     lastError?: string | null
+    runDurationMs?: number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -48194,6 +48437,7 @@ export namespace Prisma {
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    runDurationMs?: NullableIntFieldUpdateOperationsInput | number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -48226,6 +48470,7 @@ export namespace Prisma {
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    runDurationMs?: NullableIntFieldUpdateOperationsInput | number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -48258,6 +48503,7 @@ export namespace Prisma {
     completedAt?: Date | string | null
     failedAt?: Date | string | null
     lastError?: string | null
+    runDurationMs?: number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -48290,6 +48536,7 @@ export namespace Prisma {
     completedAt?: Date | string | null
     failedAt?: Date | string | null
     lastError?: string | null
+    runDurationMs?: number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -48338,6 +48585,7 @@ export namespace Prisma {
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    runDurationMs?: NullableIntFieldUpdateOperationsInput | number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -48370,6 +48618,7 @@ export namespace Prisma {
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    runDurationMs?: NullableIntFieldUpdateOperationsInput | number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -48402,6 +48651,7 @@ export namespace Prisma {
     completedAt?: Date | string | null
     failedAt?: Date | string | null
     lastError?: string | null
+    runDurationMs?: number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -48434,6 +48684,7 @@ export namespace Prisma {
     completedAt?: Date | string | null
     failedAt?: Date | string | null
     lastError?: string | null
+    runDurationMs?: number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -48465,6 +48716,9 @@ export namespace Prisma {
     steps: number
     label?: string | null
     createdAt?: Date | string
+    startedAt?: Date | string | null
+    completedAt?: Date | string | null
+    durationMs?: number | null
     run: SimulationRunCreateNestedOneWithoutRunVariantsInput
     agentDecisions?: AgentDecisionCreateNestedManyWithoutRunVariantInput
     agentInfoStates?: AgentInfoStateCreateNestedManyWithoutRunVariantInput
@@ -48484,6 +48738,9 @@ export namespace Prisma {
     steps: number
     label?: string | null
     createdAt?: Date | string
+    startedAt?: Date | string | null
+    completedAt?: Date | string | null
+    durationMs?: number | null
     agentDecisions?: AgentDecisionUncheckedCreateNestedManyWithoutRunVariantInput
     agentInfoStates?: AgentInfoStateUncheckedCreateNestedManyWithoutRunVariantInput
     agentStates?: AgentStateUncheckedCreateNestedManyWithoutRunVariantInput
@@ -48560,6 +48817,7 @@ export namespace Prisma {
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    runDurationMs?: NullableIntFieldUpdateOperationsInput | number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -48592,6 +48850,7 @@ export namespace Prisma {
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    runDurationMs?: NullableIntFieldUpdateOperationsInput | number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -48629,6 +48888,9 @@ export namespace Prisma {
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationMs?: NullableIntFieldUpdateOperationsInput | number | null
     run?: SimulationRunUpdateOneRequiredWithoutRunVariantsNestedInput
     agentDecisions?: AgentDecisionUpdateManyWithoutRunVariantNestedInput
     agentInfoStates?: AgentInfoStateUpdateManyWithoutRunVariantNestedInput
@@ -48648,6 +48910,9 @@ export namespace Prisma {
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationMs?: NullableIntFieldUpdateOperationsInput | number | null
     agentDecisions?: AgentDecisionUncheckedUpdateManyWithoutRunVariantNestedInput
     agentInfoStates?: AgentInfoStateUncheckedUpdateManyWithoutRunVariantNestedInput
     agentStates?: AgentStateUncheckedUpdateManyWithoutRunVariantNestedInput
@@ -48714,6 +48979,7 @@ export namespace Prisma {
     completedAt?: Date | string | null
     failedAt?: Date | string | null
     lastError?: string | null
+    runDurationMs?: number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -48746,6 +49012,7 @@ export namespace Prisma {
     completedAt?: Date | string | null
     failedAt?: Date | string | null
     lastError?: string | null
+    runDurationMs?: number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -48794,6 +49061,7 @@ export namespace Prisma {
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    runDurationMs?: NullableIntFieldUpdateOperationsInput | number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -48826,6 +49094,7 @@ export namespace Prisma {
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    runDurationMs?: NullableIntFieldUpdateOperationsInput | number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -48950,6 +49219,7 @@ export namespace Prisma {
     completedAt?: Date | string | null
     failedAt?: Date | string | null
     lastError?: string | null
+    runDurationMs?: number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -48982,6 +49252,7 @@ export namespace Prisma {
     completedAt?: Date | string | null
     failedAt?: Date | string | null
     lastError?: string | null
+    runDurationMs?: number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -49085,6 +49356,7 @@ export namespace Prisma {
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    runDurationMs?: NullableIntFieldUpdateOperationsInput | number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -49117,6 +49389,7 @@ export namespace Prisma {
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     failedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    runDurationMs?: NullableIntFieldUpdateOperationsInput | number | null
     configJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -49204,6 +49477,9 @@ export namespace Prisma {
     steps: number
     label?: string | null
     createdAt?: Date | string
+    startedAt?: Date | string | null
+    completedAt?: Date | string | null
+    durationMs?: number | null
     run: SimulationRunCreateNestedOneWithoutRunVariantsInput
     agentDecisions?: AgentDecisionCreateNestedManyWithoutRunVariantInput
     agentInfoStates?: AgentInfoStateCreateNestedManyWithoutRunVariantInput
@@ -49223,6 +49499,9 @@ export namespace Prisma {
     steps: number
     label?: string | null
     createdAt?: Date | string
+    startedAt?: Date | string | null
+    completedAt?: Date | string | null
+    durationMs?: number | null
     agentDecisions?: AgentDecisionUncheckedCreateNestedManyWithoutRunVariantInput
     agentInfoStates?: AgentInfoStateUncheckedCreateNestedManyWithoutRunVariantInput
     agentStates?: AgentStateUncheckedCreateNestedManyWithoutRunVariantInput
@@ -49256,6 +49535,9 @@ export namespace Prisma {
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationMs?: NullableIntFieldUpdateOperationsInput | number | null
     run?: SimulationRunUpdateOneRequiredWithoutRunVariantsNestedInput
     agentDecisions?: AgentDecisionUpdateManyWithoutRunVariantNestedInput
     agentInfoStates?: AgentInfoStateUpdateManyWithoutRunVariantNestedInput
@@ -49275,6 +49557,9 @@ export namespace Prisma {
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationMs?: NullableIntFieldUpdateOperationsInput | number | null
     agentDecisions?: AgentDecisionUncheckedUpdateManyWithoutRunVariantNestedInput
     agentInfoStates?: AgentInfoStateUncheckedUpdateManyWithoutRunVariantNestedInput
     agentStates?: AgentStateUncheckedUpdateManyWithoutRunVariantNestedInput
@@ -49599,6 +49884,9 @@ export namespace Prisma {
     steps: number
     label?: string | null
     createdAt?: Date | string
+    startedAt?: Date | string | null
+    completedAt?: Date | string | null
+    durationMs?: number | null
   }
 
   export type AgentExperienceUpdateWithoutRunInput = {
@@ -50094,6 +50382,9 @@ export namespace Prisma {
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationMs?: NullableIntFieldUpdateOperationsInput | number | null
     agentDecisions?: AgentDecisionUpdateManyWithoutRunVariantNestedInput
     agentInfoStates?: AgentInfoStateUpdateManyWithoutRunVariantNestedInput
     agentStates?: AgentStateUpdateManyWithoutRunVariantNestedInput
@@ -50112,6 +50403,9 @@ export namespace Prisma {
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationMs?: NullableIntFieldUpdateOperationsInput | number | null
     agentDecisions?: AgentDecisionUncheckedUpdateManyWithoutRunVariantNestedInput
     agentInfoStates?: AgentInfoStateUncheckedUpdateManyWithoutRunVariantNestedInput
     agentStates?: AgentStateUncheckedUpdateManyWithoutRunVariantNestedInput
@@ -50130,6 +50424,9 @@ export namespace Prisma {
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationMs?: NullableIntFieldUpdateOperationsInput | number | null
   }
 
   export type AgentDecisionCreateManyRunVariantInput = {

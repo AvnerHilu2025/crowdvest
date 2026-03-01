@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { truncateMiddle } from "@/lib/ui";
-import { formatDateUTC } from "@/lib/format";
+import { truncateMiddle, formatDateTimeUTC } from "@/lib/format";
 import {
   SectionCard,
   MetricRows,
@@ -161,7 +160,7 @@ export default async function DashboardPage() {
                 />
                 <MetricRow
                   label="Completed"
-                  value={formatDateUTC(latestResult.data.run.completedAt)}
+                  value={formatDateTimeUTC(latestResult.data.run.completedAt)}
                 />
                 <MetricRow
                   label="Dataset"

@@ -2,24 +2,36 @@
 
 import React, { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import DashboardFiltersClient from "@/components/dashboard-filters.client";
 import { MiniBar as ScalingMiniBar, Badge } from "@/components/dashboard/mini-bar";
 import { MiniBar, HeaderWithTip, StabilityLegend } from "@/components/dashboard/mini";
+import { ScalingCurve } from "@/components/dashboard/ScalingCurve";
+import { CrowdConsensus } from "@/components/dashboard/CrowdConsensus";
+import { ScalingDetails } from "@/components/dashboard/ScalingDetails";
 import { p95, normToP95 } from "@/lib/miniBars";
 import { DASH_THRESHOLDS, fmtNum, fmtPct01, clamp01, formatOverheadPct } from "@/lib/dashboardThresholds";
 import styles from "./dashboard.module.css";
 
 type ScalingRow = {
   runId: string;
+  stabilityBand?: "OK" | "DIVERGING" | "UNSTABLE" | "LEGACY" | null;
+  stabilityScore?: number | null;
   agents: number;
   variants: number;
   steps: number;
   runDurationMs: number | null;
   decisionsPerSec: number | null;
+  sumVariantMs?: number;
   overheadMs: number | null;
   overheadPct: number | null;
   efficiencyMsPerDecision: number | null;
   isLegacyTiming?: boolean;
+  computeMs?: number | null;
+  totalMs?: number | null;
+  engineInitMs?: number | null;
+  orchestrationMs?: number | null;
+  dbCommitMs?: number | null;
 };
 
 type StabilityRow = {
@@ -52,8 +64,27 @@ function badgeKind(band: string): "stable" | "unstable" | "diverging" | "legacy"
   return "stable";
 }
 
+function buildDashboardUrl(
+  pathname: string,
+  searchParams: URLSearchParams,
+  patch: (p: URLSearchParams) => void
+): string {
+  const p = new URLSearchParams(searchParams.toString());
+  patch(p);
+  const qs = p.toString();
+  return qs ? `${pathname}?${qs}` : pathname;
+}
+
 export type DashboardClientProps = {
   initialData: {
+    consensus: {
+      buyPct: number;
+      sellPct: number;
+      holdPct: number;
+      majorityPct: number;
+      entropy: number;
+      polarization: number;
+    } | null;
     scaling: ScalingRow[];
     stability: StabilityRow[];
     counts: { unstable: number; diverging: number; ok: number; legacy: number };
@@ -71,16 +102,47 @@ export type DashboardClientProps = {
 };
 
 export function DashboardClient({ initialData, initialQuery }: DashboardClientProps) {
-  const { scaling, stability, counts, filterLabel, latest, latestScalingRow } = initialData;
+  const { consensus, scaling, stability, counts, filterLabel, latest, latestScalingRow } = initialData;
   const { assetSymbol } = initialQuery;
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const [drawerRun, setDrawerRun] = useState<{
     runId: string;
     type: "scaling" | "stability";
     row: ScalingRow | StabilityRow;
   } | null>(null);
+  const [showOverheadOutliersOnly, setShowOverheadOutliersOnly] = useState(false);
+  const [expandedScalingRows, setExpandedScalingRows] = useState<Set<string>>(new Set());
 
-  const closeDrawer = useCallback(() => setDrawerRun(null), []);
+  const closeDrawer = useCallback(() => {
+    setDrawerRun(null);
+    const url = buildDashboardUrl(
+      pathname,
+      new URLSearchParams(searchParams.toString()),
+      (p) => p.delete("drawerRunId")
+    );
+    router.replace(url);
+  }, [pathname, router, searchParams]);
+
+  const toggleScalingRowExpand = useCallback((runId: string) => {
+    setExpandedScalingRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(runId)) next.delete(runId);
+      else next.add(runId);
+      return next;
+    });
+  }, []);
+
+  const scalingFiltered = showOverheadOutliersOnly
+    ? scaling.filter(
+        (r) =>
+          !r.isLegacyTiming &&
+          r.overheadPct != null &&
+          r.overheadPct >= 5
+      )
+    : scaling;
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -90,8 +152,49 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
     return () => window.removeEventListener("keydown", onKey);
   }, [closeDrawer]);
 
-  const openScalingDrawer = (r: ScalingRow) => () => setDrawerRun({ runId: r.runId, type: "scaling", row: r });
-  const openStabilityDrawer = (r: StabilityRow) => () => setDrawerRun({ runId: r.runId, type: "stability", row: r });
+  useEffect(() => {
+    const rid = searchParams.get("drawerRunId");
+    if (!rid) return;
+    const scalingRow = scaling.find((r) => r.runId === rid);
+    if (scalingRow) {
+      setDrawerRun({ runId: rid, type: "scaling", row: scalingRow });
+      return;
+    }
+    const stabilityRow = stability.find((r) => r.runId === rid);
+    if (stabilityRow) {
+      setDrawerRun({ runId: rid, type: "stability", row: stabilityRow });
+    }
+  }, [searchParams, scaling, stability]);
+
+  const openScalingDrawer = useCallback(
+    (runId: string) => {
+      const row = scaling.find((r) => r.runId === runId);
+      if (!row) return;
+      setDrawerRun({ runId, type: "scaling", row });
+      const url = buildDashboardUrl(
+        pathname,
+        new URLSearchParams(searchParams.toString()),
+        (p) => p.set("drawerRunId", runId)
+      );
+      router.replace(url);
+    },
+    [pathname, router, searchParams, scaling]
+  );
+
+  const openStabilityDrawer = useCallback(
+    (runId: string) => {
+      const row = stability.find((r) => r.runId === runId);
+      if (!row) return;
+      setDrawerRun({ runId, type: "stability", row });
+      const url = buildDashboardUrl(
+        pathname,
+        new URLSearchParams(searchParams.toString()),
+        (p) => p.set("drawerRunId", runId)
+      );
+      router.replace(url);
+    },
+    [pathname, router, searchParams, stability]
+  );
 
   const decisionsPerSecVals = scaling.map((r) => r.decisionsPerSec ?? 0).filter((v) => v > 0);
   const overheadPctVals = scaling
@@ -111,7 +214,7 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
   const p95AccStdDev = p95(accStdDevVals) || 0.05;
 
   return (
-    <div style={{ maxWidth: 1152, margin: "0 auto", padding: "32px 24px" }}>
+    <div data-testid="dashboard-root" style={{ maxWidth: 1152, margin: "0 auto", padding: "32px 24px" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, marginBottom: 24 }}>
         <h1 style={{ fontSize: 28, fontWeight: 700 }}>Dashboard</h1>
         <DashboardFiltersClient
@@ -157,10 +260,24 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
         </div>
       </div>
 
+      <ScalingCurve scalingRows={scaling} />
+
       <div style={{ border: "1px solid rgba(15, 23, 42, 0.10)", borderRadius: 10, padding: 16, marginBottom: 32 }}>
-        <div style={{ fontWeight: 600, marginBottom: 4 }}>Last Runs (Scaling)</div>
-        <div style={{ fontSize: 12, color: "rgba(15, 23, 42, 0.55)", marginBottom: 12 }}>
-          Legacy timing means variants have no durationMs/timestamps; only runDurationMs is available.
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 12 }}>
+          <div>
+            <div style={{ fontWeight: 600, marginBottom: 4 }}>Last Runs (Scaling)</div>
+            <div style={{ fontSize: 12, color: "rgba(15, 23, 42, 0.55)" }}>
+              Legacy timing means variants have no durationMs/timestamps; only runDurationMs is available.
+            </div>
+          </div>
+          <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14 }}>
+            <input
+              type="checkbox"
+              checked={showOverheadOutliersOnly}
+              onChange={(e) => setShowOverheadOutliersOnly(e.target.checked)}
+            />
+            Show overhead outliers only (≥5%)
+          </label>
         </div>
         <div className={styles.tableWrap}>
           <table className={styles.table}>
@@ -176,22 +293,70 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
                 <th className={styles.num}>Overhead %</th>
                 <th className={styles.num}>Efficiency</th>
                 <th>Compare</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
-              {scaling.map((r) => {
+              {scalingFiltered.map((r) => {
                 const dpsWidth = r.decisionsPerSec != null ? normToP95(r.decisionsPerSec, p95Decisions) / 100 : 0;
                 const ohVal = r.overheadPct != null ? (r.overheadPct > 100 ? 100 : r.overheadPct) : null;
                 const ohWidth = ohVal != null ? normToP95(ohVal, p95Overhead) / 100 : 0;
                 const effWidth = r.efficiencyMsPerDecision != null ? normToP95(r.efficiencyMsPerDecision, p95Efficiency) / 100 : 0;
+                const overheadOutlierBadge =
+                  !r.isLegacyTiming && r.overheadPct != null
+                    ? r.overheadPct >= 15
+                      ? { kind: "overhead-hard" as const, text: "≥15%" }
+                      : r.overheadPct >= 5
+                        ? { kind: "overhead-soft" as const, text: "≥5%" }
+                        : null
+                    : null;
+                const isExpanded = expandedScalingRows.has(r.runId);
+                const hasBreakdown =
+                  !r.isLegacyTiming &&
+                  (r.engineInitMs != null ||
+                    r.orchestrationMs != null ||
+                    r.dbCommitMs != null ||
+                    r.computeMs != null);
                 return (
-                  <tr key={r.runId} className={styles.clickable} onClick={openScalingDrawer(r)}>
-                    <td>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs">{r.runId.slice(0, 6)}…{r.runId.slice(-4)}</span>
-                        {r.isLegacyTiming ? <Badge kind="legacy" text="LEGACY" /> : null}
-                      </div>
-                    </td>
+                  <React.Fragment key={r.runId}>
+                    <tr>
+                      <td>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {hasBreakdown ? (
+                            <button
+                              type="button"
+                              onClick={() => toggleScalingRowExpand(r.runId)}
+                              className="inline-flex items-center justify-center w-6 h-6 rounded border border-slate-200 bg-transparent hover:bg-slate-50 text-slate-500 hover:text-slate-700"
+                              aria-label={isExpanded ? "Collapse details" : "Expand details"}
+                              title={isExpanded ? "Collapse" : "Expand"}
+                            >
+                              {isExpanded ? "▼" : "▶"}
+                            </button>
+                          ) : null}
+                          <span className="font-mono text-xs">{r.runId.slice(0, 6)}…{r.runId.slice(-4)}</span>
+                          {r.isLegacyTiming ? <Badge kind="legacy" text="LEGACY" /> : null}
+                          {overheadOutlierBadge ? <Badge kind={overheadOutlierBadge.kind} text={overheadOutlierBadge.text} /> : null}
+                          {r.stabilityBand != null ? (
+                            <span
+                              className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-medium ${
+                                r.stabilityBand === "OK"
+                                  ? "bg-green-100 text-green-700"
+                                  : r.stabilityBand === "DIVERGING"
+                                    ? "bg-yellow-100 text-yellow-800"
+                                    : r.stabilityBand === "UNSTABLE"
+                                      ? "bg-red-100 text-red-700"
+                                      : "bg-slate-100 text-slate-600"
+                              }`}
+                            >
+                              {r.stabilityBand}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium bg-slate-100 text-slate-500">
+                              —
+                            </span>
+                          )}
+                        </div>
+                      </td>
                     <td className={styles.num}>{r.agents}</td>
                     <td className={styles.num}>{r.variants}</td>
                     <td className={styles.num}>{r.steps}</td>
@@ -238,7 +403,7 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
                         <span className="text-slate-500">—</span>
                       )}
                     </td>
-                    <td onClick={(e) => e.stopPropagation()}>
+                    <td>
                       <Link
                         href={`/runs/${r.runId}/compare?assetSymbol=${encodeURIComponent(assetSymbol)}`}
                         className={styles.actionLink}
@@ -246,13 +411,76 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
                         Compare seeds
                       </Link>
                     </td>
+                    <td>
+                      <button
+                        type="button"
+                        data-testid="run-details-btn"
+                        data-runid={r.runId}
+                        onClick={() => openScalingDrawer(r.runId)}
+                        className={styles.actionLink}
+                        style={{ border: "none", cursor: "pointer", font: "inherit" }}
+                      >
+                        Details
+                      </button>
+                    </td>
                   </tr>
+                  {isExpanded && hasBreakdown ? (
+                    <tr>
+                      <td colSpan={11} style={{ padding: 0, verticalAlign: "top" }}>
+                        <div
+                          style={{
+                            padding: "12px 16px",
+                            background: "rgba(15, 23, 42, 0.03)",
+                            borderTop: "1px solid rgba(15, 23, 42, 0.08)",
+                            fontSize: 12,
+                          }}
+                        >
+                          <div style={{ fontWeight: 600, marginBottom: 8, color: "rgba(15, 23, 42, 0.7)" }}>
+                            Overhead breakdown
+                          </div>
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+                              gap: 12,
+                            }}
+                          >
+                            <div>
+                              <div style={{ color: "rgba(15, 23, 42, 0.5)", fontSize: 11 }}>Engine Init</div>
+                              <div className="tabular-nums">
+                                {r.engineInitMs != null ? `${r.engineInitMs} ms` : "—"}
+                              </div>
+                            </div>
+                            <div>
+                              <div style={{ color: "rgba(15, 23, 42, 0.5)", fontSize: 11 }}>Orchestration</div>
+                              <div className="tabular-nums">
+                                {r.orchestrationMs != null ? `${r.orchestrationMs} ms` : "—"}
+                              </div>
+                            </div>
+                            <div>
+                              <div style={{ color: "rgba(15, 23, 42, 0.5)", fontSize: 11 }}>DB Commit</div>
+                              <div className="tabular-nums">
+                                {r.dbCommitMs != null ? `${r.dbCommitMs} ms` : "—"}
+                              </div>
+                            </div>
+                            <div>
+                              <div style={{ color: "rgba(15, 23, 42, 0.5)", fontSize: 11 }}>Compute</div>
+                              <div className="tabular-nums">
+                                {r.computeMs != null ? `${r.computeMs} ms` : "—"}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : null}
+                </React.Fragment>
                 );
               })}
-              {scaling.length === 0 ? (
+              {scalingFiltered.length === 0 ? (
                 <tr>
-                  <td colSpan={10} style={{ padding: 24, color: "rgba(15, 23, 42, 0.55)" }}>
-                    No completed runs found.
+                  <td colSpan={11} style={{ padding: 24, color: "rgba(15, 23, 42, 0.55)" }}>
+                    {showOverheadOutliersOnly ? "No overhead outliers (≥5%) in this set." : "No completed runs found."}
                   </td>
                 </tr>
               ) : null}
@@ -260,6 +488,8 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
           </table>
         </div>
       </div>
+
+      <CrowdConsensus data={consensus} />
 
       <div style={{ border: "1px solid rgba(15, 23, 42, 0.10)", borderRadius: 10, padding: 16 }}>
         <div style={{ fontWeight: 600, marginBottom: 4 }}>Stability Watchlist</div>
@@ -360,7 +590,7 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
                   <tr
                     key={r.runId}
                     className={`${rowBgClass(r.band, i)} ${styles.clickable}`}
-                    onClick={openStabilityDrawer(r)}
+                    onClick={() => openStabilityDrawer(r.runId)}
                   >
                     <td>
                       <span className="font-mono text-xs">{r.runId.slice(0, 6)}…{r.runId.slice(-4)}</span>
@@ -436,28 +666,51 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
       {drawerRun && (
         <>
           <div className={styles.drawerBackdrop} onClick={closeDrawer} aria-hidden />
-          <div className={styles.drawer} role="dialog" aria-label="Run details">
+          <div data-testid="run-details-drawer" className={styles.drawer} role="dialog" aria-label="Run details">
             <div className={styles.drawerHeader}>
-              <span className={styles.drawerTitle}>Run details</span>
+              <h2 data-testid="run-details-title" className={styles.drawerTitle}>Run details</h2>
               <button type="button" className={styles.drawerClose} onClick={closeDrawer} aria-label="Close">
                 ×
               </button>
             </div>
             <div className={styles.drawerBody}>
-              <div className={styles.drawerRow}>
+              <div className={styles.drawerRow} data-testid="drawer-row-runId">
                 <div className={styles.drawerLabel}>Run ID</div>
-                <div className={styles.drawerValue}>{drawerRun.runId}</div>
+                <div className={styles.drawerValue} data-testid="drawer-value-runId">{drawerRun.runId}</div>
               </div>
-              <div className={styles.drawerRow}>
+              <div className={styles.drawerRow} data-testid="drawer-row-asset">
                 <div className={styles.drawerLabel}>Asset</div>
-                <div className={styles.drawerValue}>{assetSymbol}</div>
+                <div className={styles.drawerValue} data-testid="drawer-value-asset">{assetSymbol}</div>
               </div>
-              <div className={styles.drawerRow}>
+              <div className={styles.drawerRow} data-testid="drawer-row-seeds">
                 <div className={styles.drawerLabel}>Seeds / Variants</div>
-                <div className={styles.drawerValue}>
+                <div className={styles.drawerValue} data-testid="drawer-value-seeds">
                   {"seeds" in drawerRun.row ? (drawerRun.row.seeds ?? drawerRun.row.variants) : drawerRun.row.variants}
                 </div>
               </div>
+              {drawerRun.type === "scaling" && (
+                <div className={styles.drawerRow}>
+                  <div className={styles.drawerLabel}>Overhead breakdown</div>
+                  <div className={styles.drawerValue} style={{ fontFamily: "inherit" }}>
+                    <ScalingDetails row={drawerRun.row as ScalingRow} assetSymbol={assetSymbol} />
+                    {!((drawerRun.row as ScalingRow).isLegacyTiming) && (
+                      <div
+                        style={{
+                          fontSize: 11,
+                          color: "rgba(15, 23, 42, 0.55)",
+                          padding: "8px 10px",
+                          background: "rgba(15, 23, 42, 0.04)",
+                          borderRadius: 6,
+                          border: "1px solid rgba(15, 23, 42, 0.08)",
+                          marginTop: 12,
+                        }}
+                      >
+                        High overhead often indicates fixed setup costs dominating short runs; compare with larger agent counts.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
               {drawerRun.type === "stability" && (
                 <>
                   <div className={styles.drawerRow}>

@@ -42,6 +42,15 @@
   - If variant exists and overwrite=false → no delete, no recompute
   - decisionsHash must remain unchanged
 
+### Multi-Seed Variant Contract
+
+- A SimulationRun may contain multiple RunVariants differentiated by seed.
+- expectedVariants equals number of seeds.
+- Run completes only when all seeds are persisted successfully.
+- Variants are fully independent compute units.
+- Cross-seed comparison must never recompute metrics dynamically.
+- All cross-seed analytics must derive strictly from persisted RunVariantSummary rows.
+
 ---
 
 ## Agent Generation Model
@@ -75,6 +84,21 @@
 - **AssetStepReturn** = canonical dataset
 - Hashes computed from canonical sources only
 - No endpoint may recompute corr dynamically
+
+### Cross-Seed Stability Metrics (Authoritative)
+
+The following metrics are derived from persisted RunVariantSummary rows only:
+
+- CIS (Crowd Intelligence Score) — deterministic composite
+- CIS spread (max - min across seeds)
+- Correlation sign instability detection
+- Accuracy standard deviation across seeds
+- Correlation standard deviation across seeds
+
+These metrics:
+- Must never recompute base corr or directionalAccuracy.
+- Must operate only on persisted summary data.
+- Must be reproducible for identical datasetVersion + modelVersion.
 
 ---
 
@@ -213,6 +237,56 @@ PENDING → RUNNING → FAILED
 
 ---
 
+## Web Product Surface (Implemented)
+
+### Run List (runs-v2)
+- Deterministic UI-ready list.
+- Excludes FAILED runs by default.
+- Variants count visible.
+
+### Run Detail Page
+- Lists RunVariants.
+- Shows summary metrics per variant.
+- Provides Compare Seeds link when variantsCount >= 2.
+
+### Variant Page
+- Shows canonical persisted metrics only.
+- No dynamic recomputation.
+- Displays:
+  - Crowd Intelligence Score
+  - Stability badges
+  - Correlation signal
+  - Market regime
+  - Run integrity hashes
+  - Cross-run percentile context
+  - Stability across seeds
+  - Stability across comparable runs
+
+### Seed Compare View (NEW)
+Route:
+  /runs/:runId/compare?assetSymbol=SPY
+
+Displays:
+  - Best seed (CIS)
+  - Worst seed (CIS)
+  - CIS spread
+  - Correlation sign instability flag
+  - Table of seeds with:
+      corr
+      accuracy
+      CIS
+      decision histogram
+      pairs count
+      link to variant
+
+Rules:
+  - Uses existing /api/runs/:runId/variants endpoint
+  - No backend changes required
+  - Deterministic composite logic only
+  - Must not introduce new metric authority
+
+---
+
 ## Worker Scripts & Key Files
 
 - `apps/worker/src/scripts/backtest-v0.ts` — main backtest; SKIPs already-computed variants (no deletes)
@@ -254,6 +328,22 @@ pnpm -C apps/worker run backtest-v0 -- \
 - SKIP must not delete existing decisions.
 - Rerun must preserve decisionsHash + returnsHash.
 - No recompute unless overwrite=true.
+
+### Cross-Seed Determinism Rule
+
+Given identical:
+  (datasetVersion, modelVersion, seeds, agents, steps)
+
+The following must be invariant:
+  - decisionsHash per seed
+  - returnsHash
+  - corr
+  - directionalAccuracy
+  - CIS composite
+  - CIS spread
+  - sign instability result
+
+Any change requires explicit modelVersion increment.
 
 ---
 
@@ -390,7 +480,15 @@ CrowdVest is a Crowd Intelligence Engine, research platform, signal generation e
 
 ## Current Status
 
-System stable and fast. Determinism, queueing, rerun idempotency, results endpoints, status patch logic hardened. 2000-agent compute validated.
+Core engine stable.
+Determinism validated (single seed and multi-seed).
+Cross-seed comparison implemented.
+Seed Compare View stable.
+UI product surface deterministic.
+2000-agent performance validated.
+No dynamic recomputation in results endpoints.
+
+System ready for Dashboard architecture phase.
 
 ---
 
@@ -406,8 +504,134 @@ System stable and fast. Determinism, queueing, rerun idempotency, results endpoi
 
 ## Phase Status
 
-Phase 1: Core Engine Hardening — COMPLETE  
-Phase 2: Observability + Bench Suite — IN PROGRESS  
-Phase 3: Product Surface (UI Contracts) — NEXT  
-Phase 4: Analytics Expansion  
-Phase 5: SaaSization
+Phase 1: Core Engine Hardening — COMPLETE
+Phase 2: Multi-Seed & Stability Layer — COMPLETE
+Phase 3: Product Surface (UI Contracts) — COMPLETE
+Phase 4: Dashboard Architecture Consolidation — NEXT
+Phase 5: Observability + Bench Automation
+Phase 6: Analytics Expansion
+Phase 7: SaaSization
+
+---
+
+## Dashboard Architecture Principle (Forward Contract)
+
+All future dashboards must:
+
+- Use existing canonical endpoints only.
+- Never recompute corr, accuracy, or hashes.
+- Derive composite metrics from RunVariantSummary only.
+- Maintain deterministic reproducibility.
+- Share UI components across:
+    - Run list
+    - Variant view
+    - Seed compare
+    - Future leaderboard
+    - Future analytics dashboards
+
+Single metric authority rule:
+RunVariantSummary is the single source of truth for performance metrics.
+
+No dashboard may override it.
+
+---
+
+## Operational Smoke Tests (Copy/Paste)
+
+### A) Hardening Suite (3 seeds per run)
+Command:
+```bash
+cd ~/crowdvest
+./scripts/run-hardening-suite.sh | tail -n 200
+```
+
+Expected:
+
+For each agents bucket (50/200/1000/2000):
+
+variantsCount=3
+
+prints 3 variantIds
+
+ends with HARDENING SUITE PASSED
+
+API sanity after picking a printed RunId:
+
+```bash
+RUN_ID="PASTE_RUN_ID"
+curl -fsS "http://localhost:4000/api/runs/$RUN_ID/variants?assetSymbol=SPY" | jq '.items | length'
+curl -fsS "http://localhost:4000/api/runs/$RUN_ID/variants?assetSymbol=SPY" \
+  | jq -r '.items[] | {id,seed,agents,steps,corr:.summary.corr,acc:.summary.directionalAccuracy}'
+```
+
+Expected:
+
+length == 3
+
+3 rows with seed=1..3
+
+### B) Seed Compare Page (UI)
+
+Open:
+
+http://localhost:4000/runs/<RUN_ID>/compare?assetSymbol=SPY
+
+Expected UI:
+
+Summary: best seed, worst seed, CIS spread
+
+"Correlation sign instability: YES/NO"
+
+Table with 3 rows and "Open variant" links
+
+### C) Variant Page (UI)
+
+Open:
+
+http://localhost:4000/runs/<RUN_ID>/variants/<VARIANT_ID>
+
+Expected UI:
+
+Crowd Intelligence Score (base + stability-adjusted)
+
+Shows stability badges when multi-seed exists
+
+Run integrity shows Deterministic Snapshot Verified
+
+No console errors (ignore dev Fast Refresh logs)
+
+### Web Routes (Next.js)
+
+Runs list:
+
+/runs
+
+Run detail:
+
+/runs/:runId
+
+Variant:
+
+/runs/:runId/variants/:variantId
+
+Seed compare:
+
+/runs/:runId/compare?assetSymbol=SPY
+
+Note: web proxies API via:
+
+http://localhost:4000/api/* → http://localhost:4001/*
+
+### Last Known-Good Multi-Seed Example (Dev)
+
+RunId (SPY, 29 steps, 2000 agents, 3 seeds):
+
+47072b9f-9b92-4444-ae2a-abf1cc0868a4
+
+Example variants:
+
+seed=1 corr≈0.1999
+
+seed=2 corr≈0.1979
+
+seed=3 corr≈-0.1544 (sign instability case)

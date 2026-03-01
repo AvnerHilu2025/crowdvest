@@ -94,6 +94,7 @@ model SimulationRun {
   completedAt    DateTime?
   failedAt       DateTime?
   lastError      String?             @db.VarChar(1000)
+  runDurationMs  Int?
   configJson     Json?
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @updatedAt
@@ -129,6 +130,9 @@ model RunVariant {
   steps        Int
   label        String?   // optional batch tag (e.g. "smoke-variants")
   createdAt    DateTime  @default(now())
+  startedAt    DateTime?
+  completedAt  DateTime?
+  durationMs   Int?
 
   run              SimulationRun     @relation(fields: [runId], references: [id], onDelete: Cascade)
   agentDecisions   AgentDecision[]

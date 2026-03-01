@@ -18,12 +18,30 @@ type RunsListRunRow = {
   status: string;
   startedAt: Date | null;
   finishedAt: Date | null;
+  completedAt: Date | null;
   createdAt: Date;
+  runDurationMs: number | null;
   seed: number;
   modelVersion: string;
   datasetVersion: string;
   schemaVersion: string;
 };
+
+function deriveRunDurationMsForList(r: {
+  runDurationMs: number | null;
+  startedAt: Date | null;
+  finishedAt: Date | null;
+  completedAt?: Date | null;
+}): number | null {
+  if (r.runDurationMs != null && Number.isFinite(r.runDurationMs) && r.runDurationMs > 0) {
+    return r.runDurationMs;
+  }
+  const start = r.startedAt;
+  const end = r.finishedAt ?? r.completedAt ?? null;
+  if (!start || !end) return null;
+  const ms = end.getTime() - start.getTime();
+  return Number.isFinite(ms) && ms >= 0 ? ms : null;
+}
 
 const MODEL_VERSION = "stage1";
 const SCHEMA_VERSION = "v1";
@@ -309,6 +327,7 @@ export class RunsService {
       createdAt: string;
       startedAt: string | null;
       finishedAt: string | null;
+      runDurationMs: number | null;
       seed: number;
       modelVersion: string;
       datasetVersion: string;
@@ -330,6 +349,8 @@ export class RunsService {
           createdAt: true,
           startedAt: true,
           finishedAt: true,
+          completedAt: true,
+          runDurationMs: true,
           seed: true,
           modelVersion: true,
           datasetVersion: true,
@@ -371,6 +392,7 @@ export class RunsService {
 
     const items = runs.map((r: RunsListRunRow) => {
       const m: RunListMetrics = aggByRun.get(r.id) ?? { agentCount: 0, totalSteps: 0, totalPnl: 0 };
+      const runDurationMs = deriveRunDurationMsForList(r) ?? r.runDurationMs ?? null;
       return {
         id: r.id,
         runId: r.id,
@@ -379,6 +401,7 @@ export class RunsService {
         createdAt: r.createdAt.toISOString(),
         startedAt: r.startedAt?.toISOString() ?? null,
         finishedAt: r.finishedAt?.toISOString() ?? null,
+        runDurationMs,
         seed: r.seed,
         modelVersion: r.modelVersion,
         datasetVersion: r.datasetVersion,
@@ -527,7 +550,7 @@ export class RunsService {
     };
   }
 
-  /** GET /runs/:runId/variants — list RunVariants for run with optional filters; returns { items, total }. */
+  /** GET /runs/:runId/variants — list RunVariants for run with optional filters; returns { items, total, agreementMatrix }. */
   async getVariantsForRun(
     runId: string,
     opts: {
@@ -546,6 +569,9 @@ export class RunsService {
       steps: number;
       label: string | null;
       createdAt: string;
+      durationMs: number | null;
+      startedAt: string | null;
+      completedAt: string | null;
       summary: {
         corr: number | null;
         directionalAccuracy: number | null;
@@ -554,6 +580,16 @@ export class RunsService {
       } | null;
     }>;
     total: number;
+    agreementMatrix: Array<{ seedA: number; seedB: number; agreement: number }>;
+    seedProfiles: Array<{
+      seed: number;
+      buyPct: number;
+      sellPct: number;
+      holdPct: number;
+      netBias: number;
+      dominantDirection: "BUY" | "SELL" | "HOLD";
+    }>;
+    stepAgreement: Array<{ step: number; agreementPct: number }>;
   }> {
     const run = await this.prisma.simulationRun.findUnique({
       where: { id: runId },
@@ -584,6 +620,9 @@ export class RunsService {
           steps: true,
           label: true,
           createdAt: true,
+          durationMs: true,
+          startedAt: true,
+          completedAt: true,
           summary: {
             select: {
               corr: true,
@@ -611,6 +650,9 @@ export class RunsService {
         steps: v.steps,
         label: v.label,
         createdAt: v.createdAt.toISOString(),
+        durationMs: v.durationMs ?? null,
+        startedAt: v.startedAt?.toISOString() ?? null,
+        completedAt: v.completedAt?.toISOString() ?? null,
         // Stored hashes for determinism validation (always included)
         decisionsHash: v.summary?.debugDecisionsHash ?? null,
         returnsHash: v.summary?.debugReturnsHash ?? null,
@@ -638,7 +680,192 @@ export class RunsService {
             : null,
       })),
       total,
+      agreementMatrix: await this.computeAgreementMatrix(variants),
+      seedProfiles: await this.computeSeedProfiles(variants),
+      stepAgreement: await this.computeStepAgreement(variants),
     };
+  }
+
+  private async computeStepAgreement(
+    variants: Array<{ id: string; seed: number }>,
+  ): Promise<Array<{ step: number; agreementPct: number }>> {
+    if (variants.length < 2) return [];
+
+    const variantIds = variants.map((v) => v.id);
+    const allDecisions = await this.prisma.agentDecision.findMany({
+      where: { runVariantId: { in: variantIds } },
+      select: { runVariantId: true, step: true, agentId: true, action: true },
+      orderBy: [{ step: "asc" }, { agentId: "asc" }],
+    });
+
+    const byVariantAndStep = new Map<string, Map<number, Map<string, number>>>();
+    for (const d of allDecisions) {
+      const vid = d.runVariantId;
+      if (!vid) continue;
+      if (!byVariantAndStep.has(vid)) {
+        byVariantAndStep.set(vid, new Map());
+      }
+      const stepMap = byVariantAndStep.get(vid)!;
+      if (!stepMap.has(d.step)) {
+        stepMap.set(d.step, new Map([["BUY", 0], ["SELL", 0], ["HOLD", 0]]));
+      }
+      const freq = stepMap.get(d.step)!;
+      const action = String(d.action);
+      if (action === "BUY" || action === "SELL" || action === "HOLD") {
+        freq.set(action, (freq.get(action) ?? 0) + 1);
+      }
+    }
+
+    const stepsSet = new Set<number>();
+    for (const [, stepMap] of byVariantAndStep) {
+      for (const step of stepMap.keys()) {
+        stepsSet.add(step);
+      }
+    }
+    const steps = [...stepsSet].sort((a, b) => a - b);
+    const totalSeeds = variants.length;
+
+    return steps.map((step) => {
+      const freq: { BUY: number; SELL: number; HOLD: number } = {
+        BUY: 0,
+        SELL: 0,
+        HOLD: 0,
+      };
+      for (const v of variants) {
+        const stepMap = byVariantAndStep.get(v.id);
+        if (!stepMap) continue;
+        const variantFreq = stepMap.get(step);
+        if (!variantFreq) continue;
+        const buyC = variantFreq.get("BUY") ?? 0;
+        const sellC = variantFreq.get("SELL") ?? 0;
+        const holdC = variantFreq.get("HOLD") ?? 0;
+        const maxC = Math.max(buyC, sellC, holdC);
+        if (maxC === 0) continue;
+        if (buyC >= sellC && buyC >= holdC) freq.BUY++;
+        else if (sellC >= buyC && sellC >= holdC) freq.SELL++;
+        else freq.HOLD++;
+      }
+      const maxCount = Math.max(freq.BUY, freq.SELL, freq.HOLD);
+      const agreementPct = totalSeeds > 0 ? maxCount / totalSeeds : 0;
+      return { step, agreementPct };
+    });
+  }
+
+  private async computeSeedProfiles(
+    variants: Array<{ id: string; seed: number }>,
+  ): Promise<
+    Array<{
+      seed: number;
+      buyPct: number;
+      sellPct: number;
+      holdPct: number;
+      netBias: number;
+      dominantDirection: "BUY" | "SELL" | "HOLD";
+    }>
+  > {
+    if (variants.length === 0) return [];
+
+    const variantIds = variants.map((v) => v.id);
+    const allDecisions = await this.prisma.agentDecision.findMany({
+      where: { runVariantId: { in: variantIds } },
+      select: { runVariantId: true, action: true },
+    });
+
+    const countsByVariant = new Map<
+      string,
+      { BUY: number; SELL: number; HOLD: number }
+    >();
+    for (const d of allDecisions) {
+      const vid = d.runVariantId;
+      if (!vid) continue;
+      if (!countsByVariant.has(vid)) {
+        countsByVariant.set(vid, { BUY: 0, SELL: 0, HOLD: 0 });
+      }
+      const c = countsByVariant.get(vid)!;
+      const action = String(d.action);
+      if (action === "BUY") c.BUY++;
+      else if (action === "SELL") c.SELL++;
+      else if (action === "HOLD") c.HOLD++;
+    }
+
+    return variants.map((v) => {
+      const c = countsByVariant.get(v.id) ?? { BUY: 0, SELL: 0, HOLD: 0 };
+      const total = c.BUY + c.SELL + c.HOLD;
+      const buyPct = total > 0 ? c.BUY / total : 0;
+      const sellPct = total > 0 ? c.SELL / total : 0;
+      const holdPct = total > 0 ? c.HOLD / total : 0;
+      const netBias = buyPct - sellPct;
+
+      let dominantDirection: "BUY" | "SELL" | "HOLD" = "HOLD";
+      if (buyPct > sellPct && buyPct > holdPct) dominantDirection = "BUY";
+      else if (sellPct > buyPct && sellPct > holdPct) dominantDirection = "SELL";
+
+      return {
+        seed: v.seed,
+        buyPct,
+        sellPct,
+        holdPct,
+        netBias,
+        dominantDirection,
+      };
+    });
+  }
+
+  private async computeAgreementMatrix(
+    variants: Array<{ id: string; seed: number }>,
+  ): Promise<Array<{ seedA: number; seedB: number; agreement: number }>> {
+    if (variants.length < 2) return [];
+
+    const variantIds = variants.map((v) => v.id);
+    const decisionsByVariant = new Map<string, Map<string, string>>();
+
+    const allDecisions = await this.prisma.agentDecision.findMany({
+      where: { runVariantId: { in: variantIds } },
+      select: { runVariantId: true, step: true, agentId: true, action: true },
+      orderBy: [{ step: "asc" }, { agentId: "asc" }],
+    });
+
+    for (const d of allDecisions) {
+      const vid = d.runVariantId;
+      if (!vid) continue;
+      const key = `${d.step}_${d.agentId}`;
+      if (!decisionsByVariant.has(vid)) {
+        decisionsByVariant.set(vid, new Map());
+      }
+      decisionsByVariant.get(vid)!.set(key, d.action);
+    }
+
+    const matrix: Array<{ seedA: number; seedB: number; agreement: number }> = [];
+    for (let i = 0; i < variants.length; i++) {
+      for (let j = 0; j < variants.length; j++) {
+        const seedA = variants[i]!.seed;
+        const seedB = variants[j]!.seed;
+        const mapA = decisionsByVariant.get(variants[i]!.id);
+        const mapB = decisionsByVariant.get(variants[j]!.id);
+
+        if (!mapA || !mapB) {
+          matrix.push({ seedA, seedB, agreement: 0 });
+          continue;
+        }
+
+        const keysA = new Set(mapA.keys());
+        const keysB = new Set(mapB.keys());
+        const intersection = [...keysA].filter((k) => keysB.has(k));
+
+        if (intersection.length === 0) {
+          matrix.push({ seedA, seedB, agreement: 1 });
+          continue;
+        }
+
+        let matches = 0;
+        for (const k of intersection) {
+          if (mapA.get(k) === mapB.get(k)) matches++;
+        }
+        const agreement = matches / intersection.length;
+        matrix.push({ seedA, seedB, agreement });
+      }
+    }
+    return matrix;
   }
 
   /** GET /variants/:variantId/summary — one variant's RunVariant + BacktestResult. */

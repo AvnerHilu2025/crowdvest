@@ -2,6 +2,51 @@
  * API client. Uses NEXT_PUBLIC_API_URL (default http://localhost:4001).
  */
 
+type Query = Record<string, string | number | boolean | null | undefined>;
+
+function toQuery(q?: Query): string {
+  if (!q) return "";
+  const usp = new URLSearchParams();
+  for (const [k, v] of Object.entries(q)) {
+    if (v === null || v === undefined) continue;
+    usp.set(k, String(v));
+  }
+  const s = usp.toString();
+  return s ? `?${s}` : "";
+}
+
+export class ApiError extends Error {
+  status: number;
+  body?: unknown;
+  constructor(message: string, status: number, body?: unknown) {
+    super(message);
+    this.status = status;
+    this.body = body;
+  }
+}
+
+/** For Next.js app router pages (SSR fetch). Default cache: no-store. */
+export async function apiGet<T>(path: string, query?: Query): Promise<T> {
+  const res = await fetch(`${path}${toQuery(query)}`, {
+    cache: "no-store",
+  });
+
+  const text = await res.text();
+  let data: unknown = text;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    // keep raw text
+  }
+
+  if (!res.ok) {
+    throw new ApiError(`GET ${path} failed`, res.status, data);
+  }
+  return data as T;
+}
+
+// ---------------------------------------------------------------------------
+
 const API_BASE_RAW =
   (typeof process !== "undefined" && process.env.NEXT_PUBLIC_API_URL) ?? "http://localhost:4001";
 export const API_BASE = String(API_BASE_RAW).replace(/\/$/, "") || "http://localhost:4001";

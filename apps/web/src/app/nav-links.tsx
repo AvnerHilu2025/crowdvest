@@ -8,6 +8,7 @@ import { getOrCreateUserId } from "@/lib/identity";
 
 const links = [
   { href: "/", label: "Home" },
+  { href: "/dashboard", label: "Dashboard" },
   { href: "/runs", label: "Runs" },
   { href: "/bets", label: "My Bets" },
   { href: "/leaderboard", label: "Leaderboard" },

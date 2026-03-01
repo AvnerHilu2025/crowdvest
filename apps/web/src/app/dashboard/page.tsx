@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { DashboardClient } from "./DashboardClient";
 import { getWebBase } from "@/lib/web-base";
 import { stabilityReason } from "@/lib/risk";
@@ -7,22 +7,38 @@ import { stabilityRiskScore, riskBand, stabilityCause } from "@/lib/stability-tr
 export const dynamic = "force-dynamic";
 
 type DashboardSummary = {
+  consensus: {
+    buyPct: number;
+    sellPct: number;
+    holdPct: number;
+    majorityPct: number;
+    entropy: number;
+    polarization: number;
+  } | null;
   latestRun: {
     id: string;
     runDurationMs: number | null;
   } | null;
   scalingRows: Array<{
     runId: string;
+    stabilityBand?: "OK" | "DIVERGING" | "UNSTABLE" | "LEGACY" | null;
+    stabilityScore?: number | null;
     agents: number;
     variants: number;
     steps: number;
     runDurationMs: number | null;
     decisionsTotal: number;
     decisionsPerSec: number | null;
+    sumVariantMs?: number;
     overheadMs: number | null;
     overheadPct: number | null;
     efficiencyMsPerDecision: number | null;
     isLegacyTiming?: boolean;
+    computeMs?: number | null;
+    totalMs?: number | null;
+    engineInitMs?: number | null;
+    orchestrationMs?: number | null;
+    dbCommitMs?: number | null;
   }>;
   stabilityRows: Array<{
     runId: string;
@@ -121,8 +137,10 @@ export default async function DashboardPage({
   const filterLabel = unstableOnly ? "unstable/diverging" : "all";
 
   return (
-    <DashboardClient
-      initialData={{
+    <Suspense fallback={<div style={{ maxWidth: 1152, margin: "0 auto", padding: "32px 24px" }}>Loading dashboard…</div>}>
+      <DashboardClient
+        initialData={{
+        consensus: data.consensus,
         scaling: data.scalingRows,
         stability: stabilityDecorated,
         counts,
@@ -137,6 +155,7 @@ export default async function DashboardPage({
         showLegacy,
         sortByRisk,
       }}
-    />
+      />
+    </Suspense>
   );
 }

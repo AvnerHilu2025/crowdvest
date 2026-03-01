@@ -177,6 +177,7 @@ exports.Prisma.SimulationRunScalarFieldEnum = {
   completedAt: 'completedAt',
   failedAt: 'failedAt',
   lastError: 'lastError',
+  runDurationMs: 'runDurationMs',
   configJson: 'configJson',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -190,7 +191,10 @@ exports.Prisma.RunVariantScalarFieldEnum = {
   agents: 'agents',
   steps: 'steps',
   label: 'label',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  startedAt: 'startedAt',
+  completedAt: 'completedAt',
+  durationMs: 'durationMs'
 };
 
 exports.Prisma.RunVariantSummaryScalarFieldEnum = {

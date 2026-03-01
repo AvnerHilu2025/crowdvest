@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   formatPercent,
   formatNumber,
+  formatDurationMs,
   truncateMiddle,
 } from "@/lib/format";
 import { stdDev } from "@/lib/cis";
@@ -43,6 +44,7 @@ interface VariantItem {
   seed: number;
   agents: number;
   steps: number;
+  durationMs?: number | null;
   label: string | null;
   createdAt: string;
   decisionsHash: string | null;
@@ -338,6 +340,10 @@ export default async function VariantDetailPage({
               value={formatPercent(directionalAccuracy)}
             />
             <MetricRow label="Pairs Count" value={formatNumber(pairsCount)} />
+            <MetricRow
+              label="Variant duration"
+              value={formatDurationMs(variant.durationMs)}
+            />
             {(variant.decisionsHash || variant.returnsHash) && (
               <MetricRow
                 label="Hashes"

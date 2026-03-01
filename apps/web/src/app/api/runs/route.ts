@@ -1,40 +1,18 @@
-import { NextRequest, NextResponse } from "next/server";
-
-function getUpstreamBase(): string {
-  const raw =
-    process.env.API_URL ??
-    process.env.NEXT_PUBLIC_API_URL ??
-    "http://localhost:4001";
-  return String(raw).replace(/\/$/, "") || "http://localhost:4001";
-}
-
-function parseLimit(value: string | null): number {
-  if (value == null || value === "") return 30;
-  const n = parseInt(value, 10);
-  if (!Number.isFinite(n) || n < 1) return 30;
-  return Math.min(n, 200);
-}
+import { NextRequest } from "next/server";
+import { getApiBase, proxyGet } from "@/lib/api-proxy";
 
 export async function GET(request: NextRequest) {
-  const limit = parseLimit(request.nextUrl.searchParams.get("limit"));
-  const baseUrl = getUpstreamBase();
-  const upstreamUrl = `${baseUrl}/runs?limit=${limit}`;
-
   try {
-    const res = await fetch(upstreamUrl, { cache: "no-store" });
-    const body = await res.json();
-    return NextResponse.json(body, {
-      status: res.status,
-      headers: { "Cache-Control": "no-store" },
-    });
+    const search = request.nextUrl.searchParams.toString();
+    const url = search
+      ? `${getApiBase()}/runs?${search}`
+      : `${getApiBase()}/runs`;
+    return await proxyGet(url);
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    return NextResponse.json(
-      { ok: false, error: msg, upstream: upstreamUrl },
-      {
-        status: 502,
-        headers: { "Cache-Control": "no-store" },
-      },
+    return Response.json(
+      { ok: false, error: msg },
+      { status: 502, headers: { "cache-control": "no-store" } },
     );
   }
 }

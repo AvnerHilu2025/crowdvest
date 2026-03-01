@@ -27,6 +27,7 @@ export interface RunMeta {
   completedAt: Date | null;
   failedAt: Date | null;
   lastError: string | null;
+  runDurationMs: number | null;
   seed: number;
   modelVersion: string;
   datasetVersion: string;
@@ -55,6 +56,7 @@ export interface NormalizedRunPayload {
   completedAt: string | null;
   failedAt: string | null;
   lastError: string | null;
+  runDurationMs: number | null;
   status: string;
   name: string;
   seed: number;
@@ -95,6 +97,7 @@ export function normalizeRunPayload(
     completedAt: runMeta.completedAt?.toISOString() ?? null,
     failedAt: runMeta.failedAt?.toISOString() ?? null,
     lastError: runMeta.lastError ?? null,
+    runDurationMs: runMeta.runDurationMs ?? null,
     status: runMeta.status,
     name: runMeta.name,
     seed: runMeta.seed,

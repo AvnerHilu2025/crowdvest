@@ -302,6 +302,7 @@ async function main(): Promise<void> {
 
     // 2) Set RUNNING before dataset validation (clear stale audit fields)
     await setRunStatus(prisma, runId, "RUNNING");
+    const runT0 = Date.now();
 
     console.log(
       "backtest-v0 assetSymbol=" +
@@ -385,6 +386,7 @@ async function main(): Promise<void> {
     variantIds.push(variantId);
 
     // Skip entire variant if already computed (unless --overwrite)
+    let variantT0: number | null = null;
     if (!argv.overwrite) {
       const summary = await prisma.runVariantSummary.findUnique({
         where: { runVariantId: variantId },
@@ -395,6 +397,11 @@ async function main(): Promise<void> {
         // Still need to load CrowdMetrics for corr computation below; data exists from prior run
       } else {
         // Run decide and compute-crowd-metrics
+        variantT0 = Date.now();
+        await prisma.runVariant.update({
+          where: { id: variantId },
+          data: { startedAt: new Date(), completedAt: null, durationMs: null },
+        });
         if (
           !runWorker(
             "decide",
@@ -434,6 +441,11 @@ async function main(): Promise<void> {
       }
     } else {
       // --overwrite: run decide and compute-crowd-metrics with overwrite
+      variantT0 = Date.now();
+      await prisma.runVariant.update({
+        where: { id: variantId },
+        data: { startedAt: new Date(), completedAt: null, durationMs: null },
+      });
       if (
         !runWorker(
           "decide",
@@ -610,6 +622,13 @@ async function main(): Promise<void> {
         directionalAccuracy,
       },
     });
+    if (variantT0 != null) {
+      const t1 = Date.now();
+      await prisma.runVariant.update({
+        where: { id: variantId },
+        data: { completedAt: new Date(), durationMs: t1 - variantT0 },
+      });
+    }
     mark("RunVariant + metrics persisted");
   } catch (e) {
       // P2002 = unique constraint (e.g. RunVariant already exists): skip, do not fail the run
@@ -626,6 +645,52 @@ async function main(): Promise<void> {
   });
   const expectedVariants = argv.seeds.length;
   if (completedVariants >= expectedVariants) {
+    // === RUN FINALIZATION VALIDATION BLOCK ===
+    const run = await prisma.simulationRun.findUnique({
+      where: { id: runId },
+    });
+
+    if (!run) {
+      throw new Error(`Run ${runId} not found during finalization`);
+    }
+
+    const variantCount = await prisma.runVariant.count({
+      where: { runId },
+    });
+
+    const summaryCount = await prisma.runVariantSummary.count({
+      where: {
+        runVariant: {
+          runId,
+        },
+      },
+    });
+
+    const expected = expectedVariants;
+    if (variantCount !== expected) {
+      throw new Error(
+        `Variant count mismatch: expected=${expected} actual=${variantCount}`,
+      );
+    }
+
+    if (summaryCount !== expected) {
+      throw new Error(
+        `Summary count mismatch: expected=${expected} actual=${summaryCount}`,
+      );
+    }
+
+    if (variantCount !== summaryCount) {
+      throw new Error(
+        `Variant/Summary mismatch: variants=${variantCount} summaries=${summaryCount}`,
+      );
+    }
+    // === END VALIDATION BLOCK ===
+
+    const runT1 = Date.now();
+    await prisma.simulationRun.update({
+      where: { id: runId },
+      data: { runDurationMs: runT1 - runT0 },
+    });
     const result = await setRunStatus(prisma, runId, "COMPLETED");
     if (result.count > 0) {
       console.log(

@@ -1,14 +1,20 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { truncateMiddle, truncate } from "@/lib/ui";
-import { formatDateUTC } from "@/lib/format";
+import { Table } from "@/components/ui/Table";
+import { Badge } from "@/components/ui/Badge";
+import { ui } from "@/components/ui/ui-styles";
+import { formatDateTimeUTC, formatDurationMs, truncateMiddle } from "@/lib/format";
+import { truncate } from "@/lib/ui";
+
+const cellStyle: React.CSSProperties = ui.td;
 
 interface RunItem {
   id: string;
   name: string;
   createdAt: string;
   status: string;
+  runDurationMs: number | null;
   assetSymbol: string | null;
   steps: number | null;
   agents: number | null;
@@ -16,66 +22,57 @@ interface RunItem {
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const cls =
+  const tone =
     status === "COMPLETED"
-      ? "badge badge-success"
+      ? "green"
       : status === "FAILED"
-        ? "badge badge-error"
+        ? "red"
         : status === "RUNNING"
-          ? "badge badge-running"
-          : "badge";
-  return <span className={cls}>{status}</span>;
+          ? "amber"
+          : "gray";
+  return <Badge tone={tone}>{status}</Badge>;
 }
 
 export function RunsTable({ items }: { items: RunItem[] }) {
   const router = useRouter();
 
   return (
-    <div className="runs-table-wrap">
-      <table className="runs-table">
-        <thead>
-          <tr>
-            <th>Created</th>
-            <th>Name</th>
-            <th>Status</th>
-            <th>Asset</th>
-            <th>Steps</th>
-            <th>Agents</th>
-            <th>Variants</th>
-            <th>Run ID</th>
+    <div style={{ overflowX: "auto", border: "1px solid #E6EEF7", borderRadius: 8 }}>
+      <Table
+        headers={["Created", "Name", "Status", "Duration", "Asset", "Steps", "Agents", "Variants", "Run ID"]}
+      >
+        {items.map((r) => (
+          <tr
+            key={r.id}
+            onClick={() => router.push(`/runs/${r.id}?assetSymbol=SPY`)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                router.push(`/runs/${r.id}?assetSymbol=SPY`);
+              }
+            }}
+            style={{ cursor: "pointer" }}
+          >
+            <td style={cellStyle}>{formatDateTimeUTC(r.createdAt)}</td>
+            <td style={cellStyle} title={r.name || r.id}>
+              {truncate(r.name || r.id, 40)}
+            </td>
+            <td style={cellStyle}>
+              <StatusBadge status={r.status} />
+            </td>
+            <td style={cellStyle}>{formatDurationMs(r.runDurationMs)}</td>
+            <td style={cellStyle}>{r.assetSymbol ?? "—"}</td>
+            <td style={cellStyle}>{r.steps ?? "—"}</td>
+            <td style={cellStyle}>{r.agents ?? "—"}</td>
+            <td style={cellStyle}>{r.variantsCount}</td>
+            <td style={cellStyle} title={r.id}>
+              {truncateMiddle(r.id)}
+            </td>
           </tr>
-        </thead>
-        <tbody>
-          {items.map((r) => (
-            <tr
-              key={r.id}
-              className="runs-table-row"
-              onClick={() => router.push(`/runs/${r.id}?assetSymbol=SPY`)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  router.push(`/runs/${r.id}?assetSymbol=SPY`);
-                }
-              }}
-            >
-              <td>{formatDateUTC(r.createdAt)}</td>
-              <td title={r.name || r.id}>{truncate(r.name || r.id, 40)}</td>
-              <td>
-                <StatusBadge status={r.status} />
-              </td>
-              <td>{r.assetSymbol ?? "—"}</td>
-              <td>{r.steps ?? "—"}</td>
-              <td>{r.agents ?? "—"}</td>
-              <td>{r.variantsCount}</td>
-              <td className="runs-table-id" title={r.id}>
-                {truncateMiddle(r.id)}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+        ))}
+      </Table>
     </div>
   );
 }

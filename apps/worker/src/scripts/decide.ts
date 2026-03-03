@@ -47,10 +47,12 @@ import {
   computeEventSignal,
   type InfoEventInput,
 } from "../lib/exposure";
+import { computeRegimeState } from "../market/regime";
 import { assertRunExists } from "../lib/assert-run-exists";
 import { chunk } from "../lib/chunk";
 
 const ALPHA = 0.35; // weight of infoSignal vs synthetic (1-ALPHA = synthetic weight)
+const REGIME_WEIGHT = 0.5;
 
 const DATABASE_URL_MISSING =
   "DATABASE_URL is not set. Create a .env at the repository root with DATABASE_URL=postgresql://...";
@@ -681,6 +683,7 @@ async function main(): Promise<void> {
     const price1 = priceByStep[step + 1]!;
     const delta = (price1 - price0) / price0;
     const syntheticSignal = clamp11(delta * 10);
+    const regime = computeRegimeState(priceByStep, step);
     const momentum = step > 0 ? syntheticSignal - (lastBaseSignal ?? 0) : 0;
     const eventsForStep = infoEventsByStep.get(step) ?? [];
 
@@ -787,7 +790,10 @@ async function main(): Promise<void> {
       eventSignalByAgent.set(agent.id, eventSignal);
 
       const baseSignal = clamp11(
-        (1 - ALPHA) * syntheticSignal + ALPHA * infoSignal + eventSignal,
+        (1 - ALPHA) * syntheticSignal +
+          ALPHA * infoSignal +
+          eventSignal +
+          REGIME_WEIGHT * regime.regimeSignal,
       );
 
       const distorted = distortSignal({
@@ -848,6 +854,8 @@ async function main(): Promise<void> {
         fatigue: state.fatigue,
         uncertainty: 0.3,
         rng,
+        regimeSignal: regime.regimeSignal,
+        regimeStrength: regime.regimeStrength,
       });
 
       let confidence = computeConfidence({

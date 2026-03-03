@@ -3,13 +3,16 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
     "build": "next build",
     "dev": "node ../../scripts/check-port.js 4000 && PORT=4000 next dev --port 4000",
     "lint": "next lint",
     "test": "echo \"No tests yet\"",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "start": "next start"
+    "start": "next start",
+    "reset:next": "rm -rf .next .turbo playwright-report test-results",
+    "smoke": "bash scripts/smoke.sh"
   },
   "dependencies": {
     "@crowdvest/shared": "workspace:*",

@@ -3,7 +3,8 @@ import { BadRequestException, ConflictException, Injectable, NotFoundException }
 import { PrismaService } from "../prisma/prisma.service";
 import type { RunSummaryResponse } from "./run-summary.types";
 import { getDefaultSpyCsvPath } from "../common/default-dataset";
-import { SPY29_DATASET_VERSION, SPY29_STEP_RETURNS } from "../common/spy29-returns";
+import { SPY29_DATASET_VERSION } from "../common/spy29-returns";
+import { deriveStepReturnsFromSpy, STEPS as SYMBOL29_STEPS } from "../common/symbol-returns";
 
 /** Raw aggregation row from AgentExperience GROUP BY. */
 type AggRow = { runId: string; agentCount: bigint; totalSteps: bigint; totalPnl: number };
@@ -45,6 +46,20 @@ function deriveRunDurationMsForList(r: {
 
 const MODEL_VERSION = "stage1";
 const SCHEMA_VERSION = "v1";
+
+function computeStepReturnsFromCloses(closes: number[]): number[] {
+  if (closes.length < 2) return [];
+  const out: number[] = [];
+  for (let i = 0; i < closes.length; i++) {
+    if (i === 0) out.push(0);
+    else {
+      const prev = closes[i - 1]!;
+      const curr = closes[i]!;
+      out.push(prev === 0 ? 0 : (curr - prev) / prev);
+    }
+  }
+  return out;
+}
 
 @Injectable()
 export class RunsService {
@@ -145,7 +160,7 @@ export class RunsService {
     return { ok: true, inserted: stepsToUpsert };
   }
 
-  /** POST /runs/import/spy29 — create exactly 29 AssetStepReturn rows for SPY. Idempotent: returns already:true if rows exist. */
+  /** POST /runs/import/spy29 — create 29 AssetStepReturn rows (steps 0–28) for SPY from PriceSeriesPoint. Idempotent. */
   async importSpy29(runId: string): Promise<{ ok: boolean; already?: boolean; count: number }> {
     const run = await this.prisma.simulationRun.findUnique({
       where: { id: runId },
@@ -156,21 +171,46 @@ export class RunsService {
     const existing = await this.prisma.assetStepReturn.count({
       where: { runId, assetSymbol: "SPY" },
     });
-    if (existing >= 29) {
-      return { ok: true, already: true, count: 29 };
+    const REQUIRED = 29;
+    if (existing >= REQUIRED) {
+      return { ok: true, already: true, count: REQUIRED };
     }
 
-    const data = SPY29_STEP_RETURNS.map((stepReturn, step) => ({
-      runId,
-      assetSymbol: "SPY",
-      step,
-      stepReturn,
-    }));
+    const points = await this.prisma.priceSeriesPoint.findMany({
+      where: { symbol: "SPY" },
+      orderBy: { date: "asc" },
+      take: REQUIRED,
+      select: { close: true },
+    });
+
+    if (points.length < REQUIRED) {
+      throw new BadRequestException(
+        `PriceSeriesPoint missing SPY data: have ${points.length}, need 29. Run pnpm --dir packages/db run db:seed`,
+      );
+    }
+
+    const closes = points.map((p: { close: number }) => p.close);
+    const stepReturns = computeStepReturnsFromCloses(closes);
+    if (stepReturns.length < REQUIRED) {
+      throw new BadRequestException(
+        `PriceSeriesPoint SPY data insufficient: computed ${stepReturns.length} step returns, need 29. Run pnpm --dir packages/db run db:seed`,
+      );
+    }
+
+    const data: Array<{ runId: string; assetSymbol: string; step: number; stepReturn: number }> = [];
+    for (let step = 0; step < REQUIRED; step++) {
+      data.push({
+        runId,
+        assetSymbol: "SPY",
+        step,
+        stepReturn: stepReturns[step]!,
+      });
+    }
     await this.prisma.assetStepReturn.createMany({
       data,
       skipDuplicates: true,
     });
-    return { ok: true, count: 29 };
+    return { ok: true, count: REQUIRED };
   }
 
   /** POST /runs/import/spy29 (no body) — create run with spy29 dataset, import, return { runId, ok, count, ... }. */
@@ -190,6 +230,207 @@ export class RunsService {
       targetRunId = run.id;
     }
     const result = await this.importSpy29(targetRunId);
+    return { runId: targetRunId, ...result };
+  }
+
+  /** Import 29 AssetStepReturn rows for a symbol into runId. Idempotent. SPY reads from PriceSeriesPoint; others use derived data. */
+  async importSymbol29(runId: string, symbol: string): Promise<{ ok: boolean; already?: boolean; count: number }> {
+    const run = await this.prisma.simulationRun.findUnique({
+      where: { id: runId },
+      select: { id: true },
+    });
+    if (!run) throw new NotFoundException("Run not found");
+
+    const assetSymbol = symbol.trim().toUpperCase() || "SPY";
+    const existing = await this.prisma.assetStepReturn.count({
+      where: { runId, assetSymbol },
+    });
+    if (existing >= SYMBOL29_STEPS) {
+      return { ok: true, already: true, count: SYMBOL29_STEPS };
+    }
+
+    let stepReturns: number[];
+    const requiredRows = SYMBOL29_STEPS + 1;
+    const count = await this.prisma.priceSeriesPoint.count({
+      where: { symbol: assetSymbol },
+    });
+    if (count >= requiredRows) {
+      stepReturns = await this.getStepReturnsFromPriceSeriesPoint(assetSymbol);
+    } else {
+      const spyReturns = await this.getStepReturnsFromPriceSeriesPoint("SPY");
+      stepReturns = deriveStepReturnsFromSpy(spyReturns, assetSymbol);
+    }
+
+    const data: Array<{ runId: string; assetSymbol: string; step: number; stepReturn: number }> = [];
+    for (let step = 0; step < stepReturns.length; step++) {
+      data.push({
+        runId,
+        assetSymbol,
+        step,
+        stepReturn: stepReturns[step]!,
+      });
+    }
+    if (data.length === 0) return { ok: true, count: 0 };
+    await this.prisma.assetStepReturn.createMany({
+      data,
+      skipDuplicates: true,
+    });
+    return { ok: true, count: stepReturns.length };
+  }
+
+  /** Fetch step returns from PriceSeriesPoint. Requires points+1 rows for points step returns. Throws BadRequestException if missing. */
+  private async getStepReturnsFromPriceSeriesPoint(
+    symbol: string,
+    points: number = SYMBOL29_STEPS,
+  ): Promise<number[]> {
+    const requiredRows = points + 1;
+    const rows = await this.prisma.priceSeriesPoint.findMany({
+      where: { symbol },
+      orderBy: { date: "asc" },
+      take: requiredRows,
+      select: { close: true },
+    });
+    if (rows.length === 0) {
+      throw new BadRequestException(
+        `PriceSeriesPoint has 0 rows for ${symbol}; run pnpm --filter @crowdvest/db run db:seed`,
+      );
+    }
+    if (rows.length < requiredRows) {
+      throw new BadRequestException(
+        `PriceSeriesPoint missing data for ${symbol} (have ${rows.length}, need ${requiredRows}); run pnpm --filter @crowdvest/db run db:seed`,
+      );
+    }
+    const closes = rows.map((r: { close: number }) => r.close);
+    return computeStepReturnsFromCloses(closes).slice(0, points + 1);
+  }
+
+  /** Import multiple symbols from PriceSeriesPoint into one run. Creates run if runId omitted. Returns { runId, symbols, counts }. */
+  async importPricesFromPriceSeriesPoint(opts: {
+    symbols: string[];
+    points?: number;
+    runId?: string;
+    nameSuffix?: string;
+    /** Seeds used for backtest; expectedVariants = symbols.length * seeds.length stored in configJson. */
+    seeds?: number[];
+  }): Promise<{ runId: string; symbols: string[]; counts: Record<string, number> }> {
+    const symbols = opts.symbols
+      .map((s) => s.trim().toUpperCase())
+      .filter(Boolean)
+      .slice(0, 10);
+    if (symbols.length === 0) {
+      throw new BadRequestException("symbols is required (1..10)");
+    }
+    const points = Math.min(Math.max(1, opts.points ?? 29), 365);
+
+    const missing: Array<{ symbol: string; have: number; need: number }> = [];
+    const seriesBySymbol = new Map<string, Array<{ date: string; close: number }>>();
+    for (const symbol of symbols) {
+      const rows = await this.prisma.priceSeriesPoint.findMany({
+        where: { symbol },
+        orderBy: { date: "asc" },
+        take: points,
+        select: { date: true, close: true },
+      });
+      seriesBySymbol.set(symbol, rows);
+      if (rows.length < points) {
+        missing.push({ symbol, have: rows.length, need: points });
+      }
+    }
+    if (missing.length > 0) {
+      const details = missing.map((m) => `${m.symbol} have ${m.have} need ${m.need}`).join(", ");
+      throw new BadRequestException(
+        `PriceSeriesPoint missing data: ${details}; run pnpm --dir packages/db run db:seed (symbols=[${symbols.join(",")}], points=${points})`,
+      );
+    }
+
+    const seeds = opts.seeds ?? [1, 2];
+    const expectedVariants = symbols.length * seeds.length;
+    let targetRunId = opts.runId?.trim() ?? "";
+    if (!targetRunId) {
+      const suffix = (opts.nameSuffix ?? "").trim() || Math.random().toString(36).slice(2, 9);
+      const run = await this.prisma.simulationRun.create({
+        data: {
+          name: `prices-${Date.now()}-${suffix}`,
+          status: "PENDING",
+          seed: Math.floor(Math.random() * 0x7fffffff),
+          modelVersion: MODEL_VERSION,
+          datasetVersion: SPY29_DATASET_VERSION,
+          schemaVersion: SCHEMA_VERSION,
+          configJson: { expectedVariants, symbols } as object,
+        },
+      });
+      targetRunId = run.id;
+    } else {
+      await this.prisma.simulationRun.update({
+        where: { id: targetRunId },
+        data: { configJson: { expectedVariants, symbols } as object },
+      });
+    }
+
+    const requiredRows = points + 1;
+    const counts: Record<string, number> = {};
+    for (const symbol of symbols) {
+      const rows = seriesBySymbol.get(symbol)!;
+      const closes = rows.map((r) => r.close);
+      const stepReturns = computeStepReturnsFromCloses(closes).slice(0, requiredRows);
+      const existing = await this.prisma.assetStepReturn.count({
+        where: { runId: targetRunId, assetSymbol: symbol },
+      });
+      if (existing < stepReturns.length) {
+        const data = stepReturns.map((stepReturn, step) => ({
+          runId: targetRunId,
+          assetSymbol: symbol,
+          step,
+          stepReturn,
+        }));
+        await this.prisma.assetStepReturn.createMany({
+          data,
+          skipDuplicates: true,
+        });
+      }
+      counts[symbol] = stepReturns.length;
+    }
+    return { runId: targetRunId, symbols, counts };
+  }
+
+  /** Import from PriceSeriesPoint. Alias for importPricesFromPriceSeriesPoint. Returns { runId, ok, symbols, points }. */
+  async importFromPrices(opts: {
+    symbols: string[];
+    points?: number;
+    nameSuffix?: string;
+    seeds?: number[];
+  }): Promise<{ runId: string; ok: true; symbols: string[]; points: number }> {
+    const points = Math.min(Math.max(2, opts.points ?? 29), 365);
+    const result = await this.importPricesFromPriceSeriesPoint({
+      symbols: opts.symbols,
+      points,
+      nameSuffix: opts.nameSuffix,
+      seeds: opts.seeds,
+    });
+    return { runId: result.runId, ok: true as const, symbols: result.symbols, points };
+  }
+
+  /** Create run and import symbol29 data. Returns { runId, ok, count }. */
+  async importSymbol29OrCreate(
+    symbol: string,
+    runId?: string,
+  ): Promise<{ runId: string; ok: boolean; already?: boolean; count: number }> {
+    const assetSymbol = symbol.trim().toUpperCase() || "SPY";
+    let targetRunId = runId?.trim() ?? "";
+    if (!targetRunId) {
+      const run = await this.prisma.simulationRun.create({
+        data: {
+          name: `${assetSymbol.toLowerCase()}29-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+          status: "PENDING",
+          seed: Math.floor(Math.random() * 0x7fffffff),
+          modelVersion: MODEL_VERSION,
+          datasetVersion: SPY29_DATASET_VERSION,
+          schemaVersion: SCHEMA_VERSION,
+        },
+      });
+      targetRunId = run.id;
+    }
+    const result = await this.importSymbol29(targetRunId, assetSymbol);
     return { runId: targetRunId, ...result };
   }
 

@@ -91,6 +91,28 @@ function riskBand(score: number): "OK" | "DIVERGING" | "UNSTABLE" | "LEGACY" {
   return "OK";
 }
 
+/** Deterministic string hash for RNG seed. */
+function hashString(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) {
+    h = (h << 5) - h + s.charCodeAt(i);
+    h |= 0;
+  }
+  return h >>> 0;
+}
+
+/** Mulberry32 deterministic PRNG. Returns [0, 1). */
+function mulberry32(seed: number): () => number {
+  let state = seed;
+  return () => {
+    state = (state + 0x6d2b79f5) >>> 0;
+    let t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
 export interface DashboardSummary {
   consensus: {
     buyPct: number;
@@ -156,6 +178,44 @@ export interface DashboardSummary {
     signAgreementRate: number | null;
     label: "multi-seed" | "single-seed";
   }>;
+  driftAsset: {
+    window: number;
+    count: number;
+    regimeShift: boolean;
+    reason: string;
+    riskMean: number;
+    riskDelta: number;
+    deltaRisk: number;
+    deltaSign: number;
+    deltaCorr: number;
+    direction: "UP" | "DOWN" | "STABLE";
+    riskSeries: number[];
+  };
+  driftGlobal: {
+    window: number;
+    count: number;
+    regimeShift: boolean;
+    reason: string;
+    riskMean: number;
+    riskDelta: number;
+    deltaRisk: number;
+    deltaSign: number;
+    deltaCorr: number;
+    direction: "UP" | "DOWN" | "STABLE";
+    riskSeries: number[];
+  };
+  forecastAccuracy: {
+    runId: string | null;
+    items: Array<{
+      assetSymbol: string;
+      overall: { accuracyRate: number; totalEvaluations: number; correctCount: number };
+      rolling10: { accuracyRate: number; totalEvaluations: number; correctCount: number };
+      baselines: {
+        alwaysBuy: { accuracyRate: number; totalEvaluations: number; correctCount: number };
+        random: { accuracyRate: number; totalEvaluations: number; correctCount: number };
+      };
+    }>;
+  };
 }
 
 @Injectable()
@@ -409,7 +469,36 @@ export class DashboardService {
       });
     }
 
-    const consensus = await this.fetchConsensus(latestRun?.id ?? null, sym);
+    const [consensus, driftAsset, driftGlobal, forecastAccuracy] = await Promise.all([
+      this.fetchConsensus(latestRun?.id ?? null, sym),
+      this.getDrift({ assetSymbol: sym, window: 30 }).catch(() => ({
+        window: 0,
+        count: 0,
+        regimeShift: false,
+        reason: "error",
+        riskMean: 0,
+        riskDelta: 0,
+        deltaRisk: 0,
+        deltaSign: 0,
+        deltaCorr: 0,
+        direction: "STABLE" as const,
+        riskSeries: [] as number[],
+      })),
+      this.getDrift({ window: 30 }).catch(() => ({
+        window: 0,
+        count: 0,
+        regimeShift: false,
+        reason: "error",
+        riskMean: 0,
+        riskDelta: 0,
+        deltaRisk: 0,
+        deltaSign: 0,
+        deltaCorr: 0,
+        direction: "STABLE" as const,
+        riskSeries: [] as number[],
+      })),
+      this.fetchForecastAccuracy(latestRun?.id ?? null),
+    ]);
 
     return {
       consensus,
@@ -417,7 +506,105 @@ export class DashboardService {
       health,
       scalingRows,
       stabilityRows,
+      driftAsset,
+      driftGlobal,
+      forecastAccuracy,
     };
+  }
+
+  private async fetchForecastAccuracy(
+    runId: string | null,
+  ): Promise<DashboardSummary["forecastAccuracy"]> {
+    if (!runId) {
+      return { runId: null, items: [] };
+    }
+
+    const [runAccuracies, forecastResults, stepReturns] = await Promise.all([
+      this.prisma.runAccuracy.findMany({
+        where: { runId },
+        orderBy: { assetSymbol: "asc" },
+      }),
+      this.prisma.forecastResult.findMany({
+        where: { runId },
+        orderBy: [{ assetSymbol: "asc" }, { step: "desc" }],
+      }),
+      this.prisma.assetStepReturn.findMany({
+        where: { runId },
+        orderBy: [{ assetSymbol: "asc" }, { step: "asc" }],
+        select: { assetSymbol: true, step: true, stepReturn: true },
+      }),
+    ]);
+
+    const assetSymbols = [
+      ...new Set([
+        ...runAccuracies.map((r) => r.assetSymbol),
+        ...stepReturns.map((r) => r.assetSymbol),
+      ]),
+    ].sort();
+
+    const items: DashboardSummary["forecastAccuracy"]["items"] = [];
+
+    for (const assetSymbol of assetSymbols) {
+      const ra = runAccuracies.find((r) => r.assetSymbol === assetSymbol);
+      const overall = ra
+        ? {
+            accuracyRate: ra.accuracyRate,
+            totalEvaluations: ra.totalEvaluations,
+            correctCount: ra.correctCount,
+          }
+        : { accuracyRate: 0, totalEvaluations: 0, correctCount: 0 };
+
+      const frForAsset = forecastResults.filter((r) => r.assetSymbol === assetSymbol);
+      const rolling10Rows = frForAsset.slice(0, 10);
+      const rolling10Total = rolling10Rows.length;
+      const rolling10Correct = rolling10Rows.filter((r) => r.isCorrect).length;
+      const rolling10 = {
+        accuracyRate: rolling10Total > 0 ? rolling10Correct / rolling10Total : 0,
+        totalEvaluations: rolling10Total,
+        correctCount: rolling10Correct,
+      };
+
+      const returnsForAsset = stepReturns.filter((r) => r.assetSymbol === assetSymbol);
+      const returnByStep = new Map(returnsForAsset.map((r) => [r.step, r.stepReturn]));
+
+      const maxStep = returnsForAsset.length > 0
+        ? Math.max(...returnsForAsset.map((r) => r.step))
+        : 0;
+
+      let alwaysBuyCorrect = 0;
+      let randomCorrect = 0;
+      let baselineTotal = 0;
+      const rng = mulberry32(hashString(runId + assetSymbol));
+
+      for (let t = 0; t <= maxStep - 1; t++) {
+        const nextRet = returnByStep.get(t + 1);
+        if (nextRet == null || !Number.isFinite(nextRet)) continue;
+        baselineTotal++;
+
+        if (nextRet > 0) alwaysBuyCorrect++;
+
+        const rand = rng();
+        const pred = rand < 1 / 3 ? "BUY" : rand < 2 / 3 ? "SELL" : "HOLD";
+        const actual = nextRet > 0 ? "BUY" : nextRet < 0 ? "SELL" : "HOLD";
+        if (pred === actual) randomCorrect++;
+      }
+      const baselines = {
+        alwaysBuy: {
+          accuracyRate: baselineTotal > 0 ? alwaysBuyCorrect / baselineTotal : 0,
+          totalEvaluations: baselineTotal,
+          correctCount: alwaysBuyCorrect,
+        },
+        random: {
+          accuracyRate: baselineTotal > 0 ? randomCorrect / baselineTotal : 0,
+          totalEvaluations: baselineTotal,
+          correctCount: randomCorrect,
+        },
+      };
+
+      items.push({ assetSymbol, overall, rolling10, baselines });
+    }
+
+    return { runId, items };
   }
 
   private async fetchConsensus(
@@ -527,6 +714,171 @@ export class DashboardService {
       variants: variants.length,
       corrDefault: summary?.corr ?? null,
       accuracyDefault: summary?.directionalAccuracy ?? null,
+    };
+  }
+
+  async getDrift(params: { assetSymbol?: string; window: number }) {
+    const { assetSymbol, window } = params;
+    const win = Math.max(1, Math.min(200, window));
+
+    const runs = await this.prisma.simulationRun.findMany({
+      where: {
+        status: "COMPLETED",
+        ...(assetSymbol
+          ? { runVariants: { some: { assetSymbol: assetSymbol.trim() } } }
+          : {}),
+      },
+      orderBy: { createdAt: "desc" },
+      take: win,
+      select: { id: true },
+    });
+
+    if (runs.length === 0) {
+      return {
+        window: win,
+        count: 0,
+        regimeShift: false,
+        reason: "insufficient_history",
+        riskMean: 0,
+        riskDelta: 0,
+        deltaRisk: 0,
+        deltaSign: 0,
+        deltaCorr: 0,
+        direction: "STABLE" as const,
+        riskSeries: [],
+      };
+    }
+
+    const runIds = runs.map((r) => r.id);
+    const sym = assetSymbol?.trim() || null;
+
+    const variantRows = await this.prisma.runVariant.findMany({
+      where: {
+        runId: { in: runIds },
+        ...(sym ? { assetSymbol: sym } : {}),
+      },
+      select: {
+        runId: true,
+        seed: true,
+        summary: { select: { corr: true, directionalAccuracy: true } },
+      },
+    });
+
+    const variantsByRunId = new Map<string, typeof variantRows>();
+    for (const v of variantRows) {
+      const list = variantsByRunId.get(v.runId) ?? [];
+      list.push(v);
+      variantsByRunId.set(v.runId, list);
+    }
+
+    const riskSeries: number[] = [];
+    const signSeries: number[] = [];
+    const corrSeries: number[] = [];
+
+    for (const run of runs) {
+      const variants = variantsByRunId.get(run.id) ?? [];
+      if (variants.length < 2) {
+        riskSeries.push(10);
+        signSeries.push(1);
+        corrSeries.push(0);
+        continue;
+      }
+
+      const corrs = variants
+        .map((v) => v.summary?.corr)
+        .filter((c): c is number => c != null && Number.isFinite(c));
+      const accs = variants
+        .map((v) => v.summary?.directionalAccuracy)
+        .filter((a): a is number => a != null && Number.isFinite(a));
+
+      const minCorr = corrs.length > 0 ? Math.min(...corrs) : null;
+      const maxCorr = corrs.length > 0 ? Math.max(...corrs) : null;
+      const corrSpread = minCorr != null && maxCorr != null ? maxCorr - minCorr : null;
+      const accStdDev = accs.length >= 2 ? stdDev(accs) : null;
+
+      const medianSign = median(corrs);
+      const targetSign = medianSign == null ? null : medianSign >= 0 ? 1 : -1;
+      const matching =
+        targetSign != null
+          ? corrs.filter((c) => (c >= 0 ? 1 : -1) === targetSign).length
+          : 0;
+      const signAgreementRate =
+        medianSign != null && corrs.length > 0 ? matching / corrs.length : null;
+
+      const riskScore = stabilityRiskScore({
+        isLegacyTiming: false,
+        label: "multi-seed",
+        corrSpread,
+        accStdDev,
+        signAgreementRate,
+      });
+
+      riskSeries.push(riskScore);
+      signSeries.push(signAgreementRate ?? 1);
+      corrSeries.push(corrSpread ?? 0);
+    }
+
+    function mean(arr: number[]) {
+      return arr.reduce((a, b) => a + b, 0) / (arr.length || 1);
+    }
+
+    if (riskSeries.length < 10) {
+      return {
+        window: Math.min(5, riskSeries.length),
+        count: runs.length,
+        regimeShift: false,
+        reason: "insufficient_history",
+        riskMean: mean(riskSeries),
+        riskDelta: 0,
+        deltaRisk: 0,
+        deltaSign: 0,
+        deltaCorr: 0,
+        direction: "STABLE" as const,
+        riskSeries,
+      };
+    }
+
+    const windowSize = Math.min(5, Math.floor(riskSeries.length / 2));
+    const recentRisk = riskSeries.slice(0, windowSize);
+    const olderRisk = riskSeries.slice(-windowSize);
+
+    const recentMean = mean(recentRisk);
+    const olderMean = mean(olderRisk);
+
+    const deltaRisk = (recentMean - olderMean) / (olderMean || 1);
+
+    const recentSign = mean(signSeries.slice(0, windowSize));
+    const olderSign = mean(signSeries.slice(-windowSize));
+    const deltaSign = recentSign - olderSign;
+
+    const recentCorr = mean(corrSeries.slice(0, windowSize));
+    const olderCorr = mean(corrSeries.slice(-windowSize));
+    const deltaCorr = recentCorr - olderCorr;
+
+    /*
+     * Regime Shift Conditions:
+     * 1) Risk increase > 15%
+     * 2) AND at least one structural metric also worsening
+     */
+    const regimeShift =
+      deltaRisk > 0.15 && (deltaSign < -0.01 || deltaCorr > 0.02);
+
+    let direction: "UP" | "DOWN" | "STABLE" = "STABLE";
+    if (deltaRisk > 0.05) direction = "UP";
+    else if (deltaRisk < -0.05) direction = "DOWN";
+
+    return {
+      window: windowSize,
+      count: runs.length,
+      riskMean: mean(riskSeries),
+      riskDelta: deltaRisk,
+      deltaRisk,
+      deltaSign,
+      deltaCorr,
+      direction,
+      regimeShift,
+      reason: regimeShift ? "multi_factor_threshold" : "within_thresholds",
+      riskSeries,
     };
   }
 

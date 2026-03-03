@@ -150,7 +150,7 @@ export function ScalingCurve({ scalingRows }: ScalingCurveProps) {
                 tickFormatter={(v) => String(Math.round(v))}
               />
               <Tooltip
-                formatter={(value: number, name: string) => [value.toFixed(0) + " ms", name]}
+                formatter={(value: number | undefined, name?: string) => [((value ?? 0).toFixed(0)) + " ms", name ?? ""]}
                 labelFormatter={(label) => `Agents: ${label}`}
               />
               <Legend />
@@ -212,9 +212,11 @@ export function ScalingCurve({ scalingRows }: ScalingCurveProps) {
                 tickFormatter={(v) => `${v}%`}
               />
               <Tooltip
-                formatter={(value: number, name: string) =>
-                  name === "Decisions/sec" ? [value.toFixed(1), name] : [`${value.toFixed(1)}%`, name]
-                }
+                formatter={(value: number | undefined, name?: string) => {
+                  const v = value ?? 0;
+                  const n = name ?? "";
+                  return n === "Decisions/sec" ? [v.toFixed(1), n] : [`${v.toFixed(1)}%`, n];
+                }}
                 labelFormatter={(label) => `Agents: ${label}`}
               />
               <Legend />

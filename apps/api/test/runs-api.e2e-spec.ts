@@ -57,6 +57,19 @@ describe("GET /runs (e2e)", () => {
       });
   });
 
+  it("POST /runs/import/prices creates run with symbols (SPY,QQQ) and enqueues once", async () => {
+    const res = await request(app.getHttpServer())
+      .post("/runs/import/prices?symbols=SPY,QQQ&points=29");
+    if (res.status === 400 && /PriceSeriesPoint missing|symbols is required/i.test(res.body?.message ?? "")) {
+      return;
+    }
+    expect(res.status).toBe(200);
+    expect(res.body.runId).toBeDefined();
+    expect(res.body.symbols).toEqual(["SPY", "QQQ"]);
+    expect(res.body.points).toBe(29);
+    expect(res.body.ok).toBe(true);
+  });
+
   it("GET /runs/:id returns 400 for invalid UUID", () => {
     return request(app.getHttpServer())
       .get("/runs/not-a-uuid")

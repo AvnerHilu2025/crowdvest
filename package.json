@@ -18,7 +18,8 @@
   },
   "scripts": {
     "db:migrate": "pnpm -C apps/api run db:deploy",
-    "db:status": "pnpm -C apps/api run db:status",
+    "db:deploy": "pnpm --dir packages/db run migrate:deploy",
+    "db:status": "pnpm --dir packages/db run migrate:status",
     "db:reset": "pnpm -C packages/db run db:reset",
     "db:resolve-applied": "pnpm -C apps/api run db:resolve-applied --",
     "db:resolve-rolled-back": "pnpm -C apps/api run db:resolve-rolled-back --",

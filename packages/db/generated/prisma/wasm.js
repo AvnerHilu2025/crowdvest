@@ -469,6 +469,54 @@ exports.Prisma.BacktestResultScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.ForecastResultScalarFieldEnum = {
+  id: 'id',
+  runId: 'runId',
+  assetSymbol: 'assetSymbol',
+  step: 'step',
+  forecastDirection: 'forecastDirection',
+  totalVotes: 'totalVotes',
+  buyVotes: 'buyVotes',
+  sellVotes: 'sellVotes',
+  holdVotes: 'holdVotes',
+  groundTruthDirection: 'groundTruthDirection',
+  isCorrect: 'isCorrect',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.RunAccuracyScalarFieldEnum = {
+  id: 'id',
+  runId: 'runId',
+  assetSymbol: 'assetSymbol',
+  totalEvaluations: 'totalEvaluations',
+  correctCount: 'correctCount',
+  accuracyRate: 'accuracyRate',
+  buyAccuracy: 'buyAccuracy',
+  sellAccuracy: 'sellAccuracy',
+  holdAccuracy: 'holdAccuracy',
+  computedAt: 'computedAt'
+};
+
+exports.Prisma.RunSignalDiagnosticsScalarFieldEnum = {
+  id: 'id',
+  runId: 'runId',
+  assetSymbol: 'assetSymbol',
+  totalSteps: 'totalSteps',
+  pctCrowdBuy: 'pctCrowdBuy',
+  pctCrowdSell: 'pctCrowdSell',
+  pctCrowdHold: 'pctCrowdHold',
+  pctMarketUp: 'pctMarketUp',
+  pctMarketDown: 'pctMarketDown',
+  pctMarketFlat: 'pctMarketFlat',
+  buyCorrect: 'buyCorrect',
+  buyWrong: 'buyWrong',
+  sellCorrect: 'sellCorrect',
+  sellWrong: 'sellWrong',
+  holdCorrect: 'holdCorrect',
+  holdWrong: 'holdWrong',
+  computedAt: 'computedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -554,7 +602,10 @@ exports.Prisma.ModelName = {
   ImportRun: 'ImportRun',
   PriceSeriesPoint: 'PriceSeriesPoint',
   BacktestWindowResult: 'BacktestWindowResult',
-  BacktestResult: 'BacktestResult'
+  BacktestResult: 'BacktestResult',
+  ForecastResult: 'ForecastResult',
+  RunAccuracy: 'RunAccuracy',
+  RunSignalDiagnostics: 'RunSignalDiagnostics'
 };
 
 /**

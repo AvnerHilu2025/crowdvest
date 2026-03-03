@@ -320,12 +320,16 @@ export interface DecisionWithPreferencesInput {
   fatigue: number;
   uncertainty: number;
   rng: () => number;
+  regimeSignal?: number;
+  regimeStrength?: number;
 }
 
 /**
  * Map signal + preference deltas to action via softmax.
  * Logits: BUY = +distorted + prefBUY, SELL = -distorted + prefSELL, HOLD = prefHOLD.
  */
+const REGIME_LOGIT_WEIGHT = 1.2;
+
 export function decisionFromSignalWithPreferences(
   input: DecisionWithPreferencesInput,
 ): Action {
@@ -339,12 +343,18 @@ export function decisionFromSignalWithPreferences(
     fatigue,
     uncertainty,
     rng,
+    regimeSignal,
+    regimeStrength,
   } = input;
 
   const k = 2.5 * (0.5 + 0.5 * attentionLevel) * (1 - 0.3 * fatigue);
-  const logitBUY = k * distorted + prefBUY;
-  const logitSELL = -k * distorted + prefSELL;
+  let logitBUY = k * distorted + prefBUY;
+  let logitSELL = -k * distorted + prefSELL;
   const logitHOLD = prefHOLD;
+
+  const rs = clamp11(regimeSignal ?? 0);
+  logitBUY += REGIME_LOGIT_WEIGHT * rs;
+  logitSELL -= REGIME_LOGIT_WEIGHT * rs;
 
   const maxL = Math.max(logitBUY, logitSELL, logitHOLD);
   const eB = Math.exp(logitBUY - maxL);

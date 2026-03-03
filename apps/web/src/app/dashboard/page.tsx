@@ -52,6 +52,44 @@ type DashboardSummary = {
     signAgreementRate: number | null;
     label: string;
   }>;
+  driftAsset?: {
+    window: number;
+    count: number;
+    regimeShift: boolean;
+    reason: string;
+    riskMean: number;
+    riskDelta: number;
+    deltaRisk: number;
+    deltaSign: number;
+    deltaCorr: number;
+    direction: "UP" | "DOWN" | "STABLE";
+    riskSeries: number[];
+  };
+  driftGlobal?: {
+    window: number;
+    count: number;
+    regimeShift: boolean;
+    reason: string;
+    riskMean: number;
+    riskDelta: number;
+    deltaRisk: number;
+    deltaSign: number;
+    deltaCorr: number;
+    direction: "UP" | "DOWN" | "STABLE";
+    riskSeries: number[];
+  };
+  forecastAccuracy?: {
+    runId: string | null;
+    items: Array<{
+      assetSymbol: string;
+      overall: { accuracyRate: number; totalEvaluations: number; correctCount: number };
+      rolling10: { accuracyRate: number; totalEvaluations: number; correctCount: number };
+      baselines: {
+        alwaysBuy: { accuracyRate: number; totalEvaluations: number; correctCount: number };
+        random: { accuracyRate: number; totalEvaluations: number; correctCount: number };
+      };
+    }>;
+  };
 };
 
 export default async function DashboardPage({
@@ -62,7 +100,7 @@ export default async function DashboardPage({
   const sp = await searchParams;
   const assetSymbol = (Array.isArray(sp.assetSymbol) ? sp.assetSymbol[0] : sp.assetSymbol) || "SPY";
   const topNParam = (Array.isArray(sp.topN) ? sp.topN[0] : sp.topN) || "50";
-  const topN = ["10", "25", "50"].includes(topNParam) ? topNParam : "50";
+  const topN = ["10", "25", "50", "100"].includes(topNParam) ? topNParam : "50";
   const topNNum = parseInt(topN, 10);
   const unstableOnly = ((Array.isArray(sp.unstableOnly) ? sp.unstableOnly[0] : sp.unstableOnly) ?? "1") === "1";
   const showLegacy = ((Array.isArray(sp.showLegacy) ? sp.showLegacy[0] : sp.showLegacy) ?? "0") === "1";
@@ -147,6 +185,9 @@ export default async function DashboardPage({
         filterLabel,
         latest,
         latestScalingRow: latestScalingRow ?? null,
+        driftAsset: data.driftAsset ?? null,
+        driftGlobal: data.driftGlobal ?? null,
+        forecastAccuracy: data.forecastAccuracy ?? { runId: null, items: [] },
       }}
       initialQuery={{
         assetSymbol,

@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
+import * as path from "path";
 import { PrismaModule } from "./prisma/prisma.module";
 import { HealthModule } from "./health/health.module";
 import { AgentsModule } from "./agents/agents.module";
@@ -18,12 +19,18 @@ import { WalletModule } from "./wallet/wallet.module";
 import { InfoEventsModule } from "./info-events/info-events.module";
 import { JobsModule } from "./jobs/jobs.module";
 import { DashboardModule } from "./dashboard/dashboard.module";
+import { BenchModule } from "./bench/bench.module";
+import { DebugModule } from "./debug/debug.module";
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ["../.env", ".env", "apps/api/.env","../../.env"],
+      envFilePath: [
+        path.join(process.cwd(), "..", ".env"),
+        path.join(process.cwd(), ".env"),
+        "apps/api/.env",
+      ],
     }),
     PrismaModule,
     HealthModule,
@@ -43,6 +50,8 @@ import { DashboardModule } from "./dashboard/dashboard.module";
     InfoEventsModule,
     JobsModule,
     DashboardModule,
+    BenchModule,
+    DebugModule,
   ],
 })
 export class AppModule {}

@@ -80,6 +80,7 @@ type PersistMode = "lite" | "full";
 function parseArgv(): {
   runId: string;
   assetSymbol: string;
+  symbols: string[];
   csv: string;
   priceField: string;
   steps: number;
@@ -92,6 +93,7 @@ function parseArgv(): {
   const args = process.argv.slice(2);
   let runId = "";
   let assetSymbol = "SPY";
+  let symbolsStr = "";
   let csv = "";
   let priceField = "close";
   let steps = 29;
@@ -106,6 +108,8 @@ function parseArgv(): {
       runId = String(args[++i]).trim();
     } else if (args[i] === "--assetSymbol" && args[i + 1]) {
       assetSymbol = String(args[++i]).trim().toUpperCase() || "SPY";
+    } else if (args[i] === "--symbols" && args[i + 1]) {
+      symbolsStr = String(args[++i]).trim();
     } else if (args[i] === "--csv" && args[i + 1]) {
       csv = String(args[++i]).trim();
     } else if (args[i] === "--priceField" && args[i + 1]) {
@@ -136,7 +140,11 @@ function parseArgv(): {
   }
   if (seedsCount < 1) throw new Error("--seeds <count> is required (count >= 1). Example: --seeds 5");
   const seeds = Array.from({ length: seedsCount }, (_, i) => seedStart + i);
-  return { runId, assetSymbol, csv, priceField, steps, agents, seeds, label, persistMode, overwrite };
+  const symbols: string[] =
+    symbolsStr.length > 0
+      ? symbolsStr.split(",").map((s) => s.trim().toUpperCase()).filter(Boolean)
+      : [assetSymbol];
+  return { runId, assetSymbol, symbols, csv, priceField, steps, agents, seeds, label, persistMode, overwrite };
 }
 
 function resolveCsvPath(csvArg: string): string {
@@ -305,8 +313,8 @@ async function main(): Promise<void> {
     const runT0 = Date.now();
 
     console.log(
-      "backtest-v0 assetSymbol=" +
-        argv.assetSymbol +
+      "backtest-v0 symbols=" +
+        argv.symbols.join(",") +
         (csvPath ? " csv=" + csvPath : "") +
         " priceField=" +
         argv.priceField +
@@ -318,43 +326,47 @@ async function main(): Promise<void> {
         argv.seeds.join(","),
     );
 
-    // 3) Ensure AssetStepReturn exists for this runId (once). Never compute corr without it.
-    const n = await prisma.assetStepReturn.count({
-    where: { runId, assetSymbol: argv.assetSymbol },
-  });
-  if (n === 0) {
-    if (!argv.csv || !csvPath) {
-      const apiBase = (process.env.API_BASE ?? "http://localhost:4001").replace(/\/$/, "");
-      console.error(
-        `No AssetStepReturn for runId=${runId} assetSymbol=${argv.assetSymbol}. ` +
-          `Run: curl -X POST ${apiBase}/runs/${runId}/import -H "Content-Type: application/json" -d '{"assetSymbol":"SPY","steps":${argv.steps},"source":"default"}'`,
-      );
-      process.exit(1);
+    // 3) Ensure AssetStepReturn exists for each symbol. Never compute corr without it.
+    for (const symbol of argv.symbols) {
+      const n = await prisma.assetStepReturn.count({
+        where: { runId, assetSymbol: symbol },
+      });
+      if (n === 0) {
+        if (argv.symbols.length === 1 && argv.csv && csvPath) {
+          console.log("AssetStepReturn count=0 for runId=" + runId + " -> importing from CSV");
+          await ensureAssetStepReturns(
+            prisma,
+            runId,
+            symbol,
+            csvPath,
+            argv.priceField,
+            argv.steps,
+          );
+          console.log("imported AssetStepReturn rows=" + argv.steps);
+        } else {
+          const apiBase = (process.env.API_BASE ?? "http://localhost:4001").replace(/\/$/, "");
+          console.error(
+            `No AssetStepReturn for runId=${runId} assetSymbol=${symbol}. ` +
+              `Run: curl -X POST ${apiBase}/runs/import/prices?symbols=${argv.symbols.join(",")}&points=${argv.steps}`,
+          );
+          process.exit(1);
+        }
+      }
+      const assetStepReturnRows = await prisma.assetStepReturn.count({
+        where: { runId, assetSymbol: symbol },
+      });
+      if (assetStepReturnRows !== argv.steps) {
+        console.error(
+          `AssetStepReturn count=${assetStepReturnRows} for ${symbol} (need ${argv.steps}). Re-run with --steps ${assetStepReturnRows} or create a new run.`,
+        );
+        process.exit(1);
+      }
     }
-    console.log("AssetStepReturn count=0 for runId=" + runId + " -> importing from CSV");
-    await ensureAssetStepReturns(
-      prisma,
-      runId,
-      argv.assetSymbol,
-      csvPath,
-      argv.priceField,
-      argv.steps,
-    );
-    console.log("imported AssetStepReturn rows=" + argv.steps);
-  }
-  const assetStepReturnRows = await prisma.assetStepReturn.count({
-    where: { runId, assetSymbol: argv.assetSymbol },
-  });
-  mark("dataset loaded");
-  if (assetStepReturnRows !== argv.steps) {
-    console.error(
-      `This run already has AssetStepReturn count=${assetStepReturnRows}. Re-run with --steps ${assetStepReturnRows} or create a new run.`,
-    );
-    process.exit(1);
-  }
+    mark("dataset loaded");
 
-  const variantIds: string[] = [];
+    const variantIds: string[] = [];
 
+    for (const assetSymbol of argv.symbols) {
   for (const seed of argv.seeds) {
     try {
     // 3) Find or create RunVariant for this seed (and optional label); upsert for idempotency
@@ -363,7 +375,7 @@ async function main(): Promise<void> {
       where: {
         runId_assetSymbol_seed_label: {
           runId,
-          assetSymbol: argv.assetSymbol,
+          assetSymbol,
           seed,
           label,
         },
@@ -374,7 +386,7 @@ async function main(): Promise<void> {
       },
       create: {
         runId,
-        assetSymbol: argv.assetSymbol,
+        assetSymbol,
         seed,
         label,
         agents: argv.agents,
@@ -492,7 +504,7 @@ async function main(): Promise<void> {
         select: { step: true, weightedSignal: true },
       }),
       prisma.assetStepReturn.findMany({
-        where: { runId, assetSymbol: argv.assetSymbol },
+        where: { runId, assetSymbol },
         orderBy: { step: "asc" },
         select: { step: true, stepReturn: true },
       }),
@@ -613,7 +625,7 @@ async function main(): Promise<void> {
       data: {
         runId,
         runVariantId: variantId,
-        assetSymbol: argv.assetSymbol,
+        assetSymbol,
         seed,
         steps: argv.steps,
         agents: argv.agents,
@@ -639,18 +651,27 @@ async function main(): Promise<void> {
       throw e;
     }
   }
+  }
 
   const completedVariants = await prisma.runVariant.count({
-    where: { runId, assetSymbol: argv.assetSymbol },
+    where: { runId },
   });
-  const expectedVariants = argv.seeds.length;
+  const run = await prisma.simulationRun.findUnique({
+    where: { id: runId },
+    select: { configJson: true },
+  });
+  const config = (run?.configJson as { expectedVariants?: number } | null) ?? {};
+  const expectedVariants =
+    typeof config.expectedVariants === "number" && config.expectedVariants > 0
+      ? config.expectedVariants
+      : argv.symbols.length * argv.seeds.length;
   if (completedVariants >= expectedVariants) {
     // === RUN FINALIZATION VALIDATION BLOCK ===
-    const run = await prisma.simulationRun.findUnique({
+    const runFull = await prisma.simulationRun.findUnique({
       where: { id: runId },
     });
 
-    if (!run) {
+    if (!runFull) {
       throw new Error(`Run ${runId} not found during finalization`);
     }
 
@@ -689,7 +710,7 @@ async function main(): Promise<void> {
     const runT1 = Date.now();
     await prisma.simulationRun.update({
       where: { id: runId },
-      data: { runDurationMs: runT1 - runT0 },
+      data: { runDurationMs: runT1 - (runT0 ?? 0) },
     });
     const result = await setRunStatus(prisma, runId, "COMPLETED");
     if (result.count > 0) {

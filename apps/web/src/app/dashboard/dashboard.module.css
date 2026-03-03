@@ -1,3 +1,89 @@
+.controlsRow {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 12px 0 18px;
+}
+
+.vizBar {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  margin: 10px 0 18px;
+}
+
+.vizItem {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.vizLabel {
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.legend {
+  font-size: 12px;
+  opacity: 0.8;
+  margin: 8px 0 16px;
+}
+
+.pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.15);
+  margin-right: 8px;
+}
+
+.riskHigh {
+  color: #ff4d4f;
+  font-weight: 600;
+}
+.riskMedium {
+  color: #faad14;
+  font-weight: 600;
+}
+.riskLow {
+  color: #52c41a;
+  font-weight: 500;
+}
+
+.driftPanel {
+  margin: 20px 0;
+  padding: 16px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 8px;
+}
+
+.driftRow {
+  display: flex;
+  gap: 40px;
+}
+
+.regimeShift {
+  color: #ff4d4f;
+  font-weight: 700;
+  margin-top: 8px;
+  display: inline-block;
+}
+
+.directionUp {
+  color: #ff4d4f;
+  font-weight: 600;
+}
+.directionDown {
+  color: #52c41a;
+  font-weight: 600;
+}
+.directionStable {
+  color: #999;
+  font-weight: 600;
+}
+
 /* Dashboard tables v2 */
 .tableWrap {
   overflow: auto;

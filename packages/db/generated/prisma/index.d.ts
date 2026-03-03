@@ -158,6 +158,21 @@ export type BacktestWindowResult = $Result.DefaultSelection<Prisma.$BacktestWind
  * 
  */
 export type BacktestResult = $Result.DefaultSelection<Prisma.$BacktestResultPayload>
+/**
+ * Model ForecastResult
+ * 
+ */
+export type ForecastResult = $Result.DefaultSelection<Prisma.$ForecastResultPayload>
+/**
+ * Model RunAccuracy
+ * 
+ */
+export type RunAccuracy = $Result.DefaultSelection<Prisma.$RunAccuracyPayload>
+/**
+ * Model RunSignalDiagnostics
+ * 
+ */
+export type RunSignalDiagnostics = $Result.DefaultSelection<Prisma.$RunSignalDiagnosticsPayload>
 
 /**
  * Enums
@@ -642,6 +657,36 @@ export class PrismaClient<
     * ```
     */
   get backtestResult(): Prisma.BacktestResultDelegate<ExtArgs>;
+
+  /**
+   * `prisma.forecastResult`: Exposes CRUD operations for the **ForecastResult** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ForecastResults
+    * const forecastResults = await prisma.forecastResult.findMany()
+    * ```
+    */
+  get forecastResult(): Prisma.ForecastResultDelegate<ExtArgs>;
+
+  /**
+   * `prisma.runAccuracy`: Exposes CRUD operations for the **RunAccuracy** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more RunAccuracies
+    * const runAccuracies = await prisma.runAccuracy.findMany()
+    * ```
+    */
+  get runAccuracy(): Prisma.RunAccuracyDelegate<ExtArgs>;
+
+  /**
+   * `prisma.runSignalDiagnostics`: Exposes CRUD operations for the **RunSignalDiagnostics** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more RunSignalDiagnostics
+    * const runSignalDiagnostics = await prisma.runSignalDiagnostics.findMany()
+    * ```
+    */
+  get runSignalDiagnostics(): Prisma.RunSignalDiagnosticsDelegate<ExtArgs>;
 }
 
 export namespace Prisma {
@@ -1111,7 +1156,10 @@ export namespace Prisma {
     ImportRun: 'ImportRun',
     PriceSeriesPoint: 'PriceSeriesPoint',
     BacktestWindowResult: 'BacktestWindowResult',
-    BacktestResult: 'BacktestResult'
+    BacktestResult: 'BacktestResult',
+    ForecastResult: 'ForecastResult',
+    RunAccuracy: 'RunAccuracy',
+    RunSignalDiagnostics: 'RunSignalDiagnostics'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -1127,7 +1175,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "archetype" | "traitDefinition" | "archetypeTraitProfile" | "agent" | "agentWallet" | "simulationRun" | "runVariant" | "runVariantSummary" | "runAgent" | "runAgentTrait" | "agentDecision" | "crowdMetrics" | "assetStepReturn" | "agentReward" | "infoEvent" | "agentInfoState" | "agentState" | "runTimeSeries" | "runDebug" | "agentExperience" | "crowdSnapshot" | "userProfile" | "userWallet" | "userWalletTransaction" | "bet" | "importRun" | "priceSeriesPoint" | "backtestWindowResult" | "backtestResult"
+      modelProps: "archetype" | "traitDefinition" | "archetypeTraitProfile" | "agent" | "agentWallet" | "simulationRun" | "runVariant" | "runVariantSummary" | "runAgent" | "runAgentTrait" | "agentDecision" | "crowdMetrics" | "assetStepReturn" | "agentReward" | "infoEvent" | "agentInfoState" | "agentState" | "runTimeSeries" | "runDebug" | "agentExperience" | "crowdSnapshot" | "userProfile" | "userWallet" | "userWalletTransaction" | "bet" | "importRun" | "priceSeriesPoint" | "backtestWindowResult" | "backtestResult" | "forecastResult" | "runAccuracy" | "runSignalDiagnostics"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -3158,6 +3206,216 @@ export namespace Prisma {
           count: {
             args: Prisma.BacktestResultCountArgs<ExtArgs>
             result: $Utils.Optional<BacktestResultCountAggregateOutputType> | number
+          }
+        }
+      }
+      ForecastResult: {
+        payload: Prisma.$ForecastResultPayload<ExtArgs>
+        fields: Prisma.ForecastResultFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ForecastResultFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ForecastResultPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ForecastResultFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ForecastResultPayload>
+          }
+          findFirst: {
+            args: Prisma.ForecastResultFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ForecastResultPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ForecastResultFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ForecastResultPayload>
+          }
+          findMany: {
+            args: Prisma.ForecastResultFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ForecastResultPayload>[]
+          }
+          create: {
+            args: Prisma.ForecastResultCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ForecastResultPayload>
+          }
+          createMany: {
+            args: Prisma.ForecastResultCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ForecastResultCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ForecastResultPayload>[]
+          }
+          delete: {
+            args: Prisma.ForecastResultDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ForecastResultPayload>
+          }
+          update: {
+            args: Prisma.ForecastResultUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ForecastResultPayload>
+          }
+          deleteMany: {
+            args: Prisma.ForecastResultDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ForecastResultUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.ForecastResultUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ForecastResultPayload>
+          }
+          aggregate: {
+            args: Prisma.ForecastResultAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateForecastResult>
+          }
+          groupBy: {
+            args: Prisma.ForecastResultGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ForecastResultGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ForecastResultCountArgs<ExtArgs>
+            result: $Utils.Optional<ForecastResultCountAggregateOutputType> | number
+          }
+        }
+      }
+      RunAccuracy: {
+        payload: Prisma.$RunAccuracyPayload<ExtArgs>
+        fields: Prisma.RunAccuracyFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.RunAccuracyFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunAccuracyPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.RunAccuracyFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunAccuracyPayload>
+          }
+          findFirst: {
+            args: Prisma.RunAccuracyFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunAccuracyPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.RunAccuracyFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunAccuracyPayload>
+          }
+          findMany: {
+            args: Prisma.RunAccuracyFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunAccuracyPayload>[]
+          }
+          create: {
+            args: Prisma.RunAccuracyCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunAccuracyPayload>
+          }
+          createMany: {
+            args: Prisma.RunAccuracyCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.RunAccuracyCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunAccuracyPayload>[]
+          }
+          delete: {
+            args: Prisma.RunAccuracyDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunAccuracyPayload>
+          }
+          update: {
+            args: Prisma.RunAccuracyUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunAccuracyPayload>
+          }
+          deleteMany: {
+            args: Prisma.RunAccuracyDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.RunAccuracyUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.RunAccuracyUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunAccuracyPayload>
+          }
+          aggregate: {
+            args: Prisma.RunAccuracyAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateRunAccuracy>
+          }
+          groupBy: {
+            args: Prisma.RunAccuracyGroupByArgs<ExtArgs>
+            result: $Utils.Optional<RunAccuracyGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.RunAccuracyCountArgs<ExtArgs>
+            result: $Utils.Optional<RunAccuracyCountAggregateOutputType> | number
+          }
+        }
+      }
+      RunSignalDiagnostics: {
+        payload: Prisma.$RunSignalDiagnosticsPayload<ExtArgs>
+        fields: Prisma.RunSignalDiagnosticsFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.RunSignalDiagnosticsFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunSignalDiagnosticsPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.RunSignalDiagnosticsFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunSignalDiagnosticsPayload>
+          }
+          findFirst: {
+            args: Prisma.RunSignalDiagnosticsFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunSignalDiagnosticsPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.RunSignalDiagnosticsFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunSignalDiagnosticsPayload>
+          }
+          findMany: {
+            args: Prisma.RunSignalDiagnosticsFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunSignalDiagnosticsPayload>[]
+          }
+          create: {
+            args: Prisma.RunSignalDiagnosticsCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunSignalDiagnosticsPayload>
+          }
+          createMany: {
+            args: Prisma.RunSignalDiagnosticsCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.RunSignalDiagnosticsCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunSignalDiagnosticsPayload>[]
+          }
+          delete: {
+            args: Prisma.RunSignalDiagnosticsDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunSignalDiagnosticsPayload>
+          }
+          update: {
+            args: Prisma.RunSignalDiagnosticsUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunSignalDiagnosticsPayload>
+          }
+          deleteMany: {
+            args: Prisma.RunSignalDiagnosticsDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.RunSignalDiagnosticsUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.RunSignalDiagnosticsUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RunSignalDiagnosticsPayload>
+          }
+          aggregate: {
+            args: Prisma.RunSignalDiagnosticsAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateRunSignalDiagnostics>
+          }
+          groupBy: {
+            args: Prisma.RunSignalDiagnosticsGroupByArgs<ExtArgs>
+            result: $Utils.Optional<RunSignalDiagnosticsGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.RunSignalDiagnosticsCountArgs<ExtArgs>
+            result: $Utils.Optional<RunSignalDiagnosticsCountAggregateOutputType> | number
           }
         }
       }
@@ -33874,6 +34132,3114 @@ export namespace Prisma {
 
 
   /**
+   * Model ForecastResult
+   */
+
+  export type AggregateForecastResult = {
+    _count: ForecastResultCountAggregateOutputType | null
+    _avg: ForecastResultAvgAggregateOutputType | null
+    _sum: ForecastResultSumAggregateOutputType | null
+    _min: ForecastResultMinAggregateOutputType | null
+    _max: ForecastResultMaxAggregateOutputType | null
+  }
+
+  export type ForecastResultAvgAggregateOutputType = {
+    step: number | null
+    totalVotes: number | null
+    buyVotes: number | null
+    sellVotes: number | null
+    holdVotes: number | null
+  }
+
+  export type ForecastResultSumAggregateOutputType = {
+    step: number | null
+    totalVotes: number | null
+    buyVotes: number | null
+    sellVotes: number | null
+    holdVotes: number | null
+  }
+
+  export type ForecastResultMinAggregateOutputType = {
+    id: string | null
+    runId: string | null
+    assetSymbol: string | null
+    step: number | null
+    forecastDirection: $Enums.AgentDecisionAction | null
+    totalVotes: number | null
+    buyVotes: number | null
+    sellVotes: number | null
+    holdVotes: number | null
+    groundTruthDirection: $Enums.AgentDecisionAction | null
+    isCorrect: boolean | null
+    createdAt: Date | null
+  }
+
+  export type ForecastResultMaxAggregateOutputType = {
+    id: string | null
+    runId: string | null
+    assetSymbol: string | null
+    step: number | null
+    forecastDirection: $Enums.AgentDecisionAction | null
+    totalVotes: number | null
+    buyVotes: number | null
+    sellVotes: number | null
+    holdVotes: number | null
+    groundTruthDirection: $Enums.AgentDecisionAction | null
+    isCorrect: boolean | null
+    createdAt: Date | null
+  }
+
+  export type ForecastResultCountAggregateOutputType = {
+    id: number
+    runId: number
+    assetSymbol: number
+    step: number
+    forecastDirection: number
+    totalVotes: number
+    buyVotes: number
+    sellVotes: number
+    holdVotes: number
+    groundTruthDirection: number
+    isCorrect: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type ForecastResultAvgAggregateInputType = {
+    step?: true
+    totalVotes?: true
+    buyVotes?: true
+    sellVotes?: true
+    holdVotes?: true
+  }
+
+  export type ForecastResultSumAggregateInputType = {
+    step?: true
+    totalVotes?: true
+    buyVotes?: true
+    sellVotes?: true
+    holdVotes?: true
+  }
+
+  export type ForecastResultMinAggregateInputType = {
+    id?: true
+    runId?: true
+    assetSymbol?: true
+    step?: true
+    forecastDirection?: true
+    totalVotes?: true
+    buyVotes?: true
+    sellVotes?: true
+    holdVotes?: true
+    groundTruthDirection?: true
+    isCorrect?: true
+    createdAt?: true
+  }
+
+  export type ForecastResultMaxAggregateInputType = {
+    id?: true
+    runId?: true
+    assetSymbol?: true
+    step?: true
+    forecastDirection?: true
+    totalVotes?: true
+    buyVotes?: true
+    sellVotes?: true
+    holdVotes?: true
+    groundTruthDirection?: true
+    isCorrect?: true
+    createdAt?: true
+  }
+
+  export type ForecastResultCountAggregateInputType = {
+    id?: true
+    runId?: true
+    assetSymbol?: true
+    step?: true
+    forecastDirection?: true
+    totalVotes?: true
+    buyVotes?: true
+    sellVotes?: true
+    holdVotes?: true
+    groundTruthDirection?: true
+    isCorrect?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type ForecastResultAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ForecastResult to aggregate.
+     */
+    where?: ForecastResultWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ForecastResults to fetch.
+     */
+    orderBy?: ForecastResultOrderByWithRelationInput | ForecastResultOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ForecastResultWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ForecastResults from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ForecastResults.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ForecastResults
+    **/
+    _count?: true | ForecastResultCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: ForecastResultAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ForecastResultSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ForecastResultMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ForecastResultMaxAggregateInputType
+  }
+
+  export type GetForecastResultAggregateType<T extends ForecastResultAggregateArgs> = {
+        [P in keyof T & keyof AggregateForecastResult]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateForecastResult[P]>
+      : GetScalarType<T[P], AggregateForecastResult[P]>
+  }
+
+
+
+
+  export type ForecastResultGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ForecastResultWhereInput
+    orderBy?: ForecastResultOrderByWithAggregationInput | ForecastResultOrderByWithAggregationInput[]
+    by: ForecastResultScalarFieldEnum[] | ForecastResultScalarFieldEnum
+    having?: ForecastResultScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ForecastResultCountAggregateInputType | true
+    _avg?: ForecastResultAvgAggregateInputType
+    _sum?: ForecastResultSumAggregateInputType
+    _min?: ForecastResultMinAggregateInputType
+    _max?: ForecastResultMaxAggregateInputType
+  }
+
+  export type ForecastResultGroupByOutputType = {
+    id: string
+    runId: string
+    assetSymbol: string
+    step: number
+    forecastDirection: $Enums.AgentDecisionAction
+    totalVotes: number
+    buyVotes: number
+    sellVotes: number
+    holdVotes: number
+    groundTruthDirection: $Enums.AgentDecisionAction
+    isCorrect: boolean
+    createdAt: Date
+    _count: ForecastResultCountAggregateOutputType | null
+    _avg: ForecastResultAvgAggregateOutputType | null
+    _sum: ForecastResultSumAggregateOutputType | null
+    _min: ForecastResultMinAggregateOutputType | null
+    _max: ForecastResultMaxAggregateOutputType | null
+  }
+
+  type GetForecastResultGroupByPayload<T extends ForecastResultGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ForecastResultGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ForecastResultGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ForecastResultGroupByOutputType[P]>
+            : GetScalarType<T[P], ForecastResultGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ForecastResultSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    runId?: boolean
+    assetSymbol?: boolean
+    step?: boolean
+    forecastDirection?: boolean
+    totalVotes?: boolean
+    buyVotes?: boolean
+    sellVotes?: boolean
+    holdVotes?: boolean
+    groundTruthDirection?: boolean
+    isCorrect?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["forecastResult"]>
+
+  export type ForecastResultSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    runId?: boolean
+    assetSymbol?: boolean
+    step?: boolean
+    forecastDirection?: boolean
+    totalVotes?: boolean
+    buyVotes?: boolean
+    sellVotes?: boolean
+    holdVotes?: boolean
+    groundTruthDirection?: boolean
+    isCorrect?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["forecastResult"]>
+
+  export type ForecastResultSelectScalar = {
+    id?: boolean
+    runId?: boolean
+    assetSymbol?: boolean
+    step?: boolean
+    forecastDirection?: boolean
+    totalVotes?: boolean
+    buyVotes?: boolean
+    sellVotes?: boolean
+    holdVotes?: boolean
+    groundTruthDirection?: boolean
+    isCorrect?: boolean
+    createdAt?: boolean
+  }
+
+
+  export type $ForecastResultPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ForecastResult"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      runId: string
+      assetSymbol: string
+      step: number
+      forecastDirection: $Enums.AgentDecisionAction
+      totalVotes: number
+      buyVotes: number
+      sellVotes: number
+      holdVotes: number
+      groundTruthDirection: $Enums.AgentDecisionAction
+      isCorrect: boolean
+      createdAt: Date
+    }, ExtArgs["result"]["forecastResult"]>
+    composites: {}
+  }
+
+  type ForecastResultGetPayload<S extends boolean | null | undefined | ForecastResultDefaultArgs> = $Result.GetResult<Prisma.$ForecastResultPayload, S>
+
+  type ForecastResultCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<ForecastResultFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: ForecastResultCountAggregateInputType | true
+    }
+
+  export interface ForecastResultDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ForecastResult'], meta: { name: 'ForecastResult' } }
+    /**
+     * Find zero or one ForecastResult that matches the filter.
+     * @param {ForecastResultFindUniqueArgs} args - Arguments to find a ForecastResult
+     * @example
+     * // Get one ForecastResult
+     * const forecastResult = await prisma.forecastResult.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ForecastResultFindUniqueArgs>(args: SelectSubset<T, ForecastResultFindUniqueArgs<ExtArgs>>): Prisma__ForecastResultClient<$Result.GetResult<Prisma.$ForecastResultPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one ForecastResult that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {ForecastResultFindUniqueOrThrowArgs} args - Arguments to find a ForecastResult
+     * @example
+     * // Get one ForecastResult
+     * const forecastResult = await prisma.forecastResult.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ForecastResultFindUniqueOrThrowArgs>(args: SelectSubset<T, ForecastResultFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ForecastResultClient<$Result.GetResult<Prisma.$ForecastResultPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first ForecastResult that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ForecastResultFindFirstArgs} args - Arguments to find a ForecastResult
+     * @example
+     * // Get one ForecastResult
+     * const forecastResult = await prisma.forecastResult.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ForecastResultFindFirstArgs>(args?: SelectSubset<T, ForecastResultFindFirstArgs<ExtArgs>>): Prisma__ForecastResultClient<$Result.GetResult<Prisma.$ForecastResultPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first ForecastResult that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ForecastResultFindFirstOrThrowArgs} args - Arguments to find a ForecastResult
+     * @example
+     * // Get one ForecastResult
+     * const forecastResult = await prisma.forecastResult.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ForecastResultFindFirstOrThrowArgs>(args?: SelectSubset<T, ForecastResultFindFirstOrThrowArgs<ExtArgs>>): Prisma__ForecastResultClient<$Result.GetResult<Prisma.$ForecastResultPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more ForecastResults that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ForecastResultFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ForecastResults
+     * const forecastResults = await prisma.forecastResult.findMany()
+     * 
+     * // Get first 10 ForecastResults
+     * const forecastResults = await prisma.forecastResult.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const forecastResultWithIdOnly = await prisma.forecastResult.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends ForecastResultFindManyArgs>(args?: SelectSubset<T, ForecastResultFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ForecastResultPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a ForecastResult.
+     * @param {ForecastResultCreateArgs} args - Arguments to create a ForecastResult.
+     * @example
+     * // Create one ForecastResult
+     * const ForecastResult = await prisma.forecastResult.create({
+     *   data: {
+     *     // ... data to create a ForecastResult
+     *   }
+     * })
+     * 
+     */
+    create<T extends ForecastResultCreateArgs>(args: SelectSubset<T, ForecastResultCreateArgs<ExtArgs>>): Prisma__ForecastResultClient<$Result.GetResult<Prisma.$ForecastResultPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many ForecastResults.
+     * @param {ForecastResultCreateManyArgs} args - Arguments to create many ForecastResults.
+     * @example
+     * // Create many ForecastResults
+     * const forecastResult = await prisma.forecastResult.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ForecastResultCreateManyArgs>(args?: SelectSubset<T, ForecastResultCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ForecastResults and returns the data saved in the database.
+     * @param {ForecastResultCreateManyAndReturnArgs} args - Arguments to create many ForecastResults.
+     * @example
+     * // Create many ForecastResults
+     * const forecastResult = await prisma.forecastResult.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ForecastResults and only return the `id`
+     * const forecastResultWithIdOnly = await prisma.forecastResult.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ForecastResultCreateManyAndReturnArgs>(args?: SelectSubset<T, ForecastResultCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ForecastResultPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a ForecastResult.
+     * @param {ForecastResultDeleteArgs} args - Arguments to delete one ForecastResult.
+     * @example
+     * // Delete one ForecastResult
+     * const ForecastResult = await prisma.forecastResult.delete({
+     *   where: {
+     *     // ... filter to delete one ForecastResult
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ForecastResultDeleteArgs>(args: SelectSubset<T, ForecastResultDeleteArgs<ExtArgs>>): Prisma__ForecastResultClient<$Result.GetResult<Prisma.$ForecastResultPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one ForecastResult.
+     * @param {ForecastResultUpdateArgs} args - Arguments to update one ForecastResult.
+     * @example
+     * // Update one ForecastResult
+     * const forecastResult = await prisma.forecastResult.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ForecastResultUpdateArgs>(args: SelectSubset<T, ForecastResultUpdateArgs<ExtArgs>>): Prisma__ForecastResultClient<$Result.GetResult<Prisma.$ForecastResultPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more ForecastResults.
+     * @param {ForecastResultDeleteManyArgs} args - Arguments to filter ForecastResults to delete.
+     * @example
+     * // Delete a few ForecastResults
+     * const { count } = await prisma.forecastResult.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ForecastResultDeleteManyArgs>(args?: SelectSubset<T, ForecastResultDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ForecastResults.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ForecastResultUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ForecastResults
+     * const forecastResult = await prisma.forecastResult.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ForecastResultUpdateManyArgs>(args: SelectSubset<T, ForecastResultUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one ForecastResult.
+     * @param {ForecastResultUpsertArgs} args - Arguments to update or create a ForecastResult.
+     * @example
+     * // Update or create a ForecastResult
+     * const forecastResult = await prisma.forecastResult.upsert({
+     *   create: {
+     *     // ... data to create a ForecastResult
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ForecastResult we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ForecastResultUpsertArgs>(args: SelectSubset<T, ForecastResultUpsertArgs<ExtArgs>>): Prisma__ForecastResultClient<$Result.GetResult<Prisma.$ForecastResultPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of ForecastResults.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ForecastResultCountArgs} args - Arguments to filter ForecastResults to count.
+     * @example
+     * // Count the number of ForecastResults
+     * const count = await prisma.forecastResult.count({
+     *   where: {
+     *     // ... the filter for the ForecastResults we want to count
+     *   }
+     * })
+    **/
+    count<T extends ForecastResultCountArgs>(
+      args?: Subset<T, ForecastResultCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ForecastResultCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ForecastResult.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ForecastResultAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ForecastResultAggregateArgs>(args: Subset<T, ForecastResultAggregateArgs>): Prisma.PrismaPromise<GetForecastResultAggregateType<T>>
+
+    /**
+     * Group by ForecastResult.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ForecastResultGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ForecastResultGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ForecastResultGroupByArgs['orderBy'] }
+        : { orderBy?: ForecastResultGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ForecastResultGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetForecastResultGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ForecastResult model
+   */
+  readonly fields: ForecastResultFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ForecastResult.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ForecastResultClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ForecastResult model
+   */ 
+  interface ForecastResultFieldRefs {
+    readonly id: FieldRef<"ForecastResult", 'String'>
+    readonly runId: FieldRef<"ForecastResult", 'String'>
+    readonly assetSymbol: FieldRef<"ForecastResult", 'String'>
+    readonly step: FieldRef<"ForecastResult", 'Int'>
+    readonly forecastDirection: FieldRef<"ForecastResult", 'AgentDecisionAction'>
+    readonly totalVotes: FieldRef<"ForecastResult", 'Int'>
+    readonly buyVotes: FieldRef<"ForecastResult", 'Int'>
+    readonly sellVotes: FieldRef<"ForecastResult", 'Int'>
+    readonly holdVotes: FieldRef<"ForecastResult", 'Int'>
+    readonly groundTruthDirection: FieldRef<"ForecastResult", 'AgentDecisionAction'>
+    readonly isCorrect: FieldRef<"ForecastResult", 'Boolean'>
+    readonly createdAt: FieldRef<"ForecastResult", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ForecastResult findUnique
+   */
+  export type ForecastResultFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ForecastResult
+     */
+    select?: ForecastResultSelect<ExtArgs> | null
+    /**
+     * Filter, which ForecastResult to fetch.
+     */
+    where: ForecastResultWhereUniqueInput
+  }
+
+  /**
+   * ForecastResult findUniqueOrThrow
+   */
+  export type ForecastResultFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ForecastResult
+     */
+    select?: ForecastResultSelect<ExtArgs> | null
+    /**
+     * Filter, which ForecastResult to fetch.
+     */
+    where: ForecastResultWhereUniqueInput
+  }
+
+  /**
+   * ForecastResult findFirst
+   */
+  export type ForecastResultFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ForecastResult
+     */
+    select?: ForecastResultSelect<ExtArgs> | null
+    /**
+     * Filter, which ForecastResult to fetch.
+     */
+    where?: ForecastResultWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ForecastResults to fetch.
+     */
+    orderBy?: ForecastResultOrderByWithRelationInput | ForecastResultOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ForecastResults.
+     */
+    cursor?: ForecastResultWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ForecastResults from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ForecastResults.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ForecastResults.
+     */
+    distinct?: ForecastResultScalarFieldEnum | ForecastResultScalarFieldEnum[]
+  }
+
+  /**
+   * ForecastResult findFirstOrThrow
+   */
+  export type ForecastResultFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ForecastResult
+     */
+    select?: ForecastResultSelect<ExtArgs> | null
+    /**
+     * Filter, which ForecastResult to fetch.
+     */
+    where?: ForecastResultWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ForecastResults to fetch.
+     */
+    orderBy?: ForecastResultOrderByWithRelationInput | ForecastResultOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ForecastResults.
+     */
+    cursor?: ForecastResultWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ForecastResults from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ForecastResults.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ForecastResults.
+     */
+    distinct?: ForecastResultScalarFieldEnum | ForecastResultScalarFieldEnum[]
+  }
+
+  /**
+   * ForecastResult findMany
+   */
+  export type ForecastResultFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ForecastResult
+     */
+    select?: ForecastResultSelect<ExtArgs> | null
+    /**
+     * Filter, which ForecastResults to fetch.
+     */
+    where?: ForecastResultWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ForecastResults to fetch.
+     */
+    orderBy?: ForecastResultOrderByWithRelationInput | ForecastResultOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ForecastResults.
+     */
+    cursor?: ForecastResultWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ForecastResults from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ForecastResults.
+     */
+    skip?: number
+    distinct?: ForecastResultScalarFieldEnum | ForecastResultScalarFieldEnum[]
+  }
+
+  /**
+   * ForecastResult create
+   */
+  export type ForecastResultCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ForecastResult
+     */
+    select?: ForecastResultSelect<ExtArgs> | null
+    /**
+     * The data needed to create a ForecastResult.
+     */
+    data: XOR<ForecastResultCreateInput, ForecastResultUncheckedCreateInput>
+  }
+
+  /**
+   * ForecastResult createMany
+   */
+  export type ForecastResultCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ForecastResults.
+     */
+    data: ForecastResultCreateManyInput | ForecastResultCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ForecastResult createManyAndReturn
+   */
+  export type ForecastResultCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ForecastResult
+     */
+    select?: ForecastResultSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many ForecastResults.
+     */
+    data: ForecastResultCreateManyInput | ForecastResultCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ForecastResult update
+   */
+  export type ForecastResultUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ForecastResult
+     */
+    select?: ForecastResultSelect<ExtArgs> | null
+    /**
+     * The data needed to update a ForecastResult.
+     */
+    data: XOR<ForecastResultUpdateInput, ForecastResultUncheckedUpdateInput>
+    /**
+     * Choose, which ForecastResult to update.
+     */
+    where: ForecastResultWhereUniqueInput
+  }
+
+  /**
+   * ForecastResult updateMany
+   */
+  export type ForecastResultUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ForecastResults.
+     */
+    data: XOR<ForecastResultUpdateManyMutationInput, ForecastResultUncheckedUpdateManyInput>
+    /**
+     * Filter which ForecastResults to update
+     */
+    where?: ForecastResultWhereInput
+  }
+
+  /**
+   * ForecastResult upsert
+   */
+  export type ForecastResultUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ForecastResult
+     */
+    select?: ForecastResultSelect<ExtArgs> | null
+    /**
+     * The filter to search for the ForecastResult to update in case it exists.
+     */
+    where: ForecastResultWhereUniqueInput
+    /**
+     * In case the ForecastResult found by the `where` argument doesn't exist, create a new ForecastResult with this data.
+     */
+    create: XOR<ForecastResultCreateInput, ForecastResultUncheckedCreateInput>
+    /**
+     * In case the ForecastResult was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ForecastResultUpdateInput, ForecastResultUncheckedUpdateInput>
+  }
+
+  /**
+   * ForecastResult delete
+   */
+  export type ForecastResultDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ForecastResult
+     */
+    select?: ForecastResultSelect<ExtArgs> | null
+    /**
+     * Filter which ForecastResult to delete.
+     */
+    where: ForecastResultWhereUniqueInput
+  }
+
+  /**
+   * ForecastResult deleteMany
+   */
+  export type ForecastResultDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ForecastResults to delete
+     */
+    where?: ForecastResultWhereInput
+  }
+
+  /**
+   * ForecastResult without action
+   */
+  export type ForecastResultDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ForecastResult
+     */
+    select?: ForecastResultSelect<ExtArgs> | null
+  }
+
+
+  /**
+   * Model RunAccuracy
+   */
+
+  export type AggregateRunAccuracy = {
+    _count: RunAccuracyCountAggregateOutputType | null
+    _avg: RunAccuracyAvgAggregateOutputType | null
+    _sum: RunAccuracySumAggregateOutputType | null
+    _min: RunAccuracyMinAggregateOutputType | null
+    _max: RunAccuracyMaxAggregateOutputType | null
+  }
+
+  export type RunAccuracyAvgAggregateOutputType = {
+    totalEvaluations: number | null
+    correctCount: number | null
+    accuracyRate: number | null
+    buyAccuracy: number | null
+    sellAccuracy: number | null
+    holdAccuracy: number | null
+  }
+
+  export type RunAccuracySumAggregateOutputType = {
+    totalEvaluations: number | null
+    correctCount: number | null
+    accuracyRate: number | null
+    buyAccuracy: number | null
+    sellAccuracy: number | null
+    holdAccuracy: number | null
+  }
+
+  export type RunAccuracyMinAggregateOutputType = {
+    id: string | null
+    runId: string | null
+    assetSymbol: string | null
+    totalEvaluations: number | null
+    correctCount: number | null
+    accuracyRate: number | null
+    buyAccuracy: number | null
+    sellAccuracy: number | null
+    holdAccuracy: number | null
+    computedAt: Date | null
+  }
+
+  export type RunAccuracyMaxAggregateOutputType = {
+    id: string | null
+    runId: string | null
+    assetSymbol: string | null
+    totalEvaluations: number | null
+    correctCount: number | null
+    accuracyRate: number | null
+    buyAccuracy: number | null
+    sellAccuracy: number | null
+    holdAccuracy: number | null
+    computedAt: Date | null
+  }
+
+  export type RunAccuracyCountAggregateOutputType = {
+    id: number
+    runId: number
+    assetSymbol: number
+    totalEvaluations: number
+    correctCount: number
+    accuracyRate: number
+    buyAccuracy: number
+    sellAccuracy: number
+    holdAccuracy: number
+    computedAt: number
+    _all: number
+  }
+
+
+  export type RunAccuracyAvgAggregateInputType = {
+    totalEvaluations?: true
+    correctCount?: true
+    accuracyRate?: true
+    buyAccuracy?: true
+    sellAccuracy?: true
+    holdAccuracy?: true
+  }
+
+  export type RunAccuracySumAggregateInputType = {
+    totalEvaluations?: true
+    correctCount?: true
+    accuracyRate?: true
+    buyAccuracy?: true
+    sellAccuracy?: true
+    holdAccuracy?: true
+  }
+
+  export type RunAccuracyMinAggregateInputType = {
+    id?: true
+    runId?: true
+    assetSymbol?: true
+    totalEvaluations?: true
+    correctCount?: true
+    accuracyRate?: true
+    buyAccuracy?: true
+    sellAccuracy?: true
+    holdAccuracy?: true
+    computedAt?: true
+  }
+
+  export type RunAccuracyMaxAggregateInputType = {
+    id?: true
+    runId?: true
+    assetSymbol?: true
+    totalEvaluations?: true
+    correctCount?: true
+    accuracyRate?: true
+    buyAccuracy?: true
+    sellAccuracy?: true
+    holdAccuracy?: true
+    computedAt?: true
+  }
+
+  export type RunAccuracyCountAggregateInputType = {
+    id?: true
+    runId?: true
+    assetSymbol?: true
+    totalEvaluations?: true
+    correctCount?: true
+    accuracyRate?: true
+    buyAccuracy?: true
+    sellAccuracy?: true
+    holdAccuracy?: true
+    computedAt?: true
+    _all?: true
+  }
+
+  export type RunAccuracyAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RunAccuracy to aggregate.
+     */
+    where?: RunAccuracyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RunAccuracies to fetch.
+     */
+    orderBy?: RunAccuracyOrderByWithRelationInput | RunAccuracyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: RunAccuracyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RunAccuracies from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RunAccuracies.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned RunAccuracies
+    **/
+    _count?: true | RunAccuracyCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: RunAccuracyAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: RunAccuracySumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: RunAccuracyMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: RunAccuracyMaxAggregateInputType
+  }
+
+  export type GetRunAccuracyAggregateType<T extends RunAccuracyAggregateArgs> = {
+        [P in keyof T & keyof AggregateRunAccuracy]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateRunAccuracy[P]>
+      : GetScalarType<T[P], AggregateRunAccuracy[P]>
+  }
+
+
+
+
+  export type RunAccuracyGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RunAccuracyWhereInput
+    orderBy?: RunAccuracyOrderByWithAggregationInput | RunAccuracyOrderByWithAggregationInput[]
+    by: RunAccuracyScalarFieldEnum[] | RunAccuracyScalarFieldEnum
+    having?: RunAccuracyScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: RunAccuracyCountAggregateInputType | true
+    _avg?: RunAccuracyAvgAggregateInputType
+    _sum?: RunAccuracySumAggregateInputType
+    _min?: RunAccuracyMinAggregateInputType
+    _max?: RunAccuracyMaxAggregateInputType
+  }
+
+  export type RunAccuracyGroupByOutputType = {
+    id: string
+    runId: string
+    assetSymbol: string
+    totalEvaluations: number
+    correctCount: number
+    accuracyRate: number
+    buyAccuracy: number
+    sellAccuracy: number
+    holdAccuracy: number
+    computedAt: Date
+    _count: RunAccuracyCountAggregateOutputType | null
+    _avg: RunAccuracyAvgAggregateOutputType | null
+    _sum: RunAccuracySumAggregateOutputType | null
+    _min: RunAccuracyMinAggregateOutputType | null
+    _max: RunAccuracyMaxAggregateOutputType | null
+  }
+
+  type GetRunAccuracyGroupByPayload<T extends RunAccuracyGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<RunAccuracyGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof RunAccuracyGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], RunAccuracyGroupByOutputType[P]>
+            : GetScalarType<T[P], RunAccuracyGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type RunAccuracySelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    runId?: boolean
+    assetSymbol?: boolean
+    totalEvaluations?: boolean
+    correctCount?: boolean
+    accuracyRate?: boolean
+    buyAccuracy?: boolean
+    sellAccuracy?: boolean
+    holdAccuracy?: boolean
+    computedAt?: boolean
+  }, ExtArgs["result"]["runAccuracy"]>
+
+  export type RunAccuracySelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    runId?: boolean
+    assetSymbol?: boolean
+    totalEvaluations?: boolean
+    correctCount?: boolean
+    accuracyRate?: boolean
+    buyAccuracy?: boolean
+    sellAccuracy?: boolean
+    holdAccuracy?: boolean
+    computedAt?: boolean
+  }, ExtArgs["result"]["runAccuracy"]>
+
+  export type RunAccuracySelectScalar = {
+    id?: boolean
+    runId?: boolean
+    assetSymbol?: boolean
+    totalEvaluations?: boolean
+    correctCount?: boolean
+    accuracyRate?: boolean
+    buyAccuracy?: boolean
+    sellAccuracy?: boolean
+    holdAccuracy?: boolean
+    computedAt?: boolean
+  }
+
+
+  export type $RunAccuracyPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "RunAccuracy"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      runId: string
+      assetSymbol: string
+      totalEvaluations: number
+      correctCount: number
+      accuracyRate: number
+      buyAccuracy: number
+      sellAccuracy: number
+      holdAccuracy: number
+      computedAt: Date
+    }, ExtArgs["result"]["runAccuracy"]>
+    composites: {}
+  }
+
+  type RunAccuracyGetPayload<S extends boolean | null | undefined | RunAccuracyDefaultArgs> = $Result.GetResult<Prisma.$RunAccuracyPayload, S>
+
+  type RunAccuracyCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<RunAccuracyFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: RunAccuracyCountAggregateInputType | true
+    }
+
+  export interface RunAccuracyDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['RunAccuracy'], meta: { name: 'RunAccuracy' } }
+    /**
+     * Find zero or one RunAccuracy that matches the filter.
+     * @param {RunAccuracyFindUniqueArgs} args - Arguments to find a RunAccuracy
+     * @example
+     * // Get one RunAccuracy
+     * const runAccuracy = await prisma.runAccuracy.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends RunAccuracyFindUniqueArgs>(args: SelectSubset<T, RunAccuracyFindUniqueArgs<ExtArgs>>): Prisma__RunAccuracyClient<$Result.GetResult<Prisma.$RunAccuracyPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one RunAccuracy that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {RunAccuracyFindUniqueOrThrowArgs} args - Arguments to find a RunAccuracy
+     * @example
+     * // Get one RunAccuracy
+     * const runAccuracy = await prisma.runAccuracy.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends RunAccuracyFindUniqueOrThrowArgs>(args: SelectSubset<T, RunAccuracyFindUniqueOrThrowArgs<ExtArgs>>): Prisma__RunAccuracyClient<$Result.GetResult<Prisma.$RunAccuracyPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first RunAccuracy that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RunAccuracyFindFirstArgs} args - Arguments to find a RunAccuracy
+     * @example
+     * // Get one RunAccuracy
+     * const runAccuracy = await prisma.runAccuracy.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends RunAccuracyFindFirstArgs>(args?: SelectSubset<T, RunAccuracyFindFirstArgs<ExtArgs>>): Prisma__RunAccuracyClient<$Result.GetResult<Prisma.$RunAccuracyPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first RunAccuracy that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RunAccuracyFindFirstOrThrowArgs} args - Arguments to find a RunAccuracy
+     * @example
+     * // Get one RunAccuracy
+     * const runAccuracy = await prisma.runAccuracy.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends RunAccuracyFindFirstOrThrowArgs>(args?: SelectSubset<T, RunAccuracyFindFirstOrThrowArgs<ExtArgs>>): Prisma__RunAccuracyClient<$Result.GetResult<Prisma.$RunAccuracyPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more RunAccuracies that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RunAccuracyFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all RunAccuracies
+     * const runAccuracies = await prisma.runAccuracy.findMany()
+     * 
+     * // Get first 10 RunAccuracies
+     * const runAccuracies = await prisma.runAccuracy.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const runAccuracyWithIdOnly = await prisma.runAccuracy.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends RunAccuracyFindManyArgs>(args?: SelectSubset<T, RunAccuracyFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RunAccuracyPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a RunAccuracy.
+     * @param {RunAccuracyCreateArgs} args - Arguments to create a RunAccuracy.
+     * @example
+     * // Create one RunAccuracy
+     * const RunAccuracy = await prisma.runAccuracy.create({
+     *   data: {
+     *     // ... data to create a RunAccuracy
+     *   }
+     * })
+     * 
+     */
+    create<T extends RunAccuracyCreateArgs>(args: SelectSubset<T, RunAccuracyCreateArgs<ExtArgs>>): Prisma__RunAccuracyClient<$Result.GetResult<Prisma.$RunAccuracyPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many RunAccuracies.
+     * @param {RunAccuracyCreateManyArgs} args - Arguments to create many RunAccuracies.
+     * @example
+     * // Create many RunAccuracies
+     * const runAccuracy = await prisma.runAccuracy.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends RunAccuracyCreateManyArgs>(args?: SelectSubset<T, RunAccuracyCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many RunAccuracies and returns the data saved in the database.
+     * @param {RunAccuracyCreateManyAndReturnArgs} args - Arguments to create many RunAccuracies.
+     * @example
+     * // Create many RunAccuracies
+     * const runAccuracy = await prisma.runAccuracy.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many RunAccuracies and only return the `id`
+     * const runAccuracyWithIdOnly = await prisma.runAccuracy.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends RunAccuracyCreateManyAndReturnArgs>(args?: SelectSubset<T, RunAccuracyCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RunAccuracyPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a RunAccuracy.
+     * @param {RunAccuracyDeleteArgs} args - Arguments to delete one RunAccuracy.
+     * @example
+     * // Delete one RunAccuracy
+     * const RunAccuracy = await prisma.runAccuracy.delete({
+     *   where: {
+     *     // ... filter to delete one RunAccuracy
+     *   }
+     * })
+     * 
+     */
+    delete<T extends RunAccuracyDeleteArgs>(args: SelectSubset<T, RunAccuracyDeleteArgs<ExtArgs>>): Prisma__RunAccuracyClient<$Result.GetResult<Prisma.$RunAccuracyPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one RunAccuracy.
+     * @param {RunAccuracyUpdateArgs} args - Arguments to update one RunAccuracy.
+     * @example
+     * // Update one RunAccuracy
+     * const runAccuracy = await prisma.runAccuracy.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends RunAccuracyUpdateArgs>(args: SelectSubset<T, RunAccuracyUpdateArgs<ExtArgs>>): Prisma__RunAccuracyClient<$Result.GetResult<Prisma.$RunAccuracyPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more RunAccuracies.
+     * @param {RunAccuracyDeleteManyArgs} args - Arguments to filter RunAccuracies to delete.
+     * @example
+     * // Delete a few RunAccuracies
+     * const { count } = await prisma.runAccuracy.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends RunAccuracyDeleteManyArgs>(args?: SelectSubset<T, RunAccuracyDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more RunAccuracies.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RunAccuracyUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many RunAccuracies
+     * const runAccuracy = await prisma.runAccuracy.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends RunAccuracyUpdateManyArgs>(args: SelectSubset<T, RunAccuracyUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one RunAccuracy.
+     * @param {RunAccuracyUpsertArgs} args - Arguments to update or create a RunAccuracy.
+     * @example
+     * // Update or create a RunAccuracy
+     * const runAccuracy = await prisma.runAccuracy.upsert({
+     *   create: {
+     *     // ... data to create a RunAccuracy
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the RunAccuracy we want to update
+     *   }
+     * })
+     */
+    upsert<T extends RunAccuracyUpsertArgs>(args: SelectSubset<T, RunAccuracyUpsertArgs<ExtArgs>>): Prisma__RunAccuracyClient<$Result.GetResult<Prisma.$RunAccuracyPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of RunAccuracies.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RunAccuracyCountArgs} args - Arguments to filter RunAccuracies to count.
+     * @example
+     * // Count the number of RunAccuracies
+     * const count = await prisma.runAccuracy.count({
+     *   where: {
+     *     // ... the filter for the RunAccuracies we want to count
+     *   }
+     * })
+    **/
+    count<T extends RunAccuracyCountArgs>(
+      args?: Subset<T, RunAccuracyCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], RunAccuracyCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a RunAccuracy.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RunAccuracyAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends RunAccuracyAggregateArgs>(args: Subset<T, RunAccuracyAggregateArgs>): Prisma.PrismaPromise<GetRunAccuracyAggregateType<T>>
+
+    /**
+     * Group by RunAccuracy.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RunAccuracyGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends RunAccuracyGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: RunAccuracyGroupByArgs['orderBy'] }
+        : { orderBy?: RunAccuracyGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, RunAccuracyGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetRunAccuracyGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the RunAccuracy model
+   */
+  readonly fields: RunAccuracyFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for RunAccuracy.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__RunAccuracyClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the RunAccuracy model
+   */ 
+  interface RunAccuracyFieldRefs {
+    readonly id: FieldRef<"RunAccuracy", 'String'>
+    readonly runId: FieldRef<"RunAccuracy", 'String'>
+    readonly assetSymbol: FieldRef<"RunAccuracy", 'String'>
+    readonly totalEvaluations: FieldRef<"RunAccuracy", 'Int'>
+    readonly correctCount: FieldRef<"RunAccuracy", 'Int'>
+    readonly accuracyRate: FieldRef<"RunAccuracy", 'Float'>
+    readonly buyAccuracy: FieldRef<"RunAccuracy", 'Float'>
+    readonly sellAccuracy: FieldRef<"RunAccuracy", 'Float'>
+    readonly holdAccuracy: FieldRef<"RunAccuracy", 'Float'>
+    readonly computedAt: FieldRef<"RunAccuracy", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * RunAccuracy findUnique
+   */
+  export type RunAccuracyFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunAccuracy
+     */
+    select?: RunAccuracySelect<ExtArgs> | null
+    /**
+     * Filter, which RunAccuracy to fetch.
+     */
+    where: RunAccuracyWhereUniqueInput
+  }
+
+  /**
+   * RunAccuracy findUniqueOrThrow
+   */
+  export type RunAccuracyFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunAccuracy
+     */
+    select?: RunAccuracySelect<ExtArgs> | null
+    /**
+     * Filter, which RunAccuracy to fetch.
+     */
+    where: RunAccuracyWhereUniqueInput
+  }
+
+  /**
+   * RunAccuracy findFirst
+   */
+  export type RunAccuracyFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunAccuracy
+     */
+    select?: RunAccuracySelect<ExtArgs> | null
+    /**
+     * Filter, which RunAccuracy to fetch.
+     */
+    where?: RunAccuracyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RunAccuracies to fetch.
+     */
+    orderBy?: RunAccuracyOrderByWithRelationInput | RunAccuracyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RunAccuracies.
+     */
+    cursor?: RunAccuracyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RunAccuracies from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RunAccuracies.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RunAccuracies.
+     */
+    distinct?: RunAccuracyScalarFieldEnum | RunAccuracyScalarFieldEnum[]
+  }
+
+  /**
+   * RunAccuracy findFirstOrThrow
+   */
+  export type RunAccuracyFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunAccuracy
+     */
+    select?: RunAccuracySelect<ExtArgs> | null
+    /**
+     * Filter, which RunAccuracy to fetch.
+     */
+    where?: RunAccuracyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RunAccuracies to fetch.
+     */
+    orderBy?: RunAccuracyOrderByWithRelationInput | RunAccuracyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RunAccuracies.
+     */
+    cursor?: RunAccuracyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RunAccuracies from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RunAccuracies.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RunAccuracies.
+     */
+    distinct?: RunAccuracyScalarFieldEnum | RunAccuracyScalarFieldEnum[]
+  }
+
+  /**
+   * RunAccuracy findMany
+   */
+  export type RunAccuracyFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunAccuracy
+     */
+    select?: RunAccuracySelect<ExtArgs> | null
+    /**
+     * Filter, which RunAccuracies to fetch.
+     */
+    where?: RunAccuracyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RunAccuracies to fetch.
+     */
+    orderBy?: RunAccuracyOrderByWithRelationInput | RunAccuracyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing RunAccuracies.
+     */
+    cursor?: RunAccuracyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RunAccuracies from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RunAccuracies.
+     */
+    skip?: number
+    distinct?: RunAccuracyScalarFieldEnum | RunAccuracyScalarFieldEnum[]
+  }
+
+  /**
+   * RunAccuracy create
+   */
+  export type RunAccuracyCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunAccuracy
+     */
+    select?: RunAccuracySelect<ExtArgs> | null
+    /**
+     * The data needed to create a RunAccuracy.
+     */
+    data: XOR<RunAccuracyCreateInput, RunAccuracyUncheckedCreateInput>
+  }
+
+  /**
+   * RunAccuracy createMany
+   */
+  export type RunAccuracyCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many RunAccuracies.
+     */
+    data: RunAccuracyCreateManyInput | RunAccuracyCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * RunAccuracy createManyAndReturn
+   */
+  export type RunAccuracyCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunAccuracy
+     */
+    select?: RunAccuracySelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many RunAccuracies.
+     */
+    data: RunAccuracyCreateManyInput | RunAccuracyCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * RunAccuracy update
+   */
+  export type RunAccuracyUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunAccuracy
+     */
+    select?: RunAccuracySelect<ExtArgs> | null
+    /**
+     * The data needed to update a RunAccuracy.
+     */
+    data: XOR<RunAccuracyUpdateInput, RunAccuracyUncheckedUpdateInput>
+    /**
+     * Choose, which RunAccuracy to update.
+     */
+    where: RunAccuracyWhereUniqueInput
+  }
+
+  /**
+   * RunAccuracy updateMany
+   */
+  export type RunAccuracyUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update RunAccuracies.
+     */
+    data: XOR<RunAccuracyUpdateManyMutationInput, RunAccuracyUncheckedUpdateManyInput>
+    /**
+     * Filter which RunAccuracies to update
+     */
+    where?: RunAccuracyWhereInput
+  }
+
+  /**
+   * RunAccuracy upsert
+   */
+  export type RunAccuracyUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunAccuracy
+     */
+    select?: RunAccuracySelect<ExtArgs> | null
+    /**
+     * The filter to search for the RunAccuracy to update in case it exists.
+     */
+    where: RunAccuracyWhereUniqueInput
+    /**
+     * In case the RunAccuracy found by the `where` argument doesn't exist, create a new RunAccuracy with this data.
+     */
+    create: XOR<RunAccuracyCreateInput, RunAccuracyUncheckedCreateInput>
+    /**
+     * In case the RunAccuracy was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<RunAccuracyUpdateInput, RunAccuracyUncheckedUpdateInput>
+  }
+
+  /**
+   * RunAccuracy delete
+   */
+  export type RunAccuracyDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunAccuracy
+     */
+    select?: RunAccuracySelect<ExtArgs> | null
+    /**
+     * Filter which RunAccuracy to delete.
+     */
+    where: RunAccuracyWhereUniqueInput
+  }
+
+  /**
+   * RunAccuracy deleteMany
+   */
+  export type RunAccuracyDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RunAccuracies to delete
+     */
+    where?: RunAccuracyWhereInput
+  }
+
+  /**
+   * RunAccuracy without action
+   */
+  export type RunAccuracyDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunAccuracy
+     */
+    select?: RunAccuracySelect<ExtArgs> | null
+  }
+
+
+  /**
+   * Model RunSignalDiagnostics
+   */
+
+  export type AggregateRunSignalDiagnostics = {
+    _count: RunSignalDiagnosticsCountAggregateOutputType | null
+    _avg: RunSignalDiagnosticsAvgAggregateOutputType | null
+    _sum: RunSignalDiagnosticsSumAggregateOutputType | null
+    _min: RunSignalDiagnosticsMinAggregateOutputType | null
+    _max: RunSignalDiagnosticsMaxAggregateOutputType | null
+  }
+
+  export type RunSignalDiagnosticsAvgAggregateOutputType = {
+    totalSteps: number | null
+    pctCrowdBuy: number | null
+    pctCrowdSell: number | null
+    pctCrowdHold: number | null
+    pctMarketUp: number | null
+    pctMarketDown: number | null
+    pctMarketFlat: number | null
+    buyCorrect: number | null
+    buyWrong: number | null
+    sellCorrect: number | null
+    sellWrong: number | null
+    holdCorrect: number | null
+    holdWrong: number | null
+  }
+
+  export type RunSignalDiagnosticsSumAggregateOutputType = {
+    totalSteps: number | null
+    pctCrowdBuy: number | null
+    pctCrowdSell: number | null
+    pctCrowdHold: number | null
+    pctMarketUp: number | null
+    pctMarketDown: number | null
+    pctMarketFlat: number | null
+    buyCorrect: number | null
+    buyWrong: number | null
+    sellCorrect: number | null
+    sellWrong: number | null
+    holdCorrect: number | null
+    holdWrong: number | null
+  }
+
+  export type RunSignalDiagnosticsMinAggregateOutputType = {
+    id: string | null
+    runId: string | null
+    assetSymbol: string | null
+    totalSteps: number | null
+    pctCrowdBuy: number | null
+    pctCrowdSell: number | null
+    pctCrowdHold: number | null
+    pctMarketUp: number | null
+    pctMarketDown: number | null
+    pctMarketFlat: number | null
+    buyCorrect: number | null
+    buyWrong: number | null
+    sellCorrect: number | null
+    sellWrong: number | null
+    holdCorrect: number | null
+    holdWrong: number | null
+    computedAt: Date | null
+  }
+
+  export type RunSignalDiagnosticsMaxAggregateOutputType = {
+    id: string | null
+    runId: string | null
+    assetSymbol: string | null
+    totalSteps: number | null
+    pctCrowdBuy: number | null
+    pctCrowdSell: number | null
+    pctCrowdHold: number | null
+    pctMarketUp: number | null
+    pctMarketDown: number | null
+    pctMarketFlat: number | null
+    buyCorrect: number | null
+    buyWrong: number | null
+    sellCorrect: number | null
+    sellWrong: number | null
+    holdCorrect: number | null
+    holdWrong: number | null
+    computedAt: Date | null
+  }
+
+  export type RunSignalDiagnosticsCountAggregateOutputType = {
+    id: number
+    runId: number
+    assetSymbol: number
+    totalSteps: number
+    pctCrowdBuy: number
+    pctCrowdSell: number
+    pctCrowdHold: number
+    pctMarketUp: number
+    pctMarketDown: number
+    pctMarketFlat: number
+    buyCorrect: number
+    buyWrong: number
+    sellCorrect: number
+    sellWrong: number
+    holdCorrect: number
+    holdWrong: number
+    computedAt: number
+    _all: number
+  }
+
+
+  export type RunSignalDiagnosticsAvgAggregateInputType = {
+    totalSteps?: true
+    pctCrowdBuy?: true
+    pctCrowdSell?: true
+    pctCrowdHold?: true
+    pctMarketUp?: true
+    pctMarketDown?: true
+    pctMarketFlat?: true
+    buyCorrect?: true
+    buyWrong?: true
+    sellCorrect?: true
+    sellWrong?: true
+    holdCorrect?: true
+    holdWrong?: true
+  }
+
+  export type RunSignalDiagnosticsSumAggregateInputType = {
+    totalSteps?: true
+    pctCrowdBuy?: true
+    pctCrowdSell?: true
+    pctCrowdHold?: true
+    pctMarketUp?: true
+    pctMarketDown?: true
+    pctMarketFlat?: true
+    buyCorrect?: true
+    buyWrong?: true
+    sellCorrect?: true
+    sellWrong?: true
+    holdCorrect?: true
+    holdWrong?: true
+  }
+
+  export type RunSignalDiagnosticsMinAggregateInputType = {
+    id?: true
+    runId?: true
+    assetSymbol?: true
+    totalSteps?: true
+    pctCrowdBuy?: true
+    pctCrowdSell?: true
+    pctCrowdHold?: true
+    pctMarketUp?: true
+    pctMarketDown?: true
+    pctMarketFlat?: true
+    buyCorrect?: true
+    buyWrong?: true
+    sellCorrect?: true
+    sellWrong?: true
+    holdCorrect?: true
+    holdWrong?: true
+    computedAt?: true
+  }
+
+  export type RunSignalDiagnosticsMaxAggregateInputType = {
+    id?: true
+    runId?: true
+    assetSymbol?: true
+    totalSteps?: true
+    pctCrowdBuy?: true
+    pctCrowdSell?: true
+    pctCrowdHold?: true
+    pctMarketUp?: true
+    pctMarketDown?: true
+    pctMarketFlat?: true
+    buyCorrect?: true
+    buyWrong?: true
+    sellCorrect?: true
+    sellWrong?: true
+    holdCorrect?: true
+    holdWrong?: true
+    computedAt?: true
+  }
+
+  export type RunSignalDiagnosticsCountAggregateInputType = {
+    id?: true
+    runId?: true
+    assetSymbol?: true
+    totalSteps?: true
+    pctCrowdBuy?: true
+    pctCrowdSell?: true
+    pctCrowdHold?: true
+    pctMarketUp?: true
+    pctMarketDown?: true
+    pctMarketFlat?: true
+    buyCorrect?: true
+    buyWrong?: true
+    sellCorrect?: true
+    sellWrong?: true
+    holdCorrect?: true
+    holdWrong?: true
+    computedAt?: true
+    _all?: true
+  }
+
+  export type RunSignalDiagnosticsAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RunSignalDiagnostics to aggregate.
+     */
+    where?: RunSignalDiagnosticsWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RunSignalDiagnostics to fetch.
+     */
+    orderBy?: RunSignalDiagnosticsOrderByWithRelationInput | RunSignalDiagnosticsOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: RunSignalDiagnosticsWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RunSignalDiagnostics from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RunSignalDiagnostics.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned RunSignalDiagnostics
+    **/
+    _count?: true | RunSignalDiagnosticsCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: RunSignalDiagnosticsAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: RunSignalDiagnosticsSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: RunSignalDiagnosticsMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: RunSignalDiagnosticsMaxAggregateInputType
+  }
+
+  export type GetRunSignalDiagnosticsAggregateType<T extends RunSignalDiagnosticsAggregateArgs> = {
+        [P in keyof T & keyof AggregateRunSignalDiagnostics]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateRunSignalDiagnostics[P]>
+      : GetScalarType<T[P], AggregateRunSignalDiagnostics[P]>
+  }
+
+
+
+
+  export type RunSignalDiagnosticsGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RunSignalDiagnosticsWhereInput
+    orderBy?: RunSignalDiagnosticsOrderByWithAggregationInput | RunSignalDiagnosticsOrderByWithAggregationInput[]
+    by: RunSignalDiagnosticsScalarFieldEnum[] | RunSignalDiagnosticsScalarFieldEnum
+    having?: RunSignalDiagnosticsScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: RunSignalDiagnosticsCountAggregateInputType | true
+    _avg?: RunSignalDiagnosticsAvgAggregateInputType
+    _sum?: RunSignalDiagnosticsSumAggregateInputType
+    _min?: RunSignalDiagnosticsMinAggregateInputType
+    _max?: RunSignalDiagnosticsMaxAggregateInputType
+  }
+
+  export type RunSignalDiagnosticsGroupByOutputType = {
+    id: string
+    runId: string
+    assetSymbol: string
+    totalSteps: number
+    pctCrowdBuy: number
+    pctCrowdSell: number
+    pctCrowdHold: number
+    pctMarketUp: number
+    pctMarketDown: number
+    pctMarketFlat: number
+    buyCorrect: number
+    buyWrong: number
+    sellCorrect: number
+    sellWrong: number
+    holdCorrect: number
+    holdWrong: number
+    computedAt: Date
+    _count: RunSignalDiagnosticsCountAggregateOutputType | null
+    _avg: RunSignalDiagnosticsAvgAggregateOutputType | null
+    _sum: RunSignalDiagnosticsSumAggregateOutputType | null
+    _min: RunSignalDiagnosticsMinAggregateOutputType | null
+    _max: RunSignalDiagnosticsMaxAggregateOutputType | null
+  }
+
+  type GetRunSignalDiagnosticsGroupByPayload<T extends RunSignalDiagnosticsGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<RunSignalDiagnosticsGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof RunSignalDiagnosticsGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], RunSignalDiagnosticsGroupByOutputType[P]>
+            : GetScalarType<T[P], RunSignalDiagnosticsGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type RunSignalDiagnosticsSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    runId?: boolean
+    assetSymbol?: boolean
+    totalSteps?: boolean
+    pctCrowdBuy?: boolean
+    pctCrowdSell?: boolean
+    pctCrowdHold?: boolean
+    pctMarketUp?: boolean
+    pctMarketDown?: boolean
+    pctMarketFlat?: boolean
+    buyCorrect?: boolean
+    buyWrong?: boolean
+    sellCorrect?: boolean
+    sellWrong?: boolean
+    holdCorrect?: boolean
+    holdWrong?: boolean
+    computedAt?: boolean
+  }, ExtArgs["result"]["runSignalDiagnostics"]>
+
+  export type RunSignalDiagnosticsSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    runId?: boolean
+    assetSymbol?: boolean
+    totalSteps?: boolean
+    pctCrowdBuy?: boolean
+    pctCrowdSell?: boolean
+    pctCrowdHold?: boolean
+    pctMarketUp?: boolean
+    pctMarketDown?: boolean
+    pctMarketFlat?: boolean
+    buyCorrect?: boolean
+    buyWrong?: boolean
+    sellCorrect?: boolean
+    sellWrong?: boolean
+    holdCorrect?: boolean
+    holdWrong?: boolean
+    computedAt?: boolean
+  }, ExtArgs["result"]["runSignalDiagnostics"]>
+
+  export type RunSignalDiagnosticsSelectScalar = {
+    id?: boolean
+    runId?: boolean
+    assetSymbol?: boolean
+    totalSteps?: boolean
+    pctCrowdBuy?: boolean
+    pctCrowdSell?: boolean
+    pctCrowdHold?: boolean
+    pctMarketUp?: boolean
+    pctMarketDown?: boolean
+    pctMarketFlat?: boolean
+    buyCorrect?: boolean
+    buyWrong?: boolean
+    sellCorrect?: boolean
+    sellWrong?: boolean
+    holdCorrect?: boolean
+    holdWrong?: boolean
+    computedAt?: boolean
+  }
+
+
+  export type $RunSignalDiagnosticsPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "RunSignalDiagnostics"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      runId: string
+      assetSymbol: string
+      totalSteps: number
+      pctCrowdBuy: number
+      pctCrowdSell: number
+      pctCrowdHold: number
+      pctMarketUp: number
+      pctMarketDown: number
+      pctMarketFlat: number
+      buyCorrect: number
+      buyWrong: number
+      sellCorrect: number
+      sellWrong: number
+      holdCorrect: number
+      holdWrong: number
+      computedAt: Date
+    }, ExtArgs["result"]["runSignalDiagnostics"]>
+    composites: {}
+  }
+
+  type RunSignalDiagnosticsGetPayload<S extends boolean | null | undefined | RunSignalDiagnosticsDefaultArgs> = $Result.GetResult<Prisma.$RunSignalDiagnosticsPayload, S>
+
+  type RunSignalDiagnosticsCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<RunSignalDiagnosticsFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: RunSignalDiagnosticsCountAggregateInputType | true
+    }
+
+  export interface RunSignalDiagnosticsDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['RunSignalDiagnostics'], meta: { name: 'RunSignalDiagnostics' } }
+    /**
+     * Find zero or one RunSignalDiagnostics that matches the filter.
+     * @param {RunSignalDiagnosticsFindUniqueArgs} args - Arguments to find a RunSignalDiagnostics
+     * @example
+     * // Get one RunSignalDiagnostics
+     * const runSignalDiagnostics = await prisma.runSignalDiagnostics.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends RunSignalDiagnosticsFindUniqueArgs>(args: SelectSubset<T, RunSignalDiagnosticsFindUniqueArgs<ExtArgs>>): Prisma__RunSignalDiagnosticsClient<$Result.GetResult<Prisma.$RunSignalDiagnosticsPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one RunSignalDiagnostics that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {RunSignalDiagnosticsFindUniqueOrThrowArgs} args - Arguments to find a RunSignalDiagnostics
+     * @example
+     * // Get one RunSignalDiagnostics
+     * const runSignalDiagnostics = await prisma.runSignalDiagnostics.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends RunSignalDiagnosticsFindUniqueOrThrowArgs>(args: SelectSubset<T, RunSignalDiagnosticsFindUniqueOrThrowArgs<ExtArgs>>): Prisma__RunSignalDiagnosticsClient<$Result.GetResult<Prisma.$RunSignalDiagnosticsPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first RunSignalDiagnostics that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RunSignalDiagnosticsFindFirstArgs} args - Arguments to find a RunSignalDiagnostics
+     * @example
+     * // Get one RunSignalDiagnostics
+     * const runSignalDiagnostics = await prisma.runSignalDiagnostics.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends RunSignalDiagnosticsFindFirstArgs>(args?: SelectSubset<T, RunSignalDiagnosticsFindFirstArgs<ExtArgs>>): Prisma__RunSignalDiagnosticsClient<$Result.GetResult<Prisma.$RunSignalDiagnosticsPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first RunSignalDiagnostics that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RunSignalDiagnosticsFindFirstOrThrowArgs} args - Arguments to find a RunSignalDiagnostics
+     * @example
+     * // Get one RunSignalDiagnostics
+     * const runSignalDiagnostics = await prisma.runSignalDiagnostics.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends RunSignalDiagnosticsFindFirstOrThrowArgs>(args?: SelectSubset<T, RunSignalDiagnosticsFindFirstOrThrowArgs<ExtArgs>>): Prisma__RunSignalDiagnosticsClient<$Result.GetResult<Prisma.$RunSignalDiagnosticsPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more RunSignalDiagnostics that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RunSignalDiagnosticsFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all RunSignalDiagnostics
+     * const runSignalDiagnostics = await prisma.runSignalDiagnostics.findMany()
+     * 
+     * // Get first 10 RunSignalDiagnostics
+     * const runSignalDiagnostics = await prisma.runSignalDiagnostics.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const runSignalDiagnosticsWithIdOnly = await prisma.runSignalDiagnostics.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends RunSignalDiagnosticsFindManyArgs>(args?: SelectSubset<T, RunSignalDiagnosticsFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RunSignalDiagnosticsPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a RunSignalDiagnostics.
+     * @param {RunSignalDiagnosticsCreateArgs} args - Arguments to create a RunSignalDiagnostics.
+     * @example
+     * // Create one RunSignalDiagnostics
+     * const RunSignalDiagnostics = await prisma.runSignalDiagnostics.create({
+     *   data: {
+     *     // ... data to create a RunSignalDiagnostics
+     *   }
+     * })
+     * 
+     */
+    create<T extends RunSignalDiagnosticsCreateArgs>(args: SelectSubset<T, RunSignalDiagnosticsCreateArgs<ExtArgs>>): Prisma__RunSignalDiagnosticsClient<$Result.GetResult<Prisma.$RunSignalDiagnosticsPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many RunSignalDiagnostics.
+     * @param {RunSignalDiagnosticsCreateManyArgs} args - Arguments to create many RunSignalDiagnostics.
+     * @example
+     * // Create many RunSignalDiagnostics
+     * const runSignalDiagnostics = await prisma.runSignalDiagnostics.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends RunSignalDiagnosticsCreateManyArgs>(args?: SelectSubset<T, RunSignalDiagnosticsCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many RunSignalDiagnostics and returns the data saved in the database.
+     * @param {RunSignalDiagnosticsCreateManyAndReturnArgs} args - Arguments to create many RunSignalDiagnostics.
+     * @example
+     * // Create many RunSignalDiagnostics
+     * const runSignalDiagnostics = await prisma.runSignalDiagnostics.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many RunSignalDiagnostics and only return the `id`
+     * const runSignalDiagnosticsWithIdOnly = await prisma.runSignalDiagnostics.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends RunSignalDiagnosticsCreateManyAndReturnArgs>(args?: SelectSubset<T, RunSignalDiagnosticsCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RunSignalDiagnosticsPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a RunSignalDiagnostics.
+     * @param {RunSignalDiagnosticsDeleteArgs} args - Arguments to delete one RunSignalDiagnostics.
+     * @example
+     * // Delete one RunSignalDiagnostics
+     * const RunSignalDiagnostics = await prisma.runSignalDiagnostics.delete({
+     *   where: {
+     *     // ... filter to delete one RunSignalDiagnostics
+     *   }
+     * })
+     * 
+     */
+    delete<T extends RunSignalDiagnosticsDeleteArgs>(args: SelectSubset<T, RunSignalDiagnosticsDeleteArgs<ExtArgs>>): Prisma__RunSignalDiagnosticsClient<$Result.GetResult<Prisma.$RunSignalDiagnosticsPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one RunSignalDiagnostics.
+     * @param {RunSignalDiagnosticsUpdateArgs} args - Arguments to update one RunSignalDiagnostics.
+     * @example
+     * // Update one RunSignalDiagnostics
+     * const runSignalDiagnostics = await prisma.runSignalDiagnostics.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends RunSignalDiagnosticsUpdateArgs>(args: SelectSubset<T, RunSignalDiagnosticsUpdateArgs<ExtArgs>>): Prisma__RunSignalDiagnosticsClient<$Result.GetResult<Prisma.$RunSignalDiagnosticsPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more RunSignalDiagnostics.
+     * @param {RunSignalDiagnosticsDeleteManyArgs} args - Arguments to filter RunSignalDiagnostics to delete.
+     * @example
+     * // Delete a few RunSignalDiagnostics
+     * const { count } = await prisma.runSignalDiagnostics.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends RunSignalDiagnosticsDeleteManyArgs>(args?: SelectSubset<T, RunSignalDiagnosticsDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more RunSignalDiagnostics.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RunSignalDiagnosticsUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many RunSignalDiagnostics
+     * const runSignalDiagnostics = await prisma.runSignalDiagnostics.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends RunSignalDiagnosticsUpdateManyArgs>(args: SelectSubset<T, RunSignalDiagnosticsUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one RunSignalDiagnostics.
+     * @param {RunSignalDiagnosticsUpsertArgs} args - Arguments to update or create a RunSignalDiagnostics.
+     * @example
+     * // Update or create a RunSignalDiagnostics
+     * const runSignalDiagnostics = await prisma.runSignalDiagnostics.upsert({
+     *   create: {
+     *     // ... data to create a RunSignalDiagnostics
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the RunSignalDiagnostics we want to update
+     *   }
+     * })
+     */
+    upsert<T extends RunSignalDiagnosticsUpsertArgs>(args: SelectSubset<T, RunSignalDiagnosticsUpsertArgs<ExtArgs>>): Prisma__RunSignalDiagnosticsClient<$Result.GetResult<Prisma.$RunSignalDiagnosticsPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of RunSignalDiagnostics.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RunSignalDiagnosticsCountArgs} args - Arguments to filter RunSignalDiagnostics to count.
+     * @example
+     * // Count the number of RunSignalDiagnostics
+     * const count = await prisma.runSignalDiagnostics.count({
+     *   where: {
+     *     // ... the filter for the RunSignalDiagnostics we want to count
+     *   }
+     * })
+    **/
+    count<T extends RunSignalDiagnosticsCountArgs>(
+      args?: Subset<T, RunSignalDiagnosticsCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], RunSignalDiagnosticsCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a RunSignalDiagnostics.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RunSignalDiagnosticsAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends RunSignalDiagnosticsAggregateArgs>(args: Subset<T, RunSignalDiagnosticsAggregateArgs>): Prisma.PrismaPromise<GetRunSignalDiagnosticsAggregateType<T>>
+
+    /**
+     * Group by RunSignalDiagnostics.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RunSignalDiagnosticsGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends RunSignalDiagnosticsGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: RunSignalDiagnosticsGroupByArgs['orderBy'] }
+        : { orderBy?: RunSignalDiagnosticsGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, RunSignalDiagnosticsGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetRunSignalDiagnosticsGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the RunSignalDiagnostics model
+   */
+  readonly fields: RunSignalDiagnosticsFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for RunSignalDiagnostics.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__RunSignalDiagnosticsClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the RunSignalDiagnostics model
+   */ 
+  interface RunSignalDiagnosticsFieldRefs {
+    readonly id: FieldRef<"RunSignalDiagnostics", 'String'>
+    readonly runId: FieldRef<"RunSignalDiagnostics", 'String'>
+    readonly assetSymbol: FieldRef<"RunSignalDiagnostics", 'String'>
+    readonly totalSteps: FieldRef<"RunSignalDiagnostics", 'Int'>
+    readonly pctCrowdBuy: FieldRef<"RunSignalDiagnostics", 'Float'>
+    readonly pctCrowdSell: FieldRef<"RunSignalDiagnostics", 'Float'>
+    readonly pctCrowdHold: FieldRef<"RunSignalDiagnostics", 'Float'>
+    readonly pctMarketUp: FieldRef<"RunSignalDiagnostics", 'Float'>
+    readonly pctMarketDown: FieldRef<"RunSignalDiagnostics", 'Float'>
+    readonly pctMarketFlat: FieldRef<"RunSignalDiagnostics", 'Float'>
+    readonly buyCorrect: FieldRef<"RunSignalDiagnostics", 'Int'>
+    readonly buyWrong: FieldRef<"RunSignalDiagnostics", 'Int'>
+    readonly sellCorrect: FieldRef<"RunSignalDiagnostics", 'Int'>
+    readonly sellWrong: FieldRef<"RunSignalDiagnostics", 'Int'>
+    readonly holdCorrect: FieldRef<"RunSignalDiagnostics", 'Int'>
+    readonly holdWrong: FieldRef<"RunSignalDiagnostics", 'Int'>
+    readonly computedAt: FieldRef<"RunSignalDiagnostics", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * RunSignalDiagnostics findUnique
+   */
+  export type RunSignalDiagnosticsFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunSignalDiagnostics
+     */
+    select?: RunSignalDiagnosticsSelect<ExtArgs> | null
+    /**
+     * Filter, which RunSignalDiagnostics to fetch.
+     */
+    where: RunSignalDiagnosticsWhereUniqueInput
+  }
+
+  /**
+   * RunSignalDiagnostics findUniqueOrThrow
+   */
+  export type RunSignalDiagnosticsFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunSignalDiagnostics
+     */
+    select?: RunSignalDiagnosticsSelect<ExtArgs> | null
+    /**
+     * Filter, which RunSignalDiagnostics to fetch.
+     */
+    where: RunSignalDiagnosticsWhereUniqueInput
+  }
+
+  /**
+   * RunSignalDiagnostics findFirst
+   */
+  export type RunSignalDiagnosticsFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunSignalDiagnostics
+     */
+    select?: RunSignalDiagnosticsSelect<ExtArgs> | null
+    /**
+     * Filter, which RunSignalDiagnostics to fetch.
+     */
+    where?: RunSignalDiagnosticsWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RunSignalDiagnostics to fetch.
+     */
+    orderBy?: RunSignalDiagnosticsOrderByWithRelationInput | RunSignalDiagnosticsOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RunSignalDiagnostics.
+     */
+    cursor?: RunSignalDiagnosticsWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RunSignalDiagnostics from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RunSignalDiagnostics.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RunSignalDiagnostics.
+     */
+    distinct?: RunSignalDiagnosticsScalarFieldEnum | RunSignalDiagnosticsScalarFieldEnum[]
+  }
+
+  /**
+   * RunSignalDiagnostics findFirstOrThrow
+   */
+  export type RunSignalDiagnosticsFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunSignalDiagnostics
+     */
+    select?: RunSignalDiagnosticsSelect<ExtArgs> | null
+    /**
+     * Filter, which RunSignalDiagnostics to fetch.
+     */
+    where?: RunSignalDiagnosticsWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RunSignalDiagnostics to fetch.
+     */
+    orderBy?: RunSignalDiagnosticsOrderByWithRelationInput | RunSignalDiagnosticsOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RunSignalDiagnostics.
+     */
+    cursor?: RunSignalDiagnosticsWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RunSignalDiagnostics from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RunSignalDiagnostics.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RunSignalDiagnostics.
+     */
+    distinct?: RunSignalDiagnosticsScalarFieldEnum | RunSignalDiagnosticsScalarFieldEnum[]
+  }
+
+  /**
+   * RunSignalDiagnostics findMany
+   */
+  export type RunSignalDiagnosticsFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunSignalDiagnostics
+     */
+    select?: RunSignalDiagnosticsSelect<ExtArgs> | null
+    /**
+     * Filter, which RunSignalDiagnostics to fetch.
+     */
+    where?: RunSignalDiagnosticsWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RunSignalDiagnostics to fetch.
+     */
+    orderBy?: RunSignalDiagnosticsOrderByWithRelationInput | RunSignalDiagnosticsOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing RunSignalDiagnostics.
+     */
+    cursor?: RunSignalDiagnosticsWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RunSignalDiagnostics from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RunSignalDiagnostics.
+     */
+    skip?: number
+    distinct?: RunSignalDiagnosticsScalarFieldEnum | RunSignalDiagnosticsScalarFieldEnum[]
+  }
+
+  /**
+   * RunSignalDiagnostics create
+   */
+  export type RunSignalDiagnosticsCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunSignalDiagnostics
+     */
+    select?: RunSignalDiagnosticsSelect<ExtArgs> | null
+    /**
+     * The data needed to create a RunSignalDiagnostics.
+     */
+    data: XOR<RunSignalDiagnosticsCreateInput, RunSignalDiagnosticsUncheckedCreateInput>
+  }
+
+  /**
+   * RunSignalDiagnostics createMany
+   */
+  export type RunSignalDiagnosticsCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many RunSignalDiagnostics.
+     */
+    data: RunSignalDiagnosticsCreateManyInput | RunSignalDiagnosticsCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * RunSignalDiagnostics createManyAndReturn
+   */
+  export type RunSignalDiagnosticsCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunSignalDiagnostics
+     */
+    select?: RunSignalDiagnosticsSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many RunSignalDiagnostics.
+     */
+    data: RunSignalDiagnosticsCreateManyInput | RunSignalDiagnosticsCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * RunSignalDiagnostics update
+   */
+  export type RunSignalDiagnosticsUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunSignalDiagnostics
+     */
+    select?: RunSignalDiagnosticsSelect<ExtArgs> | null
+    /**
+     * The data needed to update a RunSignalDiagnostics.
+     */
+    data: XOR<RunSignalDiagnosticsUpdateInput, RunSignalDiagnosticsUncheckedUpdateInput>
+    /**
+     * Choose, which RunSignalDiagnostics to update.
+     */
+    where: RunSignalDiagnosticsWhereUniqueInput
+  }
+
+  /**
+   * RunSignalDiagnostics updateMany
+   */
+  export type RunSignalDiagnosticsUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update RunSignalDiagnostics.
+     */
+    data: XOR<RunSignalDiagnosticsUpdateManyMutationInput, RunSignalDiagnosticsUncheckedUpdateManyInput>
+    /**
+     * Filter which RunSignalDiagnostics to update
+     */
+    where?: RunSignalDiagnosticsWhereInput
+  }
+
+  /**
+   * RunSignalDiagnostics upsert
+   */
+  export type RunSignalDiagnosticsUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunSignalDiagnostics
+     */
+    select?: RunSignalDiagnosticsSelect<ExtArgs> | null
+    /**
+     * The filter to search for the RunSignalDiagnostics to update in case it exists.
+     */
+    where: RunSignalDiagnosticsWhereUniqueInput
+    /**
+     * In case the RunSignalDiagnostics found by the `where` argument doesn't exist, create a new RunSignalDiagnostics with this data.
+     */
+    create: XOR<RunSignalDiagnosticsCreateInput, RunSignalDiagnosticsUncheckedCreateInput>
+    /**
+     * In case the RunSignalDiagnostics was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<RunSignalDiagnosticsUpdateInput, RunSignalDiagnosticsUncheckedUpdateInput>
+  }
+
+  /**
+   * RunSignalDiagnostics delete
+   */
+  export type RunSignalDiagnosticsDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunSignalDiagnostics
+     */
+    select?: RunSignalDiagnosticsSelect<ExtArgs> | null
+    /**
+     * Filter which RunSignalDiagnostics to delete.
+     */
+    where: RunSignalDiagnosticsWhereUniqueInput
+  }
+
+  /**
+   * RunSignalDiagnostics deleteMany
+   */
+  export type RunSignalDiagnosticsDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RunSignalDiagnostics to delete
+     */
+    where?: RunSignalDiagnosticsWhereInput
+  }
+
+  /**
+   * RunSignalDiagnostics without action
+   */
+  export type RunSignalDiagnosticsDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunSignalDiagnostics
+     */
+    select?: RunSignalDiagnosticsSelect<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -34321,6 +37687,63 @@ export namespace Prisma {
   export type BacktestResultScalarFieldEnum = (typeof BacktestResultScalarFieldEnum)[keyof typeof BacktestResultScalarFieldEnum]
 
 
+  export const ForecastResultScalarFieldEnum: {
+    id: 'id',
+    runId: 'runId',
+    assetSymbol: 'assetSymbol',
+    step: 'step',
+    forecastDirection: 'forecastDirection',
+    totalVotes: 'totalVotes',
+    buyVotes: 'buyVotes',
+    sellVotes: 'sellVotes',
+    holdVotes: 'holdVotes',
+    groundTruthDirection: 'groundTruthDirection',
+    isCorrect: 'isCorrect',
+    createdAt: 'createdAt'
+  };
+
+  export type ForecastResultScalarFieldEnum = (typeof ForecastResultScalarFieldEnum)[keyof typeof ForecastResultScalarFieldEnum]
+
+
+  export const RunAccuracyScalarFieldEnum: {
+    id: 'id',
+    runId: 'runId',
+    assetSymbol: 'assetSymbol',
+    totalEvaluations: 'totalEvaluations',
+    correctCount: 'correctCount',
+    accuracyRate: 'accuracyRate',
+    buyAccuracy: 'buyAccuracy',
+    sellAccuracy: 'sellAccuracy',
+    holdAccuracy: 'holdAccuracy',
+    computedAt: 'computedAt'
+  };
+
+  export type RunAccuracyScalarFieldEnum = (typeof RunAccuracyScalarFieldEnum)[keyof typeof RunAccuracyScalarFieldEnum]
+
+
+  export const RunSignalDiagnosticsScalarFieldEnum: {
+    id: 'id',
+    runId: 'runId',
+    assetSymbol: 'assetSymbol',
+    totalSteps: 'totalSteps',
+    pctCrowdBuy: 'pctCrowdBuy',
+    pctCrowdSell: 'pctCrowdSell',
+    pctCrowdHold: 'pctCrowdHold',
+    pctMarketUp: 'pctMarketUp',
+    pctMarketDown: 'pctMarketDown',
+    pctMarketFlat: 'pctMarketFlat',
+    buyCorrect: 'buyCorrect',
+    buyWrong: 'buyWrong',
+    sellCorrect: 'sellCorrect',
+    sellWrong: 'sellWrong',
+    holdCorrect: 'holdCorrect',
+    holdWrong: 'holdWrong',
+    computedAt: 'computedAt'
+  };
+
+  export type RunSignalDiagnosticsScalarFieldEnum = (typeof RunSignalDiagnosticsScalarFieldEnum)[keyof typeof RunSignalDiagnosticsScalarFieldEnum]
+
+
   export const SortOrder: {
     asc: 'asc',
     desc: 'desc'
@@ -34497,6 +37920,13 @@ export namespace Prisma {
    * Reference to a field of type 'BetStatus[]'
    */
   export type ListEnumBetStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BetStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Boolean'
+   */
+  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
   /**
    * Deep Input Types
@@ -36847,6 +40277,291 @@ export namespace Prisma {
     corr?: FloatNullableWithAggregatesFilter<"BacktestResult"> | number | null
     directionalAccuracy?: FloatNullableWithAggregatesFilter<"BacktestResult"> | number | null
     createdAt?: DateTimeWithAggregatesFilter<"BacktestResult"> | Date | string
+  }
+
+  export type ForecastResultWhereInput = {
+    AND?: ForecastResultWhereInput | ForecastResultWhereInput[]
+    OR?: ForecastResultWhereInput[]
+    NOT?: ForecastResultWhereInput | ForecastResultWhereInput[]
+    id?: UuidFilter<"ForecastResult"> | string
+    runId?: UuidFilter<"ForecastResult"> | string
+    assetSymbol?: StringFilter<"ForecastResult"> | string
+    step?: IntFilter<"ForecastResult"> | number
+    forecastDirection?: EnumAgentDecisionActionFilter<"ForecastResult"> | $Enums.AgentDecisionAction
+    totalVotes?: IntFilter<"ForecastResult"> | number
+    buyVotes?: IntFilter<"ForecastResult"> | number
+    sellVotes?: IntFilter<"ForecastResult"> | number
+    holdVotes?: IntFilter<"ForecastResult"> | number
+    groundTruthDirection?: EnumAgentDecisionActionFilter<"ForecastResult"> | $Enums.AgentDecisionAction
+    isCorrect?: BoolFilter<"ForecastResult"> | boolean
+    createdAt?: DateTimeFilter<"ForecastResult"> | Date | string
+  }
+
+  export type ForecastResultOrderByWithRelationInput = {
+    id?: SortOrder
+    runId?: SortOrder
+    assetSymbol?: SortOrder
+    step?: SortOrder
+    forecastDirection?: SortOrder
+    totalVotes?: SortOrder
+    buyVotes?: SortOrder
+    sellVotes?: SortOrder
+    holdVotes?: SortOrder
+    groundTruthDirection?: SortOrder
+    isCorrect?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type ForecastResultWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    runId_assetSymbol_step?: ForecastResultRunIdAssetSymbolStepCompoundUniqueInput
+    AND?: ForecastResultWhereInput | ForecastResultWhereInput[]
+    OR?: ForecastResultWhereInput[]
+    NOT?: ForecastResultWhereInput | ForecastResultWhereInput[]
+    runId?: UuidFilter<"ForecastResult"> | string
+    assetSymbol?: StringFilter<"ForecastResult"> | string
+    step?: IntFilter<"ForecastResult"> | number
+    forecastDirection?: EnumAgentDecisionActionFilter<"ForecastResult"> | $Enums.AgentDecisionAction
+    totalVotes?: IntFilter<"ForecastResult"> | number
+    buyVotes?: IntFilter<"ForecastResult"> | number
+    sellVotes?: IntFilter<"ForecastResult"> | number
+    holdVotes?: IntFilter<"ForecastResult"> | number
+    groundTruthDirection?: EnumAgentDecisionActionFilter<"ForecastResult"> | $Enums.AgentDecisionAction
+    isCorrect?: BoolFilter<"ForecastResult"> | boolean
+    createdAt?: DateTimeFilter<"ForecastResult"> | Date | string
+  }, "id" | "runId_assetSymbol_step">
+
+  export type ForecastResultOrderByWithAggregationInput = {
+    id?: SortOrder
+    runId?: SortOrder
+    assetSymbol?: SortOrder
+    step?: SortOrder
+    forecastDirection?: SortOrder
+    totalVotes?: SortOrder
+    buyVotes?: SortOrder
+    sellVotes?: SortOrder
+    holdVotes?: SortOrder
+    groundTruthDirection?: SortOrder
+    isCorrect?: SortOrder
+    createdAt?: SortOrder
+    _count?: ForecastResultCountOrderByAggregateInput
+    _avg?: ForecastResultAvgOrderByAggregateInput
+    _max?: ForecastResultMaxOrderByAggregateInput
+    _min?: ForecastResultMinOrderByAggregateInput
+    _sum?: ForecastResultSumOrderByAggregateInput
+  }
+
+  export type ForecastResultScalarWhereWithAggregatesInput = {
+    AND?: ForecastResultScalarWhereWithAggregatesInput | ForecastResultScalarWhereWithAggregatesInput[]
+    OR?: ForecastResultScalarWhereWithAggregatesInput[]
+    NOT?: ForecastResultScalarWhereWithAggregatesInput | ForecastResultScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"ForecastResult"> | string
+    runId?: UuidWithAggregatesFilter<"ForecastResult"> | string
+    assetSymbol?: StringWithAggregatesFilter<"ForecastResult"> | string
+    step?: IntWithAggregatesFilter<"ForecastResult"> | number
+    forecastDirection?: EnumAgentDecisionActionWithAggregatesFilter<"ForecastResult"> | $Enums.AgentDecisionAction
+    totalVotes?: IntWithAggregatesFilter<"ForecastResult"> | number
+    buyVotes?: IntWithAggregatesFilter<"ForecastResult"> | number
+    sellVotes?: IntWithAggregatesFilter<"ForecastResult"> | number
+    holdVotes?: IntWithAggregatesFilter<"ForecastResult"> | number
+    groundTruthDirection?: EnumAgentDecisionActionWithAggregatesFilter<"ForecastResult"> | $Enums.AgentDecisionAction
+    isCorrect?: BoolWithAggregatesFilter<"ForecastResult"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"ForecastResult"> | Date | string
+  }
+
+  export type RunAccuracyWhereInput = {
+    AND?: RunAccuracyWhereInput | RunAccuracyWhereInput[]
+    OR?: RunAccuracyWhereInput[]
+    NOT?: RunAccuracyWhereInput | RunAccuracyWhereInput[]
+    id?: UuidFilter<"RunAccuracy"> | string
+    runId?: UuidFilter<"RunAccuracy"> | string
+    assetSymbol?: StringFilter<"RunAccuracy"> | string
+    totalEvaluations?: IntFilter<"RunAccuracy"> | number
+    correctCount?: IntFilter<"RunAccuracy"> | number
+    accuracyRate?: FloatFilter<"RunAccuracy"> | number
+    buyAccuracy?: FloatFilter<"RunAccuracy"> | number
+    sellAccuracy?: FloatFilter<"RunAccuracy"> | number
+    holdAccuracy?: FloatFilter<"RunAccuracy"> | number
+    computedAt?: DateTimeFilter<"RunAccuracy"> | Date | string
+  }
+
+  export type RunAccuracyOrderByWithRelationInput = {
+    id?: SortOrder
+    runId?: SortOrder
+    assetSymbol?: SortOrder
+    totalEvaluations?: SortOrder
+    correctCount?: SortOrder
+    accuracyRate?: SortOrder
+    buyAccuracy?: SortOrder
+    sellAccuracy?: SortOrder
+    holdAccuracy?: SortOrder
+    computedAt?: SortOrder
+  }
+
+  export type RunAccuracyWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    runId_assetSymbol?: RunAccuracyRunIdAssetSymbolCompoundUniqueInput
+    AND?: RunAccuracyWhereInput | RunAccuracyWhereInput[]
+    OR?: RunAccuracyWhereInput[]
+    NOT?: RunAccuracyWhereInput | RunAccuracyWhereInput[]
+    runId?: UuidFilter<"RunAccuracy"> | string
+    assetSymbol?: StringFilter<"RunAccuracy"> | string
+    totalEvaluations?: IntFilter<"RunAccuracy"> | number
+    correctCount?: IntFilter<"RunAccuracy"> | number
+    accuracyRate?: FloatFilter<"RunAccuracy"> | number
+    buyAccuracy?: FloatFilter<"RunAccuracy"> | number
+    sellAccuracy?: FloatFilter<"RunAccuracy"> | number
+    holdAccuracy?: FloatFilter<"RunAccuracy"> | number
+    computedAt?: DateTimeFilter<"RunAccuracy"> | Date | string
+  }, "id" | "runId_assetSymbol">
+
+  export type RunAccuracyOrderByWithAggregationInput = {
+    id?: SortOrder
+    runId?: SortOrder
+    assetSymbol?: SortOrder
+    totalEvaluations?: SortOrder
+    correctCount?: SortOrder
+    accuracyRate?: SortOrder
+    buyAccuracy?: SortOrder
+    sellAccuracy?: SortOrder
+    holdAccuracy?: SortOrder
+    computedAt?: SortOrder
+    _count?: RunAccuracyCountOrderByAggregateInput
+    _avg?: RunAccuracyAvgOrderByAggregateInput
+    _max?: RunAccuracyMaxOrderByAggregateInput
+    _min?: RunAccuracyMinOrderByAggregateInput
+    _sum?: RunAccuracySumOrderByAggregateInput
+  }
+
+  export type RunAccuracyScalarWhereWithAggregatesInput = {
+    AND?: RunAccuracyScalarWhereWithAggregatesInput | RunAccuracyScalarWhereWithAggregatesInput[]
+    OR?: RunAccuracyScalarWhereWithAggregatesInput[]
+    NOT?: RunAccuracyScalarWhereWithAggregatesInput | RunAccuracyScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"RunAccuracy"> | string
+    runId?: UuidWithAggregatesFilter<"RunAccuracy"> | string
+    assetSymbol?: StringWithAggregatesFilter<"RunAccuracy"> | string
+    totalEvaluations?: IntWithAggregatesFilter<"RunAccuracy"> | number
+    correctCount?: IntWithAggregatesFilter<"RunAccuracy"> | number
+    accuracyRate?: FloatWithAggregatesFilter<"RunAccuracy"> | number
+    buyAccuracy?: FloatWithAggregatesFilter<"RunAccuracy"> | number
+    sellAccuracy?: FloatWithAggregatesFilter<"RunAccuracy"> | number
+    holdAccuracy?: FloatWithAggregatesFilter<"RunAccuracy"> | number
+    computedAt?: DateTimeWithAggregatesFilter<"RunAccuracy"> | Date | string
+  }
+
+  export type RunSignalDiagnosticsWhereInput = {
+    AND?: RunSignalDiagnosticsWhereInput | RunSignalDiagnosticsWhereInput[]
+    OR?: RunSignalDiagnosticsWhereInput[]
+    NOT?: RunSignalDiagnosticsWhereInput | RunSignalDiagnosticsWhereInput[]
+    id?: UuidFilter<"RunSignalDiagnostics"> | string
+    runId?: UuidFilter<"RunSignalDiagnostics"> | string
+    assetSymbol?: StringFilter<"RunSignalDiagnostics"> | string
+    totalSteps?: IntFilter<"RunSignalDiagnostics"> | number
+    pctCrowdBuy?: FloatFilter<"RunSignalDiagnostics"> | number
+    pctCrowdSell?: FloatFilter<"RunSignalDiagnostics"> | number
+    pctCrowdHold?: FloatFilter<"RunSignalDiagnostics"> | number
+    pctMarketUp?: FloatFilter<"RunSignalDiagnostics"> | number
+    pctMarketDown?: FloatFilter<"RunSignalDiagnostics"> | number
+    pctMarketFlat?: FloatFilter<"RunSignalDiagnostics"> | number
+    buyCorrect?: IntFilter<"RunSignalDiagnostics"> | number
+    buyWrong?: IntFilter<"RunSignalDiagnostics"> | number
+    sellCorrect?: IntFilter<"RunSignalDiagnostics"> | number
+    sellWrong?: IntFilter<"RunSignalDiagnostics"> | number
+    holdCorrect?: IntFilter<"RunSignalDiagnostics"> | number
+    holdWrong?: IntFilter<"RunSignalDiagnostics"> | number
+    computedAt?: DateTimeFilter<"RunSignalDiagnostics"> | Date | string
+  }
+
+  export type RunSignalDiagnosticsOrderByWithRelationInput = {
+    id?: SortOrder
+    runId?: SortOrder
+    assetSymbol?: SortOrder
+    totalSteps?: SortOrder
+    pctCrowdBuy?: SortOrder
+    pctCrowdSell?: SortOrder
+    pctCrowdHold?: SortOrder
+    pctMarketUp?: SortOrder
+    pctMarketDown?: SortOrder
+    pctMarketFlat?: SortOrder
+    buyCorrect?: SortOrder
+    buyWrong?: SortOrder
+    sellCorrect?: SortOrder
+    sellWrong?: SortOrder
+    holdCorrect?: SortOrder
+    holdWrong?: SortOrder
+    computedAt?: SortOrder
+  }
+
+  export type RunSignalDiagnosticsWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    runId_assetSymbol?: RunSignalDiagnosticsRunIdAssetSymbolCompoundUniqueInput
+    AND?: RunSignalDiagnosticsWhereInput | RunSignalDiagnosticsWhereInput[]
+    OR?: RunSignalDiagnosticsWhereInput[]
+    NOT?: RunSignalDiagnosticsWhereInput | RunSignalDiagnosticsWhereInput[]
+    runId?: UuidFilter<"RunSignalDiagnostics"> | string
+    assetSymbol?: StringFilter<"RunSignalDiagnostics"> | string
+    totalSteps?: IntFilter<"RunSignalDiagnostics"> | number
+    pctCrowdBuy?: FloatFilter<"RunSignalDiagnostics"> | number
+    pctCrowdSell?: FloatFilter<"RunSignalDiagnostics"> | number
+    pctCrowdHold?: FloatFilter<"RunSignalDiagnostics"> | number
+    pctMarketUp?: FloatFilter<"RunSignalDiagnostics"> | number
+    pctMarketDown?: FloatFilter<"RunSignalDiagnostics"> | number
+    pctMarketFlat?: FloatFilter<"RunSignalDiagnostics"> | number
+    buyCorrect?: IntFilter<"RunSignalDiagnostics"> | number
+    buyWrong?: IntFilter<"RunSignalDiagnostics"> | number
+    sellCorrect?: IntFilter<"RunSignalDiagnostics"> | number
+    sellWrong?: IntFilter<"RunSignalDiagnostics"> | number
+    holdCorrect?: IntFilter<"RunSignalDiagnostics"> | number
+    holdWrong?: IntFilter<"RunSignalDiagnostics"> | number
+    computedAt?: DateTimeFilter<"RunSignalDiagnostics"> | Date | string
+  }, "id" | "runId_assetSymbol">
+
+  export type RunSignalDiagnosticsOrderByWithAggregationInput = {
+    id?: SortOrder
+    runId?: SortOrder
+    assetSymbol?: SortOrder
+    totalSteps?: SortOrder
+    pctCrowdBuy?: SortOrder
+    pctCrowdSell?: SortOrder
+    pctCrowdHold?: SortOrder
+    pctMarketUp?: SortOrder
+    pctMarketDown?: SortOrder
+    pctMarketFlat?: SortOrder
+    buyCorrect?: SortOrder
+    buyWrong?: SortOrder
+    sellCorrect?: SortOrder
+    sellWrong?: SortOrder
+    holdCorrect?: SortOrder
+    holdWrong?: SortOrder
+    computedAt?: SortOrder
+    _count?: RunSignalDiagnosticsCountOrderByAggregateInput
+    _avg?: RunSignalDiagnosticsAvgOrderByAggregateInput
+    _max?: RunSignalDiagnosticsMaxOrderByAggregateInput
+    _min?: RunSignalDiagnosticsMinOrderByAggregateInput
+    _sum?: RunSignalDiagnosticsSumOrderByAggregateInput
+  }
+
+  export type RunSignalDiagnosticsScalarWhereWithAggregatesInput = {
+    AND?: RunSignalDiagnosticsScalarWhereWithAggregatesInput | RunSignalDiagnosticsScalarWhereWithAggregatesInput[]
+    OR?: RunSignalDiagnosticsScalarWhereWithAggregatesInput[]
+    NOT?: RunSignalDiagnosticsScalarWhereWithAggregatesInput | RunSignalDiagnosticsScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"RunSignalDiagnostics"> | string
+    runId?: UuidWithAggregatesFilter<"RunSignalDiagnostics"> | string
+    assetSymbol?: StringWithAggregatesFilter<"RunSignalDiagnostics"> | string
+    totalSteps?: IntWithAggregatesFilter<"RunSignalDiagnostics"> | number
+    pctCrowdBuy?: FloatWithAggregatesFilter<"RunSignalDiagnostics"> | number
+    pctCrowdSell?: FloatWithAggregatesFilter<"RunSignalDiagnostics"> | number
+    pctCrowdHold?: FloatWithAggregatesFilter<"RunSignalDiagnostics"> | number
+    pctMarketUp?: FloatWithAggregatesFilter<"RunSignalDiagnostics"> | number
+    pctMarketDown?: FloatWithAggregatesFilter<"RunSignalDiagnostics"> | number
+    pctMarketFlat?: FloatWithAggregatesFilter<"RunSignalDiagnostics"> | number
+    buyCorrect?: IntWithAggregatesFilter<"RunSignalDiagnostics"> | number
+    buyWrong?: IntWithAggregatesFilter<"RunSignalDiagnostics"> | number
+    sellCorrect?: IntWithAggregatesFilter<"RunSignalDiagnostics"> | number
+    sellWrong?: IntWithAggregatesFilter<"RunSignalDiagnostics"> | number
+    holdCorrect?: IntWithAggregatesFilter<"RunSignalDiagnostics"> | number
+    holdWrong?: IntWithAggregatesFilter<"RunSignalDiagnostics"> | number
+    computedAt?: DateTimeWithAggregatesFilter<"RunSignalDiagnostics"> | Date | string
   }
 
   export type ArchetypeCreateInput = {
@@ -39380,6 +43095,342 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type ForecastResultCreateInput = {
+    id?: string
+    runId: string
+    assetSymbol: string
+    step: number
+    forecastDirection: $Enums.AgentDecisionAction
+    totalVotes: number
+    buyVotes: number
+    sellVotes: number
+    holdVotes: number
+    groundTruthDirection: $Enums.AgentDecisionAction
+    isCorrect: boolean
+    createdAt?: Date | string
+  }
+
+  export type ForecastResultUncheckedCreateInput = {
+    id?: string
+    runId: string
+    assetSymbol: string
+    step: number
+    forecastDirection: $Enums.AgentDecisionAction
+    totalVotes: number
+    buyVotes: number
+    sellVotes: number
+    holdVotes: number
+    groundTruthDirection: $Enums.AgentDecisionAction
+    isCorrect: boolean
+    createdAt?: Date | string
+  }
+
+  export type ForecastResultUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    step?: IntFieldUpdateOperationsInput | number
+    forecastDirection?: EnumAgentDecisionActionFieldUpdateOperationsInput | $Enums.AgentDecisionAction
+    totalVotes?: IntFieldUpdateOperationsInput | number
+    buyVotes?: IntFieldUpdateOperationsInput | number
+    sellVotes?: IntFieldUpdateOperationsInput | number
+    holdVotes?: IntFieldUpdateOperationsInput | number
+    groundTruthDirection?: EnumAgentDecisionActionFieldUpdateOperationsInput | $Enums.AgentDecisionAction
+    isCorrect?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ForecastResultUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    step?: IntFieldUpdateOperationsInput | number
+    forecastDirection?: EnumAgentDecisionActionFieldUpdateOperationsInput | $Enums.AgentDecisionAction
+    totalVotes?: IntFieldUpdateOperationsInput | number
+    buyVotes?: IntFieldUpdateOperationsInput | number
+    sellVotes?: IntFieldUpdateOperationsInput | number
+    holdVotes?: IntFieldUpdateOperationsInput | number
+    groundTruthDirection?: EnumAgentDecisionActionFieldUpdateOperationsInput | $Enums.AgentDecisionAction
+    isCorrect?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ForecastResultCreateManyInput = {
+    id?: string
+    runId: string
+    assetSymbol: string
+    step: number
+    forecastDirection: $Enums.AgentDecisionAction
+    totalVotes: number
+    buyVotes: number
+    sellVotes: number
+    holdVotes: number
+    groundTruthDirection: $Enums.AgentDecisionAction
+    isCorrect: boolean
+    createdAt?: Date | string
+  }
+
+  export type ForecastResultUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    step?: IntFieldUpdateOperationsInput | number
+    forecastDirection?: EnumAgentDecisionActionFieldUpdateOperationsInput | $Enums.AgentDecisionAction
+    totalVotes?: IntFieldUpdateOperationsInput | number
+    buyVotes?: IntFieldUpdateOperationsInput | number
+    sellVotes?: IntFieldUpdateOperationsInput | number
+    holdVotes?: IntFieldUpdateOperationsInput | number
+    groundTruthDirection?: EnumAgentDecisionActionFieldUpdateOperationsInput | $Enums.AgentDecisionAction
+    isCorrect?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ForecastResultUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    step?: IntFieldUpdateOperationsInput | number
+    forecastDirection?: EnumAgentDecisionActionFieldUpdateOperationsInput | $Enums.AgentDecisionAction
+    totalVotes?: IntFieldUpdateOperationsInput | number
+    buyVotes?: IntFieldUpdateOperationsInput | number
+    sellVotes?: IntFieldUpdateOperationsInput | number
+    holdVotes?: IntFieldUpdateOperationsInput | number
+    groundTruthDirection?: EnumAgentDecisionActionFieldUpdateOperationsInput | $Enums.AgentDecisionAction
+    isCorrect?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RunAccuracyCreateInput = {
+    id?: string
+    runId: string
+    assetSymbol: string
+    totalEvaluations: number
+    correctCount: number
+    accuracyRate: number
+    buyAccuracy: number
+    sellAccuracy: number
+    holdAccuracy: number
+    computedAt?: Date | string
+  }
+
+  export type RunAccuracyUncheckedCreateInput = {
+    id?: string
+    runId: string
+    assetSymbol: string
+    totalEvaluations: number
+    correctCount: number
+    accuracyRate: number
+    buyAccuracy: number
+    sellAccuracy: number
+    holdAccuracy: number
+    computedAt?: Date | string
+  }
+
+  export type RunAccuracyUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    totalEvaluations?: IntFieldUpdateOperationsInput | number
+    correctCount?: IntFieldUpdateOperationsInput | number
+    accuracyRate?: FloatFieldUpdateOperationsInput | number
+    buyAccuracy?: FloatFieldUpdateOperationsInput | number
+    sellAccuracy?: FloatFieldUpdateOperationsInput | number
+    holdAccuracy?: FloatFieldUpdateOperationsInput | number
+    computedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RunAccuracyUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    totalEvaluations?: IntFieldUpdateOperationsInput | number
+    correctCount?: IntFieldUpdateOperationsInput | number
+    accuracyRate?: FloatFieldUpdateOperationsInput | number
+    buyAccuracy?: FloatFieldUpdateOperationsInput | number
+    sellAccuracy?: FloatFieldUpdateOperationsInput | number
+    holdAccuracy?: FloatFieldUpdateOperationsInput | number
+    computedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RunAccuracyCreateManyInput = {
+    id?: string
+    runId: string
+    assetSymbol: string
+    totalEvaluations: number
+    correctCount: number
+    accuracyRate: number
+    buyAccuracy: number
+    sellAccuracy: number
+    holdAccuracy: number
+    computedAt?: Date | string
+  }
+
+  export type RunAccuracyUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    totalEvaluations?: IntFieldUpdateOperationsInput | number
+    correctCount?: IntFieldUpdateOperationsInput | number
+    accuracyRate?: FloatFieldUpdateOperationsInput | number
+    buyAccuracy?: FloatFieldUpdateOperationsInput | number
+    sellAccuracy?: FloatFieldUpdateOperationsInput | number
+    holdAccuracy?: FloatFieldUpdateOperationsInput | number
+    computedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RunAccuracyUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    totalEvaluations?: IntFieldUpdateOperationsInput | number
+    correctCount?: IntFieldUpdateOperationsInput | number
+    accuracyRate?: FloatFieldUpdateOperationsInput | number
+    buyAccuracy?: FloatFieldUpdateOperationsInput | number
+    sellAccuracy?: FloatFieldUpdateOperationsInput | number
+    holdAccuracy?: FloatFieldUpdateOperationsInput | number
+    computedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RunSignalDiagnosticsCreateInput = {
+    id?: string
+    runId: string
+    assetSymbol: string
+    totalSteps: number
+    pctCrowdBuy: number
+    pctCrowdSell: number
+    pctCrowdHold: number
+    pctMarketUp: number
+    pctMarketDown: number
+    pctMarketFlat: number
+    buyCorrect: number
+    buyWrong: number
+    sellCorrect: number
+    sellWrong: number
+    holdCorrect: number
+    holdWrong: number
+    computedAt?: Date | string
+  }
+
+  export type RunSignalDiagnosticsUncheckedCreateInput = {
+    id?: string
+    runId: string
+    assetSymbol: string
+    totalSteps: number
+    pctCrowdBuy: number
+    pctCrowdSell: number
+    pctCrowdHold: number
+    pctMarketUp: number
+    pctMarketDown: number
+    pctMarketFlat: number
+    buyCorrect: number
+    buyWrong: number
+    sellCorrect: number
+    sellWrong: number
+    holdCorrect: number
+    holdWrong: number
+    computedAt?: Date | string
+  }
+
+  export type RunSignalDiagnosticsUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    totalSteps?: IntFieldUpdateOperationsInput | number
+    pctCrowdBuy?: FloatFieldUpdateOperationsInput | number
+    pctCrowdSell?: FloatFieldUpdateOperationsInput | number
+    pctCrowdHold?: FloatFieldUpdateOperationsInput | number
+    pctMarketUp?: FloatFieldUpdateOperationsInput | number
+    pctMarketDown?: FloatFieldUpdateOperationsInput | number
+    pctMarketFlat?: FloatFieldUpdateOperationsInput | number
+    buyCorrect?: IntFieldUpdateOperationsInput | number
+    buyWrong?: IntFieldUpdateOperationsInput | number
+    sellCorrect?: IntFieldUpdateOperationsInput | number
+    sellWrong?: IntFieldUpdateOperationsInput | number
+    holdCorrect?: IntFieldUpdateOperationsInput | number
+    holdWrong?: IntFieldUpdateOperationsInput | number
+    computedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RunSignalDiagnosticsUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    totalSteps?: IntFieldUpdateOperationsInput | number
+    pctCrowdBuy?: FloatFieldUpdateOperationsInput | number
+    pctCrowdSell?: FloatFieldUpdateOperationsInput | number
+    pctCrowdHold?: FloatFieldUpdateOperationsInput | number
+    pctMarketUp?: FloatFieldUpdateOperationsInput | number
+    pctMarketDown?: FloatFieldUpdateOperationsInput | number
+    pctMarketFlat?: FloatFieldUpdateOperationsInput | number
+    buyCorrect?: IntFieldUpdateOperationsInput | number
+    buyWrong?: IntFieldUpdateOperationsInput | number
+    sellCorrect?: IntFieldUpdateOperationsInput | number
+    sellWrong?: IntFieldUpdateOperationsInput | number
+    holdCorrect?: IntFieldUpdateOperationsInput | number
+    holdWrong?: IntFieldUpdateOperationsInput | number
+    computedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RunSignalDiagnosticsCreateManyInput = {
+    id?: string
+    runId: string
+    assetSymbol: string
+    totalSteps: number
+    pctCrowdBuy: number
+    pctCrowdSell: number
+    pctCrowdHold: number
+    pctMarketUp: number
+    pctMarketDown: number
+    pctMarketFlat: number
+    buyCorrect: number
+    buyWrong: number
+    sellCorrect: number
+    sellWrong: number
+    holdCorrect: number
+    holdWrong: number
+    computedAt?: Date | string
+  }
+
+  export type RunSignalDiagnosticsUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    totalSteps?: IntFieldUpdateOperationsInput | number
+    pctCrowdBuy?: FloatFieldUpdateOperationsInput | number
+    pctCrowdSell?: FloatFieldUpdateOperationsInput | number
+    pctCrowdHold?: FloatFieldUpdateOperationsInput | number
+    pctMarketUp?: FloatFieldUpdateOperationsInput | number
+    pctMarketDown?: FloatFieldUpdateOperationsInput | number
+    pctMarketFlat?: FloatFieldUpdateOperationsInput | number
+    buyCorrect?: IntFieldUpdateOperationsInput | number
+    buyWrong?: IntFieldUpdateOperationsInput | number
+    sellCorrect?: IntFieldUpdateOperationsInput | number
+    sellWrong?: IntFieldUpdateOperationsInput | number
+    holdCorrect?: IntFieldUpdateOperationsInput | number
+    holdWrong?: IntFieldUpdateOperationsInput | number
+    computedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RunSignalDiagnosticsUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    assetSymbol?: StringFieldUpdateOperationsInput | string
+    totalSteps?: IntFieldUpdateOperationsInput | number
+    pctCrowdBuy?: FloatFieldUpdateOperationsInput | number
+    pctCrowdSell?: FloatFieldUpdateOperationsInput | number
+    pctCrowdHold?: FloatFieldUpdateOperationsInput | number
+    pctMarketUp?: FloatFieldUpdateOperationsInput | number
+    pctMarketDown?: FloatFieldUpdateOperationsInput | number
+    pctMarketFlat?: FloatFieldUpdateOperationsInput | number
+    buyCorrect?: IntFieldUpdateOperationsInput | number
+    buyWrong?: IntFieldUpdateOperationsInput | number
+    sellCorrect?: IntFieldUpdateOperationsInput | number
+    sellWrong?: IntFieldUpdateOperationsInput | number
+    holdCorrect?: IntFieldUpdateOperationsInput | number
+    holdWrong?: IntFieldUpdateOperationsInput | number
+    computedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type UuidFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -41434,6 +45485,245 @@ export namespace Prisma {
     directionalAccuracy?: SortOrder
   }
 
+  export type BoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
+  export type ForecastResultRunIdAssetSymbolStepCompoundUniqueInput = {
+    runId: string
+    assetSymbol: string
+    step: number
+  }
+
+  export type ForecastResultCountOrderByAggregateInput = {
+    id?: SortOrder
+    runId?: SortOrder
+    assetSymbol?: SortOrder
+    step?: SortOrder
+    forecastDirection?: SortOrder
+    totalVotes?: SortOrder
+    buyVotes?: SortOrder
+    sellVotes?: SortOrder
+    holdVotes?: SortOrder
+    groundTruthDirection?: SortOrder
+    isCorrect?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type ForecastResultAvgOrderByAggregateInput = {
+    step?: SortOrder
+    totalVotes?: SortOrder
+    buyVotes?: SortOrder
+    sellVotes?: SortOrder
+    holdVotes?: SortOrder
+  }
+
+  export type ForecastResultMaxOrderByAggregateInput = {
+    id?: SortOrder
+    runId?: SortOrder
+    assetSymbol?: SortOrder
+    step?: SortOrder
+    forecastDirection?: SortOrder
+    totalVotes?: SortOrder
+    buyVotes?: SortOrder
+    sellVotes?: SortOrder
+    holdVotes?: SortOrder
+    groundTruthDirection?: SortOrder
+    isCorrect?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type ForecastResultMinOrderByAggregateInput = {
+    id?: SortOrder
+    runId?: SortOrder
+    assetSymbol?: SortOrder
+    step?: SortOrder
+    forecastDirection?: SortOrder
+    totalVotes?: SortOrder
+    buyVotes?: SortOrder
+    sellVotes?: SortOrder
+    holdVotes?: SortOrder
+    groundTruthDirection?: SortOrder
+    isCorrect?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type ForecastResultSumOrderByAggregateInput = {
+    step?: SortOrder
+    totalVotes?: SortOrder
+    buyVotes?: SortOrder
+    sellVotes?: SortOrder
+    holdVotes?: SortOrder
+  }
+
+  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
+
+  export type RunAccuracyRunIdAssetSymbolCompoundUniqueInput = {
+    runId: string
+    assetSymbol: string
+  }
+
+  export type RunAccuracyCountOrderByAggregateInput = {
+    id?: SortOrder
+    runId?: SortOrder
+    assetSymbol?: SortOrder
+    totalEvaluations?: SortOrder
+    correctCount?: SortOrder
+    accuracyRate?: SortOrder
+    buyAccuracy?: SortOrder
+    sellAccuracy?: SortOrder
+    holdAccuracy?: SortOrder
+    computedAt?: SortOrder
+  }
+
+  export type RunAccuracyAvgOrderByAggregateInput = {
+    totalEvaluations?: SortOrder
+    correctCount?: SortOrder
+    accuracyRate?: SortOrder
+    buyAccuracy?: SortOrder
+    sellAccuracy?: SortOrder
+    holdAccuracy?: SortOrder
+  }
+
+  export type RunAccuracyMaxOrderByAggregateInput = {
+    id?: SortOrder
+    runId?: SortOrder
+    assetSymbol?: SortOrder
+    totalEvaluations?: SortOrder
+    correctCount?: SortOrder
+    accuracyRate?: SortOrder
+    buyAccuracy?: SortOrder
+    sellAccuracy?: SortOrder
+    holdAccuracy?: SortOrder
+    computedAt?: SortOrder
+  }
+
+  export type RunAccuracyMinOrderByAggregateInput = {
+    id?: SortOrder
+    runId?: SortOrder
+    assetSymbol?: SortOrder
+    totalEvaluations?: SortOrder
+    correctCount?: SortOrder
+    accuracyRate?: SortOrder
+    buyAccuracy?: SortOrder
+    sellAccuracy?: SortOrder
+    holdAccuracy?: SortOrder
+    computedAt?: SortOrder
+  }
+
+  export type RunAccuracySumOrderByAggregateInput = {
+    totalEvaluations?: SortOrder
+    correctCount?: SortOrder
+    accuracyRate?: SortOrder
+    buyAccuracy?: SortOrder
+    sellAccuracy?: SortOrder
+    holdAccuracy?: SortOrder
+  }
+
+  export type RunSignalDiagnosticsRunIdAssetSymbolCompoundUniqueInput = {
+    runId: string
+    assetSymbol: string
+  }
+
+  export type RunSignalDiagnosticsCountOrderByAggregateInput = {
+    id?: SortOrder
+    runId?: SortOrder
+    assetSymbol?: SortOrder
+    totalSteps?: SortOrder
+    pctCrowdBuy?: SortOrder
+    pctCrowdSell?: SortOrder
+    pctCrowdHold?: SortOrder
+    pctMarketUp?: SortOrder
+    pctMarketDown?: SortOrder
+    pctMarketFlat?: SortOrder
+    buyCorrect?: SortOrder
+    buyWrong?: SortOrder
+    sellCorrect?: SortOrder
+    sellWrong?: SortOrder
+    holdCorrect?: SortOrder
+    holdWrong?: SortOrder
+    computedAt?: SortOrder
+  }
+
+  export type RunSignalDiagnosticsAvgOrderByAggregateInput = {
+    totalSteps?: SortOrder
+    pctCrowdBuy?: SortOrder
+    pctCrowdSell?: SortOrder
+    pctCrowdHold?: SortOrder
+    pctMarketUp?: SortOrder
+    pctMarketDown?: SortOrder
+    pctMarketFlat?: SortOrder
+    buyCorrect?: SortOrder
+    buyWrong?: SortOrder
+    sellCorrect?: SortOrder
+    sellWrong?: SortOrder
+    holdCorrect?: SortOrder
+    holdWrong?: SortOrder
+  }
+
+  export type RunSignalDiagnosticsMaxOrderByAggregateInput = {
+    id?: SortOrder
+    runId?: SortOrder
+    assetSymbol?: SortOrder
+    totalSteps?: SortOrder
+    pctCrowdBuy?: SortOrder
+    pctCrowdSell?: SortOrder
+    pctCrowdHold?: SortOrder
+    pctMarketUp?: SortOrder
+    pctMarketDown?: SortOrder
+    pctMarketFlat?: SortOrder
+    buyCorrect?: SortOrder
+    buyWrong?: SortOrder
+    sellCorrect?: SortOrder
+    sellWrong?: SortOrder
+    holdCorrect?: SortOrder
+    holdWrong?: SortOrder
+    computedAt?: SortOrder
+  }
+
+  export type RunSignalDiagnosticsMinOrderByAggregateInput = {
+    id?: SortOrder
+    runId?: SortOrder
+    assetSymbol?: SortOrder
+    totalSteps?: SortOrder
+    pctCrowdBuy?: SortOrder
+    pctCrowdSell?: SortOrder
+    pctCrowdHold?: SortOrder
+    pctMarketUp?: SortOrder
+    pctMarketDown?: SortOrder
+    pctMarketFlat?: SortOrder
+    buyCorrect?: SortOrder
+    buyWrong?: SortOrder
+    sellCorrect?: SortOrder
+    sellWrong?: SortOrder
+    holdCorrect?: SortOrder
+    holdWrong?: SortOrder
+    computedAt?: SortOrder
+  }
+
+  export type RunSignalDiagnosticsSumOrderByAggregateInput = {
+    totalSteps?: SortOrder
+    pctCrowdBuy?: SortOrder
+    pctCrowdSell?: SortOrder
+    pctCrowdHold?: SortOrder
+    pctMarketUp?: SortOrder
+    pctMarketDown?: SortOrder
+    pctMarketFlat?: SortOrder
+    buyCorrect?: SortOrder
+    buyWrong?: SortOrder
+    sellCorrect?: SortOrder
+    sellWrong?: SortOrder
+    holdCorrect?: SortOrder
+    holdWrong?: SortOrder
+  }
+
   export type ArchetypeTraitProfileCreateNestedManyWithoutArchetypeInput = {
     create?: XOR<ArchetypeTraitProfileCreateWithoutArchetypeInput, ArchetypeTraitProfileUncheckedCreateWithoutArchetypeInput> | ArchetypeTraitProfileCreateWithoutArchetypeInput[] | ArchetypeTraitProfileUncheckedCreateWithoutArchetypeInput[]
     connectOrCreate?: ArchetypeTraitProfileCreateOrConnectWithoutArchetypeInput | ArchetypeTraitProfileCreateOrConnectWithoutArchetypeInput[]
@@ -43394,6 +47684,10 @@ export namespace Prisma {
     update?: XOR<XOR<RunVariantUpdateToOneWithWhereWithoutBacktestResultsInput, RunVariantUpdateWithoutBacktestResultsInput>, RunVariantUncheckedUpdateWithoutBacktestResultsInput>
   }
 
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
+  }
+
   export type NestedUuidFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -43769,6 +48063,19 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumBetStatusFilter<$PrismaModel>
     _max?: NestedEnumBetStatusFilter<$PrismaModel>
+  }
+
+  export type NestedBoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
+  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type ArchetypeTraitProfileCreateWithoutArchetypeInput = {
@@ -51366,6 +55673,18 @@ export namespace Prisma {
      * @deprecated Use BacktestResultDefaultArgs instead
      */
     export type BacktestResultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = BacktestResultDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use ForecastResultDefaultArgs instead
+     */
+    export type ForecastResultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ForecastResultDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use RunAccuracyDefaultArgs instead
+     */
+    export type RunAccuracyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = RunAccuracyDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use RunSignalDiagnosticsDefaultArgs instead
+     */
+    export type RunSignalDiagnosticsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = RunSignalDiagnosticsDefaultArgs<ExtArgs>
 
   /**
    * Batch Payload for updateMany & deleteMany & createMany

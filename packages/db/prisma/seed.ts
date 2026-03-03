@@ -46,6 +46,12 @@ const TRAIT_VALUE_RANGE_DEFAULT = "0..1 (default)";
 
 const SEED_DEBUG = process.env.SEED_DEBUG === "1";
 
+/** Path to SPY CSV (same source as spy29-returns). From packages/db: repo root. */
+const SPY_CSV_PATHS = [
+  path.resolve(__dirname, "../../../apps/worker/data/market/spy.us.daily.sample.csv"),
+  path.resolve(__dirname, "../../apps/worker/data/market/spy.us.daily.sample.csv"),
+];
+
 let datasetVersion = "";
 let archetypeReport = {
   totalTraitColumns: 0,
@@ -605,7 +611,58 @@ async function main() {
 
   await seedAgents();
   await seedSimulationRun();
+  await seedPriceSeriesPoint();
   printReport(importRunIds, "success");
+}
+
+/** Seed PriceSeriesPoint from local SPY CSV. Idempotent upsert by (symbol, date). */
+async function seedPriceSeriesPoint() {
+  const csvPath = SPY_CSV_PATHS.find((p) => fs.existsSync(p));
+  if (!csvPath) {
+    console.warn("SPY CSV not found; skipping PriceSeriesPoint seed. Tried:", SPY_CSV_PATHS.join(", "));
+    return;
+  }
+  const content = fs.readFileSync(csvPath, "utf8");
+  const lines = content.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  if (lines.length < 2) return;
+  const headers = lines[0].split(",").map((h) => h.trim());
+  const dateIdx = headers.indexOf("date");
+  const closeIdx = headers.indexOf("close");
+  if (dateIdx === -1 || closeIdx === -1) return;
+
+  const spyRows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cols = lines[i].split(",").map((c) => c.trim());
+    const date = cols[dateIdx];
+    const close = parseFloat(cols[closeIdx] ?? "");
+    if (!date || !Number.isFinite(close)) continue;
+    await prisma.priceSeriesPoint.upsert({
+      where: { symbol_date: { symbol: "SPY", date } },
+      create: { symbol: "SPY", date, close },
+      update: { close },
+    });
+    spyRows.push({ date, close });
+  }
+  if (spyRows.length > 0) {
+    console.log("PriceSeriesPoint: seeded", spyRows.length, "SPY rows");
+  }
+  if (spyRows.length >= 29) {
+    let qqqCount = 0;
+    for (let i = 0; i < spyRows.length; i++) {
+      const { date, close } = spyRows[i];
+      const closeQQQ = close * (1.02 + 0.01 * Math.sin(i));
+      if (!Number.isFinite(closeQQQ) || closeQQQ <= 0) continue;
+      await prisma.priceSeriesPoint.upsert({
+        where: { symbol_date: { symbol: "QQQ", date } },
+        create: { symbol: "QQQ", date, close: closeQQQ },
+        update: { close: closeQQQ },
+      });
+      qqqCount++;
+    }
+    if (qqqCount > 0) {
+      console.log("PriceSeriesPoint: seeded", qqqCount, "QQQ rows (derived from SPY)");
+    }
+  }
 }
 
 main()

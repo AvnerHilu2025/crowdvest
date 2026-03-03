@@ -2,6 +2,10 @@
 
 Minimal web UI to view simulation results. Functionality only; no styling focus.
 
+## When you see 427.js / routes-manifest missing (500 errors)
+
+Next.js can serve stale or corrupted build artifacts (e.g. `Cannot find module './427.js'`, missing `routes-manifest.json`). Common causes: concurrent `next dev` processes, interrupted builds, or leftover `.next` from a different branch. **Recovery:** run `pnpm -C apps/web reset:next` then restart `pnpm -C apps/web dev`.
+
 ## Run
 
 1. Start the API (must be reachable by the browser):

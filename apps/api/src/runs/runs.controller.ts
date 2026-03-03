@@ -16,6 +16,7 @@ import {
 } from "@nestjs/common";
 import { Request } from "express";
 import { randomUUID } from "crypto";
+import { ForecastService } from "../forecast/forecast.service";
 import { ResultsService } from "../results/results.service";
 import { TimeseriesService } from "../timeseries/timeseries.service";
 import { RunsService } from "./runs.service";
@@ -32,6 +33,7 @@ export class RunsController {
     private readonly resultsService: ResultsService,
     private readonly timeseriesService: TimeseriesService,
     private readonly runQueue: RunQueueService,
+    private readonly forecastService: ForecastService,
   ) {}
 
   /** POST /runs — create a new run. Body: { name?: string; autoImport?: boolean; assetSymbol?: string; steps?: number; source?: string }. Returns { id }. If autoImport=true, imports default SPY price data. */
@@ -76,6 +78,40 @@ export class RunsController {
     }
   }
 
+  /** POST /runs/import/prices — import from PriceSeriesPoint. Query: symbols=SPY,QQQ (required, 1..10), points=29 (default, 2..365), nameSuffix optional. Creates one run, imports all symbols, enqueues backtest per symbol. */
+  @Post("runs/import/prices")
+  @HttpCode(HttpStatus.OK)
+  async importPrices(
+    @Query("symbols") symbolsStr?: string,
+    @Query("points") pointsStr?: string,
+    @Query("nameSuffix") nameSuffix?: string,
+  ) {
+    const symbols = (symbolsStr ?? "")
+      .split(",")
+      .map((s) => s.trim().toUpperCase())
+      .filter(Boolean)
+      .filter((s, i, arr) => arr.indexOf(s) === i)
+      .slice(0, 10);
+    if (symbols.length === 0) throw new BadRequestException("symbols is required (e.g. SPY,QQQ)");
+    const points = Math.min(Math.max(2, parseInt(pointsStr ?? "29", 10) || 29), 365);
+    const seeds = [1, 2];
+    const result = await this.runsService.importFromPrices({
+      symbols,
+      points,
+      nameSuffix: nameSuffix?.trim() || undefined,
+      seeds,
+    });
+    const er = await this.runQueue.enqueueBacktest(result.runId, {
+      assetSymbol: result.symbols.length === 1 ? result.symbols[0]! : "",
+      symbols: result.symbols,
+      steps: result.points,
+      agents: 50,
+      seedStart: 1,
+      seeds,
+    });
+    return { runId: result.runId, ok: true, symbols: result.symbols, points: result.points, enqueued: er.enqueued ?? false };
+  }
+
   /** POST /runs/import/spy29 — create 29 AssetStepReturn rows for SPY. Body: { runId? } (optional). Idempotent. If runId omitted, creates a new run with spy29 dataset and imports. Auto-enqueues backtest when dataset ready (count=29). */
   @Post("runs/import/spy29")
   @HttpCode(HttpStatus.OK)
@@ -83,7 +119,7 @@ export class RunsController {
     const runId = (body?.runId ?? "").trim();
     if (runId && !UUID_REGEX.test(runId)) throw new BadRequestException("runId must be a UUID");
     const result = await this.runsService.importSpy29OrCreate(runId || undefined);
-    if (result.count === 29) {
+    if (result.count >= 29) {
       const enqueueResult = await this.runQueue.enqueueBacktest(result.runId, {
         assetSymbol: "SPY",
         steps: 29,
@@ -215,6 +251,18 @@ export class RunsController {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+
+  /** GET /runs/:id/accuracy?overwrite=true|false — Forecast Accuracy + Signal Diagnostics. Returns { items: RunAccuracy[], diagnostics: RunSignalDiagnostics[] }. */
+  @Get("runs/:id/accuracy")
+  async getAccuracy(
+    @Param("id") runId: string,
+    @Query("overwrite") overwrite?: string,
+  ) {
+    const id = runId?.trim() ?? "";
+    if (id === "" || !UUID_REGEX.test(id)) throw new BadRequestException("run id must be a UUID");
+    const overwriteFlag = overwrite === "true";
+    return this.forecastService.computeRunAccuracy(id, { overwrite: overwriteFlag });
   }
 
   /** GET /runs/:id/summary?assetSymbol=SPY — read-only snapshot for run+asset (counts, latest crowd, backtest, health). */

@@ -52,7 +52,7 @@ export function AgreementTimeline({ stepAgreement }: AgreementTimelineProps) {
               tickFormatter={(v) => `${Math.round(v * 100)}%`}
             />
             <Tooltip
-              formatter={(value: number) => [`${(value * 100).toFixed(1)}%`, "Agreement"]}
+              formatter={(value: number | undefined) => [`${((value ?? 0) * 100).toFixed(1)}%`, "Agreement"]}
               labelFormatter={(label) => `Step ${label}`}
             />
             <ReferenceArea

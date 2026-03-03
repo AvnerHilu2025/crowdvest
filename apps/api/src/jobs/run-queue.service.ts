@@ -7,6 +7,8 @@ import { PrismaService } from "../prisma/prisma.service";
 
 export interface BacktestPayload {
   assetSymbol: string;
+  /** When provided (length > 1), spawn worker once for all symbols; omit --assetSymbol, pass --symbols. */
+  symbols?: string[];
   steps: number;
   agents: number;
   seedStart: number;
@@ -40,6 +42,7 @@ const LAST_EVENTS_SIZE = 50;
 export class RunQueueService implements OnModuleInit {
   private readonly queue: QueuedJob[] = [];
   private readonly activeRunIds = new Set<string>();
+  private readonly activeJobKeys = new Set<string>();
   private processing = false;
   private runningRunId: string | null = null;
   private readonly lastEvents: QueueEvent[] = [];
@@ -63,11 +66,12 @@ export class RunQueueService implements OnModuleInit {
     }
   }
 
-  /** Enqueue backtest. Returns {ok, enqueued} or {ok:false, reason, status}. Dedup: skip if runId in queue/running or status != PENDING. */
+  /** Enqueue backtest. Returns {ok, enqueued} or {ok:false, reason, status}. Dedup: skip if (runId,assetSymbol) or runId (multi-asset) in queue/running or status != PENDING. */
   async enqueueBacktest(runId: string, payload: BacktestPayload): Promise<EnqueueResult> {
-    if (this.activeRunIds.has(runId)) {
+    const jobKey = payload.symbols && payload.symbols.length > 1 ? runId : `${runId}:${payload.assetSymbol}`;
+    if (this.activeJobKeys.has(jobKey)) {
       this.pushEvent("SKIP", runId, "already_queued_or_running");
-      console.log(`[RunQueue] enqueue skipped (already queued/running) runId=${runId}`);
+      console.log(`[RunQueue] enqueue skipped (already queued/running) runId=${runId} asset=${payload.symbols?.join(",") ?? payload.assetSymbol}`);
       return { ok: false, reason: "already_queued_or_running" };
     }
 
@@ -95,6 +99,7 @@ export class RunQueueService implements OnModuleInit {
     }
 
     this.activeRunIds.add(runId);
+    this.activeJobKeys.add(jobKey);
     this.queue.push({ runId, payload });
     this.pushEvent("ENQUEUE", runId);
     console.log(`[RunQueue] enqueued runId=${runId} queueLen=${this.queue.length}`);
@@ -122,6 +127,7 @@ export class RunQueueService implements OnModuleInit {
       this.processing = true;
       this.runningRunId = job.runId;
       const { runId, payload } = job;
+      const jobKey = payload.symbols && payload.symbols.length > 1 ? runId : `${runId}:${payload.assetSymbol}`;
       this.pushEvent("START", runId);
       console.log(`[RunQueue] start runId=${runId}`);
 
@@ -134,8 +140,6 @@ export class RunQueueService implements OnModuleInit {
         "--",
         "--runId",
         runId,
-        "--assetSymbol",
-        payload.assetSymbol,
         "--steps",
         String(payload.steps),
         "--agents",
@@ -145,9 +149,15 @@ export class RunQueueService implements OnModuleInit {
         "--seeds",
         String(payload.seeds.length),
       ];
+      if (payload.symbols && payload.symbols.length > 1) {
+        args.push("--symbols", payload.symbols.join(","));
+      } else {
+        args.push("--assetSymbol", payload.assetSymbol || "SPY");
+      }
 
       const onExit = (code: number | null, signal: NodeJS.Signals | null) => {
         this.activeRunIds.delete(runId);
+        this.activeJobKeys.delete(jobKey);
         this.runningRunId = null;
         this.processing = false;
         if (code === 0) {
@@ -191,6 +201,7 @@ export class RunQueueService implements OnModuleInit {
           console.error(`[RunQueue] RUNNING update failed runId=${runId}`, e);
           this.pushEvent("FAIL", runId, "status_update_failed");
           this.activeRunIds.delete(runId);
+          this.activeJobKeys.delete(jobKey);
           this.runningRunId = null;
           this.processing = false;
           setImmediate(() => this.processLoop());

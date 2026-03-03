@@ -622,3 +622,69 @@ model BacktestResult {
   @@index([runId, assetSymbol])
   @@index([runVariantId])
 }
+
+// ---------------------------------------------------------------------------
+// Forecast Accuracy Engine (Phase 2)
+// ---------------------------------------------------------------------------
+
+model ForecastResult {
+  id                   String              @id @default(uuid()) @db.Uuid
+  runId                String              @db.Uuid
+  assetSymbol          String
+  step                 Int
+  forecastDirection    AgentDecisionAction
+  totalVotes           Int
+  buyVotes             Int
+  sellVotes            Int
+  holdVotes            Int
+  groundTruthDirection AgentDecisionAction
+  isCorrect            Boolean
+  createdAt            DateTime            @default(now())
+
+  @@unique([runId, assetSymbol, step])
+  @@index([runId])
+}
+
+model RunAccuracy {
+  id               String   @id @default(uuid()) @db.Uuid
+  runId            String   @db.Uuid
+  assetSymbol      String
+  totalEvaluations Int
+  correctCount     Int
+  accuracyRate     Float
+  buyAccuracy      Float
+  sellAccuracy     Float
+  holdAccuracy     Float
+  computedAt       DateTime @default(now())
+
+  @@unique([runId, assetSymbol])
+  @@index([runId])
+}
+
+model RunSignalDiagnostics {
+  id          String @id @default(uuid()) @db.Uuid
+  runId       String @db.Uuid
+  assetSymbol String
+
+  totalSteps Int
+
+  pctCrowdBuy  Float
+  pctCrowdSell Float
+  pctCrowdHold Float
+
+  pctMarketUp   Float
+  pctMarketDown Float
+  pctMarketFlat Float
+
+  buyCorrect  Int
+  buyWrong    Int
+  sellCorrect Int
+  sellWrong   Int
+  holdCorrect Int
+  holdWrong   Int
+
+  computedAt DateTime @default(now())
+
+  @@unique([runId, assetSymbol])
+  @@index([runId])
+}

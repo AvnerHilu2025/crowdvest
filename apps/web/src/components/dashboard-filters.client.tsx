@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 function setParam(params: URLSearchParams, key: string, val: string | null) {
@@ -18,26 +17,6 @@ export default function DashboardFiltersClient(props: {
   const router = useRouter();
   const pathname = usePathname();
   const sp = useSearchParams();
-
-  useEffect(() => {
-    const params = new URLSearchParams(sp.toString());
-    let changed = false;
-    if (!params.has("unstableOnly")) {
-      params.set("unstableOnly", "1");
-      changed = true;
-    }
-    if (!params.has("showLegacy")) {
-      params.set("showLegacy", "0");
-      changed = true;
-    }
-    if (!params.has("sortRisk")) {
-      params.set("sortRisk", "1");
-      changed = true;
-    }
-    if (changed) {
-      router.replace(`${pathname}?${params.toString()}`);
-    }
-  }, [pathname, router, sp]);
 
   const updateUrl = (updater: (params: URLSearchParams) => void) => {
     const params = new URLSearchParams(sp.toString());
@@ -69,6 +48,7 @@ export default function DashboardFiltersClient(props: {
 
       <label style={{ fontSize: 14, fontWeight: 500 }}>Top N</label>
       <select
+        data-testid="topn-select"
         style={{
           border: "1px solid rgba(15, 23, 42, 0.15)",
           borderRadius: 8,
@@ -83,11 +63,13 @@ export default function DashboardFiltersClient(props: {
         <option value="10">Top 10</option>
         <option value="25">Top 25</option>
         <option value="50">Top 50</option>
+        <option value="100">Top 100</option>
       </select>
 
       <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14 }}>
         <input
           type="checkbox"
+          data-testid="toggle-only-unstable"
           checked={props.showOnlyUnstable}
           onChange={(e) =>
             updateUrl((p) => setParam(p, "unstableOnly", e.target.checked ? "1" : null))
@@ -99,6 +81,7 @@ export default function DashboardFiltersClient(props: {
       <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14 }}>
         <input
           type="checkbox"
+          data-testid="toggle-show-legacy"
           checked={props.showLegacy}
           onChange={(e) =>
             updateUrl((p) => setParam(p, "showLegacy", e.target.checked ? "1" : null))
@@ -110,6 +93,7 @@ export default function DashboardFiltersClient(props: {
       <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14 }}>
         <input
           type="checkbox"
+          data-testid="toggle-sort-risk"
           checked={props.sortByRisk}
           onChange={(e) =>
             updateUrl((p) => setParam(p, "sortRisk", e.target.checked ? "1" : "0"))

@@ -173,6 +173,11 @@ export type RunAccuracy = $Result.DefaultSelection<Prisma.$RunAccuracyPayload>
  * 
  */
 export type RunSignalDiagnostics = $Result.DefaultSelection<Prisma.$RunSignalDiagnosticsPayload>
+/**
+ * Model BenchWindowSnapshot
+ * 
+ */
+export type BenchWindowSnapshot = $Result.DefaultSelection<Prisma.$BenchWindowSnapshotPayload>
 
 /**
  * Enums
@@ -687,6 +692,16 @@ export class PrismaClient<
     * ```
     */
   get runSignalDiagnostics(): Prisma.RunSignalDiagnosticsDelegate<ExtArgs>;
+
+  /**
+   * `prisma.benchWindowSnapshot`: Exposes CRUD operations for the **BenchWindowSnapshot** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more BenchWindowSnapshots
+    * const benchWindowSnapshots = await prisma.benchWindowSnapshot.findMany()
+    * ```
+    */
+  get benchWindowSnapshot(): Prisma.BenchWindowSnapshotDelegate<ExtArgs>;
 }
 
 export namespace Prisma {
@@ -1159,7 +1174,8 @@ export namespace Prisma {
     BacktestResult: 'BacktestResult',
     ForecastResult: 'ForecastResult',
     RunAccuracy: 'RunAccuracy',
-    RunSignalDiagnostics: 'RunSignalDiagnostics'
+    RunSignalDiagnostics: 'RunSignalDiagnostics',
+    BenchWindowSnapshot: 'BenchWindowSnapshot'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -1175,7 +1191,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "archetype" | "traitDefinition" | "archetypeTraitProfile" | "agent" | "agentWallet" | "simulationRun" | "runVariant" | "runVariantSummary" | "runAgent" | "runAgentTrait" | "agentDecision" | "crowdMetrics" | "assetStepReturn" | "agentReward" | "infoEvent" | "agentInfoState" | "agentState" | "runTimeSeries" | "runDebug" | "agentExperience" | "crowdSnapshot" | "userProfile" | "userWallet" | "userWalletTransaction" | "bet" | "importRun" | "priceSeriesPoint" | "backtestWindowResult" | "backtestResult" | "forecastResult" | "runAccuracy" | "runSignalDiagnostics"
+      modelProps: "archetype" | "traitDefinition" | "archetypeTraitProfile" | "agent" | "agentWallet" | "simulationRun" | "runVariant" | "runVariantSummary" | "runAgent" | "runAgentTrait" | "agentDecision" | "crowdMetrics" | "assetStepReturn" | "agentReward" | "infoEvent" | "agentInfoState" | "agentState" | "runTimeSeries" | "runDebug" | "agentExperience" | "crowdSnapshot" | "userProfile" | "userWallet" | "userWalletTransaction" | "bet" | "importRun" | "priceSeriesPoint" | "backtestWindowResult" | "backtestResult" | "forecastResult" | "runAccuracy" | "runSignalDiagnostics" | "benchWindowSnapshot"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -3416,6 +3432,76 @@ export namespace Prisma {
           count: {
             args: Prisma.RunSignalDiagnosticsCountArgs<ExtArgs>
             result: $Utils.Optional<RunSignalDiagnosticsCountAggregateOutputType> | number
+          }
+        }
+      }
+      BenchWindowSnapshot: {
+        payload: Prisma.$BenchWindowSnapshotPayload<ExtArgs>
+        fields: Prisma.BenchWindowSnapshotFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.BenchWindowSnapshotFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BenchWindowSnapshotPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.BenchWindowSnapshotFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BenchWindowSnapshotPayload>
+          }
+          findFirst: {
+            args: Prisma.BenchWindowSnapshotFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BenchWindowSnapshotPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.BenchWindowSnapshotFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BenchWindowSnapshotPayload>
+          }
+          findMany: {
+            args: Prisma.BenchWindowSnapshotFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BenchWindowSnapshotPayload>[]
+          }
+          create: {
+            args: Prisma.BenchWindowSnapshotCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BenchWindowSnapshotPayload>
+          }
+          createMany: {
+            args: Prisma.BenchWindowSnapshotCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.BenchWindowSnapshotCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BenchWindowSnapshotPayload>[]
+          }
+          delete: {
+            args: Prisma.BenchWindowSnapshotDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BenchWindowSnapshotPayload>
+          }
+          update: {
+            args: Prisma.BenchWindowSnapshotUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BenchWindowSnapshotPayload>
+          }
+          deleteMany: {
+            args: Prisma.BenchWindowSnapshotDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.BenchWindowSnapshotUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.BenchWindowSnapshotUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BenchWindowSnapshotPayload>
+          }
+          aggregate: {
+            args: Prisma.BenchWindowSnapshotAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateBenchWindowSnapshot>
+          }
+          groupBy: {
+            args: Prisma.BenchWindowSnapshotGroupByArgs<ExtArgs>
+            result: $Utils.Optional<BenchWindowSnapshotGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.BenchWindowSnapshotCountArgs<ExtArgs>
+            result: $Utils.Optional<BenchWindowSnapshotCountAggregateOutputType> | number
           }
         }
       }
@@ -14697,11 +14783,29 @@ export namespace Prisma {
   export type AgentDecisionAvgAggregateOutputType = {
     step: number | null
     confidence: number | null
+    syntheticSignal: number | null
+    infoSignal: number | null
+    eventSignal: number | null
+    regimeSignal: number | null
+    distortedSignal: number | null
+    beliefDrift: number | null
+    prefBUY: number | null
+    prefSELL: number | null
+    prefHOLD: number | null
   }
 
   export type AgentDecisionSumAggregateOutputType = {
     step: number | null
     confidence: number | null
+    syntheticSignal: number | null
+    infoSignal: number | null
+    eventSignal: number | null
+    regimeSignal: number | null
+    distortedSignal: number | null
+    beliefDrift: number | null
+    prefBUY: number | null
+    prefSELL: number | null
+    prefHOLD: number | null
   }
 
   export type AgentDecisionMinAggregateOutputType = {
@@ -14715,6 +14819,15 @@ export namespace Prisma {
     confidence: number | null
     rationale: string | null
     createdAt: Date | null
+    syntheticSignal: number | null
+    infoSignal: number | null
+    eventSignal: number | null
+    regimeSignal: number | null
+    distortedSignal: number | null
+    beliefDrift: number | null
+    prefBUY: number | null
+    prefSELL: number | null
+    prefHOLD: number | null
   }
 
   export type AgentDecisionMaxAggregateOutputType = {
@@ -14728,6 +14841,15 @@ export namespace Prisma {
     confidence: number | null
     rationale: string | null
     createdAt: Date | null
+    syntheticSignal: number | null
+    infoSignal: number | null
+    eventSignal: number | null
+    regimeSignal: number | null
+    distortedSignal: number | null
+    beliefDrift: number | null
+    prefBUY: number | null
+    prefSELL: number | null
+    prefHOLD: number | null
   }
 
   export type AgentDecisionCountAggregateOutputType = {
@@ -14741,6 +14863,15 @@ export namespace Prisma {
     confidence: number
     rationale: number
     createdAt: number
+    syntheticSignal: number
+    infoSignal: number
+    eventSignal: number
+    regimeSignal: number
+    distortedSignal: number
+    beliefDrift: number
+    prefBUY: number
+    prefSELL: number
+    prefHOLD: number
     _all: number
   }
 
@@ -14748,11 +14879,29 @@ export namespace Prisma {
   export type AgentDecisionAvgAggregateInputType = {
     step?: true
     confidence?: true
+    syntheticSignal?: true
+    infoSignal?: true
+    eventSignal?: true
+    regimeSignal?: true
+    distortedSignal?: true
+    beliefDrift?: true
+    prefBUY?: true
+    prefSELL?: true
+    prefHOLD?: true
   }
 
   export type AgentDecisionSumAggregateInputType = {
     step?: true
     confidence?: true
+    syntheticSignal?: true
+    infoSignal?: true
+    eventSignal?: true
+    regimeSignal?: true
+    distortedSignal?: true
+    beliefDrift?: true
+    prefBUY?: true
+    prefSELL?: true
+    prefHOLD?: true
   }
 
   export type AgentDecisionMinAggregateInputType = {
@@ -14766,6 +14915,15 @@ export namespace Prisma {
     confidence?: true
     rationale?: true
     createdAt?: true
+    syntheticSignal?: true
+    infoSignal?: true
+    eventSignal?: true
+    regimeSignal?: true
+    distortedSignal?: true
+    beliefDrift?: true
+    prefBUY?: true
+    prefSELL?: true
+    prefHOLD?: true
   }
 
   export type AgentDecisionMaxAggregateInputType = {
@@ -14779,6 +14937,15 @@ export namespace Prisma {
     confidence?: true
     rationale?: true
     createdAt?: true
+    syntheticSignal?: true
+    infoSignal?: true
+    eventSignal?: true
+    regimeSignal?: true
+    distortedSignal?: true
+    beliefDrift?: true
+    prefBUY?: true
+    prefSELL?: true
+    prefHOLD?: true
   }
 
   export type AgentDecisionCountAggregateInputType = {
@@ -14792,6 +14959,15 @@ export namespace Prisma {
     confidence?: true
     rationale?: true
     createdAt?: true
+    syntheticSignal?: true
+    infoSignal?: true
+    eventSignal?: true
+    regimeSignal?: true
+    distortedSignal?: true
+    beliefDrift?: true
+    prefBUY?: true
+    prefSELL?: true
+    prefHOLD?: true
     _all?: true
   }
 
@@ -14892,6 +15068,15 @@ export namespace Prisma {
     confidence: number
     rationale: string | null
     createdAt: Date
+    syntheticSignal: number | null
+    infoSignal: number | null
+    eventSignal: number | null
+    regimeSignal: number | null
+    distortedSignal: number | null
+    beliefDrift: number | null
+    prefBUY: number | null
+    prefSELL: number | null
+    prefHOLD: number | null
     _count: AgentDecisionCountAggregateOutputType | null
     _avg: AgentDecisionAvgAggregateOutputType | null
     _sum: AgentDecisionSumAggregateOutputType | null
@@ -14924,6 +15109,15 @@ export namespace Prisma {
     confidence?: boolean
     rationale?: boolean
     createdAt?: boolean
+    syntheticSignal?: boolean
+    infoSignal?: boolean
+    eventSignal?: boolean
+    regimeSignal?: boolean
+    distortedSignal?: boolean
+    beliefDrift?: boolean
+    prefBUY?: boolean
+    prefSELL?: boolean
+    prefHOLD?: boolean
     run?: boolean | SimulationRunDefaultArgs<ExtArgs>
     runVariant?: boolean | AgentDecision$runVariantArgs<ExtArgs>
     agent?: boolean | RunAgentDefaultArgs<ExtArgs>
@@ -14940,6 +15134,15 @@ export namespace Prisma {
     confidence?: boolean
     rationale?: boolean
     createdAt?: boolean
+    syntheticSignal?: boolean
+    infoSignal?: boolean
+    eventSignal?: boolean
+    regimeSignal?: boolean
+    distortedSignal?: boolean
+    beliefDrift?: boolean
+    prefBUY?: boolean
+    prefSELL?: boolean
+    prefHOLD?: boolean
     run?: boolean | SimulationRunDefaultArgs<ExtArgs>
     runVariant?: boolean | AgentDecision$runVariantArgs<ExtArgs>
     agent?: boolean | RunAgentDefaultArgs<ExtArgs>
@@ -14956,6 +15159,15 @@ export namespace Prisma {
     confidence?: boolean
     rationale?: boolean
     createdAt?: boolean
+    syntheticSignal?: boolean
+    infoSignal?: boolean
+    eventSignal?: boolean
+    regimeSignal?: boolean
+    distortedSignal?: boolean
+    beliefDrift?: boolean
+    prefBUY?: boolean
+    prefSELL?: boolean
+    prefHOLD?: boolean
   }
 
   export type AgentDecisionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -14987,6 +15199,15 @@ export namespace Prisma {
       confidence: number
       rationale: string | null
       createdAt: Date
+      syntheticSignal: number | null
+      infoSignal: number | null
+      eventSignal: number | null
+      regimeSignal: number | null
+      distortedSignal: number | null
+      beliefDrift: number | null
+      prefBUY: number | null
+      prefSELL: number | null
+      prefHOLD: number | null
     }, ExtArgs["result"]["agentDecision"]>
     composites: {}
   }
@@ -15393,6 +15614,15 @@ export namespace Prisma {
     readonly confidence: FieldRef<"AgentDecision", 'Float'>
     readonly rationale: FieldRef<"AgentDecision", 'String'>
     readonly createdAt: FieldRef<"AgentDecision", 'DateTime'>
+    readonly syntheticSignal: FieldRef<"AgentDecision", 'Float'>
+    readonly infoSignal: FieldRef<"AgentDecision", 'Float'>
+    readonly eventSignal: FieldRef<"AgentDecision", 'Float'>
+    readonly regimeSignal: FieldRef<"AgentDecision", 'Float'>
+    readonly distortedSignal: FieldRef<"AgentDecision", 'Float'>
+    readonly beliefDrift: FieldRef<"AgentDecision", 'Float'>
+    readonly prefBUY: FieldRef<"AgentDecision", 'Float'>
+    readonly prefSELL: FieldRef<"AgentDecision", 'Float'>
+    readonly prefHOLD: FieldRef<"AgentDecision", 'Float'>
   }
     
 
@@ -37240,6 +37470,1002 @@ export namespace Prisma {
 
 
   /**
+   * Model BenchWindowSnapshot
+   */
+
+  export type AggregateBenchWindowSnapshot = {
+    _count: BenchWindowSnapshotCountAggregateOutputType | null
+    _avg: BenchWindowSnapshotAvgAggregateOutputType | null
+    _sum: BenchWindowSnapshotSumAggregateOutputType | null
+    _min: BenchWindowSnapshotMinAggregateOutputType | null
+    _max: BenchWindowSnapshotMaxAggregateOutputType | null
+  }
+
+  export type BenchWindowSnapshotAvgAggregateOutputType = {
+    n: number | null
+    points: number | null
+  }
+
+  export type BenchWindowSnapshotSumAggregateOutputType = {
+    n: number | null
+    points: number | null
+  }
+
+  export type BenchWindowSnapshotMinAggregateOutputType = {
+    id: string | null
+    createdAt: Date | null
+    symbols: string | null
+    windows: string | null
+    n: number | null
+    points: number | null
+    overwrite: boolean | null
+    datasetVersion: string | null
+    modelVersion: string | null
+    tag: string | null
+    isBaseline: boolean | null
+  }
+
+  export type BenchWindowSnapshotMaxAggregateOutputType = {
+    id: string | null
+    createdAt: Date | null
+    symbols: string | null
+    windows: string | null
+    n: number | null
+    points: number | null
+    overwrite: boolean | null
+    datasetVersion: string | null
+    modelVersion: string | null
+    tag: string | null
+    isBaseline: boolean | null
+  }
+
+  export type BenchWindowSnapshotCountAggregateOutputType = {
+    id: number
+    createdAt: number
+    symbols: number
+    windows: number
+    n: number
+    points: number
+    overwrite: number
+    datasetVersion: number
+    modelVersion: number
+    payloadJson: number
+    tag: number
+    isBaseline: number
+    _all: number
+  }
+
+
+  export type BenchWindowSnapshotAvgAggregateInputType = {
+    n?: true
+    points?: true
+  }
+
+  export type BenchWindowSnapshotSumAggregateInputType = {
+    n?: true
+    points?: true
+  }
+
+  export type BenchWindowSnapshotMinAggregateInputType = {
+    id?: true
+    createdAt?: true
+    symbols?: true
+    windows?: true
+    n?: true
+    points?: true
+    overwrite?: true
+    datasetVersion?: true
+    modelVersion?: true
+    tag?: true
+    isBaseline?: true
+  }
+
+  export type BenchWindowSnapshotMaxAggregateInputType = {
+    id?: true
+    createdAt?: true
+    symbols?: true
+    windows?: true
+    n?: true
+    points?: true
+    overwrite?: true
+    datasetVersion?: true
+    modelVersion?: true
+    tag?: true
+    isBaseline?: true
+  }
+
+  export type BenchWindowSnapshotCountAggregateInputType = {
+    id?: true
+    createdAt?: true
+    symbols?: true
+    windows?: true
+    n?: true
+    points?: true
+    overwrite?: true
+    datasetVersion?: true
+    modelVersion?: true
+    payloadJson?: true
+    tag?: true
+    isBaseline?: true
+    _all?: true
+  }
+
+  export type BenchWindowSnapshotAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BenchWindowSnapshot to aggregate.
+     */
+    where?: BenchWindowSnapshotWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BenchWindowSnapshots to fetch.
+     */
+    orderBy?: BenchWindowSnapshotOrderByWithRelationInput | BenchWindowSnapshotOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: BenchWindowSnapshotWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BenchWindowSnapshots from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BenchWindowSnapshots.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned BenchWindowSnapshots
+    **/
+    _count?: true | BenchWindowSnapshotCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: BenchWindowSnapshotAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: BenchWindowSnapshotSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: BenchWindowSnapshotMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: BenchWindowSnapshotMaxAggregateInputType
+  }
+
+  export type GetBenchWindowSnapshotAggregateType<T extends BenchWindowSnapshotAggregateArgs> = {
+        [P in keyof T & keyof AggregateBenchWindowSnapshot]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateBenchWindowSnapshot[P]>
+      : GetScalarType<T[P], AggregateBenchWindowSnapshot[P]>
+  }
+
+
+
+
+  export type BenchWindowSnapshotGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BenchWindowSnapshotWhereInput
+    orderBy?: BenchWindowSnapshotOrderByWithAggregationInput | BenchWindowSnapshotOrderByWithAggregationInput[]
+    by: BenchWindowSnapshotScalarFieldEnum[] | BenchWindowSnapshotScalarFieldEnum
+    having?: BenchWindowSnapshotScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: BenchWindowSnapshotCountAggregateInputType | true
+    _avg?: BenchWindowSnapshotAvgAggregateInputType
+    _sum?: BenchWindowSnapshotSumAggregateInputType
+    _min?: BenchWindowSnapshotMinAggregateInputType
+    _max?: BenchWindowSnapshotMaxAggregateInputType
+  }
+
+  export type BenchWindowSnapshotGroupByOutputType = {
+    id: string
+    createdAt: Date
+    symbols: string
+    windows: string
+    n: number
+    points: number | null
+    overwrite: boolean
+    datasetVersion: string | null
+    modelVersion: string | null
+    payloadJson: JsonValue
+    tag: string | null
+    isBaseline: boolean
+    _count: BenchWindowSnapshotCountAggregateOutputType | null
+    _avg: BenchWindowSnapshotAvgAggregateOutputType | null
+    _sum: BenchWindowSnapshotSumAggregateOutputType | null
+    _min: BenchWindowSnapshotMinAggregateOutputType | null
+    _max: BenchWindowSnapshotMaxAggregateOutputType | null
+  }
+
+  type GetBenchWindowSnapshotGroupByPayload<T extends BenchWindowSnapshotGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<BenchWindowSnapshotGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof BenchWindowSnapshotGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], BenchWindowSnapshotGroupByOutputType[P]>
+            : GetScalarType<T[P], BenchWindowSnapshotGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type BenchWindowSnapshotSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    createdAt?: boolean
+    symbols?: boolean
+    windows?: boolean
+    n?: boolean
+    points?: boolean
+    overwrite?: boolean
+    datasetVersion?: boolean
+    modelVersion?: boolean
+    payloadJson?: boolean
+    tag?: boolean
+    isBaseline?: boolean
+  }, ExtArgs["result"]["benchWindowSnapshot"]>
+
+  export type BenchWindowSnapshotSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    createdAt?: boolean
+    symbols?: boolean
+    windows?: boolean
+    n?: boolean
+    points?: boolean
+    overwrite?: boolean
+    datasetVersion?: boolean
+    modelVersion?: boolean
+    payloadJson?: boolean
+    tag?: boolean
+    isBaseline?: boolean
+  }, ExtArgs["result"]["benchWindowSnapshot"]>
+
+  export type BenchWindowSnapshotSelectScalar = {
+    id?: boolean
+    createdAt?: boolean
+    symbols?: boolean
+    windows?: boolean
+    n?: boolean
+    points?: boolean
+    overwrite?: boolean
+    datasetVersion?: boolean
+    modelVersion?: boolean
+    payloadJson?: boolean
+    tag?: boolean
+    isBaseline?: boolean
+  }
+
+
+  export type $BenchWindowSnapshotPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "BenchWindowSnapshot"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      createdAt: Date
+      symbols: string
+      windows: string
+      n: number
+      points: number | null
+      overwrite: boolean
+      datasetVersion: string | null
+      modelVersion: string | null
+      payloadJson: Prisma.JsonValue
+      tag: string | null
+      isBaseline: boolean
+    }, ExtArgs["result"]["benchWindowSnapshot"]>
+    composites: {}
+  }
+
+  type BenchWindowSnapshotGetPayload<S extends boolean | null | undefined | BenchWindowSnapshotDefaultArgs> = $Result.GetResult<Prisma.$BenchWindowSnapshotPayload, S>
+
+  type BenchWindowSnapshotCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<BenchWindowSnapshotFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: BenchWindowSnapshotCountAggregateInputType | true
+    }
+
+  export interface BenchWindowSnapshotDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['BenchWindowSnapshot'], meta: { name: 'BenchWindowSnapshot' } }
+    /**
+     * Find zero or one BenchWindowSnapshot that matches the filter.
+     * @param {BenchWindowSnapshotFindUniqueArgs} args - Arguments to find a BenchWindowSnapshot
+     * @example
+     * // Get one BenchWindowSnapshot
+     * const benchWindowSnapshot = await prisma.benchWindowSnapshot.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends BenchWindowSnapshotFindUniqueArgs>(args: SelectSubset<T, BenchWindowSnapshotFindUniqueArgs<ExtArgs>>): Prisma__BenchWindowSnapshotClient<$Result.GetResult<Prisma.$BenchWindowSnapshotPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one BenchWindowSnapshot that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {BenchWindowSnapshotFindUniqueOrThrowArgs} args - Arguments to find a BenchWindowSnapshot
+     * @example
+     * // Get one BenchWindowSnapshot
+     * const benchWindowSnapshot = await prisma.benchWindowSnapshot.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends BenchWindowSnapshotFindUniqueOrThrowArgs>(args: SelectSubset<T, BenchWindowSnapshotFindUniqueOrThrowArgs<ExtArgs>>): Prisma__BenchWindowSnapshotClient<$Result.GetResult<Prisma.$BenchWindowSnapshotPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first BenchWindowSnapshot that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BenchWindowSnapshotFindFirstArgs} args - Arguments to find a BenchWindowSnapshot
+     * @example
+     * // Get one BenchWindowSnapshot
+     * const benchWindowSnapshot = await prisma.benchWindowSnapshot.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends BenchWindowSnapshotFindFirstArgs>(args?: SelectSubset<T, BenchWindowSnapshotFindFirstArgs<ExtArgs>>): Prisma__BenchWindowSnapshotClient<$Result.GetResult<Prisma.$BenchWindowSnapshotPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first BenchWindowSnapshot that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BenchWindowSnapshotFindFirstOrThrowArgs} args - Arguments to find a BenchWindowSnapshot
+     * @example
+     * // Get one BenchWindowSnapshot
+     * const benchWindowSnapshot = await prisma.benchWindowSnapshot.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends BenchWindowSnapshotFindFirstOrThrowArgs>(args?: SelectSubset<T, BenchWindowSnapshotFindFirstOrThrowArgs<ExtArgs>>): Prisma__BenchWindowSnapshotClient<$Result.GetResult<Prisma.$BenchWindowSnapshotPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more BenchWindowSnapshots that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BenchWindowSnapshotFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all BenchWindowSnapshots
+     * const benchWindowSnapshots = await prisma.benchWindowSnapshot.findMany()
+     * 
+     * // Get first 10 BenchWindowSnapshots
+     * const benchWindowSnapshots = await prisma.benchWindowSnapshot.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const benchWindowSnapshotWithIdOnly = await prisma.benchWindowSnapshot.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends BenchWindowSnapshotFindManyArgs>(args?: SelectSubset<T, BenchWindowSnapshotFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BenchWindowSnapshotPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a BenchWindowSnapshot.
+     * @param {BenchWindowSnapshotCreateArgs} args - Arguments to create a BenchWindowSnapshot.
+     * @example
+     * // Create one BenchWindowSnapshot
+     * const BenchWindowSnapshot = await prisma.benchWindowSnapshot.create({
+     *   data: {
+     *     // ... data to create a BenchWindowSnapshot
+     *   }
+     * })
+     * 
+     */
+    create<T extends BenchWindowSnapshotCreateArgs>(args: SelectSubset<T, BenchWindowSnapshotCreateArgs<ExtArgs>>): Prisma__BenchWindowSnapshotClient<$Result.GetResult<Prisma.$BenchWindowSnapshotPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many BenchWindowSnapshots.
+     * @param {BenchWindowSnapshotCreateManyArgs} args - Arguments to create many BenchWindowSnapshots.
+     * @example
+     * // Create many BenchWindowSnapshots
+     * const benchWindowSnapshot = await prisma.benchWindowSnapshot.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends BenchWindowSnapshotCreateManyArgs>(args?: SelectSubset<T, BenchWindowSnapshotCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many BenchWindowSnapshots and returns the data saved in the database.
+     * @param {BenchWindowSnapshotCreateManyAndReturnArgs} args - Arguments to create many BenchWindowSnapshots.
+     * @example
+     * // Create many BenchWindowSnapshots
+     * const benchWindowSnapshot = await prisma.benchWindowSnapshot.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many BenchWindowSnapshots and only return the `id`
+     * const benchWindowSnapshotWithIdOnly = await prisma.benchWindowSnapshot.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends BenchWindowSnapshotCreateManyAndReturnArgs>(args?: SelectSubset<T, BenchWindowSnapshotCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BenchWindowSnapshotPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a BenchWindowSnapshot.
+     * @param {BenchWindowSnapshotDeleteArgs} args - Arguments to delete one BenchWindowSnapshot.
+     * @example
+     * // Delete one BenchWindowSnapshot
+     * const BenchWindowSnapshot = await prisma.benchWindowSnapshot.delete({
+     *   where: {
+     *     // ... filter to delete one BenchWindowSnapshot
+     *   }
+     * })
+     * 
+     */
+    delete<T extends BenchWindowSnapshotDeleteArgs>(args: SelectSubset<T, BenchWindowSnapshotDeleteArgs<ExtArgs>>): Prisma__BenchWindowSnapshotClient<$Result.GetResult<Prisma.$BenchWindowSnapshotPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one BenchWindowSnapshot.
+     * @param {BenchWindowSnapshotUpdateArgs} args - Arguments to update one BenchWindowSnapshot.
+     * @example
+     * // Update one BenchWindowSnapshot
+     * const benchWindowSnapshot = await prisma.benchWindowSnapshot.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends BenchWindowSnapshotUpdateArgs>(args: SelectSubset<T, BenchWindowSnapshotUpdateArgs<ExtArgs>>): Prisma__BenchWindowSnapshotClient<$Result.GetResult<Prisma.$BenchWindowSnapshotPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more BenchWindowSnapshots.
+     * @param {BenchWindowSnapshotDeleteManyArgs} args - Arguments to filter BenchWindowSnapshots to delete.
+     * @example
+     * // Delete a few BenchWindowSnapshots
+     * const { count } = await prisma.benchWindowSnapshot.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends BenchWindowSnapshotDeleteManyArgs>(args?: SelectSubset<T, BenchWindowSnapshotDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BenchWindowSnapshots.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BenchWindowSnapshotUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many BenchWindowSnapshots
+     * const benchWindowSnapshot = await prisma.benchWindowSnapshot.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends BenchWindowSnapshotUpdateManyArgs>(args: SelectSubset<T, BenchWindowSnapshotUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one BenchWindowSnapshot.
+     * @param {BenchWindowSnapshotUpsertArgs} args - Arguments to update or create a BenchWindowSnapshot.
+     * @example
+     * // Update or create a BenchWindowSnapshot
+     * const benchWindowSnapshot = await prisma.benchWindowSnapshot.upsert({
+     *   create: {
+     *     // ... data to create a BenchWindowSnapshot
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the BenchWindowSnapshot we want to update
+     *   }
+     * })
+     */
+    upsert<T extends BenchWindowSnapshotUpsertArgs>(args: SelectSubset<T, BenchWindowSnapshotUpsertArgs<ExtArgs>>): Prisma__BenchWindowSnapshotClient<$Result.GetResult<Prisma.$BenchWindowSnapshotPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of BenchWindowSnapshots.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BenchWindowSnapshotCountArgs} args - Arguments to filter BenchWindowSnapshots to count.
+     * @example
+     * // Count the number of BenchWindowSnapshots
+     * const count = await prisma.benchWindowSnapshot.count({
+     *   where: {
+     *     // ... the filter for the BenchWindowSnapshots we want to count
+     *   }
+     * })
+    **/
+    count<T extends BenchWindowSnapshotCountArgs>(
+      args?: Subset<T, BenchWindowSnapshotCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], BenchWindowSnapshotCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a BenchWindowSnapshot.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BenchWindowSnapshotAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends BenchWindowSnapshotAggregateArgs>(args: Subset<T, BenchWindowSnapshotAggregateArgs>): Prisma.PrismaPromise<GetBenchWindowSnapshotAggregateType<T>>
+
+    /**
+     * Group by BenchWindowSnapshot.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BenchWindowSnapshotGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends BenchWindowSnapshotGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: BenchWindowSnapshotGroupByArgs['orderBy'] }
+        : { orderBy?: BenchWindowSnapshotGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, BenchWindowSnapshotGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetBenchWindowSnapshotGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the BenchWindowSnapshot model
+   */
+  readonly fields: BenchWindowSnapshotFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for BenchWindowSnapshot.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__BenchWindowSnapshotClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the BenchWindowSnapshot model
+   */ 
+  interface BenchWindowSnapshotFieldRefs {
+    readonly id: FieldRef<"BenchWindowSnapshot", 'String'>
+    readonly createdAt: FieldRef<"BenchWindowSnapshot", 'DateTime'>
+    readonly symbols: FieldRef<"BenchWindowSnapshot", 'String'>
+    readonly windows: FieldRef<"BenchWindowSnapshot", 'String'>
+    readonly n: FieldRef<"BenchWindowSnapshot", 'Int'>
+    readonly points: FieldRef<"BenchWindowSnapshot", 'Int'>
+    readonly overwrite: FieldRef<"BenchWindowSnapshot", 'Boolean'>
+    readonly datasetVersion: FieldRef<"BenchWindowSnapshot", 'String'>
+    readonly modelVersion: FieldRef<"BenchWindowSnapshot", 'String'>
+    readonly payloadJson: FieldRef<"BenchWindowSnapshot", 'Json'>
+    readonly tag: FieldRef<"BenchWindowSnapshot", 'String'>
+    readonly isBaseline: FieldRef<"BenchWindowSnapshot", 'Boolean'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * BenchWindowSnapshot findUnique
+   */
+  export type BenchWindowSnapshotFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BenchWindowSnapshot
+     */
+    select?: BenchWindowSnapshotSelect<ExtArgs> | null
+    /**
+     * Filter, which BenchWindowSnapshot to fetch.
+     */
+    where: BenchWindowSnapshotWhereUniqueInput
+  }
+
+  /**
+   * BenchWindowSnapshot findUniqueOrThrow
+   */
+  export type BenchWindowSnapshotFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BenchWindowSnapshot
+     */
+    select?: BenchWindowSnapshotSelect<ExtArgs> | null
+    /**
+     * Filter, which BenchWindowSnapshot to fetch.
+     */
+    where: BenchWindowSnapshotWhereUniqueInput
+  }
+
+  /**
+   * BenchWindowSnapshot findFirst
+   */
+  export type BenchWindowSnapshotFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BenchWindowSnapshot
+     */
+    select?: BenchWindowSnapshotSelect<ExtArgs> | null
+    /**
+     * Filter, which BenchWindowSnapshot to fetch.
+     */
+    where?: BenchWindowSnapshotWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BenchWindowSnapshots to fetch.
+     */
+    orderBy?: BenchWindowSnapshotOrderByWithRelationInput | BenchWindowSnapshotOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BenchWindowSnapshots.
+     */
+    cursor?: BenchWindowSnapshotWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BenchWindowSnapshots from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BenchWindowSnapshots.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BenchWindowSnapshots.
+     */
+    distinct?: BenchWindowSnapshotScalarFieldEnum | BenchWindowSnapshotScalarFieldEnum[]
+  }
+
+  /**
+   * BenchWindowSnapshot findFirstOrThrow
+   */
+  export type BenchWindowSnapshotFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BenchWindowSnapshot
+     */
+    select?: BenchWindowSnapshotSelect<ExtArgs> | null
+    /**
+     * Filter, which BenchWindowSnapshot to fetch.
+     */
+    where?: BenchWindowSnapshotWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BenchWindowSnapshots to fetch.
+     */
+    orderBy?: BenchWindowSnapshotOrderByWithRelationInput | BenchWindowSnapshotOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BenchWindowSnapshots.
+     */
+    cursor?: BenchWindowSnapshotWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BenchWindowSnapshots from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BenchWindowSnapshots.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BenchWindowSnapshots.
+     */
+    distinct?: BenchWindowSnapshotScalarFieldEnum | BenchWindowSnapshotScalarFieldEnum[]
+  }
+
+  /**
+   * BenchWindowSnapshot findMany
+   */
+  export type BenchWindowSnapshotFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BenchWindowSnapshot
+     */
+    select?: BenchWindowSnapshotSelect<ExtArgs> | null
+    /**
+     * Filter, which BenchWindowSnapshots to fetch.
+     */
+    where?: BenchWindowSnapshotWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BenchWindowSnapshots to fetch.
+     */
+    orderBy?: BenchWindowSnapshotOrderByWithRelationInput | BenchWindowSnapshotOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing BenchWindowSnapshots.
+     */
+    cursor?: BenchWindowSnapshotWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BenchWindowSnapshots from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BenchWindowSnapshots.
+     */
+    skip?: number
+    distinct?: BenchWindowSnapshotScalarFieldEnum | BenchWindowSnapshotScalarFieldEnum[]
+  }
+
+  /**
+   * BenchWindowSnapshot create
+   */
+  export type BenchWindowSnapshotCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BenchWindowSnapshot
+     */
+    select?: BenchWindowSnapshotSelect<ExtArgs> | null
+    /**
+     * The data needed to create a BenchWindowSnapshot.
+     */
+    data: XOR<BenchWindowSnapshotCreateInput, BenchWindowSnapshotUncheckedCreateInput>
+  }
+
+  /**
+   * BenchWindowSnapshot createMany
+   */
+  export type BenchWindowSnapshotCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many BenchWindowSnapshots.
+     */
+    data: BenchWindowSnapshotCreateManyInput | BenchWindowSnapshotCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * BenchWindowSnapshot createManyAndReturn
+   */
+  export type BenchWindowSnapshotCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BenchWindowSnapshot
+     */
+    select?: BenchWindowSnapshotSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many BenchWindowSnapshots.
+     */
+    data: BenchWindowSnapshotCreateManyInput | BenchWindowSnapshotCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * BenchWindowSnapshot update
+   */
+  export type BenchWindowSnapshotUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BenchWindowSnapshot
+     */
+    select?: BenchWindowSnapshotSelect<ExtArgs> | null
+    /**
+     * The data needed to update a BenchWindowSnapshot.
+     */
+    data: XOR<BenchWindowSnapshotUpdateInput, BenchWindowSnapshotUncheckedUpdateInput>
+    /**
+     * Choose, which BenchWindowSnapshot to update.
+     */
+    where: BenchWindowSnapshotWhereUniqueInput
+  }
+
+  /**
+   * BenchWindowSnapshot updateMany
+   */
+  export type BenchWindowSnapshotUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update BenchWindowSnapshots.
+     */
+    data: XOR<BenchWindowSnapshotUpdateManyMutationInput, BenchWindowSnapshotUncheckedUpdateManyInput>
+    /**
+     * Filter which BenchWindowSnapshots to update
+     */
+    where?: BenchWindowSnapshotWhereInput
+  }
+
+  /**
+   * BenchWindowSnapshot upsert
+   */
+  export type BenchWindowSnapshotUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BenchWindowSnapshot
+     */
+    select?: BenchWindowSnapshotSelect<ExtArgs> | null
+    /**
+     * The filter to search for the BenchWindowSnapshot to update in case it exists.
+     */
+    where: BenchWindowSnapshotWhereUniqueInput
+    /**
+     * In case the BenchWindowSnapshot found by the `where` argument doesn't exist, create a new BenchWindowSnapshot with this data.
+     */
+    create: XOR<BenchWindowSnapshotCreateInput, BenchWindowSnapshotUncheckedCreateInput>
+    /**
+     * In case the BenchWindowSnapshot was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<BenchWindowSnapshotUpdateInput, BenchWindowSnapshotUncheckedUpdateInput>
+  }
+
+  /**
+   * BenchWindowSnapshot delete
+   */
+  export type BenchWindowSnapshotDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BenchWindowSnapshot
+     */
+    select?: BenchWindowSnapshotSelect<ExtArgs> | null
+    /**
+     * Filter which BenchWindowSnapshot to delete.
+     */
+    where: BenchWindowSnapshotWhereUniqueInput
+  }
+
+  /**
+   * BenchWindowSnapshot deleteMany
+   */
+  export type BenchWindowSnapshotDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BenchWindowSnapshots to delete
+     */
+    where?: BenchWindowSnapshotWhereInput
+  }
+
+  /**
+   * BenchWindowSnapshot without action
+   */
+  export type BenchWindowSnapshotDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BenchWindowSnapshot
+     */
+    select?: BenchWindowSnapshotSelect<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -37401,7 +38627,16 @@ export namespace Prisma {
     action: 'action',
     confidence: 'confidence',
     rationale: 'rationale',
-    createdAt: 'createdAt'
+    createdAt: 'createdAt',
+    syntheticSignal: 'syntheticSignal',
+    infoSignal: 'infoSignal',
+    eventSignal: 'eventSignal',
+    regimeSignal: 'regimeSignal',
+    distortedSignal: 'distortedSignal',
+    beliefDrift: 'beliefDrift',
+    prefBUY: 'prefBUY',
+    prefSELL: 'prefSELL',
+    prefHOLD: 'prefHOLD'
   };
 
   export type AgentDecisionScalarFieldEnum = (typeof AgentDecisionScalarFieldEnum)[keyof typeof AgentDecisionScalarFieldEnum]
@@ -37744,6 +38979,24 @@ export namespace Prisma {
   export type RunSignalDiagnosticsScalarFieldEnum = (typeof RunSignalDiagnosticsScalarFieldEnum)[keyof typeof RunSignalDiagnosticsScalarFieldEnum]
 
 
+  export const BenchWindowSnapshotScalarFieldEnum: {
+    id: 'id',
+    createdAt: 'createdAt',
+    symbols: 'symbols',
+    windows: 'windows',
+    n: 'n',
+    points: 'points',
+    overwrite: 'overwrite',
+    datasetVersion: 'datasetVersion',
+    modelVersion: 'modelVersion',
+    payloadJson: 'payloadJson',
+    tag: 'tag',
+    isBaseline: 'isBaseline'
+  };
+
+  export type BenchWindowSnapshotScalarFieldEnum = (typeof BenchWindowSnapshotScalarFieldEnum)[keyof typeof BenchWindowSnapshotScalarFieldEnum]
+
+
   export const SortOrder: {
     asc: 'asc',
     desc: 'desc'
@@ -37758,6 +39011,13 @@ export namespace Prisma {
   };
 
   export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
+  export const JsonNullValueInput: {
+    JsonNull: typeof JsonNull
+  };
+
+  export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
   export const QueryMode: {
@@ -38747,6 +40007,15 @@ export namespace Prisma {
     confidence?: FloatFilter<"AgentDecision"> | number
     rationale?: StringNullableFilter<"AgentDecision"> | string | null
     createdAt?: DateTimeFilter<"AgentDecision"> | Date | string
+    syntheticSignal?: FloatNullableFilter<"AgentDecision"> | number | null
+    infoSignal?: FloatNullableFilter<"AgentDecision"> | number | null
+    eventSignal?: FloatNullableFilter<"AgentDecision"> | number | null
+    regimeSignal?: FloatNullableFilter<"AgentDecision"> | number | null
+    distortedSignal?: FloatNullableFilter<"AgentDecision"> | number | null
+    beliefDrift?: FloatNullableFilter<"AgentDecision"> | number | null
+    prefBUY?: FloatNullableFilter<"AgentDecision"> | number | null
+    prefSELL?: FloatNullableFilter<"AgentDecision"> | number | null
+    prefHOLD?: FloatNullableFilter<"AgentDecision"> | number | null
     run?: XOR<SimulationRunRelationFilter, SimulationRunWhereInput>
     runVariant?: XOR<RunVariantNullableRelationFilter, RunVariantWhereInput> | null
     agent?: XOR<RunAgentRelationFilter, RunAgentWhereInput>
@@ -38763,6 +40032,15 @@ export namespace Prisma {
     confidence?: SortOrder
     rationale?: SortOrderInput | SortOrder
     createdAt?: SortOrder
+    syntheticSignal?: SortOrderInput | SortOrder
+    infoSignal?: SortOrderInput | SortOrder
+    eventSignal?: SortOrderInput | SortOrder
+    regimeSignal?: SortOrderInput | SortOrder
+    distortedSignal?: SortOrderInput | SortOrder
+    beliefDrift?: SortOrderInput | SortOrder
+    prefBUY?: SortOrderInput | SortOrder
+    prefSELL?: SortOrderInput | SortOrder
+    prefHOLD?: SortOrderInput | SortOrder
     run?: SimulationRunOrderByWithRelationInput
     runVariant?: RunVariantOrderByWithRelationInput
     agent?: RunAgentOrderByWithRelationInput
@@ -38783,6 +40061,15 @@ export namespace Prisma {
     confidence?: FloatFilter<"AgentDecision"> | number
     rationale?: StringNullableFilter<"AgentDecision"> | string | null
     createdAt?: DateTimeFilter<"AgentDecision"> | Date | string
+    syntheticSignal?: FloatNullableFilter<"AgentDecision"> | number | null
+    infoSignal?: FloatNullableFilter<"AgentDecision"> | number | null
+    eventSignal?: FloatNullableFilter<"AgentDecision"> | number | null
+    regimeSignal?: FloatNullableFilter<"AgentDecision"> | number | null
+    distortedSignal?: FloatNullableFilter<"AgentDecision"> | number | null
+    beliefDrift?: FloatNullableFilter<"AgentDecision"> | number | null
+    prefBUY?: FloatNullableFilter<"AgentDecision"> | number | null
+    prefSELL?: FloatNullableFilter<"AgentDecision"> | number | null
+    prefHOLD?: FloatNullableFilter<"AgentDecision"> | number | null
     run?: XOR<SimulationRunRelationFilter, SimulationRunWhereInput>
     runVariant?: XOR<RunVariantNullableRelationFilter, RunVariantWhereInput> | null
     agent?: XOR<RunAgentRelationFilter, RunAgentWhereInput>
@@ -38799,6 +40086,15 @@ export namespace Prisma {
     confidence?: SortOrder
     rationale?: SortOrderInput | SortOrder
     createdAt?: SortOrder
+    syntheticSignal?: SortOrderInput | SortOrder
+    infoSignal?: SortOrderInput | SortOrder
+    eventSignal?: SortOrderInput | SortOrder
+    regimeSignal?: SortOrderInput | SortOrder
+    distortedSignal?: SortOrderInput | SortOrder
+    beliefDrift?: SortOrderInput | SortOrder
+    prefBUY?: SortOrderInput | SortOrder
+    prefSELL?: SortOrderInput | SortOrder
+    prefHOLD?: SortOrderInput | SortOrder
     _count?: AgentDecisionCountOrderByAggregateInput
     _avg?: AgentDecisionAvgOrderByAggregateInput
     _max?: AgentDecisionMaxOrderByAggregateInput
@@ -38820,6 +40116,15 @@ export namespace Prisma {
     confidence?: FloatWithAggregatesFilter<"AgentDecision"> | number
     rationale?: StringNullableWithAggregatesFilter<"AgentDecision"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"AgentDecision"> | Date | string
+    syntheticSignal?: FloatNullableWithAggregatesFilter<"AgentDecision"> | number | null
+    infoSignal?: FloatNullableWithAggregatesFilter<"AgentDecision"> | number | null
+    eventSignal?: FloatNullableWithAggregatesFilter<"AgentDecision"> | number | null
+    regimeSignal?: FloatNullableWithAggregatesFilter<"AgentDecision"> | number | null
+    distortedSignal?: FloatNullableWithAggregatesFilter<"AgentDecision"> | number | null
+    beliefDrift?: FloatNullableWithAggregatesFilter<"AgentDecision"> | number | null
+    prefBUY?: FloatNullableWithAggregatesFilter<"AgentDecision"> | number | null
+    prefSELL?: FloatNullableWithAggregatesFilter<"AgentDecision"> | number | null
+    prefHOLD?: FloatNullableWithAggregatesFilter<"AgentDecision"> | number | null
   }
 
   export type CrowdMetricsWhereInput = {
@@ -40564,6 +41869,95 @@ export namespace Prisma {
     computedAt?: DateTimeWithAggregatesFilter<"RunSignalDiagnostics"> | Date | string
   }
 
+  export type BenchWindowSnapshotWhereInput = {
+    AND?: BenchWindowSnapshotWhereInput | BenchWindowSnapshotWhereInput[]
+    OR?: BenchWindowSnapshotWhereInput[]
+    NOT?: BenchWindowSnapshotWhereInput | BenchWindowSnapshotWhereInput[]
+    id?: UuidFilter<"BenchWindowSnapshot"> | string
+    createdAt?: DateTimeFilter<"BenchWindowSnapshot"> | Date | string
+    symbols?: StringFilter<"BenchWindowSnapshot"> | string
+    windows?: StringFilter<"BenchWindowSnapshot"> | string
+    n?: IntFilter<"BenchWindowSnapshot"> | number
+    points?: IntNullableFilter<"BenchWindowSnapshot"> | number | null
+    overwrite?: BoolFilter<"BenchWindowSnapshot"> | boolean
+    datasetVersion?: StringNullableFilter<"BenchWindowSnapshot"> | string | null
+    modelVersion?: StringNullableFilter<"BenchWindowSnapshot"> | string | null
+    payloadJson?: JsonFilter<"BenchWindowSnapshot">
+    tag?: StringNullableFilter<"BenchWindowSnapshot"> | string | null
+    isBaseline?: BoolFilter<"BenchWindowSnapshot"> | boolean
+  }
+
+  export type BenchWindowSnapshotOrderByWithRelationInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    symbols?: SortOrder
+    windows?: SortOrder
+    n?: SortOrder
+    points?: SortOrderInput | SortOrder
+    overwrite?: SortOrder
+    datasetVersion?: SortOrderInput | SortOrder
+    modelVersion?: SortOrderInput | SortOrder
+    payloadJson?: SortOrder
+    tag?: SortOrderInput | SortOrder
+    isBaseline?: SortOrder
+  }
+
+  export type BenchWindowSnapshotWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    tag?: string
+    AND?: BenchWindowSnapshotWhereInput | BenchWindowSnapshotWhereInput[]
+    OR?: BenchWindowSnapshotWhereInput[]
+    NOT?: BenchWindowSnapshotWhereInput | BenchWindowSnapshotWhereInput[]
+    createdAt?: DateTimeFilter<"BenchWindowSnapshot"> | Date | string
+    symbols?: StringFilter<"BenchWindowSnapshot"> | string
+    windows?: StringFilter<"BenchWindowSnapshot"> | string
+    n?: IntFilter<"BenchWindowSnapshot"> | number
+    points?: IntNullableFilter<"BenchWindowSnapshot"> | number | null
+    overwrite?: BoolFilter<"BenchWindowSnapshot"> | boolean
+    datasetVersion?: StringNullableFilter<"BenchWindowSnapshot"> | string | null
+    modelVersion?: StringNullableFilter<"BenchWindowSnapshot"> | string | null
+    payloadJson?: JsonFilter<"BenchWindowSnapshot">
+    isBaseline?: BoolFilter<"BenchWindowSnapshot"> | boolean
+  }, "id" | "tag">
+
+  export type BenchWindowSnapshotOrderByWithAggregationInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    symbols?: SortOrder
+    windows?: SortOrder
+    n?: SortOrder
+    points?: SortOrderInput | SortOrder
+    overwrite?: SortOrder
+    datasetVersion?: SortOrderInput | SortOrder
+    modelVersion?: SortOrderInput | SortOrder
+    payloadJson?: SortOrder
+    tag?: SortOrderInput | SortOrder
+    isBaseline?: SortOrder
+    _count?: BenchWindowSnapshotCountOrderByAggregateInput
+    _avg?: BenchWindowSnapshotAvgOrderByAggregateInput
+    _max?: BenchWindowSnapshotMaxOrderByAggregateInput
+    _min?: BenchWindowSnapshotMinOrderByAggregateInput
+    _sum?: BenchWindowSnapshotSumOrderByAggregateInput
+  }
+
+  export type BenchWindowSnapshotScalarWhereWithAggregatesInput = {
+    AND?: BenchWindowSnapshotScalarWhereWithAggregatesInput | BenchWindowSnapshotScalarWhereWithAggregatesInput[]
+    OR?: BenchWindowSnapshotScalarWhereWithAggregatesInput[]
+    NOT?: BenchWindowSnapshotScalarWhereWithAggregatesInput | BenchWindowSnapshotScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"BenchWindowSnapshot"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"BenchWindowSnapshot"> | Date | string
+    symbols?: StringWithAggregatesFilter<"BenchWindowSnapshot"> | string
+    windows?: StringWithAggregatesFilter<"BenchWindowSnapshot"> | string
+    n?: IntWithAggregatesFilter<"BenchWindowSnapshot"> | number
+    points?: IntNullableWithAggregatesFilter<"BenchWindowSnapshot"> | number | null
+    overwrite?: BoolWithAggregatesFilter<"BenchWindowSnapshot"> | boolean
+    datasetVersion?: StringNullableWithAggregatesFilter<"BenchWindowSnapshot"> | string | null
+    modelVersion?: StringNullableWithAggregatesFilter<"BenchWindowSnapshot"> | string | null
+    payloadJson?: JsonWithAggregatesFilter<"BenchWindowSnapshot">
+    tag?: StringNullableWithAggregatesFilter<"BenchWindowSnapshot"> | string | null
+    isBaseline?: BoolWithAggregatesFilter<"BenchWindowSnapshot"> | boolean
+  }
+
   export type ArchetypeCreateInput = {
     id?: string
     name: string
@@ -41452,6 +42846,15 @@ export namespace Prisma {
     confidence: number
     rationale?: string | null
     createdAt?: Date | string
+    syntheticSignal?: number | null
+    infoSignal?: number | null
+    eventSignal?: number | null
+    regimeSignal?: number | null
+    distortedSignal?: number | null
+    beliefDrift?: number | null
+    prefBUY?: number | null
+    prefSELL?: number | null
+    prefHOLD?: number | null
     run: SimulationRunCreateNestedOneWithoutAgentDecisionsInput
     runVariant?: RunVariantCreateNestedOneWithoutAgentDecisionsInput
     agent: RunAgentCreateNestedOneWithoutDecisionsInput
@@ -41468,6 +42871,15 @@ export namespace Prisma {
     confidence: number
     rationale?: string | null
     createdAt?: Date | string
+    syntheticSignal?: number | null
+    infoSignal?: number | null
+    eventSignal?: number | null
+    regimeSignal?: number | null
+    distortedSignal?: number | null
+    beliefDrift?: number | null
+    prefBUY?: number | null
+    prefSELL?: number | null
+    prefHOLD?: number | null
   }
 
   export type AgentDecisionUpdateInput = {
@@ -41478,6 +42890,15 @@ export namespace Prisma {
     confidence?: FloatFieldUpdateOperationsInput | number
     rationale?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    syntheticSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    infoSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    eventSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    regimeSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    distortedSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    beliefDrift?: NullableFloatFieldUpdateOperationsInput | number | null
+    prefBUY?: NullableFloatFieldUpdateOperationsInput | number | null
+    prefSELL?: NullableFloatFieldUpdateOperationsInput | number | null
+    prefHOLD?: NullableFloatFieldUpdateOperationsInput | number | null
     run?: SimulationRunUpdateOneRequiredWithoutAgentDecisionsNestedInput
     runVariant?: RunVariantUpdateOneWithoutAgentDecisionsNestedInput
     agent?: RunAgentUpdateOneRequiredWithoutDecisionsNestedInput
@@ -41494,6 +42915,15 @@ export namespace Prisma {
     confidence?: FloatFieldUpdateOperationsInput | number
     rationale?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    syntheticSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    infoSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    eventSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    regimeSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    distortedSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    beliefDrift?: NullableFloatFieldUpdateOperationsInput | number | null
+    prefBUY?: NullableFloatFieldUpdateOperationsInput | number | null
+    prefSELL?: NullableFloatFieldUpdateOperationsInput | number | null
+    prefHOLD?: NullableFloatFieldUpdateOperationsInput | number | null
   }
 
   export type AgentDecisionCreateManyInput = {
@@ -41507,6 +42937,15 @@ export namespace Prisma {
     confidence: number
     rationale?: string | null
     createdAt?: Date | string
+    syntheticSignal?: number | null
+    infoSignal?: number | null
+    eventSignal?: number | null
+    regimeSignal?: number | null
+    distortedSignal?: number | null
+    beliefDrift?: number | null
+    prefBUY?: number | null
+    prefSELL?: number | null
+    prefHOLD?: number | null
   }
 
   export type AgentDecisionUpdateManyMutationInput = {
@@ -41517,6 +42956,15 @@ export namespace Prisma {
     confidence?: FloatFieldUpdateOperationsInput | number
     rationale?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    syntheticSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    infoSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    eventSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    regimeSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    distortedSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    beliefDrift?: NullableFloatFieldUpdateOperationsInput | number | null
+    prefBUY?: NullableFloatFieldUpdateOperationsInput | number | null
+    prefSELL?: NullableFloatFieldUpdateOperationsInput | number | null
+    prefHOLD?: NullableFloatFieldUpdateOperationsInput | number | null
   }
 
   export type AgentDecisionUncheckedUpdateManyInput = {
@@ -41530,6 +42978,15 @@ export namespace Prisma {
     confidence?: FloatFieldUpdateOperationsInput | number
     rationale?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    syntheticSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    infoSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    eventSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    regimeSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    distortedSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    beliefDrift?: NullableFloatFieldUpdateOperationsInput | number | null
+    prefBUY?: NullableFloatFieldUpdateOperationsInput | number | null
+    prefSELL?: NullableFloatFieldUpdateOperationsInput | number | null
+    prefHOLD?: NullableFloatFieldUpdateOperationsInput | number | null
   }
 
   export type CrowdMetricsCreateInput = {
@@ -43431,6 +44888,111 @@ export namespace Prisma {
     computedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type BenchWindowSnapshotCreateInput = {
+    id?: string
+    createdAt?: Date | string
+    symbols: string
+    windows: string
+    n: number
+    points?: number | null
+    overwrite?: boolean
+    datasetVersion?: string | null
+    modelVersion?: string | null
+    payloadJson: JsonNullValueInput | InputJsonValue
+    tag?: string | null
+    isBaseline?: boolean
+  }
+
+  export type BenchWindowSnapshotUncheckedCreateInput = {
+    id?: string
+    createdAt?: Date | string
+    symbols: string
+    windows: string
+    n: number
+    points?: number | null
+    overwrite?: boolean
+    datasetVersion?: string | null
+    modelVersion?: string | null
+    payloadJson: JsonNullValueInput | InputJsonValue
+    tag?: string | null
+    isBaseline?: boolean
+  }
+
+  export type BenchWindowSnapshotUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    symbols?: StringFieldUpdateOperationsInput | string
+    windows?: StringFieldUpdateOperationsInput | string
+    n?: IntFieldUpdateOperationsInput | number
+    points?: NullableIntFieldUpdateOperationsInput | number | null
+    overwrite?: BoolFieldUpdateOperationsInput | boolean
+    datasetVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    modelVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    payloadJson?: JsonNullValueInput | InputJsonValue
+    tag?: NullableStringFieldUpdateOperationsInput | string | null
+    isBaseline?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type BenchWindowSnapshotUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    symbols?: StringFieldUpdateOperationsInput | string
+    windows?: StringFieldUpdateOperationsInput | string
+    n?: IntFieldUpdateOperationsInput | number
+    points?: NullableIntFieldUpdateOperationsInput | number | null
+    overwrite?: BoolFieldUpdateOperationsInput | boolean
+    datasetVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    modelVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    payloadJson?: JsonNullValueInput | InputJsonValue
+    tag?: NullableStringFieldUpdateOperationsInput | string | null
+    isBaseline?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type BenchWindowSnapshotCreateManyInput = {
+    id?: string
+    createdAt?: Date | string
+    symbols: string
+    windows: string
+    n: number
+    points?: number | null
+    overwrite?: boolean
+    datasetVersion?: string | null
+    modelVersion?: string | null
+    payloadJson: JsonNullValueInput | InputJsonValue
+    tag?: string | null
+    isBaseline?: boolean
+  }
+
+  export type BenchWindowSnapshotUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    symbols?: StringFieldUpdateOperationsInput | string
+    windows?: StringFieldUpdateOperationsInput | string
+    n?: IntFieldUpdateOperationsInput | number
+    points?: NullableIntFieldUpdateOperationsInput | number | null
+    overwrite?: BoolFieldUpdateOperationsInput | boolean
+    datasetVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    modelVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    payloadJson?: JsonNullValueInput | InputJsonValue
+    tag?: NullableStringFieldUpdateOperationsInput | string | null
+    isBaseline?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type BenchWindowSnapshotUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    symbols?: StringFieldUpdateOperationsInput | string
+    windows?: StringFieldUpdateOperationsInput | string
+    n?: IntFieldUpdateOperationsInput | number
+    points?: NullableIntFieldUpdateOperationsInput | number | null
+    overwrite?: BoolFieldUpdateOperationsInput | boolean
+    datasetVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    modelVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    payloadJson?: JsonNullValueInput | InputJsonValue
+    tag?: NullableStringFieldUpdateOperationsInput | string | null
+    isBaseline?: BoolFieldUpdateOperationsInput | boolean
+  }
+
   export type UuidFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -44408,11 +45970,29 @@ export namespace Prisma {
     confidence?: SortOrder
     rationale?: SortOrder
     createdAt?: SortOrder
+    syntheticSignal?: SortOrder
+    infoSignal?: SortOrder
+    eventSignal?: SortOrder
+    regimeSignal?: SortOrder
+    distortedSignal?: SortOrder
+    beliefDrift?: SortOrder
+    prefBUY?: SortOrder
+    prefSELL?: SortOrder
+    prefHOLD?: SortOrder
   }
 
   export type AgentDecisionAvgOrderByAggregateInput = {
     step?: SortOrder
     confidence?: SortOrder
+    syntheticSignal?: SortOrder
+    infoSignal?: SortOrder
+    eventSignal?: SortOrder
+    regimeSignal?: SortOrder
+    distortedSignal?: SortOrder
+    beliefDrift?: SortOrder
+    prefBUY?: SortOrder
+    prefSELL?: SortOrder
+    prefHOLD?: SortOrder
   }
 
   export type AgentDecisionMaxOrderByAggregateInput = {
@@ -44426,6 +46006,15 @@ export namespace Prisma {
     confidence?: SortOrder
     rationale?: SortOrder
     createdAt?: SortOrder
+    syntheticSignal?: SortOrder
+    infoSignal?: SortOrder
+    eventSignal?: SortOrder
+    regimeSignal?: SortOrder
+    distortedSignal?: SortOrder
+    beliefDrift?: SortOrder
+    prefBUY?: SortOrder
+    prefSELL?: SortOrder
+    prefHOLD?: SortOrder
   }
 
   export type AgentDecisionMinOrderByAggregateInput = {
@@ -44439,11 +46028,29 @@ export namespace Prisma {
     confidence?: SortOrder
     rationale?: SortOrder
     createdAt?: SortOrder
+    syntheticSignal?: SortOrder
+    infoSignal?: SortOrder
+    eventSignal?: SortOrder
+    regimeSignal?: SortOrder
+    distortedSignal?: SortOrder
+    beliefDrift?: SortOrder
+    prefBUY?: SortOrder
+    prefSELL?: SortOrder
+    prefHOLD?: SortOrder
   }
 
   export type AgentDecisionSumOrderByAggregateInput = {
     step?: SortOrder
     confidence?: SortOrder
+    syntheticSignal?: SortOrder
+    infoSignal?: SortOrder
+    eventSignal?: SortOrder
+    regimeSignal?: SortOrder
+    distortedSignal?: SortOrder
+    beliefDrift?: SortOrder
+    prefBUY?: SortOrder
+    prefSELL?: SortOrder
+    prefHOLD?: SortOrder
   }
 
   export type UuidNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -45722,6 +47329,106 @@ export namespace Prisma {
     sellWrong?: SortOrder
     holdCorrect?: SortOrder
     holdWrong?: SortOrder
+  }
+  export type JsonFilter<$PrismaModel = never> = 
+    | PatchUndefined<
+        Either<Required<JsonFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type BenchWindowSnapshotCountOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    symbols?: SortOrder
+    windows?: SortOrder
+    n?: SortOrder
+    points?: SortOrder
+    overwrite?: SortOrder
+    datasetVersion?: SortOrder
+    modelVersion?: SortOrder
+    payloadJson?: SortOrder
+    tag?: SortOrder
+    isBaseline?: SortOrder
+  }
+
+  export type BenchWindowSnapshotAvgOrderByAggregateInput = {
+    n?: SortOrder
+    points?: SortOrder
+  }
+
+  export type BenchWindowSnapshotMaxOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    symbols?: SortOrder
+    windows?: SortOrder
+    n?: SortOrder
+    points?: SortOrder
+    overwrite?: SortOrder
+    datasetVersion?: SortOrder
+    modelVersion?: SortOrder
+    tag?: SortOrder
+    isBaseline?: SortOrder
+  }
+
+  export type BenchWindowSnapshotMinOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    symbols?: SortOrder
+    windows?: SortOrder
+    n?: SortOrder
+    points?: SortOrder
+    overwrite?: SortOrder
+    datasetVersion?: SortOrder
+    modelVersion?: SortOrder
+    tag?: SortOrder
+    isBaseline?: SortOrder
+  }
+
+  export type BenchWindowSnapshotSumOrderByAggregateInput = {
+    n?: SortOrder
+    points?: SortOrder
+  }
+  export type JsonWithAggregatesFilter<$PrismaModel = never> = 
+    | PatchUndefined<
+        Either<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedJsonFilter<$PrismaModel>
+    _max?: NestedJsonFilter<$PrismaModel>
   }
 
   export type ArchetypeTraitProfileCreateNestedManyWithoutArchetypeInput = {
@@ -48077,6 +49784,28 @@ export namespace Prisma {
     _min?: NestedBoolFilter<$PrismaModel>
     _max?: NestedBoolFilter<$PrismaModel>
   }
+  export type NestedJsonFilter<$PrismaModel = never> = 
+    | PatchUndefined<
+        Either<Required<NestedJsonFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>,
+        Required<NestedJsonFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>
+
+  export type NestedJsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
 
   export type ArchetypeTraitProfileCreateWithoutArchetypeInput = {
     baselineValue: number
@@ -48770,6 +50499,15 @@ export namespace Prisma {
     confidence: number
     rationale?: string | null
     createdAt?: Date | string
+    syntheticSignal?: number | null
+    infoSignal?: number | null
+    eventSignal?: number | null
+    regimeSignal?: number | null
+    distortedSignal?: number | null
+    beliefDrift?: number | null
+    prefBUY?: number | null
+    prefSELL?: number | null
+    prefHOLD?: number | null
     runVariant?: RunVariantCreateNestedOneWithoutAgentDecisionsInput
     agent: RunAgentCreateNestedOneWithoutDecisionsInput
   }
@@ -48784,6 +50522,15 @@ export namespace Prisma {
     confidence: number
     rationale?: string | null
     createdAt?: Date | string
+    syntheticSignal?: number | null
+    infoSignal?: number | null
+    eventSignal?: number | null
+    regimeSignal?: number | null
+    distortedSignal?: number | null
+    beliefDrift?: number | null
+    prefBUY?: number | null
+    prefSELL?: number | null
+    prefHOLD?: number | null
   }
 
   export type AgentDecisionCreateOrConnectWithoutRunInput = {
@@ -49270,6 +51017,15 @@ export namespace Prisma {
     confidence?: FloatFilter<"AgentDecision"> | number
     rationale?: StringNullableFilter<"AgentDecision"> | string | null
     createdAt?: DateTimeFilter<"AgentDecision"> | Date | string
+    syntheticSignal?: FloatNullableFilter<"AgentDecision"> | number | null
+    infoSignal?: FloatNullableFilter<"AgentDecision"> | number | null
+    eventSignal?: FloatNullableFilter<"AgentDecision"> | number | null
+    regimeSignal?: FloatNullableFilter<"AgentDecision"> | number | null
+    distortedSignal?: FloatNullableFilter<"AgentDecision"> | number | null
+    beliefDrift?: FloatNullableFilter<"AgentDecision"> | number | null
+    prefBUY?: FloatNullableFilter<"AgentDecision"> | number | null
+    prefSELL?: FloatNullableFilter<"AgentDecision"> | number | null
+    prefHOLD?: FloatNullableFilter<"AgentDecision"> | number | null
   }
 
   export type CrowdMetricsUpsertWithWhereUniqueWithoutRunInput = {
@@ -49590,6 +51346,15 @@ export namespace Prisma {
     confidence: number
     rationale?: string | null
     createdAt?: Date | string
+    syntheticSignal?: number | null
+    infoSignal?: number | null
+    eventSignal?: number | null
+    regimeSignal?: number | null
+    distortedSignal?: number | null
+    beliefDrift?: number | null
+    prefBUY?: number | null
+    prefSELL?: number | null
+    prefHOLD?: number | null
     run: SimulationRunCreateNestedOneWithoutAgentDecisionsInput
     agent: RunAgentCreateNestedOneWithoutDecisionsInput
   }
@@ -49604,6 +51369,15 @@ export namespace Prisma {
     confidence: number
     rationale?: string | null
     createdAt?: Date | string
+    syntheticSignal?: number | null
+    infoSignal?: number | null
+    eventSignal?: number | null
+    regimeSignal?: number | null
+    distortedSignal?: number | null
+    beliefDrift?: number | null
+    prefBUY?: number | null
+    prefSELL?: number | null
+    prefHOLD?: number | null
   }
 
   export type AgentDecisionCreateOrConnectWithoutRunVariantInput = {
@@ -50339,6 +52113,15 @@ export namespace Prisma {
     confidence: number
     rationale?: string | null
     createdAt?: Date | string
+    syntheticSignal?: number | null
+    infoSignal?: number | null
+    eventSignal?: number | null
+    regimeSignal?: number | null
+    distortedSignal?: number | null
+    beliefDrift?: number | null
+    prefBUY?: number | null
+    prefSELL?: number | null
+    prefHOLD?: number | null
     run: SimulationRunCreateNestedOneWithoutAgentDecisionsInput
     runVariant?: RunVariantCreateNestedOneWithoutAgentDecisionsInput
   }
@@ -50353,6 +52136,15 @@ export namespace Prisma {
     confidence: number
     rationale?: string | null
     createdAt?: Date | string
+    syntheticSignal?: number | null
+    infoSignal?: number | null
+    eventSignal?: number | null
+    regimeSignal?: number | null
+    distortedSignal?: number | null
+    beliefDrift?: number | null
+    prefBUY?: number | null
+    prefSELL?: number | null
+    prefHOLD?: number | null
   }
 
   export type AgentDecisionCreateOrConnectWithoutAgentInput = {
@@ -54095,6 +55887,15 @@ export namespace Prisma {
     confidence: number
     rationale?: string | null
     createdAt?: Date | string
+    syntheticSignal?: number | null
+    infoSignal?: number | null
+    eventSignal?: number | null
+    regimeSignal?: number | null
+    distortedSignal?: number | null
+    beliefDrift?: number | null
+    prefBUY?: number | null
+    prefSELL?: number | null
+    prefHOLD?: number | null
   }
 
   export type CrowdMetricsCreateManyRunInput = {
@@ -54395,6 +56196,15 @@ export namespace Prisma {
     confidence?: FloatFieldUpdateOperationsInput | number
     rationale?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    syntheticSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    infoSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    eventSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    regimeSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    distortedSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    beliefDrift?: NullableFloatFieldUpdateOperationsInput | number | null
+    prefBUY?: NullableFloatFieldUpdateOperationsInput | number | null
+    prefSELL?: NullableFloatFieldUpdateOperationsInput | number | null
+    prefHOLD?: NullableFloatFieldUpdateOperationsInput | number | null
     runVariant?: RunVariantUpdateOneWithoutAgentDecisionsNestedInput
     agent?: RunAgentUpdateOneRequiredWithoutDecisionsNestedInput
   }
@@ -54409,6 +56219,15 @@ export namespace Prisma {
     confidence?: FloatFieldUpdateOperationsInput | number
     rationale?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    syntheticSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    infoSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    eventSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    regimeSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    distortedSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    beliefDrift?: NullableFloatFieldUpdateOperationsInput | number | null
+    prefBUY?: NullableFloatFieldUpdateOperationsInput | number | null
+    prefSELL?: NullableFloatFieldUpdateOperationsInput | number | null
+    prefHOLD?: NullableFloatFieldUpdateOperationsInput | number | null
   }
 
   export type AgentDecisionUncheckedUpdateManyWithoutRunInput = {
@@ -54421,6 +56240,15 @@ export namespace Prisma {
     confidence?: FloatFieldUpdateOperationsInput | number
     rationale?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    syntheticSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    infoSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    eventSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    regimeSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    distortedSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    beliefDrift?: NullableFloatFieldUpdateOperationsInput | number | null
+    prefBUY?: NullableFloatFieldUpdateOperationsInput | number | null
+    prefSELL?: NullableFloatFieldUpdateOperationsInput | number | null
+    prefHOLD?: NullableFloatFieldUpdateOperationsInput | number | null
   }
 
   export type CrowdMetricsUpdateWithoutRunInput = {
@@ -54746,6 +56574,15 @@ export namespace Prisma {
     confidence: number
     rationale?: string | null
     createdAt?: Date | string
+    syntheticSignal?: number | null
+    infoSignal?: number | null
+    eventSignal?: number | null
+    regimeSignal?: number | null
+    distortedSignal?: number | null
+    beliefDrift?: number | null
+    prefBUY?: number | null
+    prefSELL?: number | null
+    prefHOLD?: number | null
   }
 
   export type AgentInfoStateCreateManyRunVariantInput = {
@@ -54850,6 +56687,15 @@ export namespace Prisma {
     confidence?: FloatFieldUpdateOperationsInput | number
     rationale?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    syntheticSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    infoSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    eventSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    regimeSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    distortedSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    beliefDrift?: NullableFloatFieldUpdateOperationsInput | number | null
+    prefBUY?: NullableFloatFieldUpdateOperationsInput | number | null
+    prefSELL?: NullableFloatFieldUpdateOperationsInput | number | null
+    prefHOLD?: NullableFloatFieldUpdateOperationsInput | number | null
     run?: SimulationRunUpdateOneRequiredWithoutAgentDecisionsNestedInput
     agent?: RunAgentUpdateOneRequiredWithoutDecisionsNestedInput
   }
@@ -54864,6 +56710,15 @@ export namespace Prisma {
     confidence?: FloatFieldUpdateOperationsInput | number
     rationale?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    syntheticSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    infoSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    eventSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    regimeSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    distortedSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    beliefDrift?: NullableFloatFieldUpdateOperationsInput | number | null
+    prefBUY?: NullableFloatFieldUpdateOperationsInput | number | null
+    prefSELL?: NullableFloatFieldUpdateOperationsInput | number | null
+    prefHOLD?: NullableFloatFieldUpdateOperationsInput | number | null
   }
 
   export type AgentDecisionUncheckedUpdateManyWithoutRunVariantInput = {
@@ -54876,6 +56731,15 @@ export namespace Prisma {
     confidence?: FloatFieldUpdateOperationsInput | number
     rationale?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    syntheticSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    infoSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    eventSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    regimeSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    distortedSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    beliefDrift?: NullableFloatFieldUpdateOperationsInput | number | null
+    prefBUY?: NullableFloatFieldUpdateOperationsInput | number | null
+    prefSELL?: NullableFloatFieldUpdateOperationsInput | number | null
+    prefHOLD?: NullableFloatFieldUpdateOperationsInput | number | null
   }
 
   export type AgentInfoStateUpdateWithoutRunVariantInput = {
@@ -55178,6 +57042,15 @@ export namespace Prisma {
     confidence: number
     rationale?: string | null
     createdAt?: Date | string
+    syntheticSignal?: number | null
+    infoSignal?: number | null
+    eventSignal?: number | null
+    regimeSignal?: number | null
+    distortedSignal?: number | null
+    beliefDrift?: number | null
+    prefBUY?: number | null
+    prefSELL?: number | null
+    prefHOLD?: number | null
   }
 
   export type AgentInfoStateCreateManyAgentInput = {
@@ -55273,6 +57146,15 @@ export namespace Prisma {
     confidence?: FloatFieldUpdateOperationsInput | number
     rationale?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    syntheticSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    infoSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    eventSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    regimeSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    distortedSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    beliefDrift?: NullableFloatFieldUpdateOperationsInput | number | null
+    prefBUY?: NullableFloatFieldUpdateOperationsInput | number | null
+    prefSELL?: NullableFloatFieldUpdateOperationsInput | number | null
+    prefHOLD?: NullableFloatFieldUpdateOperationsInput | number | null
     run?: SimulationRunUpdateOneRequiredWithoutAgentDecisionsNestedInput
     runVariant?: RunVariantUpdateOneWithoutAgentDecisionsNestedInput
   }
@@ -55287,6 +57169,15 @@ export namespace Prisma {
     confidence?: FloatFieldUpdateOperationsInput | number
     rationale?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    syntheticSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    infoSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    eventSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    regimeSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    distortedSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    beliefDrift?: NullableFloatFieldUpdateOperationsInput | number | null
+    prefBUY?: NullableFloatFieldUpdateOperationsInput | number | null
+    prefSELL?: NullableFloatFieldUpdateOperationsInput | number | null
+    prefHOLD?: NullableFloatFieldUpdateOperationsInput | number | null
   }
 
   export type AgentDecisionUncheckedUpdateManyWithoutAgentInput = {
@@ -55299,6 +57190,15 @@ export namespace Prisma {
     confidence?: FloatFieldUpdateOperationsInput | number
     rationale?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    syntheticSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    infoSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    eventSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    regimeSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    distortedSignal?: NullableFloatFieldUpdateOperationsInput | number | null
+    beliefDrift?: NullableFloatFieldUpdateOperationsInput | number | null
+    prefBUY?: NullableFloatFieldUpdateOperationsInput | number | null
+    prefSELL?: NullableFloatFieldUpdateOperationsInput | number | null
+    prefHOLD?: NullableFloatFieldUpdateOperationsInput | number | null
   }
 
   export type AgentInfoStateUpdateWithoutAgentInput = {
@@ -55685,6 +57585,10 @@ export namespace Prisma {
      * @deprecated Use RunSignalDiagnosticsDefaultArgs instead
      */
     export type RunSignalDiagnosticsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = RunSignalDiagnosticsDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use BenchWindowSnapshotDefaultArgs instead
+     */
+    export type BenchWindowSnapshotArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = BenchWindowSnapshotDefaultArgs<ExtArgs>
 
   /**
    * Batch Payload for updateMany & deleteMany & createMany

@@ -278,6 +278,63 @@ export class RunsController {
     return this.runsService.getRunSummary(id, sym);
   }
 
+  /** GET /runs/:id/return-audit — per-asset step returns from AssetStepReturn (lineage audit). */
+  @Get("runs/:id/return-audit")
+  async getReturnAudit(@Param("id") runId: string) {
+    const id = runId?.trim() ?? "";
+    if (id === "" || !UUID_REGEX.test(id)) throw new BadRequestException("run id must be a UUID");
+    return this.runsService.getReturnAudit(id);
+  }
+
+  /** GET /runs/:id/attribution-summary — averages of attribution fields per assetSymbol. */
+  @Get("runs/:id/attribution-summary")
+  async getAttributionSummary(@Param("id") runId: string) {
+    const id = runId?.trim() ?? "";
+    if (id === "" || !UUID_REGEX.test(id)) throw new BadRequestException("run id must be a UUID");
+    return this.runsService.getAttributionSummary(id);
+  }
+
+  /** GET /runs/:id/agent-alpha — agent/archetype/trait alpha analytics (completed runs only). */
+  @Get("runs/:id/agent-alpha")
+  async getAgentAlpha(@Param("id") runId: string) {
+    const id = runId?.trim() ?? "";
+    if (id === "" || !UUID_REGEX.test(id)) throw new BadRequestException("run id must be a UUID");
+    return this.runsService.getRunAgentAlpha(id);
+  }
+
+  /** GET /runs/:id/selection-simulation — selection policy simulation (completed runs only). */
+  @Get("runs/:id/selection-simulation")
+  async getSelectionSimulation(@Param("id") runId: string) {
+    const id = runId?.trim() ?? "";
+    if (id === "" || !UUID_REGEX.test(id)) throw new BadRequestException("run id must be a UUID");
+    return this.runsService.getRunSelectionSimulation(id);
+  }
+
+  /** GET /runs/:id/weighted-crowd-simulation — weighted crowd voting simulation (completed runs only). */
+  @Get("runs/:id/weighted-crowd-simulation")
+  async getWeightedCrowdSimulation(@Param("id") runId: string) {
+    const id = runId?.trim() ?? "";
+    if (id === "" || !UUID_REGEX.test(id)) throw new BadRequestException("run id must be a UUID");
+    return this.runsService.getRunWeightedCrowdSimulation(id);
+  }
+
+  /** GET /runs/:id/attribution-sample?assetSymbol=SPY&limit=20 — sample of AgentDecision rows with attribution fields. */
+  @Get("runs/:id/attribution-sample")
+  async getAttributionSample(
+    @Param("id") runId: string,
+    @Query("assetSymbol") assetSymbol?: string,
+    @Query("limit") limitStr?: string,
+  ) {
+    const id = runId?.trim() ?? "";
+    if (id === "" || !UUID_REGEX.test(id)) throw new BadRequestException("run id must be a UUID");
+    const sym = (assetSymbol ?? "").trim() || undefined;
+    const limit = Math.min(
+      Math.max(1, parseInt(limitStr ?? "20", 10) || 20),
+      200,
+    );
+    return this.runsService.getAttributionSample(id, { assetSymbol: sym, limit });
+  }
+
   /** GET /runs/:id — run by id with normalized payload. Add ?debug=1 for debug fields. */
   @Get("runs/:id")
   async getById(@Param("id") id: string, @Query("debug") debug?: string) {

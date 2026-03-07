@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
+    "bench:gate": "node scripts/bench-gate-check.mjs",
     "build": "nest build",
     "db:status": "pnpm -C ../../packages/db run db:status",
     "db:deploy": "pnpm -C ../../packages/db run db:deploy",

@@ -166,14 +166,14 @@ export function applyExperienceModulation(input: ExperienceModulationInput): num
   return clamp01(confidence - drop);
 }
 
-/** Clamp preference delta to [-0.3, 0.3]. */
+/** Clamp preference delta asymmetrically: limit downside [-0.18, 0.3]. */
 export function clampPref(x: number): number {
-  return Math.max(-0.3, Math.min(0.3, x));
+  return Math.max(-0.18, Math.min(0.3, x));
 }
 
-/** Clamp belief drift to [-0.2, 0.2]. */
+/** Clamp belief drift asymmetrically: limit negative drag [-0.12, +0.20]. */
 function clampDrift(x: number): number {
-  return Math.max(-0.2, Math.min(0.2, x));
+  return Math.max(-0.12, Math.min(0.2, x));
 }
 
 export interface BeliefDriftEntry {
@@ -287,8 +287,8 @@ export function computePreferenceDeltas(input: PreferenceDeltasInput): {
 
   for (const e of experiences) {
     const kPos = learningRate * (1 + 0.5 * overconfidence);
-    const kNeg = learningRate * (1 + 0.5 * lossAversion);
-    const kHold = learningRate * 0.5 * (volatility + uncertainty);
+    const kNeg = learningRate * (0.65 + 0.35 * lossAversion);
+    const kHold = learningRate * 0.2 * (volatility + uncertainty);
 
     if (e.action === "BUY") {
       if (e.outcomePositive) prefBUY += kPos;
@@ -355,6 +355,15 @@ export function decisionFromSignalWithPreferences(
   const rs = clamp11(regimeSignal ?? 0);
   logitBUY += REGIME_LOGIT_WEIGHT * rs;
   logitSELL -= REGIME_LOGIT_WEIGHT * rs;
+
+  if (
+    distorted >= -0.05 &&
+    distorted <= 0.1 &&
+    prefBUY < 0 &&
+    prefHOLD > 0
+  ) {
+    logitBUY += 0.05 * (0.1 - Math.abs(distorted)) / 0.1;
+  }
 
   const maxL = Math.max(logitBUY, logitSELL, logitHOLD);
   const eB = Math.exp(logitBUY - maxL);

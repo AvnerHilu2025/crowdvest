@@ -527,16 +527,34 @@ async function main(): Promise<void> {
     traitMapByAgent.set(a.id, m);
   }
 
+  const priceByStepBySymbol = new Map<string, number[]>();
+
+  const assetStepReturns = await prisma.assetStepReturn.findMany({
+    where: { runId, assetSymbol },
+    orderBy: { step: "asc" },
+    select: { step: true, stepReturn: true },
+  });
+
+  if (assetStepReturns.length < steps) {
+    throw new Error(
+      `AssetStepReturn missing or too short for runId=${runId} assetSymbol=${assetSymbol}: have ${assetStepReturns.length} rows, need ${steps}. Import price data first.`,
+    );
+  }
+
   const priceByStep: number[] = [1];
-  const drift = 0.001;
-  const noiseScale = 0.02;
-  const baseRng = createSeededRng(globalSeed);
-  for (let s = 1; s <= steps; s++) {
-    const prev = priceByStep[s - 1]!;
-    const noise = (baseRng() - 0.5) * 2 * noiseScale;
-    const ret = drift + noise;
+  for (let s = 0; s < steps; s++) {
+    const ret = assetStepReturns[s]!.stepReturn;
+    const prev = priceByStep[s]!;
     priceByStep.push(prev * (1 + ret));
   }
+  priceByStepBySymbol.set(assetSymbol, priceByStep);
+
+  const stepReturns = priceByStep
+    .slice(0, steps)
+    .map((p0, i) => (priceByStep[i + 1]! - p0) / p0);
+  const first3 = stepReturns.slice(0, 3);
+  const last3 = stepReturns.slice(-3);
+  log(`[RETURN_AUDIT] runId=${runId} asset=${assetSymbol} first3=${JSON.stringify(first3)} last3=${JSON.stringify(last3)}`);
 
   const dbExperiencesByRunAgent = new Map<
     string,
@@ -581,12 +599,13 @@ async function main(): Promise<void> {
       }
     }
 
+    const priceByStepForDb = priceByStepBySymbol.get(assetSymbol)!;
     for (const e of dbExps) {
       const meta = (e.actionJson as { action?: Action; confidence?: number }) ?? {};
       const action = (meta.action ?? "HOLD") as Action;
       const confidence = typeof meta.confidence === "number" ? meta.confidence : 0.5;
-      const p0 = priceByStep[e.step] ?? 1;
-      const p1 = priceByStep[e.step + 1] ?? p0;
+      const p0 = priceByStepForDb[e.step] ?? 1;
+      const p1 = priceByStepForDb[e.step + 1] ?? p0;
       const delta = (p1 - p0) / p0;
       const outcomePositive =
         action === "BUY" ? delta > 0 : action === "SELL" ? delta < 0 : false;
@@ -605,6 +624,15 @@ async function main(): Promise<void> {
     action: Action;
     confidence: number;
     rationale: string;
+    syntheticSignal?: number;
+    infoSignal?: number;
+    eventSignal?: number;
+    regimeSignal?: number;
+    distortedSignal?: number;
+    beliefDrift?: number;
+    prefBUY?: number;
+    prefSELL?: number;
+    prefHOLD?: number;
   }[] = [];
   const agentInfoStates: {
     runId: string;
@@ -679,11 +707,15 @@ async function main(): Promise<void> {
   }
 
   for (let step = 0; step < steps; step++) {
-    const price0 = priceByStep[step]!;
-    const price1 = priceByStep[step + 1]!;
+    const priceByStepCur = priceByStepBySymbol.get(assetSymbol);
+    if (!priceByStepCur) {
+      throw new Error(`Missing priceByStep for asset ${assetSymbol} (runId=${runId})`);
+    }
+    const price0 = priceByStepCur[step]!;
+    const price1 = priceByStepCur[step + 1]!;
     const delta = (price1 - price0) / price0;
     const syntheticSignal = clamp11(delta * 10);
-    const regime = computeRegimeState(priceByStep, step);
+    const regime = computeRegimeState(priceByStepCur, step);
     const momentum = step > 0 ? syntheticSignal - (lastBaseSignal ?? 0) : 0;
     const eventsForStep = infoEventsByStep.get(step) ?? [];
 
@@ -738,10 +770,11 @@ async function main(): Promise<void> {
         experiencesByRunAgent.set(runAgentId, [...filtered]);
       }
     }
+    const priceByStepForExp = priceByStepBySymbol.get(assetSymbol)!;
     for (const exp of experiencesToPersist) {
       if (exp.step >= step) continue;
-      const p0 = priceByStep[exp.step] ?? 1;
-      const p1 = priceByStep[exp.step + 1] ?? p0;
+      const p0 = priceByStepForExp[exp.step] ?? 1;
+      const p1 = priceByStepForExp[exp.step + 1] ?? p0;
       const delta = (p1 - p0) / p0;
       const outcomePositive =
         exp.action === "BUY" ? delta > 0 : exp.action === "SELL" ? delta < 0 : false;
@@ -947,6 +980,15 @@ async function main(): Promise<void> {
         action,
         confidence,
         rationale,
+        syntheticSignal,
+        infoSignal,
+        eventSignal,
+        regimeSignal: regime.regimeSignal,
+        distortedSignal: distortedWithDrift,
+        beliefDrift: beliefBiasDrift,
+        prefBUY: prefDeltas.prefBUY,
+        prefSELL: prefDeltas.prefSELL,
+        prefHOLD: prefDeltas.prefHOLD,
       });
     }
 
@@ -1032,6 +1074,15 @@ async function main(): Promise<void> {
     action: d.action,
     confidence: d.confidence,
     rationale: d.rationale,
+    syntheticSignal: d.syntheticSignal,
+    infoSignal: d.infoSignal,
+    eventSignal: d.eventSignal,
+    regimeSignal: d.regimeSignal,
+    distortedSignal: d.distortedSignal,
+    beliefDrift: d.beliefDrift,
+    prefBUY: d.prefBUY,
+    prefSELL: d.prefSELL,
+    prefHOLD: d.prefHOLD,
   }));
   for (const batch of chunk(decisionData, 1000)) {
     await prisma.agentDecision.createMany({ data: batch });

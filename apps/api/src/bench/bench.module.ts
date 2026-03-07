@@ -5,10 +5,11 @@ import { JobsModule } from "../jobs/jobs.module";
 import { ForecastModule } from "../forecast/forecast.module";
 import { BenchController } from "./bench.controller";
 import { BenchService } from "./bench.service";
+import { BenchWindowsSnapshotsController } from "./bench-windows-snapshots.controller";
 
 @Module({
   imports: [PrismaModule, RunsModule, JobsModule, ForecastModule],
-  controllers: [BenchController],
+  controllers: [BenchController, BenchWindowsSnapshotsController],
   providers: [BenchService],
 })
 export class BenchModule {}

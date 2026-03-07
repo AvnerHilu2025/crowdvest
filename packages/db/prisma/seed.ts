@@ -46,12 +46,6 @@ const TRAIT_VALUE_RANGE_DEFAULT = "0..1 (default)";
 
 const SEED_DEBUG = process.env.SEED_DEBUG === "1";
 
-/** Path to SPY CSV (same source as spy29-returns). From packages/db: repo root. */
-const SPY_CSV_PATHS = [
-  path.resolve(__dirname, "../../../apps/worker/data/market/spy.us.daily.sample.csv"),
-  path.resolve(__dirname, "../../apps/worker/data/market/spy.us.daily.sample.csv"),
-];
-
 let datasetVersion = "";
 let archetypeReport = {
   totalTraitColumns: 0,
@@ -615,53 +609,111 @@ async function main() {
   printReport(importRunIds, "success");
 }
 
-/** Seed PriceSeriesPoint from local SPY CSV. Idempotent upsert by (symbol, date). */
-async function seedPriceSeriesPoint() {
-  const csvPath = SPY_CSV_PATHS.find((p) => fs.existsSync(p));
-  if (!csvPath) {
-    console.warn("SPY CSV not found; skipping PriceSeriesPoint seed. Tried:", SPY_CSV_PATHS.join(", "));
-    return;
-  }
-  const content = fs.readFileSync(csvPath, "utf8");
-  const lines = content.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-  if (lines.length < 2) return;
-  const headers = lines[0].split(",").map((h) => h.trim());
-  const dateIdx = headers.indexOf("date");
-  const closeIdx = headers.indexOf("close");
-  if (dateIdx === -1 || closeIdx === -1) return;
+/** Default points to seed per symbol. Configurable via PRICE_SERIES_POINTS (default 130). Supports multi-window benchmarks (60/120). */
+const DEFAULT_PRICE_SERIES_POINTS = 130;
 
-  const spyRows = [];
-  for (let i = 1; i < lines.length; i++) {
-    const cols = lines[i].split(",").map((c) => c.trim());
-    const date = cols[dateIdx];
-    const close = parseFloat(cols[closeIdx] ?? "");
-    if (!date || !Number.isFinite(close)) continue;
-    await prisma.priceSeriesPoint.upsert({
-      where: { symbol_date: { symbol: "SPY", date } },
-      create: { symbol: "SPY", date, close },
-      update: { close },
+/** Deterministic seeded RNG. Returns 0..1. */
+function createSeededRng(seed) {
+  let s = seed | 0;
+  return function () {
+    s = Math.imul(s ^ (s >>> 15), s | 1);
+    s = (s + 0x6d2b79f5) | 0;
+    return (s >>> 0) / 4294967296;
+  };
+}
+
+/** Simple hash for IWM seed derivation. Deterministic. */
+function simpleHash(s) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) {
+    h = (h << 5) - h + s.charCodeAt(i);
+    h = h | 0;
+  }
+  return (h >>> 0) & 0x7fffffff;
+}
+
+/** Generate IWM closes: higher volatility, regime-like (trend/mean-revert blocks). Independent of SPY/QQQ. */
+function generateIwmCloses(points, seed) {
+  const rng = createSeededRng(seed);
+  const closes = [];
+  let close = 100;
+  const volatility = 0.004;
+  const blockSize = 15;
+  for (let i = 0; i < points; i++) {
+    const block = Math.floor(i / blockSize) % 2;
+    let delta;
+    if (block === 0) {
+      delta = volatility * (0.2 + rng());
+    } else {
+      const pull = (100 - close) / close * 0.08;
+      delta = pull + volatility * (rng() - 0.5);
+    }
+    close = Math.max(0.01, close * (1 + delta));
+    closes.push(close);
+  }
+  return closes;
+}
+
+/** Seed PriceSeriesPoint deterministically. Idempotent: EXACT_N rows per symbol. No external data. */
+async function seedPriceSeriesPoint() {
+  const points = Math.min(
+    Math.max(29, parseInt(process.env.PRICE_SERIES_POINTS ?? String(DEFAULT_PRICE_SERIES_POINTS), 10) || DEFAULT_PRICE_SERIES_POINTS),
+    365,
+  );
+  const padWidth = 4;
+  const datesWanted = [];
+  for (let i = 1; i <= points; i++) {
+    datesWanted.push(String(i).padStart(padWidth, "0"));
+  }
+
+  const datasetVersion = "priceseed";
+  const symbols = ["SPY", "QQQ", "IWM"];
+  const spyRng = createSeededRng(42);
+  const qqqRng = createSeededRng(43);
+  const iwmSeed = simpleHash(datasetVersion + "IWM" + points);
+  const iwmCloses = generateIwmCloses(points, iwmSeed);
+
+  const spyCloses = [];
+  let close = 100;
+  for (let i = 0; i < points; i++) {
+    const delta = 0.002 * (spyRng() - 0.5);
+    close = Math.max(0.01, close * (1 + delta));
+    spyCloses.push(close);
+  }
+
+  for (const symbol of symbols) {
+    const beforeCount = await prisma.priceSeriesPoint.count({ where: { symbol } });
+    const { count: deletedExtra } = await prisma.priceSeriesPoint.deleteMany({
+      where: { symbol, date: { notIn: datesWanted } },
     });
-    spyRows.push({ date, close });
-  }
-  if (spyRows.length > 0) {
-    console.log("PriceSeriesPoint: seeded", spyRows.length, "SPY rows");
-  }
-  if (spyRows.length >= 29) {
-    let qqqCount = 0;
-    for (let i = 0; i < spyRows.length; i++) {
-      const { date, close } = spyRows[i];
-      const closeQQQ = close * (1.02 + 0.01 * Math.sin(i));
-      if (!Number.isFinite(closeQQQ) || closeQQQ <= 0) continue;
+
+    for (let i = 0; i < points; i++) {
+      const date = datesWanted[i];
+      let closeVal;
+      if (symbol === "SPY") {
+        closeVal = spyCloses[i];
+      } else if (symbol === "QQQ") {
+        closeVal = Math.max(0.01, spyCloses[i] * (1.02 + 0.015 * (qqqRng() - 0.5)));
+      } else {
+        closeVal = iwmCloses[i];
+      }
+
       await prisma.priceSeriesPoint.upsert({
-        where: { symbol_date: { symbol: "QQQ", date } },
-        create: { symbol: "QQQ", date, close: closeQQQ },
-        update: { close: closeQQQ },
+        where: { symbol_date: { symbol, date } },
+        create: { symbol, date, close: closeVal },
+        update: { close: closeVal },
       });
-      qqqCount++;
     }
-    if (qqqCount > 0) {
-      console.log("PriceSeriesPoint: seeded", qqqCount, "QQQ rows (derived from SPY)");
-    }
+
+    const afterCount = await prisma.priceSeriesPoint.count({ where: { symbol } });
+    console.log(
+      "PriceSeriesPoint:",
+      symbol,
+      "beforeCount=" + beforeCount,
+      "afterCount=" + afterCount,
+      "pointsWanted=" + points,
+      "deletedExtra=" + deletedExtra,
+    );
   }
 }
 

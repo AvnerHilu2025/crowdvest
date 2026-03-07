@@ -61,6 +61,28 @@ function computeStepReturnsFromCloses(closes: number[]): number[] {
   return out;
 }
 
+function correctnessFromDecision(action: string, stepReturn: number): boolean {
+  if (action === "BUY") return stepReturn > 0;
+  if (action === "SELL") return stepReturn < 0;
+  return stepReturn === 0;
+}
+
+function bucketTrait(value: number): "low" | "mid" | "high" {
+  if (value < 0.33) return "low";
+  if (value < 0.66) return "mid";
+  return "high";
+}
+
+/** Per-agent metric row shared by agent-alpha and selection-simulation. */
+type AgentMetricRow = {
+  agentId: string;
+  archetypeName: string | null;
+  totalDecisions: number;
+  correctCount: number;
+  accuracyRate: number;
+  avgConfidence: number;
+};
+
 @Injectable()
 export class RunsService {
   constructor(private readonly prisma: PrismaService) {}
@@ -788,6 +810,809 @@ export class RunsService {
         crowdMetricsPresent: crowdMetricsRows > 0,
         backtestPresent: latestBacktest != null,
       },
+    };
+  }
+
+  /** GET /runs/:id/return-audit — per-asset step returns from AssetStepReturn (lineage audit). */
+  async getReturnAudit(runId: string): Promise<{
+    runId: string;
+    items: Array<{
+      assetSymbol: string;
+      steps: number;
+      avgStepReturn: number;
+      minStepReturn: number;
+      maxStepReturn: number;
+      first5StepReturns: number[];
+      last5StepReturns: number[];
+    }>;
+  }> {
+    const run = await this.prisma.simulationRun.findUnique({
+      where: { id: runId },
+      select: { id: true },
+    });
+    if (!run) throw new NotFoundException("Run not found");
+
+    const rows = await this.prisma.assetStepReturn.findMany({
+      where: { runId },
+      orderBy: { step: "asc" },
+      select: { assetSymbol: true, step: true, stepReturn: true },
+    });
+
+    const bySymbol = new Map<
+      string,
+      { stepReturns: number[] }
+    >();
+    for (const r of rows) {
+      let agg = bySymbol.get(r.assetSymbol);
+      if (!agg) {
+        agg = { stepReturns: [] };
+        bySymbol.set(r.assetSymbol, agg);
+      }
+      agg.stepReturns.push(r.stepReturn);
+    }
+
+    const items: Array<{
+      assetSymbol: string;
+      steps: number;
+      avgStepReturn: number;
+      minStepReturn: number;
+      maxStepReturn: number;
+      first5StepReturns: number[];
+      last5StepReturns: number[];
+    }> = [];
+
+    for (const [assetSymbol, agg] of bySymbol) {
+      const arr = agg.stepReturns;
+      const sum = arr.reduce((s, x) => s + x, 0);
+      const avg = arr.length > 0 ? sum / arr.length : 0;
+      const min = arr.length > 0 ? Math.min(...arr) : 0;
+      const max = arr.length > 0 ? Math.max(...arr) : 0;
+      const first5 = arr.slice(0, 5);
+      const last5 = arr.slice(-5);
+      items.push({
+        assetSymbol,
+        steps: arr.length,
+        avgStepReturn: avg,
+        minStepReturn: min,
+        maxStepReturn: max,
+        first5StepReturns: first5,
+        last5StepReturns: last5,
+      });
+    }
+
+    items.sort((a, b) => a.assetSymbol.localeCompare(b.assetSymbol));
+    return { runId, items };
+  }
+
+  /** GET /runs/:id/attribution-summary — averages of attribution fields per assetSymbol. */
+  async getAttributionSummary(runId: string): Promise<{
+    runId: string;
+    items: Array<{
+      assetSymbol: string;
+      avgSyntheticSignal: number;
+      avgInfoSignal: number;
+      avgEventSignal: number;
+      avgRegimeSignal: number;
+      avgDistortedSignal: number;
+      avgBeliefDrift: number;
+      avgPrefBUY: number;
+      avgPrefSELL: number;
+      avgPrefHOLD: number;
+      actionMix: { buyPct: number; sellPct: number; holdPct: number };
+    }>;
+  }> {
+    const run = await this.prisma.simulationRun.findUnique({
+      where: { id: runId },
+      select: { id: true },
+    });
+    if (!run) throw new NotFoundException("Run not found");
+
+    const rows = await this.prisma.agentDecision.findMany({
+      where: { runId },
+      select: {
+        assetSymbol: true,
+        action: true,
+        syntheticSignal: true,
+        infoSignal: true,
+        eventSignal: true,
+        regimeSignal: true,
+        distortedSignal: true,
+        beliefDrift: true,
+        prefBUY: true,
+        prefSELL: true,
+        prefHOLD: true,
+      },
+    });
+
+    const bySymbol = new Map<
+      string,
+      {
+        synthetic: number[];
+        info: number[];
+        event: number[];
+        regime: number[];
+        distorted: number[];
+        belief: number[];
+        prefBUY: number[];
+        prefSELL: number[];
+        prefHOLD: number[];
+        buy: number;
+        sell: number;
+        hold: number;
+      }
+    >();
+
+    for (const r of rows) {
+      const sym = r.assetSymbol;
+      let agg = bySymbol.get(sym);
+      if (!agg) {
+        agg = {
+          synthetic: [],
+          info: [],
+          event: [],
+          regime: [],
+          distorted: [],
+          belief: [],
+          prefBUY: [],
+          prefSELL: [],
+          prefHOLD: [],
+          buy: 0,
+          sell: 0,
+          hold: 0,
+        };
+        bySymbol.set(sym, agg);
+      }
+      if (r.syntheticSignal != null && Number.isFinite(r.syntheticSignal)) agg.synthetic.push(r.syntheticSignal);
+      if (r.infoSignal != null && Number.isFinite(r.infoSignal)) agg.info.push(r.infoSignal);
+      if (r.eventSignal != null && Number.isFinite(r.eventSignal)) agg.event.push(r.eventSignal);
+      if (r.regimeSignal != null && Number.isFinite(r.regimeSignal)) agg.regime.push(r.regimeSignal);
+      if (r.distortedSignal != null && Number.isFinite(r.distortedSignal)) agg.distorted.push(r.distortedSignal);
+      if (r.beliefDrift != null && Number.isFinite(r.beliefDrift)) agg.belief.push(r.beliefDrift);
+      if (r.prefBUY != null && Number.isFinite(r.prefBUY)) agg.prefBUY.push(r.prefBUY);
+      if (r.prefSELL != null && Number.isFinite(r.prefSELL)) agg.prefSELL.push(r.prefSELL);
+      if (r.prefHOLD != null && Number.isFinite(r.prefHOLD)) agg.prefHOLD.push(r.prefHOLD);
+      if (r.action === "BUY") agg.buy++;
+      else if (r.action === "SELL") agg.sell++;
+      else agg.hold++;
+    }
+
+    const items: Array<{
+      assetSymbol: string;
+      avgSyntheticSignal: number;
+      avgInfoSignal: number;
+      avgEventSignal: number;
+      avgRegimeSignal: number;
+      avgDistortedSignal: number;
+      avgBeliefDrift: number;
+      avgPrefBUY: number;
+      avgPrefSELL: number;
+      avgPrefHOLD: number;
+      actionMix: { buyPct: number; sellPct: number; holdPct: number };
+    }> = [];
+
+    for (const [assetSymbol, agg] of bySymbol) {
+      const n = agg.buy + agg.sell + agg.hold;
+      const sum = (a: number[]) => a.reduce((s, x) => s + x, 0);
+      const avg = (a: number[]) => (a.length > 0 ? sum(a) / a.length : 0);
+      items.push({
+        assetSymbol,
+        avgSyntheticSignal: avg(agg.synthetic),
+        avgInfoSignal: avg(agg.info),
+        avgEventSignal: avg(agg.event),
+        avgRegimeSignal: avg(agg.regime),
+        avgDistortedSignal: avg(agg.distorted),
+        avgBeliefDrift: avg(agg.belief),
+        avgPrefBUY: avg(agg.prefBUY),
+        avgPrefSELL: avg(agg.prefSELL),
+        avgPrefHOLD: avg(agg.prefHOLD),
+        actionMix: {
+          buyPct: n > 0 ? agg.buy / n : 0,
+          sellPct: n > 0 ? agg.sell / n : 0,
+          holdPct: n > 0 ? agg.hold / n : 0,
+        },
+      });
+    }
+
+    items.sort((a, b) => a.assetSymbol.localeCompare(b.assetSymbol));
+    return { runId, items };
+  }
+
+  /** Shared helper: fetches decisions, returns, agents; computes per-agent metrics and baseline. Used by agent-alpha and selection-simulation. */
+  private async _getRunAgentMetricsData(runId: string): Promise<{
+    decisions: Array<{ agentId: string; step: number; assetSymbol: string; action: string; confidence: number }>;
+    returnByKey: Map<string, number>;
+    agentStats: AgentMetricRow[];
+    baselineCorrect: number;
+    baselineTotal: number;
+    agentsWithTraits: Array<{ id: string; archetype: string | null; traits: Array<{ key: string; valueNum: number | null }> }>;
+  }> {
+    const run = await this.prisma.simulationRun.findUnique({
+      where: { id: runId },
+      select: { id: true, status: true },
+    });
+    if (!run) throw new NotFoundException("Run not found");
+    if (run.status !== "COMPLETED") {
+      throw new BadRequestException("Run must be COMPLETED for agent-alpha, selection-simulation and weighted-crowd-simulation analytics");
+    }
+
+    const [decisions, returns, agentsWithTraits] = await Promise.all([
+      this.prisma.agentDecision.findMany({
+        where: { runId },
+        select: { agentId: true, step: true, assetSymbol: true, action: true, confidence: true },
+      }),
+      this.prisma.assetStepReturn.findMany({
+        where: { runId },
+        select: { assetSymbol: true, step: true, stepReturn: true },
+      }),
+      this.prisma.runAgent.findMany({
+        where: { decisions: { some: { runId } } },
+        select: {
+          id: true,
+          archetype: true,
+          traits: { select: { key: true, valueNum: true } },
+        },
+      }),
+    ]);
+
+    const returnByKey = new Map<string, number>();
+    for (const r of returns) {
+      returnByKey.set(`${r.assetSymbol}:${r.step}`, r.stepReturn);
+    }
+
+    const agentMap = new Map<string, { archetype: string | null; traits: Array<{ key: string; valueNum: number | null }> }>();
+    for (const a of agentsWithTraits) {
+      agentMap.set(a.id, {
+        archetype: a.archetype ?? null,
+        traits: a.traits.map((t) => ({ key: t.key, valueNum: t.valueNum })),
+      });
+    }
+
+    const byAgent = new Map<string, { total: number; correct: number; confidenceSum: number }>();
+    let baselineCorrect = 0;
+    let baselineTotal = 0;
+
+    for (const d of decisions) {
+      const nextRet = returnByKey.get(`${d.assetSymbol}:${d.step + 1}`);
+      if (nextRet == null || !Number.isFinite(nextRet)) continue;
+
+      baselineTotal++;
+      if (correctnessFromDecision(d.action, nextRet)) baselineCorrect++;
+
+      let agg = byAgent.get(d.agentId);
+      if (!agg) {
+        agg = { total: 0, correct: 0, confidenceSum: 0 };
+        byAgent.set(d.agentId, agg);
+      }
+      agg.total++;
+      if (correctnessFromDecision(d.action, nextRet)) agg.correct++;
+      agg.confidenceSum += Number.isFinite(d.confidence) ? d.confidence : 0;
+    }
+
+    const agentStats: AgentMetricRow[] = [];
+    for (const [agentId, agg] of byAgent) {
+      const info = agentMap.get(agentId);
+      agentStats.push({
+        agentId,
+        archetypeName: info?.archetype ?? null,
+        totalDecisions: agg.total,
+        correctCount: agg.correct,
+        accuracyRate: agg.total > 0 ? agg.correct / agg.total : 0,
+        avgConfidence: agg.total > 0 ? agg.confidenceSum / agg.total : 0,
+      });
+    }
+
+    return {
+      decisions,
+      returnByKey,
+      agentStats,
+      baselineCorrect,
+      baselineTotal,
+      agentsWithTraits: agentsWithTraits.map((a) => ({
+        id: a.id,
+        archetype: a.archetype ?? null,
+        traits: a.traits.map((t) => ({ key: t.key, valueNum: t.valueNum })),
+      })),
+    };
+  }
+
+  /** GET /runs/:id/agent-alpha — agent/archetype/trait alpha analytics for completed runs. */
+  async getRunAgentAlpha(runId: string): Promise<{
+    runId: string;
+    summary: {
+      totalAgents: number;
+      totalDecisions: number;
+      avgAgentAccuracy: number;
+      bestAgentAccuracy: number;
+      worstAgentAccuracy: number;
+    };
+    topAgents: Array<{
+      agentId: string;
+      archetypeName: string | null;
+      totalDecisions: number;
+      correctCount: number;
+      accuracyRate: number;
+      avgConfidence: number;
+    }>;
+    bottomAgents: Array<{
+      agentId: string;
+      archetypeName: string | null;
+      totalDecisions: number;
+      correctCount: number;
+      accuracyRate: number;
+      avgConfidence: number;
+    }>;
+    archetypes: Array<{
+      archetypeName: string;
+      agentCount: number;
+      totalDecisions: number;
+      correctCount: number;
+      accuracyRate: number;
+      avgConfidence: number;
+    }>;
+    traits: Array<{
+      traitKey: string;
+      bucket: "low" | "mid" | "high";
+      agentCount: number;
+      totalDecisions: number;
+      correctCount: number;
+      accuracyRate: number;
+    }>;
+  }> {
+    const { decisions, returnByKey, agentStats, baselineTotal, agentsWithTraits } =
+      await this._getRunAgentMetricsData(runId);
+
+    const agentStatsSorted = [...agentStats];
+    agentStatsSorted.sort((a, b) => {
+      const ar = a.accuracyRate - b.accuracyRate;
+      if (ar !== 0) return -ar;
+      const td = b.totalDecisions - a.totalDecisions;
+      if (td !== 0) return td;
+      return a.agentId.localeCompare(b.agentId);
+    });
+
+    const topAgents = agentStatsSorted.slice(0, 10).map((s) => ({
+      agentId: s.agentId,
+      archetypeName: s.archetypeName,
+      totalDecisions: s.totalDecisions,
+      correctCount: s.correctCount,
+      accuracyRate: s.accuracyRate,
+      avgConfidence: s.avgConfidence,
+    }));
+
+    agentStatsSorted.sort((a, b) => {
+      const ar = a.accuracyRate - b.accuracyRate;
+      if (ar !== 0) return ar;
+      const td = b.totalDecisions - a.totalDecisions;
+      if (td !== 0) return td;
+      return a.agentId.localeCompare(b.agentId);
+    });
+
+    const bottomAgents = agentStatsSorted.slice(0, 10).map((s) => ({
+      agentId: s.agentId,
+      archetypeName: s.archetypeName,
+      totalDecisions: s.totalDecisions,
+      correctCount: s.correctCount,
+      accuracyRate: s.accuracyRate,
+      avgConfidence: s.avgConfidence,
+    }));
+
+    const byArchetype = new Map<
+      string,
+      { agentIds: Set<string>; total: number; correct: number; confidenceSum: number }
+    >();
+
+    for (const s of agentStats) {
+      const name = s.archetypeName ?? "(unknown)";
+      let agg = byArchetype.get(name);
+      if (!agg) {
+        agg = { agentIds: new Set(), total: 0, correct: 0, confidenceSum: 0 };
+        byArchetype.set(name, agg);
+      }
+      agg.agentIds.add(s.agentId);
+      agg.total += s.totalDecisions;
+      agg.correct += s.correctCount;
+      agg.confidenceSum += s.totalDecisions * s.avgConfidence;
+    }
+
+    const archetypes = Array.from(byArchetype.entries())
+      .map(([archetypeName, agg]) => ({
+        archetypeName,
+        agentCount: agg.agentIds.size,
+        totalDecisions: agg.total,
+        correctCount: agg.correct,
+        accuracyRate: agg.total > 0 ? agg.correct / agg.total : 0,
+        avgConfidence: agg.total > 0 ? agg.confidenceSum / agg.total : 0,
+      }))
+      .sort((a, b) => b.accuracyRate - a.accuracyRate);
+
+    const totalDecisions = agentStats.reduce((s, a) => s + a.totalDecisions, 0);
+    const avgAgentAccuracy =
+      agentStats.length > 0
+        ? agentStats.reduce((s, a) => s + a.accuracyRate, 0) / agentStats.length
+        : 0;
+
+    const byTraitBucket = new Map<
+      string,
+      { agentIds: Set<string>; total: number; correct: number }
+    >();
+
+    for (const a of agentsWithTraits) {
+      const agentStat = agentStats.find((s) => s.agentId === a.id);
+      if (!agentStat) continue;
+      for (const t of a.traits) {
+        const v = t.valueNum;
+        if (v == null || !Number.isFinite(v)) continue;
+        const bucket = bucketTrait(v);
+        const key = `${t.key}:${bucket}`;
+        let agg = byTraitBucket.get(key);
+        if (!agg) {
+          agg = { agentIds: new Set(), total: 0, correct: 0 };
+          byTraitBucket.set(key, agg);
+        }
+        agg.agentIds.add(a.id);
+        agg.total += agentStat.totalDecisions;
+        agg.correct += agentStat.correctCount;
+      }
+    }
+
+    const traits = Array.from(byTraitBucket.entries())
+      .map(([key, agg]) => {
+        const lastColon = key.lastIndexOf(":");
+        const traitKey = lastColon >= 0 ? key.slice(0, lastColon) : key;
+        const bucket = (lastColon >= 0 ? key.slice(lastColon + 1) : "mid") as "low" | "mid" | "high";
+        return {
+          traitKey,
+          bucket,
+          agentCount: agg.agentIds.size,
+          totalDecisions: agg.total,
+          correctCount: agg.correct,
+          accuracyRate: agg.total > 0 ? agg.correct / agg.total : 0,
+        };
+      })
+      .sort((a, b) => {
+        const da = Math.abs(a.accuracyRate - avgAgentAccuracy);
+        const db = Math.abs(b.accuracyRate - avgAgentAccuracy);
+        if (db !== da) return db - da;
+        return b.totalDecisions - a.totalDecisions;
+      })
+      .slice(0, 30);
+
+    const bestAgentAccuracy = agentStats.length > 0 ? Math.max(...agentStats.map((s) => s.accuracyRate)) : 0;
+    const worstAgentAccuracy = agentStats.length > 0 ? Math.min(...agentStats.map((s) => s.accuracyRate)) : 0;
+
+    return {
+      runId,
+      summary: {
+        totalAgents: agentStats.length,
+        totalDecisions,
+        avgAgentAccuracy,
+        bestAgentAccuracy,
+        worstAgentAccuracy,
+      },
+      topAgents,
+      bottomAgents,
+      archetypes,
+      traits,
+    };
+  }
+
+  /** GET /runs/:id/selection-simulation — simulates selection policies (completed runs only). */
+  async getRunSelectionSimulation(runId: string): Promise<{
+    runId: string;
+    baseline: {
+      totalAgents: number;
+      totalDecisions: number;
+      accuracyRate: number;
+    };
+    scenarios: Array<{
+      name: string;
+      selectedAgents: number;
+      selectedDecisions: number;
+      accuracyRate: number | null;
+      deltaVsBaseline: number | null;
+    }>;
+    topContributors: Array<{
+      agentId: string;
+      archetypeName: string | null;
+      accuracyRate: number;
+      totalDecisions: number;
+      avgConfidence: number;
+    }>;
+  }> {
+    const { decisions, returnByKey, agentStats, baselineCorrect, baselineTotal } =
+      await this._getRunAgentMetricsData(runId);
+
+    const baselineAccuracyRate = baselineTotal > 0 ? baselineCorrect / baselineTotal : 0;
+
+    function accuracyForSelectedAgents(selectedAgentIds: Set<string>): { total: number; correct: number } {
+      let total = 0;
+      let correct = 0;
+      for (const d of decisions) {
+        const nextRet = returnByKey.get(`${d.assetSymbol}:${d.step + 1}`);
+        if (nextRet == null || !Number.isFinite(nextRet)) continue;
+        if (!selectedAgentIds.has(d.agentId)) continue;
+        total++;
+        if (correctnessFromDecision(d.action, nextRet)) correct++;
+      }
+      return { total, correct };
+    }
+
+    const agentStatsByAccuracy = [...agentStats].sort((a, b) => {
+      const ar = b.accuracyRate - a.accuracyRate;
+      if (ar !== 0) return ar;
+      return b.totalDecisions - a.totalDecisions;
+    });
+
+    const n = agentStats.length;
+    const top10Ids = new Set(agentStatsByAccuracy.slice(0, Math.max(1, Math.ceil(0.1 * n))).map((s) => s.agentId));
+    const top20Ids = new Set(agentStatsByAccuracy.slice(0, Math.max(1, Math.ceil(0.2 * n))).map((s) => s.agentId));
+    const top30Ids = new Set(agentStatsByAccuracy.slice(0, Math.max(1, Math.ceil(0.3 * n))).map((s) => s.agentId));
+    const accGte50Ids = new Set(agentStats.filter((s) => s.accuracyRate >= 0.5).map((s) => s.agentId));
+
+    const s10 = accuracyForSelectedAgents(top10Ids);
+    const s20 = accuracyForSelectedAgents(top20Ids);
+    const s30 = accuracyForSelectedAgents(top30Ids);
+    const s50 = accuracyForSelectedAgents(accGte50Ids);
+
+    const weightSum = agentStats.reduce((s, a) => s + a.avgConfidence * a.totalDecisions, 0);
+    const weightedCorrectSum = agentStats.reduce(
+      (s, a) => s + a.accuracyRate * a.avgConfidence * a.totalDecisions,
+      0,
+    );
+    const confidenceWeightedAccuracy = weightSum > 0 ? weightedCorrectSum / weightSum : null;
+
+    function scenario(
+      name: string,
+      selectedAgents: number,
+      selectedDecisions: number,
+      accuracyRate: number | null,
+    ): { name: string; selectedAgents: number; selectedDecisions: number; accuracyRate: number | null; deltaVsBaseline: number | null } {
+      return {
+        name,
+        selectedAgents,
+        selectedDecisions,
+        accuracyRate,
+        deltaVsBaseline: accuracyRate != null ? accuracyRate - baselineAccuracyRate : null,
+      };
+    }
+
+    const scenarios: Array<{
+      name: string;
+      selectedAgents: number;
+      selectedDecisions: number;
+      accuracyRate: number | null;
+      deltaVsBaseline: number | null;
+    }> = [
+      scenario(
+        "top_10pct_agents",
+        top10Ids.size,
+        s10.total,
+        s10.total > 0 ? s10.correct / s10.total : null,
+      ),
+      scenario(
+        "top_20pct_agents",
+        top20Ids.size,
+        s20.total,
+        s20.total > 0 ? s20.correct / s20.total : null,
+      ),
+      scenario(
+        "top_30pct_agents",
+        top30Ids.size,
+        s30.total,
+        s30.total > 0 ? s30.correct / s30.total : null,
+      ),
+      scenario(
+        "accuracy_gte_0_50",
+        accGte50Ids.size,
+        s50.total,
+        accGte50Ids.size === 0 ? null : s50.total > 0 ? s50.correct / s50.total : null,
+      ),
+      scenario(
+        "confidence_weighted_all_agents",
+        n,
+        baselineTotal,
+        confidenceWeightedAccuracy,
+      ),
+    ];
+
+    const topContributors = agentStatsByAccuracy.slice(0, 10).map((s) => ({
+      agentId: s.agentId,
+      archetypeName: s.archetypeName,
+      accuracyRate: s.accuracyRate,
+      totalDecisions: s.totalDecisions,
+      avgConfidence: s.avgConfidence,
+    }));
+
+    return {
+      runId,
+      baseline: {
+        totalAgents: n,
+        totalDecisions: baselineTotal,
+        accuracyRate: baselineAccuracyRate,
+      },
+      scenarios,
+      topContributors,
+    };
+  }
+
+  /** GET /runs/:id/weighted-crowd-simulation — weighted crowd voting simulation (completed runs only). */
+  async getRunWeightedCrowdSimulation(runId: string): Promise<{
+    runId: string;
+    baseline: {
+      equalWeightAccuracyRate: number;
+      totalAgents: number;
+      totalDecisions: number;
+    };
+    scenarios: Array<{
+      name: string;
+      accuracyRate: number;
+      deltaVsBaseline: number;
+    }>;
+  }> {
+    const { decisions, returnByKey, agentStats } = await this._getRunAgentMetricsData(runId);
+
+    const agentById = new Map<string, AgentMetricRow>();
+    for (const a of agentStats) agentById.set(a.agentId, a);
+
+    const agentByAccuracy = [...agentStats].sort((a, b) => b.accuracyRate - a.accuracyRate);
+    const top20Count = Math.max(1, Math.ceil(0.2 * agentStats.length));
+    const top20Ids = new Set(agentByAccuracy.slice(0, top20Count).map((s) => s.agentId));
+
+    function actionValue(action: string): number {
+      if (action === "BUY") return 1;
+      if (action === "SELL") return -1;
+      return 0;
+    }
+
+    function scoreToAction(score: number): string {
+      if (score > 0) return "BUY";
+      if (score < 0) return "SELL";
+      return "HOLD";
+    }
+
+    const byStep = new Map<string, Array<{ agentId: string; action: string }>>();
+    for (const d of decisions) {
+      const key = `${d.assetSymbol}:${d.step}`;
+      let list = byStep.get(key);
+      if (!list) {
+        list = [];
+        byStep.set(key, list);
+      }
+      list.push({ agentId: d.agentId, action: d.action });
+    }
+
+    let equalCorrect = 0;
+    let accCorrect = 0;
+    let accConfCorrect = 0;
+    let top20Correct = 0;
+    let total = 0;
+
+    for (const [key, decs] of byStep) {
+      const [assetSymbol, stepStr] = key.split(":");
+      const step = parseInt(stepStr!, 10);
+      const stepReturn = returnByKey.get(`${assetSymbol}:${step + 1}`);
+      if (stepReturn == null || !Number.isFinite(stepReturn)) continue;
+
+      total++;
+
+      let scoreEqual = 0;
+      let scoreAcc = 0;
+      let scoreAccConf = 0;
+      let scoreTop20 = 0;
+
+      for (const d of decs) {
+        const v = actionValue(d.action);
+        const agent = agentById.get(d.agentId);
+        const acc = agent ? agent.accuracyRate : 0;
+        const conf = agent ? agent.avgConfidence : 0;
+
+        scoreEqual += v;
+
+        const wAcc = Math.max(0.01, acc);
+        scoreAcc += v * wAcc;
+
+        const wAccConf = Math.max(0.01, acc * conf);
+        scoreAccConf += v * wAccConf;
+
+        if (top20Ids.has(d.agentId)) scoreTop20 += v;
+      }
+
+      const crowdEqual = scoreToAction(scoreEqual);
+      const crowdAcc = scoreToAction(scoreAcc);
+      const crowdAccConf = scoreToAction(scoreAccConf);
+      const crowdTop20 = scoreToAction(scoreTop20);
+
+      if (correctnessFromDecision(crowdEqual, stepReturn)) equalCorrect++;
+      if (correctnessFromDecision(crowdAcc, stepReturn)) accCorrect++;
+      if (correctnessFromDecision(crowdAccConf, stepReturn)) accConfCorrect++;
+      if (correctnessFromDecision(crowdTop20, stepReturn)) top20Correct++;
+    }
+
+    const equalWeightAccuracyRate = total > 0 ? equalCorrect / total : 0;
+    const accAccuracyRate = total > 0 ? accCorrect / total : 0;
+    const accConfAccuracyRate = total > 0 ? accConfCorrect / total : 0;
+    const top20AccuracyRate = total > 0 ? top20Correct / total : 0;
+
+    return {
+      runId,
+      baseline: {
+        equalWeightAccuracyRate,
+        totalAgents: agentStats.length,
+        totalDecisions: total,
+      },
+      scenarios: [
+        { name: "equal_weight", accuracyRate: equalWeightAccuracyRate, deltaVsBaseline: 0 },
+        { name: "weight_by_agent_accuracy", accuracyRate: accAccuracyRate, deltaVsBaseline: accAccuracyRate - equalWeightAccuracyRate },
+        { name: "weight_by_agent_accuracy_x_confidence", accuracyRate: accConfAccuracyRate, deltaVsBaseline: accConfAccuracyRate - equalWeightAccuracyRate },
+        { name: "weight_top_20pct_only", accuracyRate: top20AccuracyRate, deltaVsBaseline: top20AccuracyRate - equalWeightAccuracyRate },
+      ],
+    };
+  }
+
+  /** GET /runs/:id/attribution-sample?assetSymbol=SPY&limit=20 — sample of AgentDecision rows with attribution fields. */
+  async getAttributionSample(
+    runId: string,
+    opts: { assetSymbol?: string; limit: number },
+  ): Promise<{
+    items: Array<{
+      step: number;
+      action: string;
+      confidence: number;
+      syntheticSignal: number | null;
+      infoSignal: number | null;
+      eventSignal: number | null;
+      regimeSignal: number | null;
+      distortedSignal: number | null;
+      beliefDrift: number | null;
+      prefBUY: number | null;
+      prefSELL: number | null;
+      prefHOLD: number | null;
+    }>;
+  }> {
+    const run = await this.prisma.simulationRun.findUnique({
+      where: { id: runId },
+      select: { id: true },
+    });
+    if (!run) throw new NotFoundException("Run not found");
+
+    const where: { runId: string; assetSymbol?: string } = { runId };
+    if (opts.assetSymbol) where.assetSymbol = opts.assetSymbol;
+
+    const rows = await this.prisma.agentDecision.findMany({
+      where,
+      orderBy: [{ step: "asc" }, { agentId: "asc" }],
+      take: opts.limit,
+      select: {
+        step: true,
+        action: true,
+        confidence: true,
+        syntheticSignal: true,
+        infoSignal: true,
+        eventSignal: true,
+        regimeSignal: true,
+        distortedSignal: true,
+        beliefDrift: true,
+        prefBUY: true,
+        prefSELL: true,
+        prefHOLD: true,
+      },
+    });
+
+    return {
+      items: rows.map((r) => ({
+        step: r.step,
+        action: r.action,
+        confidence: r.confidence,
+        syntheticSignal: r.syntheticSignal,
+        infoSignal: r.infoSignal,
+        eventSignal: r.eventSignal,
+        regimeSignal: r.regimeSignal,
+        distortedSignal: r.distortedSignal,
+        beliefDrift: r.beliefDrift,
+        prefBUY: r.prefBUY,
+        prefSELL: r.prefSELL,
+        prefHOLD: r.prefHOLD,
+      })),
     };
   }
 

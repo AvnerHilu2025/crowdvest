@@ -240,7 +240,16 @@ exports.Prisma.AgentDecisionScalarFieldEnum = {
   action: 'action',
   confidence: 'confidence',
   rationale: 'rationale',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  syntheticSignal: 'syntheticSignal',
+  infoSignal: 'infoSignal',
+  eventSignal: 'eventSignal',
+  regimeSignal: 'regimeSignal',
+  distortedSignal: 'distortedSignal',
+  beliefDrift: 'beliefDrift',
+  prefBUY: 'prefBUY',
+  prefSELL: 'prefSELL',
+  prefHOLD: 'prefHOLD'
 };
 
 exports.Prisma.CrowdMetricsScalarFieldEnum = {
@@ -517,6 +526,21 @@ exports.Prisma.RunSignalDiagnosticsScalarFieldEnum = {
   computedAt: 'computedAt'
 };
 
+exports.Prisma.BenchWindowSnapshotScalarFieldEnum = {
+  id: 'id',
+  createdAt: 'createdAt',
+  symbols: 'symbols',
+  windows: 'windows',
+  n: 'n',
+  points: 'points',
+  overwrite: 'overwrite',
+  datasetVersion: 'datasetVersion',
+  modelVersion: 'modelVersion',
+  payloadJson: 'payloadJson',
+  tag: 'tag',
+  isBaseline: 'isBaseline'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -524,6 +548,10 @@ exports.Prisma.SortOrder = {
 
 exports.Prisma.NullableJsonNullValueInput = {
   DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull
+};
+
+exports.Prisma.JsonNullValueInput = {
   JsonNull: Prisma.JsonNull
 };
 
@@ -605,7 +633,8 @@ exports.Prisma.ModelName = {
   BacktestResult: 'BacktestResult',
   ForecastResult: 'ForecastResult',
   RunAccuracy: 'RunAccuracy',
-  RunSignalDiagnostics: 'RunSignalDiagnostics'
+  RunSignalDiagnostics: 'RunSignalDiagnostics',
+  BenchWindowSnapshot: 'BenchWindowSnapshot'
 };
 
 /**

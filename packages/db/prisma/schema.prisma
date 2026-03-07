@@ -226,6 +226,16 @@ model AgentDecision {
   rationale      String?
   createdAt      DateTime            @default(now())
 
+  syntheticSignal   Float?
+  infoSignal        Float?
+  eventSignal       Float?
+  regimeSignal      Float?
+  distortedSignal   Float?
+  beliefDrift       Float?
+  prefBUY           Float?
+  prefSELL          Float?
+  prefHOLD          Float?
+
   run        SimulationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
   runVariant RunVariant?   @relation(fields: [runVariantId], references: [id], onDelete: Cascade)
   agent      RunAgent      @relation(fields: [agentId], references: [id], onDelete: Cascade)
@@ -687,4 +697,27 @@ model RunSignalDiagnostics {
 
   @@unique([runId, assetSymbol])
   @@index([runId])
+}
+
+// ---------------------------------------------------------------------------
+// Bench Window Snapshots (Phase 2.7)
+// ---------------------------------------------------------------------------
+
+model BenchWindowSnapshot {
+  id              String   @id @default(uuid()) @db.Uuid
+  createdAt       DateTime @default(now())
+  symbols         String
+  windows         String
+  n               Int
+  points          Int?
+  overwrite       Boolean  @default(false)
+  datasetVersion  String?
+  modelVersion    String?
+  payloadJson     Json
+  tag             String?  @unique
+  isBaseline      Boolean  @default(false)
+
+  @@index([createdAt])
+  @@index([symbols])
+  @@index([windows])
 }

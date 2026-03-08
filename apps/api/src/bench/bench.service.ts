@@ -1,8 +1,9 @@
-import { BadRequestException, ConflictException, Injectable } from "@nestjs/common";
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { RunsService } from "../runs/runs.service";
 import { RunQueueService } from "../jobs/run-queue.service";
 import { ForecastService } from "../forecast/forecast.service";
+import { StrategyProfilesService } from "../strategy-profiles/strategy-profiles.service";
 import { SPY29_DATASET_VERSION } from "../common/spy29-returns";
 
 const BENCH_STEPS = 29;
@@ -231,6 +232,7 @@ type CompareBenchWindowsResult = {
     n: number;
     datasetVersion: string | null;
     modelVersion: string | null;
+    aggregationMode: string;
   };
   current: {
     id: string;
@@ -240,6 +242,7 @@ type CompareBenchWindowsResult = {
     n: number;
     datasetVersion: string | null;
     modelVersion: string | null;
+    aggregationMode: string;
   };
   diff: {
     perSymbol: Record<
@@ -341,6 +344,8 @@ function rowToSnapshotDto(
     .map((s) => parseInt(s.trim(), 10))
     .filter((v) => Number.isFinite(v))
     .sort((a, b) => a - b);
+  const aggregationMode = readAggregationMode(row.payloadJson);
+
   const base = {
     id: row.id,
     createdAt: row.createdAt,
@@ -351,6 +356,7 @@ function rowToSnapshotDto(
     modelVersion: row.modelVersion,
     ...(row.tag != null && { tag: row.tag }),
     ...(row.isBaseline != null && { isBaseline: row.isBaseline }),
+    ...(aggregationMode != null && { aggregationMode }),
   };
   if (opts?.includePayload !== false && row.payloadJson != null) {
     return { ...base, payload: row.payloadJson as object };
@@ -380,6 +386,52 @@ function parseBenchWindowsPayload(x: unknown): BenchWindowsResult {
     throw new BadRequestException("Invalid snapshot payloadJson shape: perSymbol must be object");
   }
   return obj as unknown as BenchWindowsResult;
+}
+
+function readAggregationMode(payload: BenchWindowsResult | unknown): string | undefined {
+  if (!payload || typeof payload !== "object") return undefined;
+  const value = (payload as { aggregationMode?: unknown }).aggregationMode;
+  return typeof value === "string" ? value : undefined;
+}
+
+/** Map aggregationMode to baseline tag. */
+function getBaselineTagForAggregationMode(mode: "equal_weight" | "top_20pct_only"): string {
+  return mode === "top_20pct_only" ? "baseline-top20-v1" : "baseline-v2";
+}
+
+/** Default baseline tag for aggregation mode (strategy-aware). */
+function defaultBaselineTagForAggregationMode(mode: string): string {
+  return mode === "top_20pct_only" ? "baseline-top20-v1" : "baseline-v2";
+}
+
+/** Compute raw benchmark score from snapshot payload. rawScore = mean of deltaVsAlwaysBuy across all symbol/window pairs; rawBySymbol = mean per symbol. */
+function computeSnapshotRawScore(payload: BenchWindowsResult): {
+  rawScore: number;
+  rawBySymbol: Record<string, number>;
+} {
+  const perSymbol = payload.perSymbol ?? {};
+  const rawBySymbol: Record<string, number> = {};
+  let sum = 0;
+  let count = 0;
+
+  for (const [symbol, symData] of Object.entries(perSymbol)) {
+    const perWindow = symData?.perWindow ?? {};
+    let symSum = 0;
+    let symCount = 0;
+    for (const [, winData] of Object.entries(perWindow)) {
+      const delta = Number(winData?.mean?.deltaVsAlwaysBuy ?? winData?.mean?.delta ?? 0);
+      if (Number.isFinite(delta)) {
+        sum += delta;
+        count++;
+        symSum += delta;
+        symCount++;
+      }
+    }
+    rawBySymbol[symbol] = symCount > 0 ? symSum / symCount : 0;
+  }
+
+  const rawScore = count > 0 ? sum / count : 0;
+  return { rawScore, rawBySymbol };
 }
 
 interface MeanSnapshot {
@@ -458,7 +510,67 @@ export class BenchService {
     private readonly runsService: RunsService,
     private readonly runQueue: RunQueueService,
     private readonly forecastService: ForecastService,
+    private readonly strategyProfilesService: StrategyProfilesService,
   ) {}
+
+  /** Resolve benchmark query params with strategy defaults when missing. Explicit params always win. */
+  resolveBenchmarkQueryDefaults(input: {
+    symbolsStr?: string;
+    windowsStr?: string;
+    nStr?: string;
+    aggregationModeStr?: string;
+  }): {
+    symbols: string[];
+    windows: number[];
+    n: number;
+    aggregationMode: "equal_weight" | "top_20pct_only";
+  } {
+    const defaults = this.strategyProfilesService.getDefaults().benchmarkDefaults;
+    const symbolsProvided = (input.symbolsStr ?? "").trim().length > 0;
+    const windowsProvided = (input.windowsStr ?? "").trim().length > 0;
+    const nProvided = input.nStr != null && String(input.nStr).trim().length > 0;
+    const aggProvided = (input.aggregationModeStr ?? "").trim().length > 0;
+
+    const symbols = symbolsProvided
+      ? (input.symbolsStr ?? "")
+          .split(",")
+          .map((s) => s.trim().toUpperCase())
+          .filter(Boolean)
+          .filter((s, i, arr) => arr.indexOf(s) === i)
+          .slice(0, 10)
+      : [...defaults.symbols];
+    if (symbols.length === 0) {
+      throw new BadRequestException("symbols is required (e.g. symbols=SPY,QQQ)");
+    }
+
+    const windowsRaw = windowsProvided
+      ? (input.windowsStr ?? "")
+          .split(",")
+          .map((s) => parseInt(s.trim(), 10))
+          .filter((v) => Number.isFinite(v) && v >= 2 && v <= 365)
+      : [...defaults.windows];
+    const windows = [...new Set(windowsRaw)].slice(0, 5);
+    if (windows.length === 0) {
+      throw new BadRequestException(
+        "windows is required: comma-separated ints 2..365, max 5 (e.g. windows=29,60,120)",
+      );
+    }
+
+    const n = nProvided
+      ? Math.min(Math.max(1, parseInt(String(input.nStr), 10) || 10), 50)
+      : Math.min(Math.max(1, defaults.n), 50);
+
+    const aggRaw = (aggProvided ? input.aggregationModeStr : defaults.aggregationMode)?.trim().toLowerCase() ?? "equal_weight";
+    const aggregationMode =
+      aggRaw === "top_20pct_only" ? ("top_20pct_only" as const) : ("equal_weight" as const);
+
+    return { symbols, windows, n, aggregationMode };
+  }
+
+  /** Default baseline tag for aggregation mode (equal_weight -> baseline-v2, top_20pct_only -> baseline-top20-v1). */
+  defaultBaselineTagForAggregationMode(mode: string): string {
+    return defaultBaselineTagForAggregationMode(mode);
+  }
 
   async runSpy29Bench(opts: {
     n: number;
@@ -654,6 +766,7 @@ export class BenchService {
     points?: number;
     n: number;
     overwrite: boolean;
+    aggregationMode?: "equal_weight" | "top_20pct_only";
   }): Promise<BenchPricesResult> {
     const symbols = opts.symbols.filter((s) => s?.trim()).slice(0, 10);
     if (symbols.length === 0) {
@@ -662,6 +775,7 @@ export class BenchService {
     const points = Math.min(Math.max(2, opts.points ?? 29), 365);
     const n = Math.min(Math.max(1, opts.n), 50);
     const overwrite = opts.overwrite === true;
+    const aggregationMode = opts.aggregationMode ?? "equal_weight";
 
     const baseSeed =
       simpleHash(
@@ -749,12 +863,11 @@ export class BenchService {
       await this.forecastService.computeRunAccuracy(result.runId, { overwrite });
 
       for (const symbol of result.symbols) {
-        const accuracyItems = await this.prisma.runAccuracy.findMany({
-          where: { runId: result.runId, assetSymbol: symbol },
-          select: { accuracyRate: true },
-        });
-        const crowd =
-          accuracyItems.length > 0 ? accuracyItems[0]!.accuracyRate : 0;
+        const crowd = await this.runsService.getCrowdAccuracyForRun(
+          result.runId,
+          symbol,
+          aggregationMode,
+        );
 
         const returns = await this.prisma.assetStepReturn.findMany({
           where: { runId: result.runId, assetSymbol: symbol },
@@ -830,6 +943,7 @@ export class BenchService {
     n: number;
     overwrite: boolean;
     persist?: boolean;
+    aggregationMode?: "equal_weight" | "top_20pct_only";
   }): Promise<
     BenchWindowsResult & {
       snapshotId?: string;
@@ -854,6 +968,7 @@ export class BenchService {
     }
     const n = Math.min(Math.max(1, opts.n), 50);
     const overwrite = opts.overwrite === true;
+    const aggregationMode = opts.aggregationMode ?? "equal_weight";
 
     const perSymbol: BenchWindowsResult["perSymbol"] = {};
     for (const sym of symbols) {
@@ -876,6 +991,7 @@ export class BenchService {
         points: windowPoints,
         n,
         overwrite,
+        aggregationMode,
       });
       if (!firstRunId && symbols.length > 0) {
         const firstAsset = result.perAsset[symbols[0]!];
@@ -911,11 +1027,13 @@ export class BenchService {
       createdAt?: Date;
       datasetVersion?: string | null;
       modelVersion?: string | null;
+      aggregationMode?: string;
     } = {
       symbols,
       windows,
       n,
       perSymbol,
+      aggregationMode,
     };
 
     if (opts.persist === true) {
@@ -953,13 +1071,14 @@ export class BenchService {
     return response;
   }
 
-  /** Find latest snapshot matching symbols, windows, n, datasetVersion, modelVersion. Returns metadata only (no payload). Used for fast-path reuse. */
+  /** Find latest snapshot matching symbols, windows, n, datasetVersion, modelVersion, aggregationMode. Returns metadata only (no payload). Used for fast-path reuse. */
   async findMatchingBenchWindowSnapshot(opts: {
     symbols: string[];
     windows: number[];
     n: number;
     datasetVersion?: string;
     modelVersion?: string;
+    aggregationMode?: "equal_weight" | "top_20pct_only";
   }) {
     const symbolsKey = normalizeSymbolsKey(opts.symbols);
     const windowsKey = normalizeWindowsKey(opts.windows);
@@ -967,8 +1086,9 @@ export class BenchService {
 
     const dv = opts.datasetVersion ?? datasetVersion;
     const mv = opts.modelVersion ?? modelVersion;
+    const aggMode = opts.aggregationMode ?? "equal_weight";
 
-    const row = await this.prisma.benchWindowSnapshot.findFirst({
+    const rows = await this.prisma.benchWindowSnapshot.findMany({
       where: {
         symbols: symbolsKey,
         windows: windowsKey,
@@ -977,6 +1097,7 @@ export class BenchService {
         modelVersion: mv,
       },
       orderBy: { createdAt: "desc" },
+      take: 50,
       select: {
         id: true,
         createdAt: true,
@@ -987,7 +1108,12 @@ export class BenchService {
         modelVersion: true,
         tag: true,
         isBaseline: true,
+        payloadJson: true,
       },
+    });
+    const row = rows.find((r) => {
+      const payloadAgg = readAggregationMode(r.payloadJson);
+      return (payloadAgg ?? "equal_weight") === aggMode;
     });
     if (!row) return null;
     return rowToSnapshotDto({ ...row, payloadJson: null }, { includePayload: false });
@@ -1099,6 +1225,43 @@ export class BenchService {
     return rowToSnapshotDto(row);
   }
 
+  async getProductionAggregationMode(): Promise<{
+    tag: string;
+    snapshot: {
+      id: string;
+      createdAt: string;
+      n: number;
+      datasetVersion: string | null;
+      modelVersion: string | null;
+      aggregationMode: string;
+    };
+  }> {
+    const PRODUCTION_TAG = "production-aggregation-mode";
+    const row = await this.prisma.benchWindowSnapshot.findFirst({
+      where: { tag: PRODUCTION_TAG },
+    });
+
+    if (!row) {
+      throw new NotFoundException(
+        `No production aggregation mode set. Tag '${PRODUCTION_TAG}' not found. Use POST /bench/windows/promote-aggregation-mode to promote a mode.`,
+      );
+    }
+
+    const aggregationMode = readAggregationMode(row.payloadJson) ?? "equal_weight";
+
+    return {
+      tag: PRODUCTION_TAG,
+      snapshot: {
+        id: row.id,
+        createdAt: row.createdAt.toISOString(),
+        n: row.n,
+        datasetVersion: row.datasetVersion ?? null,
+        modelVersion: row.modelVersion ?? null,
+        aggregationMode,
+      },
+    };
+  }
+
   async promoteCandidateBenchWindow(opts: {
     candidateId: string;
     baselineTag: string;
@@ -1171,6 +1334,8 @@ export class BenchService {
     }
 
     const baselinePayload = parseBenchWindowsPayload(baselineRow.payloadJson);
+    const baselineAggMode = readAggregationMode(baselinePayload);
+    const baselineAgg = baselineAggMode ?? "equal_weight";
 
     let currentRow = null as Awaited<
       ReturnType<typeof this.prisma.benchWindowSnapshot.findUnique>
@@ -1214,6 +1379,14 @@ export class BenchService {
     }
 
     const currentPayload = parseBenchWindowsPayload(currentRow.payloadJson);
+    const currentAggMode = readAggregationMode(currentPayload);
+    const currentAgg = currentAggMode ?? "equal_weight";
+
+    if (baselineAgg !== currentAgg) {
+      throw new BadRequestException(
+        `Cannot compare: aggregationMode mismatch (baseline=${baselineAgg}, current=${currentAgg}). Both snapshots must use the same aggregationMode.`,
+      );
+    }
 
     const outDiff: CompareBenchWindowsResult["diff"] = { perSymbol: {} };
     const bySymbol: Record<string, number> = {};
@@ -1277,6 +1450,7 @@ export class BenchService {
         n: baselinePayload.n ?? baselineRow.n ?? 0,
         datasetVersion: baselineRow.datasetVersion ?? null,
         modelVersion: baselineRow.modelVersion ?? null,
+        aggregationMode: baselineAgg,
       },
       current: {
         id: currentRow.id,
@@ -1286,6 +1460,7 @@ export class BenchService {
         n: currentPayload.n ?? currentRow.n ?? 0,
         datasetVersion: currentRow.datasetVersion ?? null,
         modelVersion: currentRow.modelVersion ?? null,
+        aggregationMode: currentAgg,
       },
       diff: outDiff,
       summary: {
@@ -1305,8 +1480,10 @@ export class BenchService {
     n: number;
     overwrite: boolean;
     forceRun?: boolean;
+    aggregationMode?: "equal_weight" | "top_20pct_only";
   }): Promise<RunAndCompareBenchWindowsResult> {
-    const { baselineTag, symbols, windows, n, overwrite, forceRun } = opts;
+    const { baselineTag, symbols, windows, n, overwrite, forceRun, aggregationMode } = opts;
+    const aggMode = aggregationMode ?? "equal_weight";
 
     let snapshotId: string;
     let reusedSnapshot: boolean;
@@ -1316,6 +1493,7 @@ export class BenchService {
         symbols,
         windows,
         n,
+        aggregationMode: aggMode,
       });
       if (existing) {
         snapshotId = existing.id;
@@ -1326,6 +1504,7 @@ export class BenchService {
           windows,
           n,
           overwrite,
+          aggregationMode: aggMode,
         })) as string;
         reusedSnapshot = false;
       }
@@ -1335,6 +1514,7 @@ export class BenchService {
         windows,
         n,
         overwrite,
+        aggregationMode: aggMode,
       })) as string;
       reusedSnapshot = false;
     }
@@ -1364,14 +1544,17 @@ export class BenchService {
     n: number;
     overwrite: boolean;
     forceRun?: boolean;
+    aggregationMode?: "equal_weight" | "top_20pct_only";
   }): Promise<GateCheckResult> {
-    const { baselineTag, symbols, windows, n, overwrite, forceRun } = opts;
+    const { baselineTag, symbols, windows, n, overwrite, forceRun, aggregationMode } = opts;
+    const aggMode = aggregationMode ?? "equal_weight";
 
     if (forceRun !== true) {
       const existing = await this.findMatchingBenchWindowSnapshot({
         symbols,
         windows,
         n,
+        aggregationMode: aggMode,
       });
       if (!existing) {
         throw new BadRequestException(
@@ -1387,6 +1570,7 @@ export class BenchService {
       n,
       overwrite,
       forceRun: forceRun === true,
+      aggregationMode: aggMode,
     });
 
     const score = result.summary.score;
@@ -1409,6 +1593,7 @@ export class BenchService {
     windows: number[];
     n: number;
     overwrite: boolean;
+    aggregationMode?: "equal_weight" | "top_20pct_only";
   }): Promise<string> {
     const runResult = await this.runWindowsBench({
       ...opts,
@@ -1439,60 +1624,63 @@ export class BenchService {
     symbols: string[];
     windows: number[];
     n: number;
+    aggregationMode?: "equal_weight" | "top_20pct_only";
   }): Promise<{
+    aggregationMode: string;
     snapshots: {
-      baselineV1: {
+      baseline: {
         id: string;
         createdAt: string;
         tag: string;
         n: number;
         datasetVersion: string | null;
         modelVersion: string | null;
-      } | null;
-      baselineV2: {
-        id: string;
-        createdAt: string;
-        tag: string;
-        n: number;
-        datasetVersion: string | null;
-        modelVersion: string | null;
-      } | null;
+        aggregationMode: string;
+      };
       latest: {
         id: string;
         createdAt: string;
         n: number;
         datasetVersion: string | null;
         modelVersion: string | null;
+        aggregationMode: string;
       } | null;
     };
-    comparisons: {
-      v2_vs_v1: { score: number; bySymbol: Record<string, number> } | null;
-      latest_vs_v2: { score: number; bySymbol: Record<string, number> } | null;
-      latest_vs_v1: { score: number; bySymbol: Record<string, number> } | null;
-    };
+    comparison: {
+      score: number;
+      bySymbol: Record<string, number>;
+    } | null;
   }> {
     const { symbols, windows, n } = opts;
+    const aggMode = opts.aggregationMode ?? "equal_weight";
+    const baselineTag = getBaselineTagForAggregationMode(aggMode);
 
-    const baselineV1 = await this.getBaselineByTag("baseline-v1");
-    const baselineV2 = await this.getBaselineByTag("baseline-v2");
-    const latest = await this.findMatchingBenchWindowSnapshot({ symbols, windows, n });
-
-    if (!baselineV1) {
-      throw new BadRequestException("baseline-v1 not found. Tag a snapshot as baseline-v1 first.");
+    const baseline = await this.getBaselineByTag(baselineTag);
+    if (!baseline) {
+      throw new NotFoundException(
+        `No baseline found for aggregationMode=${aggMode}. Tag a snapshot as '${baselineTag}' first.`,
+      );
     }
 
-    const toBaselineMeta = (dto: { id: string; createdAt: Date; n: number; datasetVersion?: string | null; modelVersion?: string | null; tag?: string }) => ({
-      id: dto.id,
-      createdAt: dto.createdAt instanceof Date ? dto.createdAt.toISOString() : String(dto.createdAt),
-      tag: dto.tag ?? "",
-      n: dto.n,
-      datasetVersion: dto.datasetVersion ?? null,
-      modelVersion: dto.modelVersion ?? null,
+    const latest = await this.findMatchingBenchWindowSnapshot({
+      symbols,
+      windows,
+      n,
+      aggregationMode: aggMode,
     });
 
+    const baselineAgg = (baseline as { aggregationMode?: string }).aggregationMode ?? aggMode;
+
     const snapshots = {
-      baselineV1: toBaselineMeta(baselineV1),
-      baselineV2: baselineV2 ? toBaselineMeta(baselineV2) : null,
+      baseline: {
+        id: baseline.id,
+        createdAt: baseline.createdAt instanceof Date ? baseline.createdAt.toISOString() : String(baseline.createdAt),
+        tag: baseline.tag ?? baselineTag,
+        n: baseline.n,
+        datasetVersion: baseline.datasetVersion ?? null,
+        modelVersion: baseline.modelVersion ?? null,
+        aggregationMode: baselineAgg,
+      },
       latest: latest
         ? {
             id: latest.id,
@@ -1500,45 +1688,288 @@ export class BenchService {
             n: latest.n,
             datasetVersion: latest.datasetVersion ?? null,
             modelVersion: latest.modelVersion ?? null,
+            aggregationMode: aggMode,
           }
         : null,
     };
 
-    let v2_vs_v1: { score: number; bySymbol: Record<string, number> } | null = null;
-    let latest_vs_v2: { score: number; bySymbol: Record<string, number> } | null = null;
-    let latest_vs_v1: { score: number; bySymbol: Record<string, number> } | null = null;
-
-    if (baselineV2) {
-      const cmp = await this.compareBenchWindowsSnapshots({
-        baselineTag: "baseline-v1",
-        current: baselineV2.id,
-      });
-      v2_vs_v1 = { score: cmp.summary.score, bySymbol: cmp.summary.bySymbol };
-    }
-
-    if (latest && baselineV2) {
-      const cmp = await this.compareBenchWindowsSnapshots({
-        baselineTag: "baseline-v2",
-        current: latest.id,
-      });
-      latest_vs_v2 = { score: cmp.summary.score, bySymbol: cmp.summary.bySymbol };
-    }
-
+    let comparison: { score: number; bySymbol: Record<string, number> } | null = null;
     if (latest) {
       const cmp = await this.compareBenchWindowsSnapshots({
-        baselineTag: "baseline-v1",
+        baselineTag,
         current: latest.id,
       });
-      latest_vs_v1 = { score: cmp.summary.score, bySymbol: cmp.summary.bySymbol };
+      comparison = { score: cmp.summary.score, bySymbol: cmp.summary.bySymbol };
     }
 
     return {
+      aggregationMode: aggMode,
       snapshots,
-      comparisons: {
-        v2_vs_v1,
-        latest_vs_v2,
-        latest_vs_v1,
-      },
+      comparison,
+    };
+  }
+
+  async getModeLeaderboard(opts: {
+    symbols: string[];
+    windows: number[];
+    n: number;
+  }): Promise<{
+    symbols: string[];
+    windows: number[];
+    n: number;
+    modes: Array<{
+      aggregationMode: string;
+      latest: {
+        id: string;
+        createdAt: string;
+        n: number;
+        datasetVersion: string | null;
+        modelVersion: string | null;
+        aggregationMode: string;
+      } | null;
+      baselineTag: string;
+      rawScore: number;
+      rawBySymbol: Record<string, number>;
+      deltaVsBaseline: {
+        score: number;
+        bySymbol: Record<string, number>;
+      } | null;
+    }>;
+    ranking: Array<{
+      aggregationMode: string;
+      rawScore: number;
+    }>;
+    productionMode: {
+      aggregationMode: string;
+      snapshotId: string;
+    } | null;
+  }> {
+    const { symbols, windows, n } = opts;
+    const SUPPORTED_MODES: Array<"equal_weight" | "top_20pct_only"> = ["equal_weight", "top_20pct_only"];
+
+    let productionMode: { aggregationMode: string; snapshotId: string } | null = null;
+    const productionRow = await this.prisma.benchWindowSnapshot.findFirst({
+      where: { tag: "production-aggregation-mode" },
+      select: { id: true, payloadJson: true },
+    });
+    if (productionRow) {
+      const agg = readAggregationMode(productionRow.payloadJson) ?? "equal_weight";
+      productionMode = { aggregationMode: agg, snapshotId: productionRow.id };
+    }
+
+    const modes: Array<{
+      aggregationMode: string;
+      latest: {
+        id: string;
+        createdAt: string;
+        n: number;
+        datasetVersion: string | null;
+        modelVersion: string | null;
+        aggregationMode: string;
+      } | null;
+      baselineTag: string;
+      rawScore: number;
+      rawBySymbol: Record<string, number>;
+      deltaVsBaseline: {
+        score: number;
+        bySymbol: Record<string, number>;
+      } | null;
+    }> = [];
+
+    for (const mode of SUPPORTED_MODES) {
+      const baselineTag = getBaselineTagForAggregationMode(mode);
+      const latestMeta = await this.findMatchingBenchWindowSnapshot({
+        symbols,
+        windows,
+        n,
+        aggregationMode: mode,
+      });
+
+      if (!latestMeta) {
+        modes.push({
+          aggregationMode: mode,
+          latest: null,
+          baselineTag,
+          rawScore: 0,
+          rawBySymbol: {},
+          deltaVsBaseline: null,
+        });
+        continue;
+      }
+
+      const snapshotRow = await this.prisma.benchWindowSnapshot.findUnique({
+        where: { id: latestMeta.id },
+        select: { payloadJson: true },
+      });
+      const payload = snapshotRow?.payloadJson;
+      const { rawScore, rawBySymbol } = payload
+        ? computeSnapshotRawScore(parseBenchWindowsPayload(payload))
+        : { rawScore: 0, rawBySymbol: {} as Record<string, number> };
+
+      let deltaVsBaseline: { score: number; bySymbol: Record<string, number> } | null = null;
+      try {
+        const cmp = await this.compareBenchWindowsSnapshots({
+          baselineTag,
+          current: latestMeta.id,
+        });
+        deltaVsBaseline = { score: cmp.summary.score, bySymbol: cmp.summary.bySymbol };
+      } catch {
+        deltaVsBaseline = null;
+      }
+
+      modes.push({
+        aggregationMode: mode,
+        latest: {
+          id: latestMeta.id,
+          createdAt:
+            latestMeta.createdAt instanceof Date
+              ? latestMeta.createdAt.toISOString()
+              : String(latestMeta.createdAt),
+          n: latestMeta.n,
+          datasetVersion: latestMeta.datasetVersion ?? null,
+          modelVersion: latestMeta.modelVersion ?? null,
+          aggregationMode: mode,
+        },
+        baselineTag,
+        rawScore,
+        rawBySymbol,
+        deltaVsBaseline,
+      });
+    }
+
+    const ranking = modes
+      .filter((m) => m.latest != null)
+      .map((m) => ({ aggregationMode: m.aggregationMode, rawScore: m.rawScore }))
+      .sort((a, b) => b.rawScore - a.rawScore);
+
+    return {
+      symbols,
+      windows,
+      n,
+      modes,
+      ranking,
+      productionMode,
+    };
+  }
+
+  async promoteAggregationMode(opts: {
+    symbols: string[];
+    windows: number[];
+    n: number;
+    candidateMode: "equal_weight" | "top_20pct_only";
+    baselineMode: "equal_weight" | "top_20pct_only";
+  }): Promise<{
+    ok: boolean;
+    verdict: "PROMOTED" | "REJECTED";
+    candidateMode: string;
+    baselineMode: string;
+    candidateRawScore: number;
+    baselineRawScore: number;
+    delta: number;
+    candidateRawBySymbol: Record<string, number>;
+    baselineRawBySymbol: Record<string, number>;
+    reason: string;
+  }> {
+    const { symbols, windows, n, candidateMode, baselineMode } = opts;
+    const PROMOTE_MIN_DELTA = 0.02;
+    const PRODUCTION_TAG = "production-aggregation-mode";
+
+    const candidateLatest = await this.findMatchingBenchWindowSnapshot({
+      symbols,
+      windows,
+      n,
+      aggregationMode: candidateMode,
+    });
+    const baselineLatest = await this.findMatchingBenchWindowSnapshot({
+      symbols,
+      windows,
+      n,
+      aggregationMode: baselineMode,
+    });
+
+    if (!candidateLatest) {
+      return {
+        ok: false,
+        verdict: "REJECTED",
+        candidateMode,
+        baselineMode,
+        candidateRawScore: 0,
+        baselineRawScore: 0,
+        delta: 0,
+        candidateRawBySymbol: {},
+        baselineRawBySymbol: {},
+        reason: `No snapshot found for candidateMode=${candidateMode}. Run benchmark first.`,
+      };
+    }
+
+    if (!baselineLatest) {
+      return {
+        ok: false,
+        verdict: "REJECTED",
+        candidateMode,
+        baselineMode,
+        candidateRawScore: 0,
+        baselineRawScore: 0,
+        delta: 0,
+        candidateRawBySymbol: {},
+        baselineRawBySymbol: {},
+        reason: `No snapshot found for baselineMode=${baselineMode}. Run benchmark first.`,
+      };
+    }
+
+    const [candidatePayload, baselinePayload] = await Promise.all([
+      this.prisma.benchWindowSnapshot.findUnique({
+        where: { id: candidateLatest.id },
+        select: { payloadJson: true },
+      }),
+      this.prisma.benchWindowSnapshot.findUnique({
+        where: { id: baselineLatest.id },
+        select: { payloadJson: true },
+      }),
+    ]);
+
+    const { rawScore: candidateRawScore, rawBySymbol: candidateRawBySymbol } = candidatePayload?.payloadJson
+      ? computeSnapshotRawScore(parseBenchWindowsPayload(candidatePayload.payloadJson))
+      : { rawScore: 0, rawBySymbol: {} as Record<string, number> };
+
+    const { rawScore: baselineRawScore, rawBySymbol: baselineRawBySymbol } = baselinePayload?.payloadJson
+      ? computeSnapshotRawScore(parseBenchWindowsPayload(baselinePayload.payloadJson))
+      : { rawScore: 0, rawBySymbol: {} as Record<string, number> };
+
+    const delta = candidateRawScore - baselineRawScore;
+
+    const hasNegativeSymbol = Object.values(candidateRawBySymbol).some((v) => v < 0);
+    const meetsDelta = delta >= PROMOTE_MIN_DELTA;
+
+    const ok = meetsDelta && !hasNegativeSymbol;
+    let reason: string;
+    if (ok) {
+      reason = `Candidate rawScore (${candidateRawScore.toFixed(4)}) exceeds baseline (${baselineRawScore.toFixed(4)}) by ${delta.toFixed(4)} and has no negative symbol.`;
+    } else if (!meetsDelta) {
+      reason = `Candidate rawScore (${candidateRawScore.toFixed(4)}) does not exceed baseline (${baselineRawScore.toFixed(4)}) by at least ${PROMOTE_MIN_DELTA}. Delta=${delta.toFixed(4)}.`;
+    } else {
+      const negSymbols = Object.entries(candidateRawBySymbol)
+        .filter(([, v]) => v < 0)
+        .map(([s, v]) => `${s}=${v.toFixed(4)}`)
+        .join(", ");
+      reason = `Candidate has negative rawBySymbol: ${negSymbols}.`;
+    }
+
+    if (ok) {
+      await this.tagBenchWindowSnapshot(candidateLatest.id, PRODUCTION_TAG, true);
+    }
+
+    return {
+      ok,
+      verdict: ok ? "PROMOTED" : "REJECTED",
+      candidateMode,
+      baselineMode,
+      candidateRawScore,
+      baselineRawScore,
+      delta,
+      candidateRawBySymbol,
+      baselineRawBySymbol,
+      reason,
     };
   }
 

@@ -56,7 +56,7 @@ export class BenchController {
     return this.benchService.runPricesBench({ symbols, points, n, overwrite });
   }
 
-  /** POST /bench/windows — multi-regime windows benchmark. Query: symbols=SPY,QQQ (required), windows=29,60,120 (required, max 5), n (default 10, max 50), overwrite (default false), persist (default false). */
+  /** POST /bench/windows — multi-regime windows benchmark. Query: symbols, windows, n, aggregationMode (use strategy defaults when missing). */
   @Post("windows")
   async windows(
     @Query("symbols") symbolsStr?: string,
@@ -64,82 +64,48 @@ export class BenchController {
     @Query("n") nStr?: string,
     @Query("overwrite") overwriteStr?: string,
     @Query("persist") persistStr?: string,
+    @Query("aggregationMode") aggregationModeStr?: string,
   ) {
-    const symbols = (symbolsStr ?? "")
-      .split(",")
-      .map((s) => s.trim().toUpperCase())
-      .filter(Boolean)
-      .filter((s, i, arr) => arr.indexOf(s) === i)
-      .slice(0, 10);
-    if (symbols.length === 0) {
-      throw new BadRequestException("symbols is required (e.g. symbols=SPY,QQQ)");
-    }
-    const windowsRaw = (windowsStr ?? "")
-      .split(",")
-      .map((s) => parseInt(s.trim(), 10))
-      .filter((v) => Number.isFinite(v) && v >= 2 && v <= 365);
-    if (windowsRaw.length === 0) {
-      throw new BadRequestException(
-        "windows is required: comma-separated ints 2..365, max 5 (e.g. windows=29,60,120)",
-      );
-    }
-    const windows = [...new Set(windowsRaw)].slice(0, 5);
-    const n = Math.min(Math.max(1, parseInt(nStr ?? "10", 10) || 10), 50);
+    const { symbols, windows, n, aggregationMode } =
+      this.benchService.resolveBenchmarkQueryDefaults({ symbolsStr, windowsStr, nStr, aggregationModeStr });
     const overwrite = overwriteStr === "true";
     const persist = persistStr === "true";
-    return this.benchService.runWindowsBench({ symbols, windows, n, overwrite, persist });
+    const result = await this.benchService.runWindowsBench({ symbols, windows, n, overwrite, persist, aggregationMode });
+    return { ...result, aggregationMode, symbols, windows, n };
   }
 
-  /** POST /bench/windows/run-and-compare — run bench with persist=true, then compare vs baseline by tag. Reuses equivalent snapshot when forceRun=false. Query: baselineTag (required), symbols, windows, n, overwrite (optional), forceRun (optional, default false). */
+  /** POST /bench/windows/run-and-compare — run bench with persist=true, then compare vs baseline by tag. Query: baselineTag (optional, uses default by aggregationMode when missing), symbols, windows, n, aggregationMode (use strategy defaults when missing). */
   @Post("windows/run-and-compare")
   async runAndCompareBenchWindows(
-    @Query("baselineTag") baselineTag: string,
+    @Query("baselineTag") baselineTag?: string,
     @Query("symbols") symbolsStr?: string,
     @Query("windows") windowsStr?: string,
     @Query("n") nStr?: string,
     @Query("overwrite") overwriteStr?: string,
     @Query("forceRun") forceRunStr?: string,
+    @Query("aggregationMode") aggregationModeStr?: string,
   ) {
+    const { symbols, windows, n, aggregationMode } =
+      this.benchService.resolveBenchmarkQueryDefaults({ symbolsStr, windowsStr, nStr, aggregationModeStr });
     const baselineTagTrimmed = (baselineTag ?? "").trim();
-    if (!baselineTagTrimmed) {
-      throw new BadRequestException("baselineTag is required");
-    }
-
-    const symbols = (symbolsStr ?? "")
-      .split(",")
-      .map((s) => s.trim().toUpperCase())
-      .filter(Boolean)
-      .filter((s, i, arr) => arr.indexOf(s) === i)
-      .slice(0, 10);
-    if (symbols.length === 0) {
-      throw new BadRequestException("symbols is required (e.g. symbols=SPY,QQQ)");
-    }
-
-    const windowsRaw = (windowsStr ?? "")
-      .split(",")
-      .map((s) => parseInt(s.trim(), 10))
-      .filter((v) => Number.isFinite(v) && v >= 2 && v <= 365);
-    if (windowsRaw.length === 0) {
-      throw new BadRequestException(
-        "windows is required: comma-separated ints 2..365, max 5 (e.g. windows=29,60,120)",
-      );
-    }
-    const windows = [...new Set(windowsRaw)].slice(0, 5);
-    const n = Math.min(Math.max(1, parseInt(nStr ?? "10", 10) || 10), 50);
+    const resolvedBaselineTag =
+      baselineTagTrimmed || this.benchService.defaultBaselineTagForAggregationMode(aggregationMode);
     const overwrite = overwriteStr === "true";
     const forceRun = forceRunStr === "true";
 
-    return this.benchService.runAndCompareBenchWindows({
-      baselineTag: baselineTagTrimmed,
+    const result = await this.benchService.runAndCompareBenchWindows({
+      baselineTag: resolvedBaselineTag,
       symbols,
       windows,
       n,
       overwrite,
       forceRun,
+      aggregationMode,
     });
+    return { ...result, aggregationMode, symbols, windows, n, baselineTag: resolvedBaselineTag };
   }
 
-  /** GET /bench/windows/gate — CI-friendly regression gate. Reuses snapshot when forceRun=false; runs only when forceRun=true if no match. Query: baselineTag (required), symbols, windows, n, overwrite (optional), forceRun (optional), failOnRegression (optional, default false). Returns 409 when failOnRegression=true and ok=false. */
+  /** GET /bench/windows/gate — CI-friendly regression gate. Reuses snapshot when forceRun=false; runs only when forceRun=true if no match. Query: baselineTag (required), symbols, windows, n, overwrite (optional), forceRun (optional), failOnRegression (optional, default false), aggregationMode (optional: equal_weight|top_20pct_only). */
   @Get("windows/gate")
   async gate(
     @Query("baselineTag") baselineTag: string,
@@ -149,6 +115,7 @@ export class BenchController {
     @Query("overwrite") overwriteStr?: string,
     @Query("forceRun") forceRunStr?: string,
     @Query("failOnRegression") failOnRegressionStr?: string,
+    @Query("aggregationMode") aggregationModeStr?: string,
   ) {
     const baselineTagTrimmed = (baselineTag ?? "").trim();
     if (!baselineTagTrimmed) {
@@ -179,6 +146,9 @@ export class BenchController {
     const overwrite = overwriteStr === "true";
     const forceRun = forceRunStr === "true";
     const failOnRegression = failOnRegressionStr === "true";
+    const aggRaw = (aggregationModeStr ?? "equal_weight").trim().toLowerCase();
+    const aggregationMode =
+      aggRaw === "top_20pct_only" ? ("top_20pct_only" as const) : ("equal_weight" as const);
 
     const body = await this.benchService.runGateCheck({
       baselineTag: baselineTagTrimmed,
@@ -187,6 +157,7 @@ export class BenchController {
       n,
       overwrite,
       forceRun,
+      aggregationMode,
     });
 
     if (failOnRegression && !body.ok) {
@@ -236,12 +207,47 @@ export class BenchController {
     });
   }
 
-  /** GET /bench/windows/baseline-family — report baseline lineage (v1, v2, latest) and comparisons. Query: symbols (required), windows (required), n (required). */
+  /** GET /bench/windows/baseline-family — report baseline lineage per aggregationMode. Query: symbols, windows, n, aggregationMode (use strategy defaults when missing). */
   @Get("windows/baseline-family")
   async getBaselineFamily(
     @Query("symbols") symbolsStr?: string,
     @Query("windows") windowsStr?: string,
     @Query("n") nStr?: string,
+    @Query("aggregationMode") aggregationModeStr?: string,
+  ) {
+    const { symbols, windows, n, aggregationMode } =
+      this.benchService.resolveBenchmarkQueryDefaults({ symbolsStr, windowsStr, nStr, aggregationModeStr });
+    const result = await this.benchService.getBaselineFamilyReport({ symbols, windows, n, aggregationMode });
+    return { ...result, aggregationMode, symbols, windows, n };
+  }
+
+  /** GET /bench/windows/mode-leaderboard — compare aggregation modes side-by-side. Query: symbols, windows, n (use strategy defaults when missing). */
+  @Get("windows/mode-leaderboard")
+  async getModeLeaderboard(
+    @Query("symbols") symbolsStr?: string,
+    @Query("windows") windowsStr?: string,
+    @Query("n") nStr?: string,
+  ) {
+    const { symbols, windows, n } =
+      this.benchService.resolveBenchmarkQueryDefaults({ symbolsStr, windowsStr, nStr });
+    const result = await this.benchService.getModeLeaderboard({ symbols, windows, n });
+    return { ...result, symbols, windows, n };
+  }
+
+  /** GET /bench/windows/production-mode — currently promoted production aggregation mode (tag: production-aggregation-mode). Returns 404 if not set. */
+  @Get("windows/production-mode")
+  async getProductionMode() {
+    return this.benchService.getProductionAggregationMode();
+  }
+
+  /** POST /bench/windows/promote-aggregation-mode — evaluate and promote aggregation mode as production. Query: symbols (required), windows (required), n (required), candidateMode (required: equal_weight|top_20pct_only), baselineMode (required: equal_weight|top_20pct_only). */
+  @Post("windows/promote-aggregation-mode")
+  async promoteAggregationMode(
+    @Query("symbols") symbolsStr?: string,
+    @Query("windows") windowsStr?: string,
+    @Query("n") nStr?: string,
+    @Query("candidateMode") candidateModeStr?: string,
+    @Query("baselineMode") baselineModeStr?: string,
   ) {
     const symbols = (symbolsStr ?? "")
       .split(",")
@@ -264,7 +270,27 @@ export class BenchController {
     const windows = [...new Set(windowsRaw)].slice(0, 5);
     const n = Math.min(Math.max(1, parseInt(nStr ?? "10", 10) || 10), 50);
 
-    return this.benchService.getBaselineFamilyReport({ symbols, windows, n });
+    if (!candidateModeStr?.trim()) {
+      throw new BadRequestException("candidateMode is required (equal_weight|top_20pct_only)");
+    }
+    if (!baselineModeStr?.trim()) {
+      throw new BadRequestException("baselineMode is required (equal_weight|top_20pct_only)");
+    }
+
+    const candidateRaw = candidateModeStr.trim().toLowerCase();
+    const baselineRaw = baselineModeStr.trim().toLowerCase();
+    const candidateMode =
+      candidateRaw === "top_20pct_only" ? ("top_20pct_only" as const) : ("equal_weight" as const);
+    const baselineMode =
+      baselineRaw === "top_20pct_only" ? ("top_20pct_only" as const) : ("equal_weight" as const);
+
+    return this.benchService.promoteAggregationMode({
+      symbols,
+      windows,
+      n,
+      candidateMode,
+      baselineMode,
+    });
   }
 
   /** POST /bench/windows/promote-candidate — evaluate candidate vs baseline and optionally promote to newTag. Query: candidateId (required), baselineTag (required), newTag (required), overwrite (optional, default false). */

@@ -90,6 +90,27 @@ type DashboardSummary = {
       };
     }>;
   };
+  productionAggregationMode?: {
+    aggregationMode: string;
+    snapshotId: string;
+    datasetVersion: string | null;
+    modelVersion: string | null;
+  } | null;
+  aggregationModeRanking?: Array<{
+    aggregationMode: string;
+    rawScore: number;
+  }>;
+  strategyProfile?: {
+    key: string;
+    name: string;
+    aggregationMode: string;
+    selectionPolicy: string;
+    intendedUse: string;
+  };
+  strategyDefaults?: {
+    benchmarkDefaults: { aggregationMode: string; selectionPolicy: string; symbols: string[]; windows: number[]; n: number };
+    runDefaults: { aggregationMode: string; selectionPolicy: string; assetSymbols: string[]; points: number };
+  };
 };
 
 export default async function DashboardPage({
@@ -119,13 +140,15 @@ export default async function DashboardPage({
   }
   const data = (await res.json()) as DashboardSummary;
 
+  const scalingRows = data.scalingRows ?? [];
+  const stabilityRows = data.stabilityRows ?? [];
   const latestRun = data.latestRun;
   const latestScalingRow = latestRun
-    ? data.scalingRows.find((r) => r.runId === latestRun.id)
+    ? scalingRows.find((r) => r.runId === latestRun.id)
     : null;
   const latest = latestScalingRow ?? latestRun;
 
-  const stabilityMapped = data.stabilityRows.map((r) => {
+  const stabilityMapped = stabilityRows.map((r) => {
     const isLegacy = r.label === "missing-variants";
     const score = stabilityRiskScore({
       isLegacyTiming: isLegacy,
@@ -188,6 +211,19 @@ export default async function DashboardPage({
         driftAsset: data.driftAsset ?? null,
         driftGlobal: data.driftGlobal ?? null,
         forecastAccuracy: data.forecastAccuracy ?? { runId: null, items: [] },
+        productionAggregationMode: data.productionAggregationMode ?? null,
+        aggregationModeRanking: data.aggregationModeRanking ?? [],
+        strategyProfile: data.strategyProfile ?? {
+          key: "conservative",
+          name: "Conservative",
+          aggregationMode: "top_20pct_only",
+          selectionPolicy: "top_20pct_agents",
+          intendedUse: "production",
+        },
+        strategyDefaults: data.strategyDefaults ?? {
+          benchmarkDefaults: { aggregationMode: "top_20pct_only", selectionPolicy: "top_20pct_agents", symbols: ["SPY", "QQQ", "IWM"], windows: [29, 60, 120], n: 20 },
+          runDefaults: { aggregationMode: "top_20pct_only", selectionPolicy: "top_20pct_agents", assetSymbols: ["SPY", "QQQ", "IWM"], points: 29 },
+        },
       }}
       initialQuery={{
         assetSymbol,

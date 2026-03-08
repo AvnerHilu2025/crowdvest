@@ -110,6 +110,16 @@ function badgeKind(band: string): "stable" | "unstable" | "diverging" | "legacy"
   return "stable";
 }
 
+function shortenId(id: string, head = 8): string {
+  if (!id || id.length <= head) return id;
+  return `${id.slice(0, head)}...`;
+}
+
+function shortenHash(hash: string | null | undefined, maxLen = 12): string {
+  if (hash == null || hash === "") return "—";
+  return hash.length > maxLen ? `${hash.slice(0, maxLen)}...` : hash;
+}
+
 function buildDashboardUrl(
   pathname: string,
   searchParams: URLSearchParams,
@@ -173,6 +183,27 @@ export type DashboardClientProps = {
         };
       }>;
     };
+    productionAggregationMode?: {
+      aggregationMode: string;
+      snapshotId: string;
+      datasetVersion: string | null;
+      modelVersion: string | null;
+    } | null;
+    aggregationModeRanking?: Array<{
+      aggregationMode: string;
+      rawScore: number;
+    }>;
+    strategyProfile?: {
+      key: string;
+      name: string;
+      aggregationMode: string;
+      selectionPolicy: string;
+      intendedUse: string;
+    };
+    strategyDefaults?: {
+      benchmarkDefaults: { aggregationMode: string; selectionPolicy: string; symbols: string[]; windows: number[]; n: number };
+      runDefaults: { aggregationMode: string; selectionPolicy: string; assetSymbols: string[]; points: number };
+    };
   };
   initialQuery: {
     assetSymbol: string;
@@ -192,7 +223,7 @@ const DEFAULTS = {
 } as const;
 
 export function DashboardClient({ initialData, initialQuery }: DashboardClientProps) {
-  const { consensus, scaling, stability, counts, filterLabel, latest, latestScalingRow, driftAsset: initialDriftAsset, driftGlobal: initialDriftGlobal, forecastAccuracy } = initialData;
+  const { consensus, scaling, stability, counts, filterLabel, latest, latestScalingRow, driftAsset: initialDriftAsset, driftGlobal: initialDriftGlobal, forecastAccuracy, productionAggregationMode, aggregationModeRanking = [], strategyProfile: initialStrategyProfile, strategyDefaults = { benchmarkDefaults: { aggregationMode: "top_20pct_only", selectionPolicy: "top_20pct_agents", symbols: ["SPY", "QQQ", "IWM"], windows: [29, 60, 120], n: 20 }, runDefaults: { aggregationMode: "top_20pct_only", selectionPolicy: "top_20pct_agents", assetSymbols: ["SPY", "QQQ", "IWM"], points: 29 } } } = initialData;
   const { assetSymbol } = initialQuery;
   const router = useRouter();
   const pathname = usePathname();
@@ -229,11 +260,24 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
     regimeShift: boolean;
     riskSeries: number[];
   } | null>(initialDriftGlobal ?? null);
+  const [strategyProfile, setStrategyProfile] = useState(initialStrategyProfile ?? {
+    key: "conservative",
+    name: "Conservative",
+    aggregationMode: "top_20pct_only",
+    selectionPolicy: "top_20pct_agents",
+    intendedUse: "production",
+  });
+  const [strategySwitchLoading, setStrategySwitchLoading] = useState(false);
+  const [strategySwitchError, setStrategySwitchError] = useState<string | null>(null);
 
   useEffect(() => {
     if (initialDriftAsset != null) setDriftAsset(initialDriftAsset);
     if (initialDriftGlobal != null) setDriftGlobal(initialDriftGlobal);
   }, [initialDriftAsset, initialDriftGlobal]);
+
+  useEffect(() => {
+    if (initialStrategyProfile != null) setStrategyProfile(initialStrategyProfile);
+  }, [initialStrategyProfile]);
 
   useEffect(() => {
     if (initialDriftAsset != null && initialDriftGlobal != null) return;
@@ -566,6 +610,7 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
                 <th className={styles.num}>Overhead (ms)</th>
                 <th className={styles.num}>Overhead %</th>
                 <th className={styles.num}>Efficiency</th>
+                <th className={styles.num} role="presentation" aria-hidden="true">Risk Score</th>
                 <th>Compare</th>
                 <th></th>
               </tr>
@@ -677,6 +722,9 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
                         <span className="text-slate-500">—</span>
                       )}
                     </td>
+                    <td data-testid="risk-cell" className={styles.num}>
+                      {r.stabilityScore ?? 0}
+                    </td>
                     <td>
                       <Link
                         href={`/runs/${r.runId}/compare?assetSymbol=${encodeURIComponent(assetSymbol)}`}
@@ -700,7 +748,7 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
                   </tr>
                   {isExpanded && hasBreakdown ? (
                     <tr>
-                      <td colSpan={11} style={{ padding: 0, verticalAlign: "top" }}>
+                      <td colSpan={12} style={{ padding: 0, verticalAlign: "top" }}>
                         <div
                           style={{
                             padding: "12px 16px",
@@ -753,13 +801,189 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
               })}
               {scalingFiltered.length === 0 ? (
                 <tr>
-                  <td colSpan={11} style={{ padding: 24, color: "rgba(15, 23, 42, 0.55)" }}>
+                  <td colSpan={12} style={{ padding: 24, color: "rgba(15, 23, 42, 0.55)" }}>
                     {showOverheadOutliersOnly ? "No overhead outliers (≥5%) in this set." : "No completed runs found."}
                   </td>
                 </tr>
               ) : null}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <div
+        data-testid="production-aggregation-card"
+        style={{ border: "1px solid rgba(15, 23, 42, 0.10)", borderRadius: 10, padding: 16, marginBottom: 24 }}
+      >
+        <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 14 }}>Production Aggregation Mode</div>
+        {productionAggregationMode ? (
+          <>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12, marginBottom: 12 }}>
+              <div>
+                <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 2 }}>Active mode</div>
+                <div data-testid="production-aggregation-active-mode" style={{ fontSize: 13, fontWeight: 500 }}>{productionAggregationMode.aggregationMode}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 2 }}>Snapshot ID</div>
+                <div style={{ fontSize: 12, fontFamily: "ui-monospace, monospace" }} title={productionAggregationMode.snapshotId}>
+                  {shortenId(productionAggregationMode.snapshotId)}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 2 }}>Dataset / Model</div>
+                <div style={{ fontSize: 12 }}>
+                  {shortenHash(productionAggregationMode.datasetVersion)} / {productionAggregationMode.modelVersion ?? "—"}
+                </div>
+              </div>
+            </div>
+            {aggregationModeRanking.length > 0 ? (
+              <div data-testid="production-aggregation-ranking">
+                <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 6 }}>Ranking</div>
+                <div className={styles.tableWrap} style={{ maxHeight: 120 }}>
+                  <table className={styles.table}>
+                    <thead>
+                      <tr>
+                        <th>Mode</th>
+                        <th className={styles.num}>rawScore</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {aggregationModeRanking.map((r) => (
+                        <tr
+                          key={r.aggregationMode}
+                          className={r.aggregationMode === productionAggregationMode.aggregationMode ? styles.productionModeActive : undefined}
+                        >
+                          <td>{r.aggregationMode}</td>
+                          <td className={styles.num}>{r.rawScore.toFixed(4)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              <div style={{ fontSize: 12, color: "rgba(15, 23, 42, 0.55)" }}>No aggregation mode ranking available</div>
+            )}
+          </>
+        ) : (
+          <div style={{ fontSize: 13, color: "rgba(15, 23, 42, 0.55)" }}>No production aggregation mode selected</div>
+        )}
+      </div>
+
+      <div
+        data-testid="strategy-profile-card"
+        style={{ border: "1px solid rgba(15, 23, 42, 0.10)", borderRadius: 10, padding: 16, marginBottom: 24 }}
+      >
+        <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 14 }}>Strategy Profile</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginBottom: 12 }}>
+          <div>
+            <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 2 }}>Active profile</div>
+            <div data-testid="strategy-profile-active" style={{ fontSize: 13, fontWeight: 500 }}>{strategyProfile.name}</div>
+          </div>
+          <div style={{ gridColumn: "1 / -1" }}>
+            <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 2 }}>Description</div>
+            <div style={{ fontSize: 12, color: "rgba(15, 23, 42, 0.75)" }}>
+              {strategyProfile.key === "conservative" && "Stable production profile emphasizing proven crowd filtering."}
+              {strategyProfile.key === "balanced" && "General-purpose profile balancing coverage and signal quality."}
+              {strategyProfile.key === "aggressive" && "Higher-variance profile intended for future experimental weighting modes."}
+              {strategyProfile.key === "research" && "Open analysis profile for benchmark exploration and diagnostics."}
+            </div>
+          </div>
+          <div>
+            <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 2 }}>Aggregation mode</div>
+            <div style={{ fontSize: 12 }}>{strategyProfile.aggregationMode}</div>
+          </div>
+          <div>
+            <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 2 }}>Selection policy</div>
+            <div style={{ fontSize: 12 }}>{strategyProfile.selectionPolicy}</div>
+          </div>
+          <div>
+            <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 2 }}>Intended use</div>
+            <div style={{ fontSize: 12 }}>{strategyProfile.intendedUse}</div>
+          </div>
+        </div>
+        <div data-testid="strategy-profile-selector" style={{ marginBottom: 8 }}>
+          <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 6 }}>Switch profile</div>
+          <div data-testid="strategy-profile-list" style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {(["conservative", "balanced", "aggressive", "research"] as const).map((key) => (
+              <button
+                key={key}
+                type="button"
+                data-testid={`strategy-profile-option-${key}`}
+                disabled={strategySwitchLoading}
+                onClick={async () => {
+                  if (strategyProfile.key === key) return;
+                  setStrategySwitchError(null);
+                  setStrategySwitchLoading(true);
+                  try {
+                    const res = await fetch("/api/strategy-profiles/active", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ key }),
+                    });
+                    const data = (await res.json()) as { ok?: boolean; activeProfile?: typeof strategyProfile; error?: string; message?: string };
+                    if (data.ok && data.activeProfile) {
+                      setStrategyProfile(data.activeProfile);
+                      router.refresh();
+                    } else {
+                      setStrategySwitchError(data.message ?? data.error ?? "Switch failed");
+                    }
+                  } catch (e) {
+                    setStrategySwitchError(e instanceof Error ? e.message : "Switch failed");
+                  } finally {
+                    setStrategySwitchLoading(false);
+                  }
+                }}
+                style={{
+                  padding: "6px 12px",
+                  borderRadius: 8,
+                  border: "1px solid rgba(15, 23, 42, 0.15)",
+                  background: strategyProfile.key === key ? "rgba(6, 182, 212, 0.12)" : "rgba(15, 23, 42, 0.04)",
+                  fontWeight: strategyProfile.key === key ? 600 : 500,
+                  fontSize: 12,
+                  cursor: strategySwitchLoading ? "not-allowed" : "pointer",
+                  opacity: strategySwitchLoading ? 0.7 : 1,
+                }}
+              >
+                {key === "conservative" ? "Conservative" : key === "balanced" ? "Balanced" : key === "aggressive" ? "Aggressive" : "Research"}
+              </button>
+            ))}
+          </div>
+        </div>
+        {strategySwitchLoading && (
+          <div style={{ fontSize: 12, color: "rgba(15, 23, 42, 0.55)", marginTop: 4 }}>Switching…</div>
+        )}
+        {strategySwitchError && (
+          <div style={{ fontSize: 12, color: "#dc2626", marginTop: 4 }}>{strategySwitchError}</div>
+        )}
+        <div data-testid="strategy-defaults-block" style={{ marginTop: 16, paddingTop: 12, borderTop: "1px solid rgba(15, 23, 42, 0.08)" }}>
+          <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 8, color: "rgba(15, 23, 42, 0.8)" }}>Operational Defaults</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12, fontSize: 12 }}>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 2 }}>Benchmark aggregation mode</div>
+              <div>{strategyDefaults.benchmarkDefaults.aggregationMode}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 2 }}>Benchmark selection policy</div>
+              <div>{strategyDefaults.benchmarkDefaults.selectionPolicy}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 2 }}>Benchmark symbols / windows / n</div>
+              <div>{strategyDefaults.benchmarkDefaults.symbols.join(", ")} · [{strategyDefaults.benchmarkDefaults.windows.join(", ")}] · n={strategyDefaults.benchmarkDefaults.n}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 2 }}>Run aggregation mode</div>
+              <div>{strategyDefaults.runDefaults.aggregationMode}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 2 }}>Run selection policy</div>
+              <div>{strategyDefaults.runDefaults.selectionPolicy}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 2 }}>Run assetSymbols / points</div>
+              <div>{strategyDefaults.runDefaults.assetSymbols.join(", ")} · points={strategyDefaults.runDefaults.points}</div>
+            </div>
+          </div>
         </div>
       </div>
 

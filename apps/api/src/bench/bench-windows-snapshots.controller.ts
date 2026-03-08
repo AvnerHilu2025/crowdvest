@@ -86,7 +86,7 @@ export class BenchWindowsSnapshotsController {
     return snapshot;
   }
 
-  /** GET /bench/windows/snapshots/find — latest matching snapshot metadata (for debugging cache hits). Query: symbols (required), windows (required), n (required), datasetVersion (optional), modelVersion (optional). */
+  /** GET /bench/windows/snapshots/find — latest matching snapshot metadata (for debugging cache hits). Query: symbols (required), windows (required), n (required), datasetVersion (optional), modelVersion (optional), aggregationMode (optional: equal_weight|top_20pct_only). */
   @Get("find")
   async find(
     @Query("symbols") symbolsStr?: string,
@@ -94,6 +94,7 @@ export class BenchWindowsSnapshotsController {
     @Query("n") nStr?: string,
     @Query("datasetVersion") datasetVersion?: string,
     @Query("modelVersion") modelVersion?: string,
+    @Query("aggregationMode") aggregationModeStr?: string,
   ) {
     const symbols = (symbolsStr ?? "")
       .split(",")
@@ -119,12 +120,17 @@ export class BenchWindowsSnapshotsController {
       throw new BadRequestException("n is required and must be a positive number");
     }
 
+    const aggRaw = (aggregationModeStr ?? "equal_weight").trim().toLowerCase();
+    const aggregationMode =
+      aggRaw === "top_20pct_only" ? ("top_20pct_only" as const) : ("equal_weight" as const);
+
     const snapshot = await this.benchService.findMatchingBenchWindowSnapshot({
       symbols,
       windows,
       n,
       datasetVersion: datasetVersion?.trim() || undefined,
       modelVersion: modelVersion?.trim() || undefined,
+      aggregationMode,
     });
     if (!snapshot) {
       throw new NotFoundException(

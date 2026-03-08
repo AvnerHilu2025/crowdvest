@@ -1032,7 +1032,7 @@ export class RunsService {
     });
     if (!run) throw new NotFoundException("Run not found");
     if (run.status !== "COMPLETED") {
-      throw new BadRequestException("Run must be COMPLETED for agent-alpha, selection-simulation and weighted-crowd-simulation analytics");
+      throw new BadRequestException("Run must be COMPLETED for agent-alpha, selection-simulation, weighted-crowd-simulation and aggregation-mode-benchmark analytics");
     }
 
     const [decisions, returns, agentsWithTraits] = await Promise.all([
@@ -1113,6 +1113,69 @@ export class RunsService {
         traits: a.traits.map((t) => ({ key: t.key, valueNum: t.valueNum })),
       })),
     };
+  }
+
+  /** Compute crowd accuracy for a run+symbol. Used by bench with aggregationMode. equal_weight uses RunAccuracy; top_20pct_only computes from AgentDecision. */
+  async getCrowdAccuracyForRun(
+    runId: string,
+    assetSymbol: string,
+    aggregationMode: "equal_weight" | "top_20pct_only",
+  ): Promise<number> {
+    if (aggregationMode === "equal_weight") {
+      const acc = await this.prisma.runAccuracy.findFirst({
+        where: { runId, assetSymbol },
+        select: { accuracyRate: true },
+      });
+      return acc?.accuracyRate ?? 0;
+    }
+
+    const { decisions, returnByKey, agentStats } = await this._getRunAgentMetricsData(runId);
+    const agentByAccuracy = [...agentStats].sort((a, b) => {
+      const ar = b.accuracyRate - a.accuracyRate;
+      if (ar !== 0) return ar;
+      const td = b.totalDecisions - a.totalDecisions;
+      if (td !== 0) return td;
+      return a.agentId.localeCompare(b.agentId);
+    });
+    const top20Count = Math.max(1, Math.ceil(0.2 * agentStats.length));
+    const top20Ids = new Set(agentByAccuracy.slice(0, top20Count).map((s) => s.agentId));
+
+    function actionValue(action: string): number {
+      if (action === "BUY") return 1;
+      if (action === "SELL") return -1;
+      return 0;
+    }
+    function scoreToAction(score: number): string {
+      if (score > 0) return "BUY";
+      if (score < 0) return "SELL";
+      return "HOLD";
+    }
+
+    const byStep = new Map<number, Array<{ agentId: string; action: string }>>();
+    for (const d of decisions) {
+      if (d.assetSymbol !== assetSymbol) continue;
+      let list = byStep.get(d.step);
+      if (!list) {
+        list = [];
+        byStep.set(d.step, list);
+      }
+      list.push({ agentId: d.agentId, action: d.action });
+    }
+
+    let correct = 0;
+    let total = 0;
+    for (const [step, decs] of byStep) {
+      const stepReturn = returnByKey.get(`${assetSymbol}:${step + 1}`);
+      if (stepReturn == null || !Number.isFinite(stepReturn)) continue;
+      total++;
+      let score = 0;
+      for (const d of decs) {
+        if (top20Ids.has(d.agentId)) score += actionValue(d.action);
+      }
+      const crowdAction = scoreToAction(score);
+      if (correctnessFromDecision(crowdAction, stepReturn)) correct++;
+    }
+    return total > 0 ? correct / total : 0;
   }
 
   /** GET /runs/:id/agent-alpha — agent/archetype/trait alpha analytics for completed runs. */
@@ -1546,6 +1609,118 @@ export class RunsService {
         { name: "weight_by_agent_accuracy_x_confidence", accuracyRate: accConfAccuracyRate, deltaVsBaseline: accConfAccuracyRate - equalWeightAccuracyRate },
         { name: "weight_top_20pct_only", accuracyRate: top20AccuracyRate, deltaVsBaseline: top20AccuracyRate - equalWeightAccuracyRate },
       ],
+    };
+  }
+
+  /** GET /runs/:id/aggregation-mode-benchmark — benchmark equal_weight vs top_20pct_only (completed runs only). */
+  async getRunAggregationModeBenchmark(runId: string): Promise<{
+    runId: string;
+    modes: Array<{
+      name: string;
+      accuracyRate: number;
+      totalPredictions: number;
+      deltaVsEqualWeight?: number;
+    }>;
+    selectedAgents: {
+      top20pct: Array<{
+        agentId: string;
+        archetypeName: string | null;
+        accuracyRate: number;
+        totalDecisions: number;
+        avgConfidence: number;
+      }>;
+    };
+  }> {
+    const { decisions, returnByKey, agentStats } = await this._getRunAgentMetricsData(runId);
+
+    const agentById = new Map<string, AgentMetricRow>();
+    for (const a of agentStats) agentById.set(a.agentId, a);
+
+    const agentByAccuracy = [...agentStats].sort((a, b) => {
+      const ar = b.accuracyRate - a.accuracyRate;
+      if (ar !== 0) return ar;
+      const td = b.totalDecisions - a.totalDecisions;
+      if (td !== 0) return td;
+      return a.agentId.localeCompare(b.agentId);
+    });
+    const top20Count = Math.max(1, Math.ceil(0.2 * agentStats.length));
+    const top20Agents = agentByAccuracy.slice(0, top20Count);
+    const top20Ids = new Set(top20Agents.map((s) => s.agentId));
+
+    function actionValue(action: string): number {
+      if (action === "BUY") return 1;
+      if (action === "SELL") return -1;
+      return 0;
+    }
+
+    function scoreToAction(score: number): string {
+      if (score > 0) return "BUY";
+      if (score < 0) return "SELL";
+      return "HOLD";
+    }
+
+    const byStep = new Map<string, Array<{ agentId: string; action: string }>>();
+    for (const d of decisions) {
+      const key = `${d.assetSymbol}:${d.step}`;
+      let list = byStep.get(key);
+      if (!list) {
+        list = [];
+        byStep.set(key, list);
+      }
+      list.push({ agentId: d.agentId, action: d.action });
+    }
+
+    let equalCorrect = 0;
+    let top20Correct = 0;
+    let total = 0;
+
+    for (const [key, decs] of byStep) {
+      const [assetSymbol, stepStr] = key.split(":");
+      const step = parseInt(stepStr!, 10);
+      const stepReturn = returnByKey.get(`${assetSymbol}:${step + 1}`);
+      if (stepReturn == null || !Number.isFinite(stepReturn)) continue;
+
+      total++;
+
+      let scoreEqual = 0;
+      let scoreTop20 = 0;
+
+      for (const d of decs) {
+        const v = actionValue(d.action);
+        scoreEqual += v;
+        if (top20Ids.has(d.agentId)) scoreTop20 += v;
+      }
+
+      const crowdEqual = scoreToAction(scoreEqual);
+      const crowdTop20 = scoreToAction(scoreTop20);
+
+      if (correctnessFromDecision(crowdEqual, stepReturn)) equalCorrect++;
+      if (correctnessFromDecision(crowdTop20, stepReturn)) top20Correct++;
+    }
+
+    const equalWeightAccuracyRate = total > 0 ? equalCorrect / total : 0;
+    const top20AccuracyRate = total > 0 ? top20Correct / total : 0;
+
+    return {
+      runId,
+      modes: [
+        { name: "equal_weight", accuracyRate: equalWeightAccuracyRate, totalPredictions: total },
+        {
+          name: "top_20pct_only",
+          accuracyRate: top20AccuracyRate,
+          totalPredictions: total,
+          deltaVsEqualWeight: top20AccuracyRate - equalWeightAccuracyRate,
+        },
+      ],
+      selectedAgents: {
+        top20pct: top20Agents.map((s) => ({
+          agentId: s.agentId,
+          archetypeName: s.archetypeName,
+          accuracyRate: s.accuracyRate,
+          totalDecisions: s.totalDecisions,
+          avgConfidence: s.avgConfidence,
+        })),
+      },
     };
   }
 

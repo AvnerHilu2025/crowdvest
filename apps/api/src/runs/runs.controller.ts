@@ -318,6 +318,14 @@ export class RunsController {
     return this.runsService.getRunWeightedCrowdSimulation(id);
   }
 
+  /** GET /runs/:id/aggregation-mode-benchmark — benchmark equal_weight vs top_20pct_only (completed runs only). */
+  @Get("runs/:id/aggregation-mode-benchmark")
+  async getAggregationModeBenchmark(@Param("id") runId: string) {
+    const id = runId?.trim() ?? "";
+    if (id === "" || !UUID_REGEX.test(id)) throw new BadRequestException("run id must be a UUID");
+    return this.runsService.getRunAggregationModeBenchmark(id);
+  }
+
   /** GET /runs/:id/attribution-sample?assetSymbol=SPY&limit=20 — sample of AgentDecision rows with attribution fields. */
   @Get("runs/:id/attribution-sample")
   async getAttributionSample(

@@ -1,6 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { RunQueueService } from "../jobs/run-queue.service";
+import { BenchService } from "../bench/bench.service";
+import { StrategyProfilesService } from "../strategy-profiles/strategy-profiles.service";
 
 function parseMs(iso?: string | Date | null): number | null {
   if (iso == null) return null;
@@ -216,6 +218,38 @@ export interface DashboardSummary {
       };
     }>;
   };
+  productionAggregationMode: {
+    aggregationMode: string;
+    snapshotId: string;
+    datasetVersion: string | null;
+    modelVersion: string | null;
+  } | null;
+  aggregationModeRanking: Array<{
+    aggregationMode: string;
+    rawScore: number;
+  }>;
+  strategyProfile: {
+    key: string;
+    name: string;
+    aggregationMode: string;
+    selectionPolicy: string;
+    intendedUse: string;
+  };
+  strategyDefaults: {
+    benchmarkDefaults: {
+      aggregationMode: string;
+      selectionPolicy: string;
+      symbols: string[];
+      windows: number[];
+      n: number;
+    };
+    runDefaults: {
+      aggregationMode: string;
+      selectionPolicy: string;
+      assetSymbols: string[];
+      points: number;
+    };
+  };
 }
 
 @Injectable()
@@ -223,6 +257,8 @@ export class DashboardService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly runQueue: RunQueueService,
+    private readonly benchService: BenchService,
+    private readonly strategyProfilesService: StrategyProfilesService,
   ) {}
 
   async getSummary(limit = 10, assetSymbol = "SPY"): Promise<DashboardSummary> {
@@ -469,9 +505,39 @@ export class DashboardService {
       });
     }
 
-    const [consensus, driftAsset, driftGlobal, forecastAccuracy] = await Promise.all([
-      this.fetchConsensus(latestRun?.id ?? null, sym),
-      this.getDrift({ assetSymbol: sym, window: 30 }).catch(() => ({
+    const safeProductionMode = (async (): Promise<DashboardSummary["productionAggregationMode"]> => {
+      try {
+        const r = await this.benchService.getProductionAggregationMode();
+        return r?.snapshot
+          ? {
+              aggregationMode: r.snapshot.aggregationMode,
+              snapshotId: r.snapshot.id,
+              datasetVersion: r.snapshot.datasetVersion ?? null,
+              modelVersion: r.snapshot.modelVersion ?? null,
+            }
+          : null;
+      } catch {
+        return null;
+      }
+    })();
+
+    const safeRanking = (async (): Promise<DashboardSummary["aggregationModeRanking"]> => {
+      try {
+        const r = await this.benchService.getModeLeaderboard({
+          symbols: ["SPY", "QQQ", "IWM"],
+          windows: [29, 60, 120],
+          n: 20,
+        });
+        return Array.isArray(r?.ranking) ? r.ranking : [];
+      } catch {
+        return [];
+      }
+    })();
+
+    const [consensus, driftAsset, driftGlobal, forecastAccuracy, productionAggregationMode, aggregationModeRanking] =
+      await Promise.all([
+        this.fetchConsensus(latestRun?.id ?? null, sym),
+        this.getDrift({ assetSymbol: sym, window: 30 }).catch(() => ({
         window: 0,
         count: 0,
         regimeShift: false,
@@ -498,7 +564,54 @@ export class DashboardService {
         riskSeries: [] as number[],
       })),
       this.fetchForecastAccuracy(latestRun?.id ?? null),
+      safeProductionMode,
+      safeRanking,
     ]);
+
+    let strategyProfile: DashboardSummary["strategyProfile"];
+    try {
+      const p = this.strategyProfilesService.getActiveProfile();
+      strategyProfile = {
+        key: p.key,
+        name: p.name,
+        aggregationMode: p.aggregationMode,
+        selectionPolicy: p.selectionPolicy,
+        intendedUse: p.intendedUse,
+      };
+    } catch {
+      strategyProfile = {
+        key: "conservative",
+        name: "Conservative",
+        aggregationMode: "top_20pct_only",
+        selectionPolicy: "top_20pct_agents",
+        intendedUse: "production",
+      };
+    }
+
+    let strategyDefaults: DashboardSummary["strategyDefaults"];
+    try {
+      const d = this.strategyProfilesService.getDefaults();
+      strategyDefaults = {
+        benchmarkDefaults: d.benchmarkDefaults,
+        runDefaults: d.runDefaults,
+      };
+    } catch {
+      strategyDefaults = {
+        benchmarkDefaults: {
+          aggregationMode: "top_20pct_only",
+          selectionPolicy: "top_20pct_agents",
+          symbols: ["SPY", "QQQ", "IWM"],
+          windows: [29, 60, 120],
+          n: 20,
+        },
+        runDefaults: {
+          aggregationMode: "top_20pct_only",
+          selectionPolicy: "top_20pct_agents",
+          assetSymbols: ["SPY", "QQQ", "IWM"],
+          points: 29,
+        },
+      };
+    }
 
     return {
       consensus,
@@ -509,6 +622,10 @@ export class DashboardService {
       driftAsset,
       driftGlobal,
       forecastAccuracy,
+      productionAggregationMode,
+      aggregationModeRanking,
+      strategyProfile,
+      strategyDefaults,
     };
   }
 

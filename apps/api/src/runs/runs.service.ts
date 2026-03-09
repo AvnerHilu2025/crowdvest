@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { StrategyProfilesService } from "../strategy-profiles/strategy-profiles.service";
 import type { RunSummaryResponse } from "./run-summary.types";
 import { getDefaultSpyCsvPath } from "../common/default-dataset";
 import { SPY29_DATASET_VERSION } from "../common/spy29-returns";
@@ -83,9 +84,65 @@ type AgentMetricRow = {
   avgConfidence: number;
 };
 
+const RUN_FLOW_FALLBACK_SYMBOLS = ["SPY", "QQQ", "IWM"];
+const RUN_FLOW_FALLBACK_POINTS = 29;
+
 @Injectable()
 export class RunsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly strategyProfilesService: StrategyProfilesService,
+  ) {}
+
+  /**
+   * Resolve run/import query defaults: explicit params > strategy defaults > conservative fallback.
+   * Returns { symbols, points } for use in POST /runs/import/prices.
+   */
+  resolveRunFlowDefaults(input: {
+    symbolsStr?: string;
+    pointsStr?: string;
+  }): { symbols: string[]; points: number } {
+    let symbols: string[];
+    let points: number;
+
+    const parsedSymbols = (input.symbolsStr ?? "")
+      .split(",")
+      .map((s) => s.trim().toUpperCase())
+      .filter(Boolean)
+      .filter((s, i, arr) => arr.indexOf(s) === i)
+      .slice(0, 10);
+
+    if (parsedSymbols.length > 0) {
+      symbols = parsedSymbols;
+    } else {
+      try {
+        const d = this.strategyProfilesService.getDefaults();
+        symbols = Array.isArray(d.runDefaults?.assetSymbols) && d.runDefaults.assetSymbols.length > 0
+          ? d.runDefaults.assetSymbols.slice(0, 10)
+          : RUN_FLOW_FALLBACK_SYMBOLS;
+      } catch {
+        symbols = RUN_FLOW_FALLBACK_SYMBOLS;
+      }
+    }
+
+    const parsedPoints = parseInt(input.pointsStr ?? "", 10);
+    if (Number.isFinite(parsedPoints) && parsedPoints >= 2 && parsedPoints <= 365) {
+      points = parsedPoints;
+    } else {
+      try {
+        const d = this.strategyProfilesService.getDefaults();
+        const p = d.runDefaults?.points;
+        points = typeof p === "number" && p >= 2 && p <= 365
+          ? Math.min(Math.max(2, p), 365)
+          : RUN_FLOW_FALLBACK_POINTS;
+      } catch {
+        points = RUN_FLOW_FALLBACK_POINTS;
+      }
+    }
+
+    points = Math.min(Math.max(2, points), 365);
+    return { symbols, points };
+  }
 
   /** POST /runs — create a new SimulationRun. Returns { id }. Used by smoke tests for deterministic runs. */
   async createRun(name?: string): Promise<{ id: string }> {

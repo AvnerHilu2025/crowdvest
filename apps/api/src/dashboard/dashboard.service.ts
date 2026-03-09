@@ -250,6 +250,28 @@ export interface DashboardSummary {
       points: number;
     };
   };
+  runFlowDefaults: {
+    assetSymbols: string[];
+    points: number;
+    aggregationMode: string;
+    selectionPolicy: string;
+  };
+  executionPreset: {
+    runPreset: {
+      assetSymbols: string[];
+      points: number;
+      aggregationMode: string;
+      selectionPolicy: string;
+    };
+    benchmarkPreset: {
+      symbols: string[];
+      windows: number[];
+      n: number;
+      aggregationMode: string;
+      selectionPolicy: string;
+      baselineTag: string;
+    };
+  };
 }
 
 @Injectable()
@@ -589,11 +611,18 @@ export class DashboardService {
     }
 
     let strategyDefaults: DashboardSummary["strategyDefaults"];
+    let runFlowDefaults: DashboardSummary["runFlowDefaults"];
     try {
       const d = this.strategyProfilesService.getDefaults();
       strategyDefaults = {
         benchmarkDefaults: d.benchmarkDefaults,
         runDefaults: d.runDefaults,
+      };
+      runFlowDefaults = {
+        assetSymbols: d.runDefaults.assetSymbols,
+        points: d.runDefaults.points,
+        aggregationMode: d.runDefaults.aggregationMode,
+        selectionPolicy: d.runDefaults.selectionPolicy,
       };
     } catch {
       strategyDefaults = {
@@ -611,6 +640,51 @@ export class DashboardService {
           points: 29,
         },
       };
+      runFlowDefaults = {
+        assetSymbols: ["SPY", "QQQ", "IWM"],
+        points: 29,
+        aggregationMode: "top_20pct_only",
+        selectionPolicy: "top_20pct_agents",
+      };
+    }
+
+    let executionPreset: DashboardSummary["executionPreset"];
+    try {
+      const d = this.strategyProfilesService.getDefaults();
+      const baselineTag = d.benchmarkDefaults.aggregationMode === "top_20pct_only" ? "baseline-top20-v1" : "baseline-v2";
+      executionPreset = {
+        runPreset: {
+          assetSymbols: [...d.runDefaults.assetSymbols],
+          points: d.runDefaults.points,
+          aggregationMode: d.runDefaults.aggregationMode,
+          selectionPolicy: d.runDefaults.selectionPolicy,
+        },
+        benchmarkPreset: {
+          symbols: [...d.benchmarkDefaults.symbols],
+          windows: [...d.benchmarkDefaults.windows],
+          n: d.benchmarkDefaults.n,
+          aggregationMode: d.benchmarkDefaults.aggregationMode,
+          selectionPolicy: d.benchmarkDefaults.selectionPolicy,
+          baselineTag,
+        },
+      };
+    } catch {
+      executionPreset = {
+        runPreset: {
+          assetSymbols: ["SPY", "QQQ", "IWM"],
+          points: 29,
+          aggregationMode: "top_20pct_only",
+          selectionPolicy: "top_20pct_agents",
+        },
+        benchmarkPreset: {
+          symbols: ["SPY", "QQQ", "IWM"],
+          windows: [29, 60, 120],
+          n: 20,
+          aggregationMode: "top_20pct_only",
+          selectionPolicy: "top_20pct_agents",
+          baselineTag: "baseline-top20-v1",
+        },
+      };
     }
 
     return {
@@ -626,6 +700,8 @@ export class DashboardService {
       aggregationModeRanking,
       strategyProfile,
       strategyDefaults,
+      runFlowDefaults,
+      executionPreset,
     };
   }
 

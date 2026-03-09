@@ -78,7 +78,7 @@ export class RunsController {
     }
   }
 
-  /** POST /runs/import/prices — import from PriceSeriesPoint. Query: symbols=SPY,QQQ (required, 1..10), points=29 (default, 2..365), nameSuffix optional. Creates one run, imports all symbols, enqueues backtest per symbol. */
+  /** POST /runs/import/prices — import from PriceSeriesPoint. Query: symbols, points (use strategy defaults when missing), nameSuffix optional. Creates one run, imports all symbols, enqueues backtest per symbol. */
   @Post("runs/import/prices")
   @HttpCode(HttpStatus.OK)
   async importPrices(
@@ -86,14 +86,7 @@ export class RunsController {
     @Query("points") pointsStr?: string,
     @Query("nameSuffix") nameSuffix?: string,
   ) {
-    const symbols = (symbolsStr ?? "")
-      .split(",")
-      .map((s) => s.trim().toUpperCase())
-      .filter(Boolean)
-      .filter((s, i, arr) => arr.indexOf(s) === i)
-      .slice(0, 10);
-    if (symbols.length === 0) throw new BadRequestException("symbols is required (e.g. SPY,QQQ)");
-    const points = Math.min(Math.max(2, parseInt(pointsStr ?? "29", 10) || 29), 365);
+    const { symbols, points } = this.runsService.resolveRunFlowDefaults({ symbolsStr, pointsStr });
     const seeds = [1, 2];
     const result = await this.runsService.importFromPrices({
       symbols,

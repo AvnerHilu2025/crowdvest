@@ -84,6 +84,13 @@
   font-weight: 600;
 }
 
+/* Execution preset subsection (Strategy Profile card) */
+.executionPresetBlock {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+}
+
 /* Dashboard tables v2 */
 .tableWrap {
   overflow: auto;

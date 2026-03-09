@@ -204,6 +204,10 @@ export type DashboardClientProps = {
       benchmarkDefaults: { aggregationMode: string; selectionPolicy: string; symbols: string[]; windows: number[]; n: number };
       runDefaults: { aggregationMode: string; selectionPolicy: string; assetSymbols: string[]; points: number };
     };
+    executionPreset?: {
+      runPreset: { assetSymbols: string[]; points: number; aggregationMode: string; selectionPolicy: string };
+      benchmarkPreset: { symbols: string[]; windows: number[]; n: number; aggregationMode: string; selectionPolicy: string; baselineTag: string };
+    };
   };
   initialQuery: {
     assetSymbol: string;
@@ -223,7 +227,7 @@ const DEFAULTS = {
 } as const;
 
 export function DashboardClient({ initialData, initialQuery }: DashboardClientProps) {
-  const { consensus, scaling, stability, counts, filterLabel, latest, latestScalingRow, driftAsset: initialDriftAsset, driftGlobal: initialDriftGlobal, forecastAccuracy, productionAggregationMode, aggregationModeRanking = [], strategyProfile: initialStrategyProfile, strategyDefaults = { benchmarkDefaults: { aggregationMode: "top_20pct_only", selectionPolicy: "top_20pct_agents", symbols: ["SPY", "QQQ", "IWM"], windows: [29, 60, 120], n: 20 }, runDefaults: { aggregationMode: "top_20pct_only", selectionPolicy: "top_20pct_agents", assetSymbols: ["SPY", "QQQ", "IWM"], points: 29 } } } = initialData;
+  const { consensus, scaling, stability, counts, filterLabel, latest, latestScalingRow, driftAsset: initialDriftAsset, driftGlobal: initialDriftGlobal, forecastAccuracy, productionAggregationMode, aggregationModeRanking = [], strategyProfile: initialStrategyProfile, strategyDefaults = { benchmarkDefaults: { aggregationMode: "top_20pct_only", selectionPolicy: "top_20pct_agents", symbols: ["SPY", "QQQ", "IWM"], windows: [29, 60, 120], n: 20 }, runDefaults: { aggregationMode: "top_20pct_only", selectionPolicy: "top_20pct_agents", assetSymbols: ["SPY", "QQQ", "IWM"], points: 29 } }, executionPreset = { runPreset: { assetSymbols: ["SPY", "QQQ", "IWM"], points: 29, aggregationMode: "top_20pct_only", selectionPolicy: "top_20pct_agents" }, benchmarkPreset: { symbols: ["SPY", "QQQ", "IWM"], windows: [29, 60, 120], n: 20, aggregationMode: "top_20pct_only", selectionPolicy: "top_20pct_agents", baselineTag: "baseline-top20-v1" } } } = initialData;
   const { assetSymbol } = initialQuery;
   const router = useRouter();
   const pathname = usePathname();
@@ -982,6 +986,53 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
             <div>
               <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 2 }}>Run assetSymbols / points</div>
               <div>{strategyDefaults.runDefaults.assetSymbols.join(", ")} · points={strategyDefaults.runDefaults.points}</div>
+            </div>
+          </div>
+        </div>
+        <div data-testid="execution-preset-block" className={styles.executionPresetBlock}>
+          <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 8, color: "rgba(15, 23, 42, 0.8)" }}>Execution Preset</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12, fontSize: 12 }}>
+            <div style={{ gridColumn: "1 / -1", fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 4 }}>Run preset</div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 2 }}>assetSymbols</div>
+              <div>{executionPreset.runPreset.assetSymbols.join(", ")}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 2 }}>points</div>
+              <div>{executionPreset.runPreset.points}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 2 }}>aggregationMode</div>
+              <div>{executionPreset.runPreset.aggregationMode}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 2 }}>selectionPolicy</div>
+              <div>{executionPreset.runPreset.selectionPolicy}</div>
+            </div>
+            <div style={{ gridColumn: "1 / -1", fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 4, marginTop: 8 }}>Benchmark preset</div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 2 }}>symbols</div>
+              <div>{executionPreset.benchmarkPreset.symbols.join(", ")}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 2 }}>windows</div>
+              <div>[{executionPreset.benchmarkPreset.windows.join(", ")}]</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 2 }}>n</div>
+              <div>{executionPreset.benchmarkPreset.n}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 2 }}>aggregationMode</div>
+              <div>{executionPreset.benchmarkPreset.aggregationMode}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 2 }}>selectionPolicy</div>
+              <div>{executionPreset.benchmarkPreset.selectionPolicy}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 2 }}>baselineTag</div>
+              <div>{executionPreset.benchmarkPreset.baselineTag}</div>
             </div>
           </div>
         </div>

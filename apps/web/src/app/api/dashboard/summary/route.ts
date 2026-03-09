@@ -46,11 +46,9 @@ export async function GET(req: NextRequest) {
     if (!("productionAggregationMode" in data)) {
       data.productionAggregationMode = null;
     }
-
     if (!Array.isArray(data.aggregationModeRanking)) {
       data.aggregationModeRanking = [];
     }
-
     if (!("strategyProfile" in data) || data.strategyProfile == null || typeof data.strategyProfile !== "object") {
       data.strategyProfile = {
         key: "conservative",
@@ -60,30 +58,24 @@ export async function GET(req: NextRequest) {
         intendedUse: "production",
       };
     }
-
-    const defaultStrategyDefaults = {
-      benchmarkDefaults: {
-        aggregationMode: "top_20pct_only",
-        selectionPolicy: "top_20pct_agents",
-        symbols: ["SPY", "QQQ", "IWM"],
-        windows: [29, 60, 120],
-        n: 20,
-      },
-      runDefaults: {
-        aggregationMode: "top_20pct_only",
-        selectionPolicy: "top_20pct_agents",
-        assetSymbols: ["SPY", "QQQ", "IWM"],
-        points: 29,
-      },
-    };
-    if (!("strategyDefaults" in data) || data.strategyDefaults == null || typeof data.strategyDefaults !== "object") {
-      data.strategyDefaults = defaultStrategyDefaults;
-    }
-
     if (!("strategyDefaults" in data) || data.strategyDefaults == null || typeof data.strategyDefaults !== "object") {
       data.strategyDefaults = {
         benchmarkDefaults: { aggregationMode: "top_20pct_only", selectionPolicy: "top_20pct_agents", symbols: ["SPY", "QQQ", "IWM"], windows: [29, 60, 120], n: 20 },
         runDefaults: { aggregationMode: "top_20pct_only", selectionPolicy: "top_20pct_agents", assetSymbols: ["SPY", "QQQ", "IWM"], points: 29 },
+      };
+    }
+    if (!("runFlowDefaults" in data) || data.runFlowDefaults == null || typeof data.runFlowDefaults !== "object") {
+      data.runFlowDefaults = {
+        assetSymbols: ["SPY", "QQQ", "IWM"],
+        points: 29,
+        aggregationMode: "top_20pct_only",
+        selectionPolicy: "top_20pct_agents",
+      };
+    }
+    if (!("executionPreset" in data) || data.executionPreset == null || typeof data.executionPreset !== "object") {
+      data.executionPreset = {
+        runPreset: { assetSymbols: ["SPY", "QQQ", "IWM"], points: 29, aggregationMode: "top_20pct_only", selectionPolicy: "top_20pct_agents" },
+        benchmarkPreset: { symbols: ["SPY", "QQQ", "IWM"], windows: [29, 60, 120], n: 20, aggregationMode: "top_20pct_only", selectionPolicy: "top_20pct_agents", baselineTag: "baseline-top20-v1" },
       };
     }
 

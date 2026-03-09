@@ -111,6 +111,10 @@ type DashboardSummary = {
     benchmarkDefaults: { aggregationMode: string; selectionPolicy: string; symbols: string[]; windows: number[]; n: number };
     runDefaults: { aggregationMode: string; selectionPolicy: string; assetSymbols: string[]; points: number };
   };
+  executionPreset?: {
+    runPreset: { assetSymbols: string[]; points: number; aggregationMode: string; selectionPolicy: string };
+    benchmarkPreset: { symbols: string[]; windows: number[]; n: number; aggregationMode: string; selectionPolicy: string; baselineTag: string };
+  };
 };
 
 export default async function DashboardPage({
@@ -223,6 +227,10 @@ export default async function DashboardPage({
         strategyDefaults: data.strategyDefaults ?? {
           benchmarkDefaults: { aggregationMode: "top_20pct_only", selectionPolicy: "top_20pct_agents", symbols: ["SPY", "QQQ", "IWM"], windows: [29, 60, 120], n: 20 },
           runDefaults: { aggregationMode: "top_20pct_only", selectionPolicy: "top_20pct_agents", assetSymbols: ["SPY", "QQQ", "IWM"], points: 29 },
+        },
+        executionPreset: data.executionPreset ?? {
+          runPreset: { assetSymbols: ["SPY", "QQQ", "IWM"], points: 29, aggregationMode: "top_20pct_only", selectionPolicy: "top_20pct_agents" },
+          benchmarkPreset: { symbols: ["SPY", "QQQ", "IWM"], windows: [29, 60, 120], n: 20, aggregationMode: "top_20pct_only", selectionPolicy: "top_20pct_agents", baselineTag: "baseline-top20-v1" },
         },
       }}
       initialQuery={{

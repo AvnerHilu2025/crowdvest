@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { forwardRef, Module } from "@nestjs/common";
 import { PrismaModule } from "../prisma/prisma.module";
 import { RunsModule } from "../runs/runs.module";
 import { JobsModule } from "../jobs/jobs.module";
@@ -9,7 +9,13 @@ import { BenchService } from "./bench.service";
 import { BenchWindowsSnapshotsController } from "./bench-windows-snapshots.controller";
 
 @Module({
-  imports: [PrismaModule, RunsModule, JobsModule, ForecastModule, StrategyProfilesModule],
+  imports: [
+    PrismaModule,
+    forwardRef(() => RunsModule),
+    JobsModule,
+    ForecastModule,
+    forwardRef(() => StrategyProfilesModule),
+  ],
   controllers: [BenchController, BenchWindowsSnapshotsController],
   providers: [BenchService],
   exports: [BenchService],

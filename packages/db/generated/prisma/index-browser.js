@@ -170,6 +170,9 @@ exports.Prisma.SimulationRunScalarFieldEnum = {
   seed: 'seed',
   modelVersion: 'modelVersion',
   datasetVersion: 'datasetVersion',
+  strategyProfile: 'strategyProfile',
+  aggregationMode: 'aggregationMode',
+  selectionPolicy: 'selectionPolicy',
   codeGitSha: 'codeGitSha',
   schemaVersion: 'schemaVersion',
   startedAt: 'startedAt',
@@ -541,6 +544,44 @@ exports.Prisma.BenchWindowSnapshotScalarFieldEnum = {
   isBaseline: 'isBaseline'
 };
 
+exports.Prisma.MarketDataPayloadScalarFieldEnum = {
+  id: 'id',
+  provider: 'provider',
+  symbol: 'symbol',
+  payloadJson: 'payloadJson',
+  fetchedAt: 'fetchedAt',
+  datasetVersion: 'datasetVersion'
+};
+
+exports.Prisma.MarketPriceScalarFieldEnum = {
+  id: 'id',
+  datasetVersion: 'datasetVersion',
+  symbol: 'symbol',
+  timestamp: 'timestamp',
+  open: 'open',
+  high: 'high',
+  low: 'low',
+  close: 'close',
+  volume: 'volume'
+};
+
+exports.Prisma.SignalHistoryScalarFieldEnum = {
+  id: 'id',
+  symbol: 'symbol',
+  signal: 'signal',
+  confidence: 'confidence',
+  disagreement: 'disagreement',
+  instability: 'instability',
+  runsUsed: 'runsUsed',
+  windowSize: 'windowSize',
+  sourceRunId: 'sourceRunId',
+  datasetVersion: 'datasetVersion',
+  strategyProfile: 'strategyProfile',
+  aggregationMode: 'aggregationMode',
+  selectionPolicy: 'selectionPolicy',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -634,7 +675,10 @@ exports.Prisma.ModelName = {
   ForecastResult: 'ForecastResult',
   RunAccuracy: 'RunAccuracy',
   RunSignalDiagnostics: 'RunSignalDiagnostics',
-  BenchWindowSnapshot: 'BenchWindowSnapshot'
+  BenchWindowSnapshot: 'BenchWindowSnapshot',
+  MarketDataPayload: 'MarketDataPayload',
+  MarketPrice: 'MarketPrice',
+  SignalHistory: 'SignalHistory'
 };
 
 /**

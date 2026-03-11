@@ -115,6 +115,38 @@ type DashboardSummary = {
     runPreset: { assetSymbols: string[]; points: number; aggregationMode: string; selectionPolicy: string };
     benchmarkPreset: { symbols: string[]; windows: number[]; n: number; aggregationMode: string; selectionPolicy: string; baselineTag: string };
   };
+  launchPlan?: {
+    runPlan: { endpoint: string; method: string; params: { symbols: string[]; points: number }; resolved: { aggregationMode: string; selectionPolicy: string } };
+    benchmarkPlan: { endpoint: string; method: string; params: { symbols: string[]; windows: number[]; n: number; aggregationMode: string; baselineTag: string }; resolved: { aggregationMode: string; selectionPolicy: string; baselineTag: string } };
+    governance: { baselineFamilyTag: string; candidateMode: string; recommendedMode: string; notes: string[] };
+  };
+  crowdSignals?: {
+    window: number;
+    items: Array<{
+      symbol: string;
+      signal: string;
+      confidence: number;
+      disagreement: number;
+      instability: number;
+      runsUsed: number;
+    }>;
+  };
+  signalValidation?: {
+    total: number;
+    validated: number;
+    accuracyRate: number | null;
+    latestItems: Array<{
+      symbol: string;
+      signal: string;
+      realizedDirection: "UP" | "DOWN" | "FLAT" | null;
+      correct: boolean | null;
+      confidence: number;
+    }>;
+  };
+  signalHistoryStats?: {
+    totalSnapshots: number;
+    symbolsCovered: number;
+  };
 };
 
 export default async function DashboardPage({
@@ -136,7 +168,7 @@ export default async function DashboardPage({
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) {
     return (
-      <div style={{ maxWidth: 1152, margin: "0 auto", padding: "32px 24px" }}>
+      <div data-testid="dashboard-root" style={{ maxWidth: 1152, margin: "0 auto", padding: "32px 24px" }}>
         <h1 style={{ fontSize: 28, fontWeight: 700 }}>Dashboard</h1>
         <p style={{ marginTop: 16, color: "#dc2626" }}>Failed to load dashboard. Check that the API is running.</p>
       </div>
@@ -232,6 +264,23 @@ export default async function DashboardPage({
           runPreset: { assetSymbols: ["SPY", "QQQ", "IWM"], points: 29, aggregationMode: "top_20pct_only", selectionPolicy: "top_20pct_agents" },
           benchmarkPreset: { symbols: ["SPY", "QQQ", "IWM"], windows: [29, 60, 120], n: 20, aggregationMode: "top_20pct_only", selectionPolicy: "top_20pct_agents", baselineTag: "baseline-top20-v1" },
         },
+        launchPlan: data.launchPlan ?? {
+          runPlan: { endpoint: "/runs/import/prices", method: "POST", params: { symbols: ["SPY", "QQQ", "IWM"], points: 29 }, resolved: { aggregationMode: "top_20pct_only", selectionPolicy: "top_20pct_agents" } },
+          benchmarkPlan: { endpoint: "/bench/windows/run-and-compare", method: "POST", params: { symbols: ["SPY", "QQQ", "IWM"], windows: [29, 60, 120], n: 20, aggregationMode: "top_20pct_only", baselineTag: "baseline-top20-v1" }, resolved: { aggregationMode: "top_20pct_only", selectionPolicy: "top_20pct_agents", baselineTag: "baseline-top20-v1" } },
+          governance: { baselineFamilyTag: "baseline-top20-v1", candidateMode: "top_20pct_only", recommendedMode: "top_20pct_only", notes: ["Launch plan fallback."] },
+        },
+        crowdSignals:
+          data.crowdSignals && typeof data.crowdSignals === "object" && Array.isArray(data.crowdSignals.items)
+            ? data.crowdSignals
+            : { window: 20, items: [] },
+        signalValidation:
+          data.signalValidation && typeof data.signalValidation === "object"
+            ? data.signalValidation
+            : { total: 0, validated: 0, accuracyRate: null, latestItems: [] },
+        signalHistoryStats:
+          data.signalHistoryStats && typeof data.signalHistoryStats === "object"
+            ? data.signalHistoryStats
+            : undefined,
       }}
       initialQuery={{
         assetSymbol,

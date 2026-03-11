@@ -84,8 +84,9 @@
   font-weight: 600;
 }
 
-/* Execution preset subsection (Strategy Profile card) */
-.executionPresetBlock {
+/* Execution preset / Launch plan subsections (Strategy Profile card) */
+.executionPresetBlock,
+.launchPlanBlock {
   margin-top: 16px;
   padding-top: 12px;
   border-top: 1px solid rgba(15, 23, 42, 0.08);

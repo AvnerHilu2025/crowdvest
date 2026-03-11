@@ -20,7 +20,10 @@ import { InfoEventsModule } from "./info-events/info-events.module";
 import { JobsModule } from "./jobs/jobs.module";
 import { DashboardModule } from "./dashboard/dashboard.module";
 import { BenchModule } from "./bench/bench.module";
+import { LaunchPlanModule } from "./launch-plan/launch-plan.module";
+import { MarketDataModule } from "./market-data/market-data.module";
 import { DebugModule } from "./debug/debug.module";
+import { SignalsModule } from "./signals/signals.module";
 
 @Module({
   imports: [
@@ -51,7 +54,10 @@ import { DebugModule } from "./debug/debug.module";
     JobsModule,
     DashboardModule,
     BenchModule,
+    LaunchPlanModule,
+    MarketDataModule,
     DebugModule,
+    SignalsModule,
   ],
 })
 export class AppModule {}

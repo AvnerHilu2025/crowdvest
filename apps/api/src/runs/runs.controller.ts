@@ -246,6 +246,14 @@ export class RunsController {
     }
   }
 
+  /** GET /runs/:runId/metadata — run lineage metadata (datasetVersion, strategyProfile, etc.). */
+  @Get("runs/:runId/metadata")
+  async getMetadata(@Param("runId") runId: string) {
+    const id = runId?.trim() ?? "";
+    if (id === "" || !UUID_REGEX.test(id)) throw new BadRequestException("runId must be a UUID");
+    return this.runsService.getRunMetadata(id);
+  }
+
   /** GET /runs/:id/accuracy?overwrite=true|false — Forecast Accuracy + Signal Diagnostics. Returns { items: RunAccuracy[], diagnostics: RunSignalDiagnostics[] }. */
   @Get("runs/:id/accuracy")
   async getAccuracy(

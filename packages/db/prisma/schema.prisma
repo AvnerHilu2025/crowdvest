@@ -60,9 +60,9 @@ model Agent {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  archetype   Archetype         @relation(fields: [archetypeId], references: [id], onDelete: Restrict)
-  wallet      AgentWallet?
-  bets        Bet[]
+  archetype Archetype    @relation(fields: [archetypeId], references: [id], onDelete: Restrict)
+  wallet    AgentWallet?
+  bets      Bet[]
 }
 
 model AgentWallet {
@@ -81,23 +81,26 @@ enum SimulationRunStatus {
 }
 
 model SimulationRun {
-  id             String              @id @default(uuid()) @db.Uuid
-  name           String
-  status         SimulationRunStatus @default(PENDING)
-  seed           Int
-  modelVersion   String
-  datasetVersion String
-  codeGitSha     String?
-  schemaVersion  String
-  startedAt      DateTime?
-  finishedAt     DateTime?
-  completedAt    DateTime?
-  failedAt       DateTime?
-  lastError      String?             @db.VarChar(1000)
-  runDurationMs  Int?
-  configJson     Json?
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @updatedAt
+  id              String              @id @default(uuid()) @db.Uuid
+  name            String
+  status          SimulationRunStatus @default(PENDING)
+  seed            Int
+  modelVersion    String
+  datasetVersion  String
+  strategyProfile String?
+  aggregationMode String?
+  selectionPolicy String?
+  codeGitSha      String?
+  schemaVersion   String
+  startedAt       DateTime?
+  finishedAt      DateTime?
+  completedAt     DateTime?
+  failedAt        DateTime?
+  lastError       String?             @db.VarChar(1000)
+  runDurationMs   Int?
+  configJson      Json?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
 
   agentExperiences AgentExperience[]
   crowdSnapshots   CrowdSnapshot[]
@@ -122,19 +125,19 @@ model SimulationRun {
 // ---------------------------------------------------------------------------
 
 model RunVariant {
-  id           String    @id @default(uuid()) @db.Uuid
-  runId        String    @db.Uuid
-  assetSymbol  String
-  seed         Int
-  agents       Int
-  steps        Int
-  label        String?   // optional batch tag (e.g. "smoke-variants")
-  createdAt    DateTime  @default(now())
-  startedAt    DateTime?
-  completedAt  DateTime?
-  durationMs   Int?
+  id          String    @id @default(uuid()) @db.Uuid
+  runId       String    @db.Uuid
+  assetSymbol String
+  seed        Int
+  agents      Int
+  steps       Int
+  label       String? // optional batch tag (e.g. "smoke-variants")
+  createdAt   DateTime  @default(now())
+  startedAt   DateTime?
+  completedAt DateTime?
+  durationMs  Int?
 
-  run              SimulationRun     @relation(fields: [runId], references: [id], onDelete: Cascade)
+  run              SimulationRun      @relation(fields: [runId], references: [id], onDelete: Cascade)
   agentDecisions   AgentDecision[]
   agentInfoStates  AgentInfoState[]
   agentStates      AgentState[]
@@ -150,17 +153,17 @@ model RunVariant {
 }
 
 model RunVariantSummary {
-  id                   String    @id @default(uuid()) @db.Uuid
-  runVariantId         String    @unique @db.Uuid
-  corr                 Float
-  directionalAccuracy  Float
-  pairsCount           Int
-  computedAt           DateTime  @default(now())
+  id                  String   @id @default(uuid()) @db.Uuid
+  runVariantId        String   @unique @db.Uuid
+  corr                Float
+  directionalAccuracy Float
+  pairsCount          Int
+  computedAt          DateTime @default(now())
   // Debug / validation: deterministic fingerprints for seed isolation (decisionsHash differs per seed; returnsHash identical)
-  debugDecisionCounts  Json?     // { BUY: n, SELL: n, HOLD: n } — exposed as summary.decisionCounts
-  debugPairsSample     Json?     // first N pairs: [{ step, r, predictedSign, actualSign }]
-  debugDecisionsHash   String?   // sha256(decisions ordered by step,agentId) — exposed as summary.decisionsHash
-  debugReturnsHash     String?   // sha256(step returns) — exposed as summary.returnsHash
+  debugDecisionCounts Json? // { BUY: n, SELL: n, HOLD: n } — exposed as summary.decisionCounts
+  debugPairsSample    Json? // first N pairs: [{ step, r, predictedSign, actualSign }]
+  debugDecisionsHash  String? // sha256(decisions ordered by step,agentId) — exposed as summary.decisionsHash
+  debugReturnsHash    String? // sha256(step returns) — exposed as summary.returnsHash
 
   runVariant RunVariant @relation(fields: [runVariantId], references: [id], onDelete: Cascade)
 }
@@ -170,20 +173,20 @@ model RunVariantSummary {
 // ---------------------------------------------------------------------------
 
 model RunAgent {
-  id          String    @id @default(uuid()) @db.Uuid
-  runId       String    @db.Uuid
-  name        String
-  archetype   String?
-  biases      Json?
-  humanState  Json?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id         String   @id @default(uuid()) @db.Uuid
+  runId      String   @db.Uuid
+  name       String
+  archetype  String?
+  biases     Json?
+  humanState Json?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  run          SimulationRun   @relation(fields: [runId], references: [id], onDelete: Cascade)
+  run          SimulationRun     @relation(fields: [runId], references: [id], onDelete: Cascade)
   traits       RunAgentTrait[]
   decisions    AgentDecision[]
   infoStates   AgentInfoState[]
-  agentStates AgentState[]
+  agentStates  AgentState[]
   experiences  AgentExperience[]
   agentRewards AgentReward[]
 
@@ -215,26 +218,26 @@ enum AgentDecisionAction {
 }
 
 model AgentDecision {
-  id             String              @id @default(uuid()) @db.Uuid
-  runId          String              @db.Uuid
-  runVariantId   String?             @db.Uuid
-  step           Int
-  agentId        String              @db.Uuid
-  assetSymbol    String              @default("RUN")
-  action         AgentDecisionAction
-  confidence     Float
-  rationale      String?
-  createdAt      DateTime            @default(now())
+  id           String              @id @default(uuid()) @db.Uuid
+  runId        String              @db.Uuid
+  runVariantId String?             @db.Uuid
+  step         Int
+  agentId      String              @db.Uuid
+  assetSymbol  String              @default("RUN")
+  action       AgentDecisionAction
+  confidence   Float
+  rationale    String?
+  createdAt    DateTime            @default(now())
 
-  syntheticSignal   Float?
-  infoSignal        Float?
-  eventSignal       Float?
-  regimeSignal      Float?
-  distortedSignal   Float?
-  beliefDrift       Float?
-  prefBUY           Float?
-  prefSELL          Float?
-  prefHOLD          Float?
+  syntheticSignal Float?
+  infoSignal      Float?
+  eventSignal     Float?
+  regimeSignal    Float?
+  distortedSignal Float?
+  beliefDrift     Float?
+  prefBUY         Float?
+  prefSELL        Float?
+  prefHOLD        Float?
 
   run        SimulationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
   runVariant RunVariant?   @relation(fields: [runVariantId], references: [id], onDelete: Cascade)
@@ -252,27 +255,27 @@ model AgentDecision {
 // ---------------------------------------------------------------------------
 
 model CrowdMetrics {
-  id               String   @id @default(uuid()) @db.Uuid
-  runId            String   @db.Uuid
-  runVariantId     String?  @db.Uuid
-  assetSymbol      String
-  step             Int
-  signal           Float
-  weightedSignal   Float
-  consensus        Float
-  polarization     Float
-  uncertainty      Float
-  minorityStrength Float
-  beliefMomentum   Float?
-  diversityIndex   Float?
+  id                String   @id @default(uuid()) @db.Uuid
+  runId             String   @db.Uuid
+  runVariantId      String?  @db.Uuid
+  assetSymbol       String
+  step              Int
+  signal            Float
+  weightedSignal    Float
+  consensus         Float
+  polarization      Float
+  uncertainty       Float
+  minorityStrength  Float
+  beliefMomentum    Float?
+  diversityIndex    Float?
   independenceIndex Float?
-  herdingIndex     Float?
-  wisdomScore      Float?
-  noiseSensitivity Float?
-  createdAt        DateTime @default(now())
+  herdingIndex      Float?
+  wisdomScore       Float?
+  noiseSensitivity  Float?
+  createdAt         DateTime @default(now())
 
   run        SimulationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
-  runVariant RunVariant?    @relation(fields: [runVariantId], references: [id], onDelete: Cascade)
+  runVariant RunVariant?   @relation(fields: [runVariantId], references: [id], onDelete: Cascade)
 
   @@unique([runId, assetSymbol, step, runVariantId])
   @@index([runId])
@@ -285,12 +288,12 @@ model CrowdMetrics {
 // ---------------------------------------------------------------------------
 
 model AssetStepReturn {
-  id         String   @id @default(uuid()) @db.Uuid
-  runId      String   @db.Uuid
+  id          String   @id @default(uuid()) @db.Uuid
+  runId       String   @db.Uuid
   assetSymbol String
-  step       Int
-  stepReturn Float
-  createdAt  DateTime @default(now())
+  step        Int
+  stepReturn  Float
+  createdAt   DateTime @default(now())
 
   run SimulationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
 
@@ -299,19 +302,19 @@ model AssetStepReturn {
 }
 
 model AgentReward {
-  id            String              @id @default(uuid()) @db.Uuid
-  runId         String              @db.Uuid
-  runVariantId  String?             @db.Uuid
-  agentId       String              @db.Uuid
-  assetSymbol   String
-  step          Int
-  action        AgentDecisionAction
-  stepReturn    Float
-  pnl           Float
-  regret        Float
-  drawdown      Float
-  rewardScore   Float
-  createdAt     DateTime            @default(now())
+  id           String              @id @default(uuid()) @db.Uuid
+  runId        String              @db.Uuid
+  runVariantId String?             @db.Uuid
+  agentId      String              @db.Uuid
+  assetSymbol  String
+  step         Int
+  action       AgentDecisionAction
+  stepReturn   Float
+  pnl          Float
+  regret       Float
+  drawdown     Float
+  rewardScore  Float
+  createdAt    DateTime            @default(now())
 
   run        SimulationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
   runVariant RunVariant?   @relation(fields: [runVariantId], references: [id], onDelete: Cascade)
@@ -327,8 +330,8 @@ model AgentReward {
 // ---------------------------------------------------------------------------
 
 model InfoEvent {
-  id               String    @id @default(uuid()) @db.Uuid
-  runId            String    @db.Uuid
+  id               String   @id @default(uuid()) @db.Uuid
+  runId            String   @db.Uuid
   assetSymbol      String
   step             Int
   topic            String
@@ -337,7 +340,7 @@ model InfoEvent {
   reach            Float
   volatilityImpact Float?
   source           String?
-  createdAt        DateTime  @default(now())
+  createdAt        DateTime @default(now())
 
   run SimulationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
 
@@ -346,19 +349,19 @@ model InfoEvent {
 }
 
 model AgentInfoState {
-  id             String    @id @default(uuid()) @db.Uuid
-  runId          String    @db.Uuid
-  runVariantId   String?   @db.Uuid
-  assetSymbol    String
-  agentId        String    @db.Uuid
-  step           Int
-  exposedCount   Int
-  infoSignal     Float
-  confidence     Float?    // 0..1, learning state (when learning enabled)
-  riskTolerance  Float?    // 0..1
-  herding        Float?    // 0..1
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @default(now()) @updatedAt
+  id            String   @id @default(uuid()) @db.Uuid
+  runId         String   @db.Uuid
+  runVariantId  String?  @db.Uuid
+  assetSymbol   String
+  agentId       String   @db.Uuid
+  step          Int
+  exposedCount  Int
+  infoSignal    Float
+  confidence    Float? // 0..1, learning state (when learning enabled)
+  riskTolerance Float? // 0..1
+  herding       Float? // 0..1
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now()) @updatedAt
 
   run        SimulationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
   runVariant RunVariant?   @relation(fields: [runVariantId], references: [id], onDelete: Cascade)
@@ -375,19 +378,19 @@ model AgentInfoState {
 // ---------------------------------------------------------------------------
 
 model AgentState {
-  id             String   @id @default(uuid()) @db.Uuid
-  runId          String   @db.Uuid
-  runVariantId   String?  @db.Uuid
-  assetSymbol    String
-  agentId        String   @db.Uuid
-  step           Int
-  confidence     Float    // 0..1
-  riskTolerance  Float    // 0..1
-  herding        Float    // 0..1
-  infoSignal     Float
-  exposedCount   Int
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @default(now()) @updatedAt
+  id            String   @id @default(uuid()) @db.Uuid
+  runId         String   @db.Uuid
+  runVariantId  String?  @db.Uuid
+  assetSymbol   String
+  agentId       String   @db.Uuid
+  step          Int
+  confidence    Float // 0..1
+  riskTolerance Float // 0..1
+  herding       Float // 0..1
+  infoSignal    Float
+  exposedCount  Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now()) @updatedAt
 
   run        SimulationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
   runVariant RunVariant?   @relation(fields: [runVariantId], references: [id], onDelete: Cascade)
@@ -504,7 +507,7 @@ model UserWalletTransaction {
   betId     String?               @db.Uuid
   runId     String?               @db.Uuid
   note      String?
-  createdAt DateTime             @default(now())
+  createdAt DateTime              @default(now())
 
   bet Bet? @relation(fields: [betId], references: [id], onDelete: SetNull)
 
@@ -530,26 +533,26 @@ enum BetStatus {
 }
 
 model Bet {
-  id            String       @id @default(uuid()) @db.Uuid
-  userId        String
-  runId         String       @db.Uuid
-  agentId       String?      @db.Uuid
-  decisionStep  Int?
-  assetSymbol   String
-  direction     BetDirection
-  amount        Float
-  status        BetStatus    @default(OPEN)
-  openPrice     Float
-  openStep      Int
-  closePrice    Float?
-  closeStep     Int?
-  pnl           Float        @default(0)
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  id           String       @id @default(uuid()) @db.Uuid
+  userId       String
+  runId        String       @db.Uuid
+  agentId      String?      @db.Uuid
+  decisionStep Int?
+  assetSymbol  String
+  direction    BetDirection
+  amount       Float
+  status       BetStatus    @default(OPEN)
+  openPrice    Float
+  openStep     Int
+  closePrice   Float?
+  closeStep    Int?
+  pnl          Float        @default(0)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
-  run                      SimulationRun          @relation(fields: [runId], references: [id], onDelete: Cascade)
-  agent                    Agent?                  @relation(fields: [agentId], references: [id], onDelete: SetNull)
-  userWalletTransactions   UserWalletTransaction[]
+  run                    SimulationRun           @relation(fields: [runId], references: [id], onDelete: Cascade)
+  agent                  Agent?                  @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  userWalletTransactions UserWalletTransaction[]
 
   @@index([userId])
   @@index([runId])
@@ -565,17 +568,17 @@ model Bet {
 // ---------------------------------------------------------------------------
 
 model ImportRun {
-  id            String    @id @default(uuid()) @db.Uuid
-  type          String
+  id             String    @id @default(uuid()) @db.Uuid
+  type           String
   sourceFilename String
-  sourceHash    String
-  status        String
-  summaryJson   Json?
-  errorJson     Json?
-  startedAt     DateTime
-  finishedAt    DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  sourceHash     String
+  status         String
+  summaryJson    Json?
+  errorJson      Json?
+  startedAt      DateTime
+  finishedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 }
 
 // ---------------------------------------------------------------------------
@@ -585,7 +588,7 @@ model ImportRun {
 model PriceSeriesPoint {
   id        String   @id @default(uuid()) @db.Uuid
   symbol    String
-  date      String   // YYYY-MM-DD
+  date      String // YYYY-MM-DD
   close     Float
   createdAt DateTime @default(now())
 
@@ -598,8 +601,8 @@ model BacktestWindowResult {
   id        String   @id @default(uuid()) @db.Uuid
   symbol    String
   runId     String   @db.Uuid
-  fromDate  String   // YYYY-MM-DD
-  toDate    String   // YYYY-MM-DD
+  fromDate  String // YYYY-MM-DD
+  toDate    String // YYYY-MM-DD
   window    Int
   stride    Int
   agents    Int
@@ -613,17 +616,17 @@ model BacktestWindowResult {
 }
 
 model BacktestResult {
-  id                   String    @id @default(uuid()) @db.Uuid
-  runId                String    @db.Uuid
-  runVariantId         String?   @db.Uuid
-  assetSymbol          String
-  seed                 Int
-  steps                Int
-  agents               Int
-  pairsCount           Int?      // steps-1 when present (pred/ret pairs for corr)
-  corr                 Float?
-  directionalAccuracy  Float?
-  createdAt            DateTime  @default(now())
+  id                  String   @id @default(uuid()) @db.Uuid
+  runId               String   @db.Uuid
+  runVariantId        String?  @db.Uuid
+  assetSymbol         String
+  seed                Int
+  steps               Int
+  agents              Int
+  pairsCount          Int? // steps-1 when present (pred/ret pairs for corr)
+  corr                Float?
+  directionalAccuracy Float?
+  createdAt           DateTime @default(now())
 
   runVariant RunVariant? @relation(fields: [runVariantId], references: [id], onDelete: Cascade)
 
@@ -672,28 +675,28 @@ model RunAccuracy {
 }
 
 model RunSignalDiagnostics {
-  id              String   @id @default(uuid()) @db.Uuid
-  runId           String   @db.Uuid
-  assetSymbol     String
+  id          String @id @default(uuid()) @db.Uuid
+  runId       String @db.Uuid
+  assetSymbol String
 
-  totalSteps      Int
+  totalSteps Int
 
-  pctCrowdBuy     Float
-  pctCrowdSell    Float
-  pctCrowdHold    Float
+  pctCrowdBuy  Float
+  pctCrowdSell Float
+  pctCrowdHold Float
 
-  pctMarketUp     Float
-  pctMarketDown   Float
-  pctMarketFlat   Float
+  pctMarketUp   Float
+  pctMarketDown Float
+  pctMarketFlat Float
 
-  buyCorrect      Int
-  buyWrong        Int
-  sellCorrect     Int
-  sellWrong       Int
-  holdCorrect     Int
-  holdWrong       Int
+  buyCorrect  Int
+  buyWrong    Int
+  sellCorrect Int
+  sellWrong   Int
+  holdCorrect Int
+  holdWrong   Int
 
-  computedAt      DateTime @default(now())
+  computedAt DateTime @default(now())
 
   @@unique([runId, assetSymbol])
   @@index([runId])
@@ -704,20 +707,77 @@ model RunSignalDiagnostics {
 // ---------------------------------------------------------------------------
 
 model BenchWindowSnapshot {
-  id              String   @id @default(uuid()) @db.Uuid
-  createdAt       DateTime @default(now())
-  symbols         String
-  windows         String
-  n               Int
-  points          Int?
-  overwrite       Boolean  @default(false)
-  datasetVersion  String?
-  modelVersion    String?
-  payloadJson     Json
-  tag             String?  @unique
-  isBaseline      Boolean  @default(false)
+  id             String   @id @default(uuid()) @db.Uuid
+  createdAt      DateTime @default(now())
+  symbols        String
+  windows        String
+  n              Int
+  points         Int?
+  overwrite      Boolean  @default(false)
+  datasetVersion String?
+  modelVersion   String?
+  payloadJson    Json
+  tag            String?  @unique
+  isBaseline     Boolean  @default(false)
 
   @@index([createdAt])
   @@index([symbols])
   @@index([windows])
+}
+
+// ---------------------------------------------------------------------------
+// Market Data Ingestion (Phase 9.1)
+// ---------------------------------------------------------------------------
+
+model MarketDataPayload {
+  id             String   @id @default(uuid()) @db.Uuid
+  provider       String
+  symbol         String
+  payloadJson    Json
+  fetchedAt      DateTime @default(now())
+  datasetVersion String
+
+  @@index([provider, symbol])
+  @@index([datasetVersion])
+}
+
+model MarketPrice {
+  id             String   @id @default(uuid()) @db.Uuid
+  datasetVersion String
+  symbol         String
+  timestamp      DateTime
+  open           Float
+  high           Float
+  low            Float
+  close          Float
+  volume         Int?
+
+  @@unique([datasetVersion, symbol, timestamp])
+  @@index([symbol, timestamp])
+  @@index([datasetVersion])
+}
+
+// ---------------------------------------------------------------------------
+// Signal history – persisted crowd signals for track-record and validation
+// ---------------------------------------------------------------------------
+
+model SignalHistory {
+  id              String   @id @default(uuid()) @db.Uuid
+  symbol          String
+  signal          String // STRONG_BUY | BUY | NEUTRAL | SELL | STRONG_SELL
+  confidence      Float
+  disagreement    Float
+  instability     Float
+  runsUsed        Int
+  windowSize      Int
+  sourceRunId     String?  @db.Uuid
+  datasetVersion  String?
+  strategyProfile String?
+  aggregationMode String?
+  selectionPolicy String?
+  createdAt       DateTime @default(now())
+
+  @@index([symbol, createdAt])
+  @@index([createdAt])
+  @@index([datasetVersion])
 }

@@ -2,7 +2,10 @@ import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { RunQueueService } from "../jobs/run-queue.service";
 import { BenchService } from "../bench/bench.service";
+import { LaunchPlanService } from "../launch-plan/launch-plan.service";
+import { MarketDataService } from "../market-data/market-data.service";
 import { StrategyProfilesService } from "../strategy-profiles/strategy-profiles.service";
+import { SignalsService } from "../signals/signals.service";
 
 function parseMs(iso?: string | Date | null): number | null {
   if (iso == null) return null;
@@ -272,6 +275,68 @@ export interface DashboardSummary {
       baselineTag: string;
     };
   };
+  launchPlan: {
+    runPlan: {
+      endpoint: string;
+      method: string;
+      params: { symbols: string[]; points: number };
+      resolved: { aggregationMode: string; selectionPolicy: string };
+    };
+    benchmarkPlan: {
+      endpoint: string;
+      method: string;
+      params: {
+        symbols: string[];
+        windows: number[];
+        n: number;
+        aggregationMode: string;
+        baselineTag: string;
+      };
+      resolved: {
+        aggregationMode: string;
+        selectionPolicy: string;
+        baselineTag: string;
+      };
+    };
+    governance: {
+      baselineFamilyTag: string;
+      candidateMode: string;
+      recommendedMode: string;
+      notes: string[];
+    };
+  };
+  dataSource: {
+    type: "synthetic" | "market-data";
+    datasetVersion: string | null;
+    provider: string | null;
+  };
+  crowdSignals: {
+    window: number;
+    items: Array<{
+      symbol: string;
+      signal: string;
+      confidence: number;
+      disagreement: number;
+      instability: number;
+      runsUsed: number;
+    }>;
+  };
+  signalValidation: {
+    total: number;
+    validated: number;
+    accuracyRate: number | null;
+    latestItems: Array<{
+      symbol: string;
+      signal: string;
+      realizedDirection: "UP" | "DOWN" | "FLAT" | null;
+      correct: boolean | null;
+      confidence: number;
+    }>;
+  };
+  signalHistoryStats?: {
+    totalSnapshots: number;
+    symbolsCovered: number;
+  };
 }
 
 @Injectable()
@@ -280,7 +345,10 @@ export class DashboardService {
     private readonly prisma: PrismaService,
     private readonly runQueue: RunQueueService,
     private readonly benchService: BenchService,
+    private readonly launchPlanService: LaunchPlanService,
+    private readonly marketDataService: MarketDataService,
     private readonly strategyProfilesService: StrategyProfilesService,
+    private readonly signalsService: SignalsService,
   ) {}
 
   async getSummary(limit = 10, assetSymbol = "SPY"): Promise<DashboardSummary> {
@@ -556,7 +624,35 @@ export class DashboardService {
       }
     })();
 
-    const [consensus, driftAsset, driftGlobal, forecastAccuracy, productionAggregationMode, aggregationModeRanking] =
+    const safeCrowdSignals = (async () => {
+      try {
+        const d = this.strategyProfilesService.getDefaults();
+        const symbols = d.runDefaults?.assetSymbols ?? ["SPY", "QQQ", "IWM"];
+        return this.signalsService.getCrowdSignalsForSummary(symbols);
+      } catch {
+        return { window: 20, items: [] };
+      }
+    })().catch(() => ({ window: 20, items: [] }));
+
+    const safeSignalValidation = (async () => {
+      try {
+        const d = this.strategyProfilesService.getDefaults();
+        const symbols = d.runDefaults?.assetSymbols ?? ["SPY", "QQQ", "IWM"];
+        return this.signalsService.getSignalValidationForSummary(symbols);
+      } catch {
+        return { total: 0, validated: 0, accuracyRate: null, latestItems: [] };
+      }
+    })().catch(() => ({ total: 0, validated: 0, accuracyRate: null, latestItems: [] }));
+
+    const safeSignalHistoryStats = (async () => {
+      try {
+        return this.signalsService.getSignalHistoryStats();
+      } catch {
+        return { totalSnapshots: 0, symbolsCovered: 0 };
+      }
+    })().catch(() => ({ totalSnapshots: 0, symbolsCovered: 0 }));
+
+    const [consensus, driftAsset, driftGlobal, forecastAccuracy, productionAggregationMode, aggregationModeRanking, crowdSignals, signalValidation, signalHistoryStats] =
       await Promise.all([
         this.fetchConsensus(latestRun?.id ?? null, sym),
         this.getDrift({ assetSymbol: sym, window: 30 }).catch(() => ({
@@ -588,6 +684,9 @@ export class DashboardService {
       this.fetchForecastAccuracy(latestRun?.id ?? null),
       safeProductionMode,
       safeRanking,
+      safeCrowdSignals,
+      safeSignalValidation,
+      safeSignalHistoryStats,
     ]);
 
     let strategyProfile: DashboardSummary["strategyProfile"];
@@ -687,6 +786,54 @@ export class DashboardService {
       };
     }
 
+    let launchPlan: DashboardSummary["launchPlan"];
+    try {
+      const lp = await this.launchPlanService.getLaunchPlan();
+      launchPlan = {
+        runPlan: lp.runPlan,
+        benchmarkPlan: lp.benchmarkPlan,
+        governance: lp.governance,
+      };
+    } catch {
+      launchPlan = {
+        runPlan: {
+          endpoint: "/runs/import/prices",
+          method: "POST",
+          params: { symbols: ["SPY", "QQQ", "IWM"], points: 29 },
+          resolved: { aggregationMode: "top_20pct_only", selectionPolicy: "top_20pct_agents" },
+        },
+        benchmarkPlan: {
+          endpoint: "/bench/windows/run-and-compare",
+          method: "POST",
+          params: {
+            symbols: ["SPY", "QQQ", "IWM"],
+            windows: [29, 60, 120],
+            n: 20,
+            aggregationMode: "top_20pct_only",
+            baselineTag: "baseline-top20-v1",
+          },
+          resolved: {
+            aggregationMode: "top_20pct_only",
+            selectionPolicy: "top_20pct_agents",
+            baselineTag: "baseline-top20-v1",
+          },
+        },
+        governance: {
+          baselineFamilyTag: "baseline-top20-v1",
+          candidateMode: "top_20pct_only",
+          recommendedMode: "top_20pct_only",
+          notes: ["Launch plan fallback (strategy/profile unavailable)."],
+        },
+      };
+    }
+
+    let dataSource: DashboardSummary["dataSource"];
+    try {
+      dataSource = await this.marketDataService.getDataSourceInfo();
+    } catch {
+      dataSource = { type: "synthetic", datasetVersion: null, provider: null };
+    }
+
     return {
       consensus,
       latestRun,
@@ -702,6 +849,11 @@ export class DashboardService {
       strategyDefaults,
       runFlowDefaults,
       executionPreset,
+      launchPlan,
+      dataSource,
+      crowdSignals,
+      signalValidation,
+      signalHistoryStats,
     };
   }
 

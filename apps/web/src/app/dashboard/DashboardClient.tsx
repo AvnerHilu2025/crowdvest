@@ -208,6 +208,38 @@ export type DashboardClientProps = {
       runPreset: { assetSymbols: string[]; points: number; aggregationMode: string; selectionPolicy: string };
       benchmarkPreset: { symbols: string[]; windows: number[]; n: number; aggregationMode: string; selectionPolicy: string; baselineTag: string };
     };
+    launchPlan?: {
+      runPlan: { endpoint: string; method: string; params: { symbols: string[]; points: number }; resolved: { aggregationMode: string; selectionPolicy: string } };
+      benchmarkPlan: { endpoint: string; method: string; params: { symbols: string[]; windows: number[]; n: number; aggregationMode: string; baselineTag: string }; resolved: { aggregationMode: string; selectionPolicy: string; baselineTag: string } };
+      governance: { baselineFamilyTag: string; candidateMode: string; recommendedMode: string; notes: string[] };
+    };
+    crowdSignals?: {
+      window: number;
+      items: Array<{
+        symbol: string;
+        signal: string;
+        confidence: number;
+        disagreement: number;
+        instability: number;
+        runsUsed: number;
+      }>;
+    };
+    signalValidation?: {
+      total: number;
+      validated: number;
+      accuracyRate: number | null;
+      latestItems: Array<{
+        symbol: string;
+        signal: string;
+        realizedDirection: "UP" | "DOWN" | "FLAT" | null;
+        correct: boolean | null;
+        confidence: number;
+      }>;
+    };
+    signalHistoryStats?: {
+      totalSnapshots: number;
+      symbolsCovered: number;
+    };
   };
   initialQuery: {
     assetSymbol: string;
@@ -226,17 +258,54 @@ const DEFAULTS = {
   sortRisk: "1",
 } as const;
 
+const FALLBACK_STRATEGY_DEFAULTS = {
+  benchmarkDefaults: { aggregationMode: "top_20pct_only", selectionPolicy: "top_20pct_agents", symbols: ["SPY", "QQQ", "IWM"], windows: [29, 60, 120], n: 20 },
+  runDefaults: { aggregationMode: "top_20pct_only", selectionPolicy: "top_20pct_agents", assetSymbols: ["SPY", "QQQ", "IWM"], points: 29 },
+};
+const FALLBACK_EXECUTION_PRESET = {
+  runPreset: { assetSymbols: ["SPY", "QQQ", "IWM"], points: 29, aggregationMode: "top_20pct_only", selectionPolicy: "top_20pct_agents" },
+  benchmarkPreset: { symbols: ["SPY", "QQQ", "IWM"], windows: [29, 60, 120], n: 20, aggregationMode: "top_20pct_only", selectionPolicy: "top_20pct_agents", baselineTag: "baseline-top20-v1" },
+};
+const FALLBACK_LAUNCH_PLAN = {
+  runPlan: { endpoint: "/runs/import/prices", method: "POST", params: { symbols: ["SPY", "QQQ", "IWM"], points: 29 }, resolved: { aggregationMode: "top_20pct_only", selectionPolicy: "top_20pct_agents" } },
+  benchmarkPlan: { endpoint: "/bench/windows/run-and-compare", method: "POST", params: { symbols: ["SPY", "QQQ", "IWM"], windows: [29, 60, 120], n: 20, aggregationMode: "top_20pct_only", baselineTag: "baseline-top20-v1" }, resolved: { aggregationMode: "top_20pct_only", selectionPolicy: "top_20pct_agents", baselineTag: "baseline-top20-v1" } },
+  governance: { baselineFamilyTag: "baseline-top20-v1", candidateMode: "top_20pct_only", recommendedMode: "top_20pct_only", notes: ["Launch plan fallback."] },
+};
+
 export function DashboardClient({ initialData, initialQuery }: DashboardClientProps) {
-  const { consensus, scaling, stability, counts, filterLabel, latest, latestScalingRow, driftAsset: initialDriftAsset, driftGlobal: initialDriftGlobal, forecastAccuracy, productionAggregationMode, aggregationModeRanking = [], strategyProfile: initialStrategyProfile, strategyDefaults = { benchmarkDefaults: { aggregationMode: "top_20pct_only", selectionPolicy: "top_20pct_agents", symbols: ["SPY", "QQQ", "IWM"], windows: [29, 60, 120], n: 20 }, runDefaults: { aggregationMode: "top_20pct_only", selectionPolicy: "top_20pct_agents", assetSymbols: ["SPY", "QQQ", "IWM"], points: 29 } }, executionPreset = { runPreset: { assetSymbols: ["SPY", "QQQ", "IWM"], points: 29, aggregationMode: "top_20pct_only", selectionPolicy: "top_20pct_agents" }, benchmarkPreset: { symbols: ["SPY", "QQQ", "IWM"], windows: [29, 60, 120], n: 20, aggregationMode: "top_20pct_only", selectionPolicy: "top_20pct_agents", baselineTag: "baseline-top20-v1" } } } = initialData;
-  const { assetSymbol } = initialQuery;
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const drawerRunId = searchParams.get("drawerRunId");
+
+  const { consensus, scaling = [], stability = [], counts = { unstable: 0, diverging: 0, ok: 0, legacy: 0 }, filterLabel = "all", latest, latestScalingRow, driftAsset: initialDriftAsset, driftGlobal: initialDriftGlobal, forecastAccuracy, productionAggregationMode, aggregationModeRanking = [], strategyProfile: initialStrategyProfile, strategyDefaults = FALLBACK_STRATEGY_DEFAULTS, executionPreset = FALLBACK_EXECUTION_PRESET, launchPlan = FALLBACK_LAUNCH_PLAN, crowdSignals: rawCrowdSignals, signalValidation: rawSignalValidation, signalHistoryStats } = initialData ?? {};
+  const crowdSignals =
+    rawCrowdSignals && typeof rawCrowdSignals === "object" && Array.isArray(rawCrowdSignals.items)
+      ? rawCrowdSignals
+      : { window: 20, items: [] as Array<{ symbol: string; signal: string; confidence: number; disagreement: number; instability: number; runsUsed: number }> };
+  const signalValidation =
+    rawSignalValidation && typeof rawSignalValidation === "object"
+      ? {
+          total: typeof rawSignalValidation.total === "number" ? rawSignalValidation.total : 0,
+          validated: typeof rawSignalValidation.validated === "number" ? rawSignalValidation.validated : 0,
+          accuracyRate: typeof rawSignalValidation.accuracyRate === "number" ? rawSignalValidation.accuracyRate : null,
+          latestItems: Array.isArray(rawSignalValidation.latestItems) ? rawSignalValidation.latestItems : [],
+        }
+      : { total: 0, validated: 0, accuracyRate: null as number | null, latestItems: [] as Array<{ symbol: string; signal: string; realizedDirection: "UP" | "DOWN" | "FLAT" | null; correct: boolean | null; confidence: number }> };
+  const { assetSymbol = "SPY" } = initialQuery ?? {};
 
   const [drawerRun, setDrawerRun] = useState<{
     runId: string;
     type: "scaling" | "stability";
     row: ScalingRow | StabilityRow;
+  } | null>(null);
+  const [drawerRunMetadata, setDrawerRunMetadata] = useState<{
+    datasetVersion: string;
+    strategyProfile: string;
+    aggregationMode: string;
+    selectionPolicy: string;
+    simulationSeed: number;
+    modelVersion: string;
   } | null>(null);
   const [showOverheadOutliersOnly, setShowOverheadOutliersOnly] = useState(false);
   const [expandedScalingRows, setExpandedScalingRows] = useState<Set<string>>(new Set());
@@ -284,6 +353,39 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
   }, [initialStrategyProfile]);
 
   useEffect(() => {
+    if (!drawerRunId) {
+      setDrawerRunMetadata(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/runs/${encodeURIComponent(drawerRunId)}/metadata`);
+        if (!res.ok || cancelled) return;
+        const data = await res.json();
+        if (cancelled) return;
+        if (data?.ok === false) {
+          setDrawerRunMetadata(null);
+          return;
+        }
+        setDrawerRunMetadata({
+          datasetVersion: data.datasetVersion ?? "—",
+          strategyProfile: data.strategyProfile ?? "—",
+          aggregationMode: data.aggregationMode ?? "—",
+          selectionPolicy: data.selectionPolicy ?? "—",
+          simulationSeed: data.simulationSeed ?? 0,
+          modelVersion: data.modelVersion ?? "—",
+        });
+      } catch {
+        if (!cancelled) setDrawerRunMetadata(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [drawerRunId]);
+
+  useEffect(() => {
     if (initialDriftAsset != null && initialDriftGlobal != null) return;
     async function loadDrift() {
       try {
@@ -326,8 +428,6 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
       didNormalizeRef.current = false;
     }, 0);
   }, [pathname, router, searchParams]);
-
-  const drawerRunId = searchParams.get("drawerRunId");
 
   const openRunDetailsDrawer = useCallback(
     (runId: string) => {
@@ -965,27 +1065,27 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12, fontSize: 12 }}>
             <div>
               <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 2 }}>Benchmark aggregation mode</div>
-              <div>{strategyDefaults.benchmarkDefaults.aggregationMode}</div>
+              <div>{strategyDefaults?.benchmarkDefaults?.aggregationMode ?? "—"}</div>
             </div>
             <div>
               <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 2 }}>Benchmark selection policy</div>
-              <div>{strategyDefaults.benchmarkDefaults.selectionPolicy}</div>
+              <div>{strategyDefaults?.benchmarkDefaults?.selectionPolicy ?? "—"}</div>
             </div>
             <div>
               <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 2 }}>Benchmark symbols / windows / n</div>
-              <div>{strategyDefaults.benchmarkDefaults.symbols.join(", ")} · [{strategyDefaults.benchmarkDefaults.windows.join(", ")}] · n={strategyDefaults.benchmarkDefaults.n}</div>
+              <div>{(strategyDefaults?.benchmarkDefaults?.symbols ?? []).join(", ")} · [{(strategyDefaults?.benchmarkDefaults?.windows ?? []).join(", ")}] · n={strategyDefaults?.benchmarkDefaults?.n ?? "—"}</div>
             </div>
             <div>
               <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 2 }}>Run aggregation mode</div>
-              <div>{strategyDefaults.runDefaults.aggregationMode}</div>
+              <div>{strategyDefaults?.runDefaults?.aggregationMode ?? "—"}</div>
             </div>
             <div>
               <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 2 }}>Run selection policy</div>
-              <div>{strategyDefaults.runDefaults.selectionPolicy}</div>
+              <div>{strategyDefaults?.runDefaults?.selectionPolicy ?? "—"}</div>
             </div>
             <div>
               <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 2 }}>Run assetSymbols / points</div>
-              <div>{strategyDefaults.runDefaults.assetSymbols.join(", ")} · points={strategyDefaults.runDefaults.points}</div>
+              <div>{(strategyDefaults?.runDefaults?.assetSymbols ?? []).join(", ")} · points={strategyDefaults?.runDefaults?.points ?? "—"}</div>
             </div>
           </div>
         </div>
@@ -1036,9 +1136,194 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
             </div>
           </div>
         </div>
+        <div data-testid="launch-plan-block" className={styles.launchPlanBlock}>
+          <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 8, color: "rgba(15, 23, 42, 0.8)" }}>Launch Plan</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12, fontSize: 12 }}>
+            <div style={{ gridColumn: "1 / -1", fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 4 }}>Run plan</div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 2 }}>endpoint</div>
+              <div>{launchPlan.runPlan.endpoint}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 2 }}>symbols · points</div>
+              <div>{launchPlan.runPlan.params.symbols.join(", ")} · {launchPlan.runPlan.params.points}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 2 }}>aggregationMode · selectionPolicy</div>
+              <div>{launchPlan.runPlan.resolved.aggregationMode} · {launchPlan.runPlan.resolved.selectionPolicy}</div>
+            </div>
+            <div style={{ gridColumn: "1 / -1", fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 4, marginTop: 8 }}>Benchmark plan</div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 2 }}>endpoint</div>
+              <div>{launchPlan.benchmarkPlan.endpoint}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 2 }}>symbols · windows · n · baselineTag</div>
+              <div>{launchPlan.benchmarkPlan.params.symbols.join(", ")} · [{launchPlan.benchmarkPlan.params.windows.join(", ")}] · n={launchPlan.benchmarkPlan.params.n} · {launchPlan.benchmarkPlan.params.baselineTag}</div>
+            </div>
+            <div style={{ gridColumn: "1 / -1", fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 4, marginTop: 8 }}>Governance</div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 2 }}>candidateMode</div>
+              <div>{launchPlan.governance.candidateMode}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 2 }}>recommendedMode</div>
+              <div>{launchPlan.governance.recommendedMode}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 2 }}>baselineFamilyTag</div>
+              <div>{launchPlan.governance.baselineFamilyTag}</div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <CrowdConsensus data={consensus} />
+
+      <div
+        data-testid="crowd-signals-card"
+        style={{ border: "1px solid rgba(15, 23, 42, 0.10)", borderRadius: 10, padding: 16, marginBottom: 24 }}
+      >
+        <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 14 }}>Crowd Signals</div>
+        {crowdSignals.items && crowdSignals.items.length > 0 ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "60px 1fr 1fr 1fr 1fr 1fr",
+                gap: 12,
+                fontSize: 11,
+                color: "rgba(15, 23, 42, 0.55)",
+                paddingBottom: 4,
+              }}
+            >
+              <span>Symbol</span>
+              <span>Signal</span>
+              <span>Confidence</span>
+              <span>Disagreement</span>
+              <span>Instability</span>
+              <span>Runs</span>
+            </div>
+            {crowdSignals.items.map((item) => (
+              <div
+                key={item.symbol ?? "unknown"}
+                data-testid="crowd-signal-row"
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "60px 1fr 1fr 1fr 1fr 1fr",
+                  gap: 12,
+                  alignItems: "center",
+                  fontSize: 13,
+                  padding: "8px 10px",
+                  background: "rgba(15, 23, 42, 0.02)",
+                  borderRadius: 6,
+                  border: "1px solid rgba(15, 23, 42, 0.06)",
+                }}
+              >
+                <span style={{ fontWeight: 600 }}>{item.symbol ?? "—"}</span>
+                <span
+                  style={{
+                    color:
+                      item.signal === "STRONG_BUY" || item.signal === "BUY"
+                        ? "#16a34a"
+                        : item.signal === "STRONG_SELL" || item.signal === "SELL"
+                          ? "#dc2626"
+                          : "rgba(15, 23, 42, 0.7)",
+                  }}
+                >
+                  {item.signal ?? "NEUTRAL"}
+                </span>
+                <span title="confidence">{((item.confidence ?? 0) * 100).toFixed(1)}%</span>
+                <span title="disagreement">{((item.disagreement ?? 0) * 100).toFixed(1)}%</span>
+                <span title="instability">{((item.instability ?? 0) * 100).toFixed(1)}%</span>
+                <span title="runs used">{item.runsUsed ?? 0}</span>
+              </div>
+            ))}
+            <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginTop: 4 }}>
+              Rolling window: {crowdSignals.window ?? 20} runs
+            </div>
+          </div>
+        ) : (
+          <div style={{ fontSize: 13, color: "rgba(15, 23, 42, 0.55)" }}>No crowd signals yet</div>
+        )}
+      </div>
+
+      <div
+        data-testid="signal-validation-card"
+        style={{ border: "1px solid rgba(15, 23, 42, 0.10)", borderRadius: 10, padding: 16, marginBottom: 24 }}
+      >
+        <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 14 }}>Signal Validation</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))", gap: 12, marginBottom: 12 }}>
+          <div>
+            <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Total</div>
+            <div style={{ fontSize: 18, fontWeight: 600 }}>{signalValidation.total ?? 0}</div>
+          </div>
+          <div>
+            <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Validated</div>
+            <div style={{ fontSize: 18, fontWeight: 600 }}>{signalValidation.validated ?? 0}</div>
+          </div>
+          <div>
+            <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Accuracy</div>
+            <div style={{ fontSize: 18, fontWeight: 600 }}>
+              {signalValidation.accuracyRate != null
+                ? `${(signalValidation.accuracyRate * 100).toFixed(1)}%`
+                : "—"}
+            </div>
+          </div>
+        </div>
+        {signalValidation.latestItems && signalValidation.latestItems.length > 0 ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "50px 70px 1fr 1fr 1fr",
+                gap: 8,
+                fontSize: 11,
+                color: "rgba(15, 23, 42, 0.55)",
+                paddingBottom: 4,
+              }}
+            >
+              <span>Symbol</span>
+              <span>Signal</span>
+              <span>Realized</span>
+              <span>Correct</span>
+              <span>Conf</span>
+            </div>
+            {signalValidation.latestItems.map((item, idx) => (
+              <div
+                key={`${item.symbol}-${idx}`}
+                data-testid="signal-validation-row"
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "50px 70px 1fr 1fr 1fr",
+                  gap: 8,
+                  alignItems: "center",
+                  fontSize: 12,
+                  padding: "6px 8px",
+                  background: "rgba(15, 23, 42, 0.02)",
+                  borderRadius: 6,
+                  border: "1px solid rgba(15, 23, 42, 0.06)",
+                }}
+              >
+                <span style={{ fontWeight: 600 }}>{item.symbol ?? "—"}</span>
+                <span>{item.signal ?? "—"}</span>
+                <span>{item.realizedDirection ?? "—"}</span>
+                <span>
+                  {item.correct === true ? "✓" : item.correct === false ? "✗" : "—"}
+                </span>
+                <span>{((item.confidence ?? 0) * 100).toFixed(1)}%</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{ fontSize: 13, color: "rgba(15, 23, 42, 0.55)" }}>No validation data yet. Run POST /signals/snapshot or POST /signals/backfill to persist signals.</div>
+        )}
+        {signalHistoryStats && (signalHistoryStats.totalSnapshots > 0 || signalHistoryStats.symbolsCovered > 0) ? (
+          <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginTop: 8 }}>
+            History: {signalHistoryStats.totalSnapshots} snapshots across {signalHistoryStats.symbolsCovered} symbol{signalHistoryStats.symbolsCovered !== 1 ? "s" : ""}
+          </div>
+        ) : null}
+      </div>
 
       <div
         data-testid="forecast-accuracy-panel"
@@ -1303,6 +1588,19 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
                   {"seeds" in drawerRun.row ? (drawerRun.row.seeds ?? drawerRun.row.variants) : drawerRun.row.variants}
                 </div>
               </div>
+              {drawerRunMetadata && (
+                <div className={styles.drawerRow} data-testid="drawer-row-run-config">
+                  <div className={styles.drawerLabel}>Run configuration</div>
+                  <div className={styles.drawerValue} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    <span><strong>Dataset:</strong> {drawerRunMetadata.datasetVersion}</span>
+                    <span><strong>Strategy:</strong> {drawerRunMetadata.strategyProfile}</span>
+                    <span><strong>Aggregation:</strong> {drawerRunMetadata.aggregationMode}</span>
+                    <span><strong>Selection:</strong> {drawerRunMetadata.selectionPolicy}</span>
+                    <span><strong>Seed:</strong> {drawerRunMetadata.simulationSeed}</span>
+                    <span><strong>Model:</strong> {drawerRunMetadata.modelVersion}</span>
+                  </div>
+                </div>
+              )}
               {drawerRun.type === "scaling" && (
                 <div className={styles.drawerRow}>
                   <div className={styles.drawerLabel}>Overhead breakdown</div>

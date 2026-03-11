@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { MarketDataService } from "../market-data/market-data.service";
 import { StrategyProfilesService } from "../strategy-profiles/strategy-profiles.service";
 import type { RunSummaryResponse } from "./run-summary.types";
 import { getDefaultSpyCsvPath } from "../common/default-dataset";
@@ -87,12 +88,99 @@ type AgentMetricRow = {
 const RUN_FLOW_FALLBACK_SYMBOLS = ["SPY", "QQQ", "IWM"];
 const RUN_FLOW_FALLBACK_POINTS = 29;
 
+export interface RunMetadata {
+  datasetVersion: string;
+  modelVersion: string;
+  strategyProfile: string;
+  aggregationMode: string;
+  selectionPolicy: string;
+  simulationSeed: number;
+}
+
 @Injectable()
 export class RunsService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly marketDataService: MarketDataService,
     private readonly strategyProfilesService: StrategyProfilesService,
   ) {}
+
+  /** Resolve run metadata for new runs: dataset from market-data or synthetic, profile from active strategy. */
+  async resolveRunMetadata(): Promise<{
+    datasetVersion: string;
+    modelVersion: string;
+    strategyProfile: string;
+    aggregationMode: string;
+    selectionPolicy: string;
+    simulationSeed: number;
+  }> {
+    let datasetVersion = "default";
+    try {
+      const ds = await this.marketDataService.getDataSourceInfo();
+      if (ds.type === "market-data" && ds.datasetVersion) {
+        datasetVersion = ds.datasetVersion;
+      }
+    } catch {
+      // fallback: use latest run's dataset or import hash
+      const latest = await this.prisma.simulationRun.findFirst({
+        orderBy: { createdAt: "desc" },
+        select: { datasetVersion: true },
+      });
+      const importRun = await this.prisma.importRun.findFirst({
+        where: { type: "archetypes" },
+        orderBy: { startedAt: "desc" },
+        select: { sourceHash: true },
+      });
+      datasetVersion = latest?.datasetVersion ?? importRun?.sourceHash ?? "default";
+    }
+
+    let strategyProfile = "conservative";
+    let aggregationMode = "top_20pct_only";
+    let selectionPolicy = "top_20pct_agents";
+    try {
+      const p = this.strategyProfilesService.getActiveProfile();
+      strategyProfile = p.key;
+      aggregationMode = p.aggregationMode;
+      selectionPolicy = p.selectionPolicy;
+    } catch {
+      // fallbacks
+    }
+
+    return {
+      datasetVersion,
+      modelVersion: MODEL_VERSION,
+      strategyProfile,
+      aggregationMode,
+      selectionPolicy,
+      simulationSeed: Math.floor(Math.random() * 0x7fffffff),
+    };
+  }
+
+  /** GET /runs/:runId/metadata — return RunMetadata for a run. Throws NotFoundException if run missing. */
+  async getRunMetadata(runId: string): Promise<RunMetadata & { runId: string }> {
+    const run = await this.prisma.simulationRun.findUnique({
+      where: { id: runId },
+      select: {
+        id: true,
+        datasetVersion: true,
+        modelVersion: true,
+        strategyProfile: true,
+        aggregationMode: true,
+        selectionPolicy: true,
+        seed: true,
+      },
+    });
+    if (!run) throw new NotFoundException("Run not found");
+    return {
+      runId: run.id,
+      datasetVersion: run.datasetVersion ?? "default",
+      modelVersion: run.modelVersion ?? MODEL_VERSION,
+      strategyProfile: run.strategyProfile ?? "conservative",
+      aggregationMode: run.aggregationMode ?? "top_20pct_only",
+      selectionPolicy: run.selectionPolicy ?? "top_20pct_agents",
+      simulationSeed: run.seed,
+    };
+  }
 
   /**
    * Resolve run/import query defaults: explicit params > strategy defaults > conservative fallback.
@@ -146,34 +234,28 @@ export class RunsService {
 
   /** POST /runs — create a new SimulationRun. Returns { id }. Used by smoke tests for deterministic runs. */
   async createRun(name?: string): Promise<{ id: string }> {
-    const latest = await this.prisma.simulationRun.findFirst({
-      orderBy: { createdAt: "desc" },
-      select: { datasetVersion: true },
-    });
-    const importRun = await this.prisma.importRun.findFirst({
-      where: { type: "archetypes" },
-      orderBy: { startedAt: "desc" },
-      select: { sourceHash: true },
-    });
-    const datasetVersion = latest?.datasetVersion ?? importRun?.sourceHash ?? "default";
+    const meta = await this.resolveRunMetadata();
     const runName =
       (name ?? "").trim() || `spy-e2e-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
     try {
       const run = await this.prisma.simulationRun.create({
-      data: {
-        name: runName,
-        status: "PENDING",
-        seed: Math.floor(Math.random() * 0x7fffffff),
-        modelVersion: MODEL_VERSION,
-        datasetVersion,
-        schemaVersion: SCHEMA_VERSION,
-      },
+        data: {
+          name: runName,
+          status: "PENDING",
+          seed: meta.simulationSeed,
+          modelVersion: meta.modelVersion,
+          datasetVersion: meta.datasetVersion,
+          strategyProfile: meta.strategyProfile,
+          aggregationMode: meta.aggregationMode,
+          selectionPolicy: meta.selectionPolicy,
+          schemaVersion: SCHEMA_VERSION,
+        },
       });
       return { id: run.id };
     } catch (e) {
       if (e && typeof e === "object" && (e as { code?: string }).code === "P2002") {
         throw new ConflictException(
-          `Run with name="${runName}" and datasetVersion="${datasetVersion}" already exists`,
+          `Run with name="${runName}" and datasetVersion="${meta.datasetVersion}" already exists`,
         );
       }
       throw e;
@@ -296,13 +378,17 @@ export class RunsService {
   async importSpy29OrCreate(runId?: string): Promise<{ runId: string; ok: boolean; already?: boolean; count: number }> {
     let targetRunId = runId?.trim() ?? "";
     if (!targetRunId) {
+      const meta = await this.resolveRunMetadata();
       const run = await this.prisma.simulationRun.create({
         data: {
           name: `spy29-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
           status: "PENDING",
-          seed: Math.floor(Math.random() * 0x7fffffff),
-          modelVersion: MODEL_VERSION,
-          datasetVersion: SPY29_DATASET_VERSION,
+          seed: meta.simulationSeed,
+          modelVersion: meta.modelVersion,
+          datasetVersion: meta.datasetVersion,
+          strategyProfile: meta.strategyProfile,
+          aggregationMode: meta.aggregationMode,
+          selectionPolicy: meta.selectionPolicy,
           schemaVersion: SCHEMA_VERSION,
         },
       });
@@ -426,14 +512,18 @@ export class RunsService {
     const expectedVariants = symbols.length * seeds.length;
     let targetRunId = opts.runId?.trim() ?? "";
     if (!targetRunId) {
+      const meta = await this.resolveRunMetadata();
       const suffix = (opts.nameSuffix ?? "").trim() || Math.random().toString(36).slice(2, 9);
       const run = await this.prisma.simulationRun.create({
         data: {
           name: `prices-${Date.now()}-${suffix}`,
           status: "PENDING",
-          seed: Math.floor(Math.random() * 0x7fffffff),
-          modelVersion: MODEL_VERSION,
-          datasetVersion: SPY29_DATASET_VERSION,
+          seed: meta.simulationSeed,
+          modelVersion: meta.modelVersion,
+          datasetVersion: meta.datasetVersion,
+          strategyProfile: meta.strategyProfile,
+          aggregationMode: meta.aggregationMode,
+          selectionPolicy: meta.selectionPolicy,
           schemaVersion: SCHEMA_VERSION,
           configJson: { expectedVariants, symbols } as object,
         },
@@ -497,13 +587,17 @@ export class RunsService {
     const assetSymbol = symbol.trim().toUpperCase() || "SPY";
     let targetRunId = runId?.trim() ?? "";
     if (!targetRunId) {
+      const meta = await this.resolveRunMetadata();
       const run = await this.prisma.simulationRun.create({
         data: {
           name: `${assetSymbol.toLowerCase()}29-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
           status: "PENDING",
-          seed: Math.floor(Math.random() * 0x7fffffff),
-          modelVersion: MODEL_VERSION,
-          datasetVersion: SPY29_DATASET_VERSION,
+          seed: meta.simulationSeed,
+          modelVersion: meta.modelVersion,
+          datasetVersion: meta.datasetVersion,
+          strategyProfile: meta.strategyProfile,
+          aggregationMode: meta.aggregationMode,
+          selectionPolicy: meta.selectionPolicy,
           schemaVersion: SCHEMA_VERSION,
         },
       });
@@ -521,17 +615,8 @@ export class RunsService {
     datasetVersion?: string;
     schemaVersion?: string;
   }): Promise<{ id: string; runId: string; name: string; datasetVersion: string }> {
-    const latest = await this.prisma.simulationRun.findFirst({
-      orderBy: { createdAt: "desc" },
-      select: { datasetVersion: true },
-    });
-    const importRun = await this.prisma.importRun.findFirst({
-      where: { type: "archetypes" },
-      orderBy: { startedAt: "desc" },
-      select: { sourceHash: true },
-    });
-    const datasetVersion =
-      opts.datasetVersion ?? latest?.datasetVersion ?? importRun?.sourceHash ?? "default";
+    const meta = await this.resolveRunMetadata();
+    const datasetVersion = opts.datasetVersion ?? meta.datasetVersion;
     const baseName = (opts.baseName ?? "lifecycle").trim() || "lifecycle";
     const suffix = Math.random().toString(36).slice(2, 9);
     const name = `${baseName}-${Date.now()}-${suffix}`;
@@ -540,9 +625,12 @@ export class RunsService {
       data: {
         name,
         status: "PENDING",
-        seed: opts.seed ?? Math.floor(Math.random() * 0x7fffffff),
-        modelVersion: opts.modelVersion ?? MODEL_VERSION,
+        seed: opts.seed ?? meta.simulationSeed,
+        modelVersion: opts.modelVersion ?? meta.modelVersion,
         datasetVersion,
+        strategyProfile: meta.strategyProfile,
+        aggregationMode: meta.aggregationMode,
+        selectionPolicy: meta.selectionPolicy,
         schemaVersion: opts.schemaVersion ?? SCHEMA_VERSION,
       },
     });

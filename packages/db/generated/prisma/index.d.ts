@@ -178,6 +178,21 @@ export type RunSignalDiagnostics = $Result.DefaultSelection<Prisma.$RunSignalDia
  * 
  */
 export type BenchWindowSnapshot = $Result.DefaultSelection<Prisma.$BenchWindowSnapshotPayload>
+/**
+ * Model MarketDataPayload
+ * 
+ */
+export type MarketDataPayload = $Result.DefaultSelection<Prisma.$MarketDataPayloadPayload>
+/**
+ * Model MarketPrice
+ * 
+ */
+export type MarketPrice = $Result.DefaultSelection<Prisma.$MarketPricePayload>
+/**
+ * Model SignalHistory
+ * 
+ */
+export type SignalHistory = $Result.DefaultSelection<Prisma.$SignalHistoryPayload>
 
 /**
  * Enums
@@ -702,6 +717,36 @@ export class PrismaClient<
     * ```
     */
   get benchWindowSnapshot(): Prisma.BenchWindowSnapshotDelegate<ExtArgs>;
+
+  /**
+   * `prisma.marketDataPayload`: Exposes CRUD operations for the **MarketDataPayload** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more MarketDataPayloads
+    * const marketDataPayloads = await prisma.marketDataPayload.findMany()
+    * ```
+    */
+  get marketDataPayload(): Prisma.MarketDataPayloadDelegate<ExtArgs>;
+
+  /**
+   * `prisma.marketPrice`: Exposes CRUD operations for the **MarketPrice** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more MarketPrices
+    * const marketPrices = await prisma.marketPrice.findMany()
+    * ```
+    */
+  get marketPrice(): Prisma.MarketPriceDelegate<ExtArgs>;
+
+  /**
+   * `prisma.signalHistory`: Exposes CRUD operations for the **SignalHistory** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more SignalHistories
+    * const signalHistories = await prisma.signalHistory.findMany()
+    * ```
+    */
+  get signalHistory(): Prisma.SignalHistoryDelegate<ExtArgs>;
 }
 
 export namespace Prisma {
@@ -1175,7 +1220,10 @@ export namespace Prisma {
     ForecastResult: 'ForecastResult',
     RunAccuracy: 'RunAccuracy',
     RunSignalDiagnostics: 'RunSignalDiagnostics',
-    BenchWindowSnapshot: 'BenchWindowSnapshot'
+    BenchWindowSnapshot: 'BenchWindowSnapshot',
+    MarketDataPayload: 'MarketDataPayload',
+    MarketPrice: 'MarketPrice',
+    SignalHistory: 'SignalHistory'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -1191,7 +1239,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "archetype" | "traitDefinition" | "archetypeTraitProfile" | "agent" | "agentWallet" | "simulationRun" | "runVariant" | "runVariantSummary" | "runAgent" | "runAgentTrait" | "agentDecision" | "crowdMetrics" | "assetStepReturn" | "agentReward" | "infoEvent" | "agentInfoState" | "agentState" | "runTimeSeries" | "runDebug" | "agentExperience" | "crowdSnapshot" | "userProfile" | "userWallet" | "userWalletTransaction" | "bet" | "importRun" | "priceSeriesPoint" | "backtestWindowResult" | "backtestResult" | "forecastResult" | "runAccuracy" | "runSignalDiagnostics" | "benchWindowSnapshot"
+      modelProps: "archetype" | "traitDefinition" | "archetypeTraitProfile" | "agent" | "agentWallet" | "simulationRun" | "runVariant" | "runVariantSummary" | "runAgent" | "runAgentTrait" | "agentDecision" | "crowdMetrics" | "assetStepReturn" | "agentReward" | "infoEvent" | "agentInfoState" | "agentState" | "runTimeSeries" | "runDebug" | "agentExperience" | "crowdSnapshot" | "userProfile" | "userWallet" | "userWalletTransaction" | "bet" | "importRun" | "priceSeriesPoint" | "backtestWindowResult" | "backtestResult" | "forecastResult" | "runAccuracy" | "runSignalDiagnostics" | "benchWindowSnapshot" | "marketDataPayload" | "marketPrice" | "signalHistory"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -3502,6 +3550,216 @@ export namespace Prisma {
           count: {
             args: Prisma.BenchWindowSnapshotCountArgs<ExtArgs>
             result: $Utils.Optional<BenchWindowSnapshotCountAggregateOutputType> | number
+          }
+        }
+      }
+      MarketDataPayload: {
+        payload: Prisma.$MarketDataPayloadPayload<ExtArgs>
+        fields: Prisma.MarketDataPayloadFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.MarketDataPayloadFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MarketDataPayloadPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.MarketDataPayloadFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MarketDataPayloadPayload>
+          }
+          findFirst: {
+            args: Prisma.MarketDataPayloadFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MarketDataPayloadPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.MarketDataPayloadFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MarketDataPayloadPayload>
+          }
+          findMany: {
+            args: Prisma.MarketDataPayloadFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MarketDataPayloadPayload>[]
+          }
+          create: {
+            args: Prisma.MarketDataPayloadCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MarketDataPayloadPayload>
+          }
+          createMany: {
+            args: Prisma.MarketDataPayloadCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.MarketDataPayloadCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MarketDataPayloadPayload>[]
+          }
+          delete: {
+            args: Prisma.MarketDataPayloadDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MarketDataPayloadPayload>
+          }
+          update: {
+            args: Prisma.MarketDataPayloadUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MarketDataPayloadPayload>
+          }
+          deleteMany: {
+            args: Prisma.MarketDataPayloadDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.MarketDataPayloadUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.MarketDataPayloadUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MarketDataPayloadPayload>
+          }
+          aggregate: {
+            args: Prisma.MarketDataPayloadAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateMarketDataPayload>
+          }
+          groupBy: {
+            args: Prisma.MarketDataPayloadGroupByArgs<ExtArgs>
+            result: $Utils.Optional<MarketDataPayloadGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.MarketDataPayloadCountArgs<ExtArgs>
+            result: $Utils.Optional<MarketDataPayloadCountAggregateOutputType> | number
+          }
+        }
+      }
+      MarketPrice: {
+        payload: Prisma.$MarketPricePayload<ExtArgs>
+        fields: Prisma.MarketPriceFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.MarketPriceFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MarketPricePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.MarketPriceFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MarketPricePayload>
+          }
+          findFirst: {
+            args: Prisma.MarketPriceFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MarketPricePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.MarketPriceFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MarketPricePayload>
+          }
+          findMany: {
+            args: Prisma.MarketPriceFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MarketPricePayload>[]
+          }
+          create: {
+            args: Prisma.MarketPriceCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MarketPricePayload>
+          }
+          createMany: {
+            args: Prisma.MarketPriceCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.MarketPriceCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MarketPricePayload>[]
+          }
+          delete: {
+            args: Prisma.MarketPriceDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MarketPricePayload>
+          }
+          update: {
+            args: Prisma.MarketPriceUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MarketPricePayload>
+          }
+          deleteMany: {
+            args: Prisma.MarketPriceDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.MarketPriceUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.MarketPriceUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MarketPricePayload>
+          }
+          aggregate: {
+            args: Prisma.MarketPriceAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateMarketPrice>
+          }
+          groupBy: {
+            args: Prisma.MarketPriceGroupByArgs<ExtArgs>
+            result: $Utils.Optional<MarketPriceGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.MarketPriceCountArgs<ExtArgs>
+            result: $Utils.Optional<MarketPriceCountAggregateOutputType> | number
+          }
+        }
+      }
+      SignalHistory: {
+        payload: Prisma.$SignalHistoryPayload<ExtArgs>
+        fields: Prisma.SignalHistoryFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.SignalHistoryFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SignalHistoryPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.SignalHistoryFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SignalHistoryPayload>
+          }
+          findFirst: {
+            args: Prisma.SignalHistoryFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SignalHistoryPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.SignalHistoryFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SignalHistoryPayload>
+          }
+          findMany: {
+            args: Prisma.SignalHistoryFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SignalHistoryPayload>[]
+          }
+          create: {
+            args: Prisma.SignalHistoryCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SignalHistoryPayload>
+          }
+          createMany: {
+            args: Prisma.SignalHistoryCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.SignalHistoryCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SignalHistoryPayload>[]
+          }
+          delete: {
+            args: Prisma.SignalHistoryDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SignalHistoryPayload>
+          }
+          update: {
+            args: Prisma.SignalHistoryUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SignalHistoryPayload>
+          }
+          deleteMany: {
+            args: Prisma.SignalHistoryDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.SignalHistoryUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.SignalHistoryUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SignalHistoryPayload>
+          }
+          aggregate: {
+            args: Prisma.SignalHistoryAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateSignalHistory>
+          }
+          groupBy: {
+            args: Prisma.SignalHistoryGroupByArgs<ExtArgs>
+            result: $Utils.Optional<SignalHistoryGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.SignalHistoryCountArgs<ExtArgs>
+            result: $Utils.Optional<SignalHistoryCountAggregateOutputType> | number
           }
         }
       }
@@ -9011,6 +9269,9 @@ export namespace Prisma {
     seed: number | null
     modelVersion: string | null
     datasetVersion: string | null
+    strategyProfile: string | null
+    aggregationMode: string | null
+    selectionPolicy: string | null
     codeGitSha: string | null
     schemaVersion: string | null
     startedAt: Date | null
@@ -9030,6 +9291,9 @@ export namespace Prisma {
     seed: number | null
     modelVersion: string | null
     datasetVersion: string | null
+    strategyProfile: string | null
+    aggregationMode: string | null
+    selectionPolicy: string | null
     codeGitSha: string | null
     schemaVersion: string | null
     startedAt: Date | null
@@ -9049,6 +9313,9 @@ export namespace Prisma {
     seed: number
     modelVersion: number
     datasetVersion: number
+    strategyProfile: number
+    aggregationMode: number
+    selectionPolicy: number
     codeGitSha: number
     schemaVersion: number
     startedAt: number
@@ -9081,6 +9348,9 @@ export namespace Prisma {
     seed?: true
     modelVersion?: true
     datasetVersion?: true
+    strategyProfile?: true
+    aggregationMode?: true
+    selectionPolicy?: true
     codeGitSha?: true
     schemaVersion?: true
     startedAt?: true
@@ -9100,6 +9370,9 @@ export namespace Prisma {
     seed?: true
     modelVersion?: true
     datasetVersion?: true
+    strategyProfile?: true
+    aggregationMode?: true
+    selectionPolicy?: true
     codeGitSha?: true
     schemaVersion?: true
     startedAt?: true
@@ -9119,6 +9392,9 @@ export namespace Prisma {
     seed?: true
     modelVersion?: true
     datasetVersion?: true
+    strategyProfile?: true
+    aggregationMode?: true
+    selectionPolicy?: true
     codeGitSha?: true
     schemaVersion?: true
     startedAt?: true
@@ -9226,6 +9502,9 @@ export namespace Prisma {
     seed: number
     modelVersion: string
     datasetVersion: string
+    strategyProfile: string | null
+    aggregationMode: string | null
+    selectionPolicy: string | null
     codeGitSha: string | null
     schemaVersion: string
     startedAt: Date | null
@@ -9265,6 +9544,9 @@ export namespace Prisma {
     seed?: boolean
     modelVersion?: boolean
     datasetVersion?: boolean
+    strategyProfile?: boolean
+    aggregationMode?: boolean
+    selectionPolicy?: boolean
     codeGitSha?: boolean
     schemaVersion?: boolean
     startedAt?: boolean
@@ -9300,6 +9582,9 @@ export namespace Prisma {
     seed?: boolean
     modelVersion?: boolean
     datasetVersion?: boolean
+    strategyProfile?: boolean
+    aggregationMode?: boolean
+    selectionPolicy?: boolean
     codeGitSha?: boolean
     schemaVersion?: boolean
     startedAt?: boolean
@@ -9320,6 +9605,9 @@ export namespace Prisma {
     seed?: boolean
     modelVersion?: boolean
     datasetVersion?: boolean
+    strategyProfile?: boolean
+    aggregationMode?: boolean
+    selectionPolicy?: boolean
     codeGitSha?: boolean
     schemaVersion?: boolean
     startedAt?: boolean
@@ -9377,6 +9665,9 @@ export namespace Prisma {
       seed: number
       modelVersion: string
       datasetVersion: string
+      strategyProfile: string | null
+      aggregationMode: string | null
+      selectionPolicy: string | null
       codeGitSha: string | null
       schemaVersion: string
       startedAt: Date | null
@@ -9801,6 +10092,9 @@ export namespace Prisma {
     readonly seed: FieldRef<"SimulationRun", 'Int'>
     readonly modelVersion: FieldRef<"SimulationRun", 'String'>
     readonly datasetVersion: FieldRef<"SimulationRun", 'String'>
+    readonly strategyProfile: FieldRef<"SimulationRun", 'String'>
+    readonly aggregationMode: FieldRef<"SimulationRun", 'String'>
+    readonly selectionPolicy: FieldRef<"SimulationRun", 'String'>
     readonly codeGitSha: FieldRef<"SimulationRun", 'String'>
     readonly schemaVersion: FieldRef<"SimulationRun", 'String'>
     readonly startedAt: FieldRef<"SimulationRun", 'DateTime'>
@@ -38466,6 +38760,2904 @@ export namespace Prisma {
 
 
   /**
+   * Model MarketDataPayload
+   */
+
+  export type AggregateMarketDataPayload = {
+    _count: MarketDataPayloadCountAggregateOutputType | null
+    _min: MarketDataPayloadMinAggregateOutputType | null
+    _max: MarketDataPayloadMaxAggregateOutputType | null
+  }
+
+  export type MarketDataPayloadMinAggregateOutputType = {
+    id: string | null
+    provider: string | null
+    symbol: string | null
+    fetchedAt: Date | null
+    datasetVersion: string | null
+  }
+
+  export type MarketDataPayloadMaxAggregateOutputType = {
+    id: string | null
+    provider: string | null
+    symbol: string | null
+    fetchedAt: Date | null
+    datasetVersion: string | null
+  }
+
+  export type MarketDataPayloadCountAggregateOutputType = {
+    id: number
+    provider: number
+    symbol: number
+    payloadJson: number
+    fetchedAt: number
+    datasetVersion: number
+    _all: number
+  }
+
+
+  export type MarketDataPayloadMinAggregateInputType = {
+    id?: true
+    provider?: true
+    symbol?: true
+    fetchedAt?: true
+    datasetVersion?: true
+  }
+
+  export type MarketDataPayloadMaxAggregateInputType = {
+    id?: true
+    provider?: true
+    symbol?: true
+    fetchedAt?: true
+    datasetVersion?: true
+  }
+
+  export type MarketDataPayloadCountAggregateInputType = {
+    id?: true
+    provider?: true
+    symbol?: true
+    payloadJson?: true
+    fetchedAt?: true
+    datasetVersion?: true
+    _all?: true
+  }
+
+  export type MarketDataPayloadAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which MarketDataPayload to aggregate.
+     */
+    where?: MarketDataPayloadWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MarketDataPayloads to fetch.
+     */
+    orderBy?: MarketDataPayloadOrderByWithRelationInput | MarketDataPayloadOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: MarketDataPayloadWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MarketDataPayloads from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MarketDataPayloads.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned MarketDataPayloads
+    **/
+    _count?: true | MarketDataPayloadCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: MarketDataPayloadMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: MarketDataPayloadMaxAggregateInputType
+  }
+
+  export type GetMarketDataPayloadAggregateType<T extends MarketDataPayloadAggregateArgs> = {
+        [P in keyof T & keyof AggregateMarketDataPayload]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateMarketDataPayload[P]>
+      : GetScalarType<T[P], AggregateMarketDataPayload[P]>
+  }
+
+
+
+
+  export type MarketDataPayloadGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: MarketDataPayloadWhereInput
+    orderBy?: MarketDataPayloadOrderByWithAggregationInput | MarketDataPayloadOrderByWithAggregationInput[]
+    by: MarketDataPayloadScalarFieldEnum[] | MarketDataPayloadScalarFieldEnum
+    having?: MarketDataPayloadScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: MarketDataPayloadCountAggregateInputType | true
+    _min?: MarketDataPayloadMinAggregateInputType
+    _max?: MarketDataPayloadMaxAggregateInputType
+  }
+
+  export type MarketDataPayloadGroupByOutputType = {
+    id: string
+    provider: string
+    symbol: string
+    payloadJson: JsonValue
+    fetchedAt: Date
+    datasetVersion: string
+    _count: MarketDataPayloadCountAggregateOutputType | null
+    _min: MarketDataPayloadMinAggregateOutputType | null
+    _max: MarketDataPayloadMaxAggregateOutputType | null
+  }
+
+  type GetMarketDataPayloadGroupByPayload<T extends MarketDataPayloadGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<MarketDataPayloadGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof MarketDataPayloadGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], MarketDataPayloadGroupByOutputType[P]>
+            : GetScalarType<T[P], MarketDataPayloadGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type MarketDataPayloadSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    provider?: boolean
+    symbol?: boolean
+    payloadJson?: boolean
+    fetchedAt?: boolean
+    datasetVersion?: boolean
+  }, ExtArgs["result"]["marketDataPayload"]>
+
+  export type MarketDataPayloadSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    provider?: boolean
+    symbol?: boolean
+    payloadJson?: boolean
+    fetchedAt?: boolean
+    datasetVersion?: boolean
+  }, ExtArgs["result"]["marketDataPayload"]>
+
+  export type MarketDataPayloadSelectScalar = {
+    id?: boolean
+    provider?: boolean
+    symbol?: boolean
+    payloadJson?: boolean
+    fetchedAt?: boolean
+    datasetVersion?: boolean
+  }
+
+
+  export type $MarketDataPayloadPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "MarketDataPayload"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      provider: string
+      symbol: string
+      payloadJson: Prisma.JsonValue
+      fetchedAt: Date
+      datasetVersion: string
+    }, ExtArgs["result"]["marketDataPayload"]>
+    composites: {}
+  }
+
+  type MarketDataPayloadGetPayload<S extends boolean | null | undefined | MarketDataPayloadDefaultArgs> = $Result.GetResult<Prisma.$MarketDataPayloadPayload, S>
+
+  type MarketDataPayloadCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<MarketDataPayloadFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: MarketDataPayloadCountAggregateInputType | true
+    }
+
+  export interface MarketDataPayloadDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['MarketDataPayload'], meta: { name: 'MarketDataPayload' } }
+    /**
+     * Find zero or one MarketDataPayload that matches the filter.
+     * @param {MarketDataPayloadFindUniqueArgs} args - Arguments to find a MarketDataPayload
+     * @example
+     * // Get one MarketDataPayload
+     * const marketDataPayload = await prisma.marketDataPayload.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends MarketDataPayloadFindUniqueArgs>(args: SelectSubset<T, MarketDataPayloadFindUniqueArgs<ExtArgs>>): Prisma__MarketDataPayloadClient<$Result.GetResult<Prisma.$MarketDataPayloadPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one MarketDataPayload that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {MarketDataPayloadFindUniqueOrThrowArgs} args - Arguments to find a MarketDataPayload
+     * @example
+     * // Get one MarketDataPayload
+     * const marketDataPayload = await prisma.marketDataPayload.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends MarketDataPayloadFindUniqueOrThrowArgs>(args: SelectSubset<T, MarketDataPayloadFindUniqueOrThrowArgs<ExtArgs>>): Prisma__MarketDataPayloadClient<$Result.GetResult<Prisma.$MarketDataPayloadPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first MarketDataPayload that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MarketDataPayloadFindFirstArgs} args - Arguments to find a MarketDataPayload
+     * @example
+     * // Get one MarketDataPayload
+     * const marketDataPayload = await prisma.marketDataPayload.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends MarketDataPayloadFindFirstArgs>(args?: SelectSubset<T, MarketDataPayloadFindFirstArgs<ExtArgs>>): Prisma__MarketDataPayloadClient<$Result.GetResult<Prisma.$MarketDataPayloadPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first MarketDataPayload that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MarketDataPayloadFindFirstOrThrowArgs} args - Arguments to find a MarketDataPayload
+     * @example
+     * // Get one MarketDataPayload
+     * const marketDataPayload = await prisma.marketDataPayload.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends MarketDataPayloadFindFirstOrThrowArgs>(args?: SelectSubset<T, MarketDataPayloadFindFirstOrThrowArgs<ExtArgs>>): Prisma__MarketDataPayloadClient<$Result.GetResult<Prisma.$MarketDataPayloadPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more MarketDataPayloads that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MarketDataPayloadFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all MarketDataPayloads
+     * const marketDataPayloads = await prisma.marketDataPayload.findMany()
+     * 
+     * // Get first 10 MarketDataPayloads
+     * const marketDataPayloads = await prisma.marketDataPayload.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const marketDataPayloadWithIdOnly = await prisma.marketDataPayload.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends MarketDataPayloadFindManyArgs>(args?: SelectSubset<T, MarketDataPayloadFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MarketDataPayloadPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a MarketDataPayload.
+     * @param {MarketDataPayloadCreateArgs} args - Arguments to create a MarketDataPayload.
+     * @example
+     * // Create one MarketDataPayload
+     * const MarketDataPayload = await prisma.marketDataPayload.create({
+     *   data: {
+     *     // ... data to create a MarketDataPayload
+     *   }
+     * })
+     * 
+     */
+    create<T extends MarketDataPayloadCreateArgs>(args: SelectSubset<T, MarketDataPayloadCreateArgs<ExtArgs>>): Prisma__MarketDataPayloadClient<$Result.GetResult<Prisma.$MarketDataPayloadPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many MarketDataPayloads.
+     * @param {MarketDataPayloadCreateManyArgs} args - Arguments to create many MarketDataPayloads.
+     * @example
+     * // Create many MarketDataPayloads
+     * const marketDataPayload = await prisma.marketDataPayload.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends MarketDataPayloadCreateManyArgs>(args?: SelectSubset<T, MarketDataPayloadCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many MarketDataPayloads and returns the data saved in the database.
+     * @param {MarketDataPayloadCreateManyAndReturnArgs} args - Arguments to create many MarketDataPayloads.
+     * @example
+     * // Create many MarketDataPayloads
+     * const marketDataPayload = await prisma.marketDataPayload.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many MarketDataPayloads and only return the `id`
+     * const marketDataPayloadWithIdOnly = await prisma.marketDataPayload.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends MarketDataPayloadCreateManyAndReturnArgs>(args?: SelectSubset<T, MarketDataPayloadCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MarketDataPayloadPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a MarketDataPayload.
+     * @param {MarketDataPayloadDeleteArgs} args - Arguments to delete one MarketDataPayload.
+     * @example
+     * // Delete one MarketDataPayload
+     * const MarketDataPayload = await prisma.marketDataPayload.delete({
+     *   where: {
+     *     // ... filter to delete one MarketDataPayload
+     *   }
+     * })
+     * 
+     */
+    delete<T extends MarketDataPayloadDeleteArgs>(args: SelectSubset<T, MarketDataPayloadDeleteArgs<ExtArgs>>): Prisma__MarketDataPayloadClient<$Result.GetResult<Prisma.$MarketDataPayloadPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one MarketDataPayload.
+     * @param {MarketDataPayloadUpdateArgs} args - Arguments to update one MarketDataPayload.
+     * @example
+     * // Update one MarketDataPayload
+     * const marketDataPayload = await prisma.marketDataPayload.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends MarketDataPayloadUpdateArgs>(args: SelectSubset<T, MarketDataPayloadUpdateArgs<ExtArgs>>): Prisma__MarketDataPayloadClient<$Result.GetResult<Prisma.$MarketDataPayloadPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more MarketDataPayloads.
+     * @param {MarketDataPayloadDeleteManyArgs} args - Arguments to filter MarketDataPayloads to delete.
+     * @example
+     * // Delete a few MarketDataPayloads
+     * const { count } = await prisma.marketDataPayload.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends MarketDataPayloadDeleteManyArgs>(args?: SelectSubset<T, MarketDataPayloadDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more MarketDataPayloads.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MarketDataPayloadUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many MarketDataPayloads
+     * const marketDataPayload = await prisma.marketDataPayload.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends MarketDataPayloadUpdateManyArgs>(args: SelectSubset<T, MarketDataPayloadUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one MarketDataPayload.
+     * @param {MarketDataPayloadUpsertArgs} args - Arguments to update or create a MarketDataPayload.
+     * @example
+     * // Update or create a MarketDataPayload
+     * const marketDataPayload = await prisma.marketDataPayload.upsert({
+     *   create: {
+     *     // ... data to create a MarketDataPayload
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the MarketDataPayload we want to update
+     *   }
+     * })
+     */
+    upsert<T extends MarketDataPayloadUpsertArgs>(args: SelectSubset<T, MarketDataPayloadUpsertArgs<ExtArgs>>): Prisma__MarketDataPayloadClient<$Result.GetResult<Prisma.$MarketDataPayloadPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of MarketDataPayloads.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MarketDataPayloadCountArgs} args - Arguments to filter MarketDataPayloads to count.
+     * @example
+     * // Count the number of MarketDataPayloads
+     * const count = await prisma.marketDataPayload.count({
+     *   where: {
+     *     // ... the filter for the MarketDataPayloads we want to count
+     *   }
+     * })
+    **/
+    count<T extends MarketDataPayloadCountArgs>(
+      args?: Subset<T, MarketDataPayloadCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], MarketDataPayloadCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a MarketDataPayload.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MarketDataPayloadAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends MarketDataPayloadAggregateArgs>(args: Subset<T, MarketDataPayloadAggregateArgs>): Prisma.PrismaPromise<GetMarketDataPayloadAggregateType<T>>
+
+    /**
+     * Group by MarketDataPayload.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MarketDataPayloadGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends MarketDataPayloadGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: MarketDataPayloadGroupByArgs['orderBy'] }
+        : { orderBy?: MarketDataPayloadGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, MarketDataPayloadGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetMarketDataPayloadGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the MarketDataPayload model
+   */
+  readonly fields: MarketDataPayloadFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for MarketDataPayload.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__MarketDataPayloadClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the MarketDataPayload model
+   */ 
+  interface MarketDataPayloadFieldRefs {
+    readonly id: FieldRef<"MarketDataPayload", 'String'>
+    readonly provider: FieldRef<"MarketDataPayload", 'String'>
+    readonly symbol: FieldRef<"MarketDataPayload", 'String'>
+    readonly payloadJson: FieldRef<"MarketDataPayload", 'Json'>
+    readonly fetchedAt: FieldRef<"MarketDataPayload", 'DateTime'>
+    readonly datasetVersion: FieldRef<"MarketDataPayload", 'String'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * MarketDataPayload findUnique
+   */
+  export type MarketDataPayloadFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MarketDataPayload
+     */
+    select?: MarketDataPayloadSelect<ExtArgs> | null
+    /**
+     * Filter, which MarketDataPayload to fetch.
+     */
+    where: MarketDataPayloadWhereUniqueInput
+  }
+
+  /**
+   * MarketDataPayload findUniqueOrThrow
+   */
+  export type MarketDataPayloadFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MarketDataPayload
+     */
+    select?: MarketDataPayloadSelect<ExtArgs> | null
+    /**
+     * Filter, which MarketDataPayload to fetch.
+     */
+    where: MarketDataPayloadWhereUniqueInput
+  }
+
+  /**
+   * MarketDataPayload findFirst
+   */
+  export type MarketDataPayloadFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MarketDataPayload
+     */
+    select?: MarketDataPayloadSelect<ExtArgs> | null
+    /**
+     * Filter, which MarketDataPayload to fetch.
+     */
+    where?: MarketDataPayloadWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MarketDataPayloads to fetch.
+     */
+    orderBy?: MarketDataPayloadOrderByWithRelationInput | MarketDataPayloadOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for MarketDataPayloads.
+     */
+    cursor?: MarketDataPayloadWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MarketDataPayloads from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MarketDataPayloads.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of MarketDataPayloads.
+     */
+    distinct?: MarketDataPayloadScalarFieldEnum | MarketDataPayloadScalarFieldEnum[]
+  }
+
+  /**
+   * MarketDataPayload findFirstOrThrow
+   */
+  export type MarketDataPayloadFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MarketDataPayload
+     */
+    select?: MarketDataPayloadSelect<ExtArgs> | null
+    /**
+     * Filter, which MarketDataPayload to fetch.
+     */
+    where?: MarketDataPayloadWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MarketDataPayloads to fetch.
+     */
+    orderBy?: MarketDataPayloadOrderByWithRelationInput | MarketDataPayloadOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for MarketDataPayloads.
+     */
+    cursor?: MarketDataPayloadWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MarketDataPayloads from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MarketDataPayloads.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of MarketDataPayloads.
+     */
+    distinct?: MarketDataPayloadScalarFieldEnum | MarketDataPayloadScalarFieldEnum[]
+  }
+
+  /**
+   * MarketDataPayload findMany
+   */
+  export type MarketDataPayloadFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MarketDataPayload
+     */
+    select?: MarketDataPayloadSelect<ExtArgs> | null
+    /**
+     * Filter, which MarketDataPayloads to fetch.
+     */
+    where?: MarketDataPayloadWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MarketDataPayloads to fetch.
+     */
+    orderBy?: MarketDataPayloadOrderByWithRelationInput | MarketDataPayloadOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing MarketDataPayloads.
+     */
+    cursor?: MarketDataPayloadWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MarketDataPayloads from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MarketDataPayloads.
+     */
+    skip?: number
+    distinct?: MarketDataPayloadScalarFieldEnum | MarketDataPayloadScalarFieldEnum[]
+  }
+
+  /**
+   * MarketDataPayload create
+   */
+  export type MarketDataPayloadCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MarketDataPayload
+     */
+    select?: MarketDataPayloadSelect<ExtArgs> | null
+    /**
+     * The data needed to create a MarketDataPayload.
+     */
+    data: XOR<MarketDataPayloadCreateInput, MarketDataPayloadUncheckedCreateInput>
+  }
+
+  /**
+   * MarketDataPayload createMany
+   */
+  export type MarketDataPayloadCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many MarketDataPayloads.
+     */
+    data: MarketDataPayloadCreateManyInput | MarketDataPayloadCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * MarketDataPayload createManyAndReturn
+   */
+  export type MarketDataPayloadCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MarketDataPayload
+     */
+    select?: MarketDataPayloadSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many MarketDataPayloads.
+     */
+    data: MarketDataPayloadCreateManyInput | MarketDataPayloadCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * MarketDataPayload update
+   */
+  export type MarketDataPayloadUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MarketDataPayload
+     */
+    select?: MarketDataPayloadSelect<ExtArgs> | null
+    /**
+     * The data needed to update a MarketDataPayload.
+     */
+    data: XOR<MarketDataPayloadUpdateInput, MarketDataPayloadUncheckedUpdateInput>
+    /**
+     * Choose, which MarketDataPayload to update.
+     */
+    where: MarketDataPayloadWhereUniqueInput
+  }
+
+  /**
+   * MarketDataPayload updateMany
+   */
+  export type MarketDataPayloadUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update MarketDataPayloads.
+     */
+    data: XOR<MarketDataPayloadUpdateManyMutationInput, MarketDataPayloadUncheckedUpdateManyInput>
+    /**
+     * Filter which MarketDataPayloads to update
+     */
+    where?: MarketDataPayloadWhereInput
+  }
+
+  /**
+   * MarketDataPayload upsert
+   */
+  export type MarketDataPayloadUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MarketDataPayload
+     */
+    select?: MarketDataPayloadSelect<ExtArgs> | null
+    /**
+     * The filter to search for the MarketDataPayload to update in case it exists.
+     */
+    where: MarketDataPayloadWhereUniqueInput
+    /**
+     * In case the MarketDataPayload found by the `where` argument doesn't exist, create a new MarketDataPayload with this data.
+     */
+    create: XOR<MarketDataPayloadCreateInput, MarketDataPayloadUncheckedCreateInput>
+    /**
+     * In case the MarketDataPayload was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<MarketDataPayloadUpdateInput, MarketDataPayloadUncheckedUpdateInput>
+  }
+
+  /**
+   * MarketDataPayload delete
+   */
+  export type MarketDataPayloadDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MarketDataPayload
+     */
+    select?: MarketDataPayloadSelect<ExtArgs> | null
+    /**
+     * Filter which MarketDataPayload to delete.
+     */
+    where: MarketDataPayloadWhereUniqueInput
+  }
+
+  /**
+   * MarketDataPayload deleteMany
+   */
+  export type MarketDataPayloadDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which MarketDataPayloads to delete
+     */
+    where?: MarketDataPayloadWhereInput
+  }
+
+  /**
+   * MarketDataPayload without action
+   */
+  export type MarketDataPayloadDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MarketDataPayload
+     */
+    select?: MarketDataPayloadSelect<ExtArgs> | null
+  }
+
+
+  /**
+   * Model MarketPrice
+   */
+
+  export type AggregateMarketPrice = {
+    _count: MarketPriceCountAggregateOutputType | null
+    _avg: MarketPriceAvgAggregateOutputType | null
+    _sum: MarketPriceSumAggregateOutputType | null
+    _min: MarketPriceMinAggregateOutputType | null
+    _max: MarketPriceMaxAggregateOutputType | null
+  }
+
+  export type MarketPriceAvgAggregateOutputType = {
+    open: number | null
+    high: number | null
+    low: number | null
+    close: number | null
+    volume: number | null
+  }
+
+  export type MarketPriceSumAggregateOutputType = {
+    open: number | null
+    high: number | null
+    low: number | null
+    close: number | null
+    volume: number | null
+  }
+
+  export type MarketPriceMinAggregateOutputType = {
+    id: string | null
+    datasetVersion: string | null
+    symbol: string | null
+    timestamp: Date | null
+    open: number | null
+    high: number | null
+    low: number | null
+    close: number | null
+    volume: number | null
+  }
+
+  export type MarketPriceMaxAggregateOutputType = {
+    id: string | null
+    datasetVersion: string | null
+    symbol: string | null
+    timestamp: Date | null
+    open: number | null
+    high: number | null
+    low: number | null
+    close: number | null
+    volume: number | null
+  }
+
+  export type MarketPriceCountAggregateOutputType = {
+    id: number
+    datasetVersion: number
+    symbol: number
+    timestamp: number
+    open: number
+    high: number
+    low: number
+    close: number
+    volume: number
+    _all: number
+  }
+
+
+  export type MarketPriceAvgAggregateInputType = {
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+  }
+
+  export type MarketPriceSumAggregateInputType = {
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+  }
+
+  export type MarketPriceMinAggregateInputType = {
+    id?: true
+    datasetVersion?: true
+    symbol?: true
+    timestamp?: true
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+  }
+
+  export type MarketPriceMaxAggregateInputType = {
+    id?: true
+    datasetVersion?: true
+    symbol?: true
+    timestamp?: true
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+  }
+
+  export type MarketPriceCountAggregateInputType = {
+    id?: true
+    datasetVersion?: true
+    symbol?: true
+    timestamp?: true
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+    _all?: true
+  }
+
+  export type MarketPriceAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which MarketPrice to aggregate.
+     */
+    where?: MarketPriceWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MarketPrices to fetch.
+     */
+    orderBy?: MarketPriceOrderByWithRelationInput | MarketPriceOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: MarketPriceWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MarketPrices from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MarketPrices.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned MarketPrices
+    **/
+    _count?: true | MarketPriceCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: MarketPriceAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: MarketPriceSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: MarketPriceMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: MarketPriceMaxAggregateInputType
+  }
+
+  export type GetMarketPriceAggregateType<T extends MarketPriceAggregateArgs> = {
+        [P in keyof T & keyof AggregateMarketPrice]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateMarketPrice[P]>
+      : GetScalarType<T[P], AggregateMarketPrice[P]>
+  }
+
+
+
+
+  export type MarketPriceGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: MarketPriceWhereInput
+    orderBy?: MarketPriceOrderByWithAggregationInput | MarketPriceOrderByWithAggregationInput[]
+    by: MarketPriceScalarFieldEnum[] | MarketPriceScalarFieldEnum
+    having?: MarketPriceScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: MarketPriceCountAggregateInputType | true
+    _avg?: MarketPriceAvgAggregateInputType
+    _sum?: MarketPriceSumAggregateInputType
+    _min?: MarketPriceMinAggregateInputType
+    _max?: MarketPriceMaxAggregateInputType
+  }
+
+  export type MarketPriceGroupByOutputType = {
+    id: string
+    datasetVersion: string
+    symbol: string
+    timestamp: Date
+    open: number
+    high: number
+    low: number
+    close: number
+    volume: number | null
+    _count: MarketPriceCountAggregateOutputType | null
+    _avg: MarketPriceAvgAggregateOutputType | null
+    _sum: MarketPriceSumAggregateOutputType | null
+    _min: MarketPriceMinAggregateOutputType | null
+    _max: MarketPriceMaxAggregateOutputType | null
+  }
+
+  type GetMarketPriceGroupByPayload<T extends MarketPriceGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<MarketPriceGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof MarketPriceGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], MarketPriceGroupByOutputType[P]>
+            : GetScalarType<T[P], MarketPriceGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type MarketPriceSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    datasetVersion?: boolean
+    symbol?: boolean
+    timestamp?: boolean
+    open?: boolean
+    high?: boolean
+    low?: boolean
+    close?: boolean
+    volume?: boolean
+  }, ExtArgs["result"]["marketPrice"]>
+
+  export type MarketPriceSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    datasetVersion?: boolean
+    symbol?: boolean
+    timestamp?: boolean
+    open?: boolean
+    high?: boolean
+    low?: boolean
+    close?: boolean
+    volume?: boolean
+  }, ExtArgs["result"]["marketPrice"]>
+
+  export type MarketPriceSelectScalar = {
+    id?: boolean
+    datasetVersion?: boolean
+    symbol?: boolean
+    timestamp?: boolean
+    open?: boolean
+    high?: boolean
+    low?: boolean
+    close?: boolean
+    volume?: boolean
+  }
+
+
+  export type $MarketPricePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "MarketPrice"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      datasetVersion: string
+      symbol: string
+      timestamp: Date
+      open: number
+      high: number
+      low: number
+      close: number
+      volume: number | null
+    }, ExtArgs["result"]["marketPrice"]>
+    composites: {}
+  }
+
+  type MarketPriceGetPayload<S extends boolean | null | undefined | MarketPriceDefaultArgs> = $Result.GetResult<Prisma.$MarketPricePayload, S>
+
+  type MarketPriceCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<MarketPriceFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: MarketPriceCountAggregateInputType | true
+    }
+
+  export interface MarketPriceDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['MarketPrice'], meta: { name: 'MarketPrice' } }
+    /**
+     * Find zero or one MarketPrice that matches the filter.
+     * @param {MarketPriceFindUniqueArgs} args - Arguments to find a MarketPrice
+     * @example
+     * // Get one MarketPrice
+     * const marketPrice = await prisma.marketPrice.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends MarketPriceFindUniqueArgs>(args: SelectSubset<T, MarketPriceFindUniqueArgs<ExtArgs>>): Prisma__MarketPriceClient<$Result.GetResult<Prisma.$MarketPricePayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one MarketPrice that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {MarketPriceFindUniqueOrThrowArgs} args - Arguments to find a MarketPrice
+     * @example
+     * // Get one MarketPrice
+     * const marketPrice = await prisma.marketPrice.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends MarketPriceFindUniqueOrThrowArgs>(args: SelectSubset<T, MarketPriceFindUniqueOrThrowArgs<ExtArgs>>): Prisma__MarketPriceClient<$Result.GetResult<Prisma.$MarketPricePayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first MarketPrice that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MarketPriceFindFirstArgs} args - Arguments to find a MarketPrice
+     * @example
+     * // Get one MarketPrice
+     * const marketPrice = await prisma.marketPrice.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends MarketPriceFindFirstArgs>(args?: SelectSubset<T, MarketPriceFindFirstArgs<ExtArgs>>): Prisma__MarketPriceClient<$Result.GetResult<Prisma.$MarketPricePayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first MarketPrice that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MarketPriceFindFirstOrThrowArgs} args - Arguments to find a MarketPrice
+     * @example
+     * // Get one MarketPrice
+     * const marketPrice = await prisma.marketPrice.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends MarketPriceFindFirstOrThrowArgs>(args?: SelectSubset<T, MarketPriceFindFirstOrThrowArgs<ExtArgs>>): Prisma__MarketPriceClient<$Result.GetResult<Prisma.$MarketPricePayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more MarketPrices that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MarketPriceFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all MarketPrices
+     * const marketPrices = await prisma.marketPrice.findMany()
+     * 
+     * // Get first 10 MarketPrices
+     * const marketPrices = await prisma.marketPrice.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const marketPriceWithIdOnly = await prisma.marketPrice.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends MarketPriceFindManyArgs>(args?: SelectSubset<T, MarketPriceFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MarketPricePayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a MarketPrice.
+     * @param {MarketPriceCreateArgs} args - Arguments to create a MarketPrice.
+     * @example
+     * // Create one MarketPrice
+     * const MarketPrice = await prisma.marketPrice.create({
+     *   data: {
+     *     // ... data to create a MarketPrice
+     *   }
+     * })
+     * 
+     */
+    create<T extends MarketPriceCreateArgs>(args: SelectSubset<T, MarketPriceCreateArgs<ExtArgs>>): Prisma__MarketPriceClient<$Result.GetResult<Prisma.$MarketPricePayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many MarketPrices.
+     * @param {MarketPriceCreateManyArgs} args - Arguments to create many MarketPrices.
+     * @example
+     * // Create many MarketPrices
+     * const marketPrice = await prisma.marketPrice.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends MarketPriceCreateManyArgs>(args?: SelectSubset<T, MarketPriceCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many MarketPrices and returns the data saved in the database.
+     * @param {MarketPriceCreateManyAndReturnArgs} args - Arguments to create many MarketPrices.
+     * @example
+     * // Create many MarketPrices
+     * const marketPrice = await prisma.marketPrice.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many MarketPrices and only return the `id`
+     * const marketPriceWithIdOnly = await prisma.marketPrice.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends MarketPriceCreateManyAndReturnArgs>(args?: SelectSubset<T, MarketPriceCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MarketPricePayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a MarketPrice.
+     * @param {MarketPriceDeleteArgs} args - Arguments to delete one MarketPrice.
+     * @example
+     * // Delete one MarketPrice
+     * const MarketPrice = await prisma.marketPrice.delete({
+     *   where: {
+     *     // ... filter to delete one MarketPrice
+     *   }
+     * })
+     * 
+     */
+    delete<T extends MarketPriceDeleteArgs>(args: SelectSubset<T, MarketPriceDeleteArgs<ExtArgs>>): Prisma__MarketPriceClient<$Result.GetResult<Prisma.$MarketPricePayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one MarketPrice.
+     * @param {MarketPriceUpdateArgs} args - Arguments to update one MarketPrice.
+     * @example
+     * // Update one MarketPrice
+     * const marketPrice = await prisma.marketPrice.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends MarketPriceUpdateArgs>(args: SelectSubset<T, MarketPriceUpdateArgs<ExtArgs>>): Prisma__MarketPriceClient<$Result.GetResult<Prisma.$MarketPricePayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more MarketPrices.
+     * @param {MarketPriceDeleteManyArgs} args - Arguments to filter MarketPrices to delete.
+     * @example
+     * // Delete a few MarketPrices
+     * const { count } = await prisma.marketPrice.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends MarketPriceDeleteManyArgs>(args?: SelectSubset<T, MarketPriceDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more MarketPrices.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MarketPriceUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many MarketPrices
+     * const marketPrice = await prisma.marketPrice.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends MarketPriceUpdateManyArgs>(args: SelectSubset<T, MarketPriceUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one MarketPrice.
+     * @param {MarketPriceUpsertArgs} args - Arguments to update or create a MarketPrice.
+     * @example
+     * // Update or create a MarketPrice
+     * const marketPrice = await prisma.marketPrice.upsert({
+     *   create: {
+     *     // ... data to create a MarketPrice
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the MarketPrice we want to update
+     *   }
+     * })
+     */
+    upsert<T extends MarketPriceUpsertArgs>(args: SelectSubset<T, MarketPriceUpsertArgs<ExtArgs>>): Prisma__MarketPriceClient<$Result.GetResult<Prisma.$MarketPricePayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of MarketPrices.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MarketPriceCountArgs} args - Arguments to filter MarketPrices to count.
+     * @example
+     * // Count the number of MarketPrices
+     * const count = await prisma.marketPrice.count({
+     *   where: {
+     *     // ... the filter for the MarketPrices we want to count
+     *   }
+     * })
+    **/
+    count<T extends MarketPriceCountArgs>(
+      args?: Subset<T, MarketPriceCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], MarketPriceCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a MarketPrice.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MarketPriceAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends MarketPriceAggregateArgs>(args: Subset<T, MarketPriceAggregateArgs>): Prisma.PrismaPromise<GetMarketPriceAggregateType<T>>
+
+    /**
+     * Group by MarketPrice.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MarketPriceGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends MarketPriceGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: MarketPriceGroupByArgs['orderBy'] }
+        : { orderBy?: MarketPriceGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, MarketPriceGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetMarketPriceGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the MarketPrice model
+   */
+  readonly fields: MarketPriceFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for MarketPrice.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__MarketPriceClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the MarketPrice model
+   */ 
+  interface MarketPriceFieldRefs {
+    readonly id: FieldRef<"MarketPrice", 'String'>
+    readonly datasetVersion: FieldRef<"MarketPrice", 'String'>
+    readonly symbol: FieldRef<"MarketPrice", 'String'>
+    readonly timestamp: FieldRef<"MarketPrice", 'DateTime'>
+    readonly open: FieldRef<"MarketPrice", 'Float'>
+    readonly high: FieldRef<"MarketPrice", 'Float'>
+    readonly low: FieldRef<"MarketPrice", 'Float'>
+    readonly close: FieldRef<"MarketPrice", 'Float'>
+    readonly volume: FieldRef<"MarketPrice", 'Int'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * MarketPrice findUnique
+   */
+  export type MarketPriceFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MarketPrice
+     */
+    select?: MarketPriceSelect<ExtArgs> | null
+    /**
+     * Filter, which MarketPrice to fetch.
+     */
+    where: MarketPriceWhereUniqueInput
+  }
+
+  /**
+   * MarketPrice findUniqueOrThrow
+   */
+  export type MarketPriceFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MarketPrice
+     */
+    select?: MarketPriceSelect<ExtArgs> | null
+    /**
+     * Filter, which MarketPrice to fetch.
+     */
+    where: MarketPriceWhereUniqueInput
+  }
+
+  /**
+   * MarketPrice findFirst
+   */
+  export type MarketPriceFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MarketPrice
+     */
+    select?: MarketPriceSelect<ExtArgs> | null
+    /**
+     * Filter, which MarketPrice to fetch.
+     */
+    where?: MarketPriceWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MarketPrices to fetch.
+     */
+    orderBy?: MarketPriceOrderByWithRelationInput | MarketPriceOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for MarketPrices.
+     */
+    cursor?: MarketPriceWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MarketPrices from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MarketPrices.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of MarketPrices.
+     */
+    distinct?: MarketPriceScalarFieldEnum | MarketPriceScalarFieldEnum[]
+  }
+
+  /**
+   * MarketPrice findFirstOrThrow
+   */
+  export type MarketPriceFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MarketPrice
+     */
+    select?: MarketPriceSelect<ExtArgs> | null
+    /**
+     * Filter, which MarketPrice to fetch.
+     */
+    where?: MarketPriceWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MarketPrices to fetch.
+     */
+    orderBy?: MarketPriceOrderByWithRelationInput | MarketPriceOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for MarketPrices.
+     */
+    cursor?: MarketPriceWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MarketPrices from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MarketPrices.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of MarketPrices.
+     */
+    distinct?: MarketPriceScalarFieldEnum | MarketPriceScalarFieldEnum[]
+  }
+
+  /**
+   * MarketPrice findMany
+   */
+  export type MarketPriceFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MarketPrice
+     */
+    select?: MarketPriceSelect<ExtArgs> | null
+    /**
+     * Filter, which MarketPrices to fetch.
+     */
+    where?: MarketPriceWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MarketPrices to fetch.
+     */
+    orderBy?: MarketPriceOrderByWithRelationInput | MarketPriceOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing MarketPrices.
+     */
+    cursor?: MarketPriceWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MarketPrices from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MarketPrices.
+     */
+    skip?: number
+    distinct?: MarketPriceScalarFieldEnum | MarketPriceScalarFieldEnum[]
+  }
+
+  /**
+   * MarketPrice create
+   */
+  export type MarketPriceCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MarketPrice
+     */
+    select?: MarketPriceSelect<ExtArgs> | null
+    /**
+     * The data needed to create a MarketPrice.
+     */
+    data: XOR<MarketPriceCreateInput, MarketPriceUncheckedCreateInput>
+  }
+
+  /**
+   * MarketPrice createMany
+   */
+  export type MarketPriceCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many MarketPrices.
+     */
+    data: MarketPriceCreateManyInput | MarketPriceCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * MarketPrice createManyAndReturn
+   */
+  export type MarketPriceCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MarketPrice
+     */
+    select?: MarketPriceSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many MarketPrices.
+     */
+    data: MarketPriceCreateManyInput | MarketPriceCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * MarketPrice update
+   */
+  export type MarketPriceUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MarketPrice
+     */
+    select?: MarketPriceSelect<ExtArgs> | null
+    /**
+     * The data needed to update a MarketPrice.
+     */
+    data: XOR<MarketPriceUpdateInput, MarketPriceUncheckedUpdateInput>
+    /**
+     * Choose, which MarketPrice to update.
+     */
+    where: MarketPriceWhereUniqueInput
+  }
+
+  /**
+   * MarketPrice updateMany
+   */
+  export type MarketPriceUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update MarketPrices.
+     */
+    data: XOR<MarketPriceUpdateManyMutationInput, MarketPriceUncheckedUpdateManyInput>
+    /**
+     * Filter which MarketPrices to update
+     */
+    where?: MarketPriceWhereInput
+  }
+
+  /**
+   * MarketPrice upsert
+   */
+  export type MarketPriceUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MarketPrice
+     */
+    select?: MarketPriceSelect<ExtArgs> | null
+    /**
+     * The filter to search for the MarketPrice to update in case it exists.
+     */
+    where: MarketPriceWhereUniqueInput
+    /**
+     * In case the MarketPrice found by the `where` argument doesn't exist, create a new MarketPrice with this data.
+     */
+    create: XOR<MarketPriceCreateInput, MarketPriceUncheckedCreateInput>
+    /**
+     * In case the MarketPrice was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<MarketPriceUpdateInput, MarketPriceUncheckedUpdateInput>
+  }
+
+  /**
+   * MarketPrice delete
+   */
+  export type MarketPriceDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MarketPrice
+     */
+    select?: MarketPriceSelect<ExtArgs> | null
+    /**
+     * Filter which MarketPrice to delete.
+     */
+    where: MarketPriceWhereUniqueInput
+  }
+
+  /**
+   * MarketPrice deleteMany
+   */
+  export type MarketPriceDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which MarketPrices to delete
+     */
+    where?: MarketPriceWhereInput
+  }
+
+  /**
+   * MarketPrice without action
+   */
+  export type MarketPriceDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MarketPrice
+     */
+    select?: MarketPriceSelect<ExtArgs> | null
+  }
+
+
+  /**
+   * Model SignalHistory
+   */
+
+  export type AggregateSignalHistory = {
+    _count: SignalHistoryCountAggregateOutputType | null
+    _avg: SignalHistoryAvgAggregateOutputType | null
+    _sum: SignalHistorySumAggregateOutputType | null
+    _min: SignalHistoryMinAggregateOutputType | null
+    _max: SignalHistoryMaxAggregateOutputType | null
+  }
+
+  export type SignalHistoryAvgAggregateOutputType = {
+    confidence: number | null
+    disagreement: number | null
+    instability: number | null
+    runsUsed: number | null
+    windowSize: number | null
+  }
+
+  export type SignalHistorySumAggregateOutputType = {
+    confidence: number | null
+    disagreement: number | null
+    instability: number | null
+    runsUsed: number | null
+    windowSize: number | null
+  }
+
+  export type SignalHistoryMinAggregateOutputType = {
+    id: string | null
+    symbol: string | null
+    signal: string | null
+    confidence: number | null
+    disagreement: number | null
+    instability: number | null
+    runsUsed: number | null
+    windowSize: number | null
+    sourceRunId: string | null
+    datasetVersion: string | null
+    strategyProfile: string | null
+    aggregationMode: string | null
+    selectionPolicy: string | null
+    createdAt: Date | null
+  }
+
+  export type SignalHistoryMaxAggregateOutputType = {
+    id: string | null
+    symbol: string | null
+    signal: string | null
+    confidence: number | null
+    disagreement: number | null
+    instability: number | null
+    runsUsed: number | null
+    windowSize: number | null
+    sourceRunId: string | null
+    datasetVersion: string | null
+    strategyProfile: string | null
+    aggregationMode: string | null
+    selectionPolicy: string | null
+    createdAt: Date | null
+  }
+
+  export type SignalHistoryCountAggregateOutputType = {
+    id: number
+    symbol: number
+    signal: number
+    confidence: number
+    disagreement: number
+    instability: number
+    runsUsed: number
+    windowSize: number
+    sourceRunId: number
+    datasetVersion: number
+    strategyProfile: number
+    aggregationMode: number
+    selectionPolicy: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type SignalHistoryAvgAggregateInputType = {
+    confidence?: true
+    disagreement?: true
+    instability?: true
+    runsUsed?: true
+    windowSize?: true
+  }
+
+  export type SignalHistorySumAggregateInputType = {
+    confidence?: true
+    disagreement?: true
+    instability?: true
+    runsUsed?: true
+    windowSize?: true
+  }
+
+  export type SignalHistoryMinAggregateInputType = {
+    id?: true
+    symbol?: true
+    signal?: true
+    confidence?: true
+    disagreement?: true
+    instability?: true
+    runsUsed?: true
+    windowSize?: true
+    sourceRunId?: true
+    datasetVersion?: true
+    strategyProfile?: true
+    aggregationMode?: true
+    selectionPolicy?: true
+    createdAt?: true
+  }
+
+  export type SignalHistoryMaxAggregateInputType = {
+    id?: true
+    symbol?: true
+    signal?: true
+    confidence?: true
+    disagreement?: true
+    instability?: true
+    runsUsed?: true
+    windowSize?: true
+    sourceRunId?: true
+    datasetVersion?: true
+    strategyProfile?: true
+    aggregationMode?: true
+    selectionPolicy?: true
+    createdAt?: true
+  }
+
+  export type SignalHistoryCountAggregateInputType = {
+    id?: true
+    symbol?: true
+    signal?: true
+    confidence?: true
+    disagreement?: true
+    instability?: true
+    runsUsed?: true
+    windowSize?: true
+    sourceRunId?: true
+    datasetVersion?: true
+    strategyProfile?: true
+    aggregationMode?: true
+    selectionPolicy?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type SignalHistoryAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SignalHistory to aggregate.
+     */
+    where?: SignalHistoryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SignalHistories to fetch.
+     */
+    orderBy?: SignalHistoryOrderByWithRelationInput | SignalHistoryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: SignalHistoryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SignalHistories from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SignalHistories.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned SignalHistories
+    **/
+    _count?: true | SignalHistoryCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: SignalHistoryAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: SignalHistorySumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: SignalHistoryMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: SignalHistoryMaxAggregateInputType
+  }
+
+  export type GetSignalHistoryAggregateType<T extends SignalHistoryAggregateArgs> = {
+        [P in keyof T & keyof AggregateSignalHistory]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateSignalHistory[P]>
+      : GetScalarType<T[P], AggregateSignalHistory[P]>
+  }
+
+
+
+
+  export type SignalHistoryGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SignalHistoryWhereInput
+    orderBy?: SignalHistoryOrderByWithAggregationInput | SignalHistoryOrderByWithAggregationInput[]
+    by: SignalHistoryScalarFieldEnum[] | SignalHistoryScalarFieldEnum
+    having?: SignalHistoryScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: SignalHistoryCountAggregateInputType | true
+    _avg?: SignalHistoryAvgAggregateInputType
+    _sum?: SignalHistorySumAggregateInputType
+    _min?: SignalHistoryMinAggregateInputType
+    _max?: SignalHistoryMaxAggregateInputType
+  }
+
+  export type SignalHistoryGroupByOutputType = {
+    id: string
+    symbol: string
+    signal: string
+    confidence: number
+    disagreement: number
+    instability: number
+    runsUsed: number
+    windowSize: number
+    sourceRunId: string | null
+    datasetVersion: string | null
+    strategyProfile: string | null
+    aggregationMode: string | null
+    selectionPolicy: string | null
+    createdAt: Date
+    _count: SignalHistoryCountAggregateOutputType | null
+    _avg: SignalHistoryAvgAggregateOutputType | null
+    _sum: SignalHistorySumAggregateOutputType | null
+    _min: SignalHistoryMinAggregateOutputType | null
+    _max: SignalHistoryMaxAggregateOutputType | null
+  }
+
+  type GetSignalHistoryGroupByPayload<T extends SignalHistoryGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<SignalHistoryGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof SignalHistoryGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], SignalHistoryGroupByOutputType[P]>
+            : GetScalarType<T[P], SignalHistoryGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type SignalHistorySelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    symbol?: boolean
+    signal?: boolean
+    confidence?: boolean
+    disagreement?: boolean
+    instability?: boolean
+    runsUsed?: boolean
+    windowSize?: boolean
+    sourceRunId?: boolean
+    datasetVersion?: boolean
+    strategyProfile?: boolean
+    aggregationMode?: boolean
+    selectionPolicy?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["signalHistory"]>
+
+  export type SignalHistorySelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    symbol?: boolean
+    signal?: boolean
+    confidence?: boolean
+    disagreement?: boolean
+    instability?: boolean
+    runsUsed?: boolean
+    windowSize?: boolean
+    sourceRunId?: boolean
+    datasetVersion?: boolean
+    strategyProfile?: boolean
+    aggregationMode?: boolean
+    selectionPolicy?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["signalHistory"]>
+
+  export type SignalHistorySelectScalar = {
+    id?: boolean
+    symbol?: boolean
+    signal?: boolean
+    confidence?: boolean
+    disagreement?: boolean
+    instability?: boolean
+    runsUsed?: boolean
+    windowSize?: boolean
+    sourceRunId?: boolean
+    datasetVersion?: boolean
+    strategyProfile?: boolean
+    aggregationMode?: boolean
+    selectionPolicy?: boolean
+    createdAt?: boolean
+  }
+
+
+  export type $SignalHistoryPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "SignalHistory"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      symbol: string
+      signal: string
+      confidence: number
+      disagreement: number
+      instability: number
+      runsUsed: number
+      windowSize: number
+      sourceRunId: string | null
+      datasetVersion: string | null
+      strategyProfile: string | null
+      aggregationMode: string | null
+      selectionPolicy: string | null
+      createdAt: Date
+    }, ExtArgs["result"]["signalHistory"]>
+    composites: {}
+  }
+
+  type SignalHistoryGetPayload<S extends boolean | null | undefined | SignalHistoryDefaultArgs> = $Result.GetResult<Prisma.$SignalHistoryPayload, S>
+
+  type SignalHistoryCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<SignalHistoryFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: SignalHistoryCountAggregateInputType | true
+    }
+
+  export interface SignalHistoryDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['SignalHistory'], meta: { name: 'SignalHistory' } }
+    /**
+     * Find zero or one SignalHistory that matches the filter.
+     * @param {SignalHistoryFindUniqueArgs} args - Arguments to find a SignalHistory
+     * @example
+     * // Get one SignalHistory
+     * const signalHistory = await prisma.signalHistory.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends SignalHistoryFindUniqueArgs>(args: SelectSubset<T, SignalHistoryFindUniqueArgs<ExtArgs>>): Prisma__SignalHistoryClient<$Result.GetResult<Prisma.$SignalHistoryPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one SignalHistory that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {SignalHistoryFindUniqueOrThrowArgs} args - Arguments to find a SignalHistory
+     * @example
+     * // Get one SignalHistory
+     * const signalHistory = await prisma.signalHistory.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends SignalHistoryFindUniqueOrThrowArgs>(args: SelectSubset<T, SignalHistoryFindUniqueOrThrowArgs<ExtArgs>>): Prisma__SignalHistoryClient<$Result.GetResult<Prisma.$SignalHistoryPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first SignalHistory that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SignalHistoryFindFirstArgs} args - Arguments to find a SignalHistory
+     * @example
+     * // Get one SignalHistory
+     * const signalHistory = await prisma.signalHistory.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends SignalHistoryFindFirstArgs>(args?: SelectSubset<T, SignalHistoryFindFirstArgs<ExtArgs>>): Prisma__SignalHistoryClient<$Result.GetResult<Prisma.$SignalHistoryPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first SignalHistory that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SignalHistoryFindFirstOrThrowArgs} args - Arguments to find a SignalHistory
+     * @example
+     * // Get one SignalHistory
+     * const signalHistory = await prisma.signalHistory.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends SignalHistoryFindFirstOrThrowArgs>(args?: SelectSubset<T, SignalHistoryFindFirstOrThrowArgs<ExtArgs>>): Prisma__SignalHistoryClient<$Result.GetResult<Prisma.$SignalHistoryPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more SignalHistories that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SignalHistoryFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all SignalHistories
+     * const signalHistories = await prisma.signalHistory.findMany()
+     * 
+     * // Get first 10 SignalHistories
+     * const signalHistories = await prisma.signalHistory.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const signalHistoryWithIdOnly = await prisma.signalHistory.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends SignalHistoryFindManyArgs>(args?: SelectSubset<T, SignalHistoryFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SignalHistoryPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a SignalHistory.
+     * @param {SignalHistoryCreateArgs} args - Arguments to create a SignalHistory.
+     * @example
+     * // Create one SignalHistory
+     * const SignalHistory = await prisma.signalHistory.create({
+     *   data: {
+     *     // ... data to create a SignalHistory
+     *   }
+     * })
+     * 
+     */
+    create<T extends SignalHistoryCreateArgs>(args: SelectSubset<T, SignalHistoryCreateArgs<ExtArgs>>): Prisma__SignalHistoryClient<$Result.GetResult<Prisma.$SignalHistoryPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many SignalHistories.
+     * @param {SignalHistoryCreateManyArgs} args - Arguments to create many SignalHistories.
+     * @example
+     * // Create many SignalHistories
+     * const signalHistory = await prisma.signalHistory.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends SignalHistoryCreateManyArgs>(args?: SelectSubset<T, SignalHistoryCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many SignalHistories and returns the data saved in the database.
+     * @param {SignalHistoryCreateManyAndReturnArgs} args - Arguments to create many SignalHistories.
+     * @example
+     * // Create many SignalHistories
+     * const signalHistory = await prisma.signalHistory.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many SignalHistories and only return the `id`
+     * const signalHistoryWithIdOnly = await prisma.signalHistory.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends SignalHistoryCreateManyAndReturnArgs>(args?: SelectSubset<T, SignalHistoryCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SignalHistoryPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a SignalHistory.
+     * @param {SignalHistoryDeleteArgs} args - Arguments to delete one SignalHistory.
+     * @example
+     * // Delete one SignalHistory
+     * const SignalHistory = await prisma.signalHistory.delete({
+     *   where: {
+     *     // ... filter to delete one SignalHistory
+     *   }
+     * })
+     * 
+     */
+    delete<T extends SignalHistoryDeleteArgs>(args: SelectSubset<T, SignalHistoryDeleteArgs<ExtArgs>>): Prisma__SignalHistoryClient<$Result.GetResult<Prisma.$SignalHistoryPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one SignalHistory.
+     * @param {SignalHistoryUpdateArgs} args - Arguments to update one SignalHistory.
+     * @example
+     * // Update one SignalHistory
+     * const signalHistory = await prisma.signalHistory.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends SignalHistoryUpdateArgs>(args: SelectSubset<T, SignalHistoryUpdateArgs<ExtArgs>>): Prisma__SignalHistoryClient<$Result.GetResult<Prisma.$SignalHistoryPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more SignalHistories.
+     * @param {SignalHistoryDeleteManyArgs} args - Arguments to filter SignalHistories to delete.
+     * @example
+     * // Delete a few SignalHistories
+     * const { count } = await prisma.signalHistory.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends SignalHistoryDeleteManyArgs>(args?: SelectSubset<T, SignalHistoryDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SignalHistories.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SignalHistoryUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many SignalHistories
+     * const signalHistory = await prisma.signalHistory.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends SignalHistoryUpdateManyArgs>(args: SelectSubset<T, SignalHistoryUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one SignalHistory.
+     * @param {SignalHistoryUpsertArgs} args - Arguments to update or create a SignalHistory.
+     * @example
+     * // Update or create a SignalHistory
+     * const signalHistory = await prisma.signalHistory.upsert({
+     *   create: {
+     *     // ... data to create a SignalHistory
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the SignalHistory we want to update
+     *   }
+     * })
+     */
+    upsert<T extends SignalHistoryUpsertArgs>(args: SelectSubset<T, SignalHistoryUpsertArgs<ExtArgs>>): Prisma__SignalHistoryClient<$Result.GetResult<Prisma.$SignalHistoryPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of SignalHistories.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SignalHistoryCountArgs} args - Arguments to filter SignalHistories to count.
+     * @example
+     * // Count the number of SignalHistories
+     * const count = await prisma.signalHistory.count({
+     *   where: {
+     *     // ... the filter for the SignalHistories we want to count
+     *   }
+     * })
+    **/
+    count<T extends SignalHistoryCountArgs>(
+      args?: Subset<T, SignalHistoryCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], SignalHistoryCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a SignalHistory.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SignalHistoryAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends SignalHistoryAggregateArgs>(args: Subset<T, SignalHistoryAggregateArgs>): Prisma.PrismaPromise<GetSignalHistoryAggregateType<T>>
+
+    /**
+     * Group by SignalHistory.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SignalHistoryGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends SignalHistoryGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: SignalHistoryGroupByArgs['orderBy'] }
+        : { orderBy?: SignalHistoryGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, SignalHistoryGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSignalHistoryGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the SignalHistory model
+   */
+  readonly fields: SignalHistoryFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for SignalHistory.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__SignalHistoryClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the SignalHistory model
+   */ 
+  interface SignalHistoryFieldRefs {
+    readonly id: FieldRef<"SignalHistory", 'String'>
+    readonly symbol: FieldRef<"SignalHistory", 'String'>
+    readonly signal: FieldRef<"SignalHistory", 'String'>
+    readonly confidence: FieldRef<"SignalHistory", 'Float'>
+    readonly disagreement: FieldRef<"SignalHistory", 'Float'>
+    readonly instability: FieldRef<"SignalHistory", 'Float'>
+    readonly runsUsed: FieldRef<"SignalHistory", 'Int'>
+    readonly windowSize: FieldRef<"SignalHistory", 'Int'>
+    readonly sourceRunId: FieldRef<"SignalHistory", 'String'>
+    readonly datasetVersion: FieldRef<"SignalHistory", 'String'>
+    readonly strategyProfile: FieldRef<"SignalHistory", 'String'>
+    readonly aggregationMode: FieldRef<"SignalHistory", 'String'>
+    readonly selectionPolicy: FieldRef<"SignalHistory", 'String'>
+    readonly createdAt: FieldRef<"SignalHistory", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * SignalHistory findUnique
+   */
+  export type SignalHistoryFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SignalHistory
+     */
+    select?: SignalHistorySelect<ExtArgs> | null
+    /**
+     * Filter, which SignalHistory to fetch.
+     */
+    where: SignalHistoryWhereUniqueInput
+  }
+
+  /**
+   * SignalHistory findUniqueOrThrow
+   */
+  export type SignalHistoryFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SignalHistory
+     */
+    select?: SignalHistorySelect<ExtArgs> | null
+    /**
+     * Filter, which SignalHistory to fetch.
+     */
+    where: SignalHistoryWhereUniqueInput
+  }
+
+  /**
+   * SignalHistory findFirst
+   */
+  export type SignalHistoryFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SignalHistory
+     */
+    select?: SignalHistorySelect<ExtArgs> | null
+    /**
+     * Filter, which SignalHistory to fetch.
+     */
+    where?: SignalHistoryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SignalHistories to fetch.
+     */
+    orderBy?: SignalHistoryOrderByWithRelationInput | SignalHistoryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SignalHistories.
+     */
+    cursor?: SignalHistoryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SignalHistories from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SignalHistories.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SignalHistories.
+     */
+    distinct?: SignalHistoryScalarFieldEnum | SignalHistoryScalarFieldEnum[]
+  }
+
+  /**
+   * SignalHistory findFirstOrThrow
+   */
+  export type SignalHistoryFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SignalHistory
+     */
+    select?: SignalHistorySelect<ExtArgs> | null
+    /**
+     * Filter, which SignalHistory to fetch.
+     */
+    where?: SignalHistoryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SignalHistories to fetch.
+     */
+    orderBy?: SignalHistoryOrderByWithRelationInput | SignalHistoryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SignalHistories.
+     */
+    cursor?: SignalHistoryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SignalHistories from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SignalHistories.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SignalHistories.
+     */
+    distinct?: SignalHistoryScalarFieldEnum | SignalHistoryScalarFieldEnum[]
+  }
+
+  /**
+   * SignalHistory findMany
+   */
+  export type SignalHistoryFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SignalHistory
+     */
+    select?: SignalHistorySelect<ExtArgs> | null
+    /**
+     * Filter, which SignalHistories to fetch.
+     */
+    where?: SignalHistoryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SignalHistories to fetch.
+     */
+    orderBy?: SignalHistoryOrderByWithRelationInput | SignalHistoryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing SignalHistories.
+     */
+    cursor?: SignalHistoryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SignalHistories from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SignalHistories.
+     */
+    skip?: number
+    distinct?: SignalHistoryScalarFieldEnum | SignalHistoryScalarFieldEnum[]
+  }
+
+  /**
+   * SignalHistory create
+   */
+  export type SignalHistoryCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SignalHistory
+     */
+    select?: SignalHistorySelect<ExtArgs> | null
+    /**
+     * The data needed to create a SignalHistory.
+     */
+    data: XOR<SignalHistoryCreateInput, SignalHistoryUncheckedCreateInput>
+  }
+
+  /**
+   * SignalHistory createMany
+   */
+  export type SignalHistoryCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many SignalHistories.
+     */
+    data: SignalHistoryCreateManyInput | SignalHistoryCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * SignalHistory createManyAndReturn
+   */
+  export type SignalHistoryCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SignalHistory
+     */
+    select?: SignalHistorySelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many SignalHistories.
+     */
+    data: SignalHistoryCreateManyInput | SignalHistoryCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * SignalHistory update
+   */
+  export type SignalHistoryUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SignalHistory
+     */
+    select?: SignalHistorySelect<ExtArgs> | null
+    /**
+     * The data needed to update a SignalHistory.
+     */
+    data: XOR<SignalHistoryUpdateInput, SignalHistoryUncheckedUpdateInput>
+    /**
+     * Choose, which SignalHistory to update.
+     */
+    where: SignalHistoryWhereUniqueInput
+  }
+
+  /**
+   * SignalHistory updateMany
+   */
+  export type SignalHistoryUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update SignalHistories.
+     */
+    data: XOR<SignalHistoryUpdateManyMutationInput, SignalHistoryUncheckedUpdateManyInput>
+    /**
+     * Filter which SignalHistories to update
+     */
+    where?: SignalHistoryWhereInput
+  }
+
+  /**
+   * SignalHistory upsert
+   */
+  export type SignalHistoryUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SignalHistory
+     */
+    select?: SignalHistorySelect<ExtArgs> | null
+    /**
+     * The filter to search for the SignalHistory to update in case it exists.
+     */
+    where: SignalHistoryWhereUniqueInput
+    /**
+     * In case the SignalHistory found by the `where` argument doesn't exist, create a new SignalHistory with this data.
+     */
+    create: XOR<SignalHistoryCreateInput, SignalHistoryUncheckedCreateInput>
+    /**
+     * In case the SignalHistory was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<SignalHistoryUpdateInput, SignalHistoryUncheckedUpdateInput>
+  }
+
+  /**
+   * SignalHistory delete
+   */
+  export type SignalHistoryDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SignalHistory
+     */
+    select?: SignalHistorySelect<ExtArgs> | null
+    /**
+     * Filter which SignalHistory to delete.
+     */
+    where: SignalHistoryWhereUniqueInput
+  }
+
+  /**
+   * SignalHistory deleteMany
+   */
+  export type SignalHistoryDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SignalHistories to delete
+     */
+    where?: SignalHistoryWhereInput
+  }
+
+  /**
+   * SignalHistory without action
+   */
+  export type SignalHistoryDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SignalHistory
+     */
+    select?: SignalHistorySelect<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -38542,6 +41734,9 @@ export namespace Prisma {
     seed: 'seed',
     modelVersion: 'modelVersion',
     datasetVersion: 'datasetVersion',
+    strategyProfile: 'strategyProfile',
+    aggregationMode: 'aggregationMode',
+    selectionPolicy: 'selectionPolicy',
     codeGitSha: 'codeGitSha',
     schemaVersion: 'schemaVersion',
     startedAt: 'startedAt',
@@ -38995,6 +42190,53 @@ export namespace Prisma {
   };
 
   export type BenchWindowSnapshotScalarFieldEnum = (typeof BenchWindowSnapshotScalarFieldEnum)[keyof typeof BenchWindowSnapshotScalarFieldEnum]
+
+
+  export const MarketDataPayloadScalarFieldEnum: {
+    id: 'id',
+    provider: 'provider',
+    symbol: 'symbol',
+    payloadJson: 'payloadJson',
+    fetchedAt: 'fetchedAt',
+    datasetVersion: 'datasetVersion'
+  };
+
+  export type MarketDataPayloadScalarFieldEnum = (typeof MarketDataPayloadScalarFieldEnum)[keyof typeof MarketDataPayloadScalarFieldEnum]
+
+
+  export const MarketPriceScalarFieldEnum: {
+    id: 'id',
+    datasetVersion: 'datasetVersion',
+    symbol: 'symbol',
+    timestamp: 'timestamp',
+    open: 'open',
+    high: 'high',
+    low: 'low',
+    close: 'close',
+    volume: 'volume'
+  };
+
+  export type MarketPriceScalarFieldEnum = (typeof MarketPriceScalarFieldEnum)[keyof typeof MarketPriceScalarFieldEnum]
+
+
+  export const SignalHistoryScalarFieldEnum: {
+    id: 'id',
+    symbol: 'symbol',
+    signal: 'signal',
+    confidence: 'confidence',
+    disagreement: 'disagreement',
+    instability: 'instability',
+    runsUsed: 'runsUsed',
+    windowSize: 'windowSize',
+    sourceRunId: 'sourceRunId',
+    datasetVersion: 'datasetVersion',
+    strategyProfile: 'strategyProfile',
+    aggregationMode: 'aggregationMode',
+    selectionPolicy: 'selectionPolicy',
+    createdAt: 'createdAt'
+  };
+
+  export type SignalHistoryScalarFieldEnum = (typeof SignalHistoryScalarFieldEnum)[keyof typeof SignalHistoryScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -39502,6 +42744,9 @@ export namespace Prisma {
     seed?: IntFilter<"SimulationRun"> | number
     modelVersion?: StringFilter<"SimulationRun"> | string
     datasetVersion?: StringFilter<"SimulationRun"> | string
+    strategyProfile?: StringNullableFilter<"SimulationRun"> | string | null
+    aggregationMode?: StringNullableFilter<"SimulationRun"> | string | null
+    selectionPolicy?: StringNullableFilter<"SimulationRun"> | string | null
     codeGitSha?: StringNullableFilter<"SimulationRun"> | string | null
     schemaVersion?: StringFilter<"SimulationRun"> | string
     startedAt?: DateTimeNullableFilter<"SimulationRun"> | Date | string | null
@@ -39536,6 +42781,9 @@ export namespace Prisma {
     seed?: SortOrder
     modelVersion?: SortOrder
     datasetVersion?: SortOrder
+    strategyProfile?: SortOrderInput | SortOrder
+    aggregationMode?: SortOrderInput | SortOrder
+    selectionPolicy?: SortOrderInput | SortOrder
     codeGitSha?: SortOrderInput | SortOrder
     schemaVersion?: SortOrder
     startedAt?: SortOrderInput | SortOrder
@@ -39574,6 +42822,9 @@ export namespace Prisma {
     seed?: IntFilter<"SimulationRun"> | number
     modelVersion?: StringFilter<"SimulationRun"> | string
     datasetVersion?: StringFilter<"SimulationRun"> | string
+    strategyProfile?: StringNullableFilter<"SimulationRun"> | string | null
+    aggregationMode?: StringNullableFilter<"SimulationRun"> | string | null
+    selectionPolicy?: StringNullableFilter<"SimulationRun"> | string | null
     codeGitSha?: StringNullableFilter<"SimulationRun"> | string | null
     schemaVersion?: StringFilter<"SimulationRun"> | string
     startedAt?: DateTimeNullableFilter<"SimulationRun"> | Date | string | null
@@ -39608,6 +42859,9 @@ export namespace Prisma {
     seed?: SortOrder
     modelVersion?: SortOrder
     datasetVersion?: SortOrder
+    strategyProfile?: SortOrderInput | SortOrder
+    aggregationMode?: SortOrderInput | SortOrder
+    selectionPolicy?: SortOrderInput | SortOrder
     codeGitSha?: SortOrderInput | SortOrder
     schemaVersion?: SortOrder
     startedAt?: SortOrderInput | SortOrder
@@ -39636,6 +42890,9 @@ export namespace Prisma {
     seed?: IntWithAggregatesFilter<"SimulationRun"> | number
     modelVersion?: StringWithAggregatesFilter<"SimulationRun"> | string
     datasetVersion?: StringWithAggregatesFilter<"SimulationRun"> | string
+    strategyProfile?: StringNullableWithAggregatesFilter<"SimulationRun"> | string | null
+    aggregationMode?: StringNullableWithAggregatesFilter<"SimulationRun"> | string | null
+    selectionPolicy?: StringNullableWithAggregatesFilter<"SimulationRun"> | string | null
     codeGitSha?: StringNullableWithAggregatesFilter<"SimulationRun"> | string | null
     schemaVersion?: StringWithAggregatesFilter<"SimulationRun"> | string
     startedAt?: DateTimeNullableWithAggregatesFilter<"SimulationRun"> | Date | string | null
@@ -41958,6 +45215,237 @@ export namespace Prisma {
     isBaseline?: BoolWithAggregatesFilter<"BenchWindowSnapshot"> | boolean
   }
 
+  export type MarketDataPayloadWhereInput = {
+    AND?: MarketDataPayloadWhereInput | MarketDataPayloadWhereInput[]
+    OR?: MarketDataPayloadWhereInput[]
+    NOT?: MarketDataPayloadWhereInput | MarketDataPayloadWhereInput[]
+    id?: UuidFilter<"MarketDataPayload"> | string
+    provider?: StringFilter<"MarketDataPayload"> | string
+    symbol?: StringFilter<"MarketDataPayload"> | string
+    payloadJson?: JsonFilter<"MarketDataPayload">
+    fetchedAt?: DateTimeFilter<"MarketDataPayload"> | Date | string
+    datasetVersion?: StringFilter<"MarketDataPayload"> | string
+  }
+
+  export type MarketDataPayloadOrderByWithRelationInput = {
+    id?: SortOrder
+    provider?: SortOrder
+    symbol?: SortOrder
+    payloadJson?: SortOrder
+    fetchedAt?: SortOrder
+    datasetVersion?: SortOrder
+  }
+
+  export type MarketDataPayloadWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: MarketDataPayloadWhereInput | MarketDataPayloadWhereInput[]
+    OR?: MarketDataPayloadWhereInput[]
+    NOT?: MarketDataPayloadWhereInput | MarketDataPayloadWhereInput[]
+    provider?: StringFilter<"MarketDataPayload"> | string
+    symbol?: StringFilter<"MarketDataPayload"> | string
+    payloadJson?: JsonFilter<"MarketDataPayload">
+    fetchedAt?: DateTimeFilter<"MarketDataPayload"> | Date | string
+    datasetVersion?: StringFilter<"MarketDataPayload"> | string
+  }, "id">
+
+  export type MarketDataPayloadOrderByWithAggregationInput = {
+    id?: SortOrder
+    provider?: SortOrder
+    symbol?: SortOrder
+    payloadJson?: SortOrder
+    fetchedAt?: SortOrder
+    datasetVersion?: SortOrder
+    _count?: MarketDataPayloadCountOrderByAggregateInput
+    _max?: MarketDataPayloadMaxOrderByAggregateInput
+    _min?: MarketDataPayloadMinOrderByAggregateInput
+  }
+
+  export type MarketDataPayloadScalarWhereWithAggregatesInput = {
+    AND?: MarketDataPayloadScalarWhereWithAggregatesInput | MarketDataPayloadScalarWhereWithAggregatesInput[]
+    OR?: MarketDataPayloadScalarWhereWithAggregatesInput[]
+    NOT?: MarketDataPayloadScalarWhereWithAggregatesInput | MarketDataPayloadScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"MarketDataPayload"> | string
+    provider?: StringWithAggregatesFilter<"MarketDataPayload"> | string
+    symbol?: StringWithAggregatesFilter<"MarketDataPayload"> | string
+    payloadJson?: JsonWithAggregatesFilter<"MarketDataPayload">
+    fetchedAt?: DateTimeWithAggregatesFilter<"MarketDataPayload"> | Date | string
+    datasetVersion?: StringWithAggregatesFilter<"MarketDataPayload"> | string
+  }
+
+  export type MarketPriceWhereInput = {
+    AND?: MarketPriceWhereInput | MarketPriceWhereInput[]
+    OR?: MarketPriceWhereInput[]
+    NOT?: MarketPriceWhereInput | MarketPriceWhereInput[]
+    id?: UuidFilter<"MarketPrice"> | string
+    datasetVersion?: StringFilter<"MarketPrice"> | string
+    symbol?: StringFilter<"MarketPrice"> | string
+    timestamp?: DateTimeFilter<"MarketPrice"> | Date | string
+    open?: FloatFilter<"MarketPrice"> | number
+    high?: FloatFilter<"MarketPrice"> | number
+    low?: FloatFilter<"MarketPrice"> | number
+    close?: FloatFilter<"MarketPrice"> | number
+    volume?: IntNullableFilter<"MarketPrice"> | number | null
+  }
+
+  export type MarketPriceOrderByWithRelationInput = {
+    id?: SortOrder
+    datasetVersion?: SortOrder
+    symbol?: SortOrder
+    timestamp?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrderInput | SortOrder
+  }
+
+  export type MarketPriceWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    datasetVersion_symbol_timestamp?: MarketPriceDatasetVersionSymbolTimestampCompoundUniqueInput
+    AND?: MarketPriceWhereInput | MarketPriceWhereInput[]
+    OR?: MarketPriceWhereInput[]
+    NOT?: MarketPriceWhereInput | MarketPriceWhereInput[]
+    datasetVersion?: StringFilter<"MarketPrice"> | string
+    symbol?: StringFilter<"MarketPrice"> | string
+    timestamp?: DateTimeFilter<"MarketPrice"> | Date | string
+    open?: FloatFilter<"MarketPrice"> | number
+    high?: FloatFilter<"MarketPrice"> | number
+    low?: FloatFilter<"MarketPrice"> | number
+    close?: FloatFilter<"MarketPrice"> | number
+    volume?: IntNullableFilter<"MarketPrice"> | number | null
+  }, "id" | "datasetVersion_symbol_timestamp">
+
+  export type MarketPriceOrderByWithAggregationInput = {
+    id?: SortOrder
+    datasetVersion?: SortOrder
+    symbol?: SortOrder
+    timestamp?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrderInput | SortOrder
+    _count?: MarketPriceCountOrderByAggregateInput
+    _avg?: MarketPriceAvgOrderByAggregateInput
+    _max?: MarketPriceMaxOrderByAggregateInput
+    _min?: MarketPriceMinOrderByAggregateInput
+    _sum?: MarketPriceSumOrderByAggregateInput
+  }
+
+  export type MarketPriceScalarWhereWithAggregatesInput = {
+    AND?: MarketPriceScalarWhereWithAggregatesInput | MarketPriceScalarWhereWithAggregatesInput[]
+    OR?: MarketPriceScalarWhereWithAggregatesInput[]
+    NOT?: MarketPriceScalarWhereWithAggregatesInput | MarketPriceScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"MarketPrice"> | string
+    datasetVersion?: StringWithAggregatesFilter<"MarketPrice"> | string
+    symbol?: StringWithAggregatesFilter<"MarketPrice"> | string
+    timestamp?: DateTimeWithAggregatesFilter<"MarketPrice"> | Date | string
+    open?: FloatWithAggregatesFilter<"MarketPrice"> | number
+    high?: FloatWithAggregatesFilter<"MarketPrice"> | number
+    low?: FloatWithAggregatesFilter<"MarketPrice"> | number
+    close?: FloatWithAggregatesFilter<"MarketPrice"> | number
+    volume?: IntNullableWithAggregatesFilter<"MarketPrice"> | number | null
+  }
+
+  export type SignalHistoryWhereInput = {
+    AND?: SignalHistoryWhereInput | SignalHistoryWhereInput[]
+    OR?: SignalHistoryWhereInput[]
+    NOT?: SignalHistoryWhereInput | SignalHistoryWhereInput[]
+    id?: UuidFilter<"SignalHistory"> | string
+    symbol?: StringFilter<"SignalHistory"> | string
+    signal?: StringFilter<"SignalHistory"> | string
+    confidence?: FloatFilter<"SignalHistory"> | number
+    disagreement?: FloatFilter<"SignalHistory"> | number
+    instability?: FloatFilter<"SignalHistory"> | number
+    runsUsed?: IntFilter<"SignalHistory"> | number
+    windowSize?: IntFilter<"SignalHistory"> | number
+    sourceRunId?: UuidNullableFilter<"SignalHistory"> | string | null
+    datasetVersion?: StringNullableFilter<"SignalHistory"> | string | null
+    strategyProfile?: StringNullableFilter<"SignalHistory"> | string | null
+    aggregationMode?: StringNullableFilter<"SignalHistory"> | string | null
+    selectionPolicy?: StringNullableFilter<"SignalHistory"> | string | null
+    createdAt?: DateTimeFilter<"SignalHistory"> | Date | string
+  }
+
+  export type SignalHistoryOrderByWithRelationInput = {
+    id?: SortOrder
+    symbol?: SortOrder
+    signal?: SortOrder
+    confidence?: SortOrder
+    disagreement?: SortOrder
+    instability?: SortOrder
+    runsUsed?: SortOrder
+    windowSize?: SortOrder
+    sourceRunId?: SortOrderInput | SortOrder
+    datasetVersion?: SortOrderInput | SortOrder
+    strategyProfile?: SortOrderInput | SortOrder
+    aggregationMode?: SortOrderInput | SortOrder
+    selectionPolicy?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type SignalHistoryWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: SignalHistoryWhereInput | SignalHistoryWhereInput[]
+    OR?: SignalHistoryWhereInput[]
+    NOT?: SignalHistoryWhereInput | SignalHistoryWhereInput[]
+    symbol?: StringFilter<"SignalHistory"> | string
+    signal?: StringFilter<"SignalHistory"> | string
+    confidence?: FloatFilter<"SignalHistory"> | number
+    disagreement?: FloatFilter<"SignalHistory"> | number
+    instability?: FloatFilter<"SignalHistory"> | number
+    runsUsed?: IntFilter<"SignalHistory"> | number
+    windowSize?: IntFilter<"SignalHistory"> | number
+    sourceRunId?: UuidNullableFilter<"SignalHistory"> | string | null
+    datasetVersion?: StringNullableFilter<"SignalHistory"> | string | null
+    strategyProfile?: StringNullableFilter<"SignalHistory"> | string | null
+    aggregationMode?: StringNullableFilter<"SignalHistory"> | string | null
+    selectionPolicy?: StringNullableFilter<"SignalHistory"> | string | null
+    createdAt?: DateTimeFilter<"SignalHistory"> | Date | string
+  }, "id">
+
+  export type SignalHistoryOrderByWithAggregationInput = {
+    id?: SortOrder
+    symbol?: SortOrder
+    signal?: SortOrder
+    confidence?: SortOrder
+    disagreement?: SortOrder
+    instability?: SortOrder
+    runsUsed?: SortOrder
+    windowSize?: SortOrder
+    sourceRunId?: SortOrderInput | SortOrder
+    datasetVersion?: SortOrderInput | SortOrder
+    strategyProfile?: SortOrderInput | SortOrder
+    aggregationMode?: SortOrderInput | SortOrder
+    selectionPolicy?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: SignalHistoryCountOrderByAggregateInput
+    _avg?: SignalHistoryAvgOrderByAggregateInput
+    _max?: SignalHistoryMaxOrderByAggregateInput
+    _min?: SignalHistoryMinOrderByAggregateInput
+    _sum?: SignalHistorySumOrderByAggregateInput
+  }
+
+  export type SignalHistoryScalarWhereWithAggregatesInput = {
+    AND?: SignalHistoryScalarWhereWithAggregatesInput | SignalHistoryScalarWhereWithAggregatesInput[]
+    OR?: SignalHistoryScalarWhereWithAggregatesInput[]
+    NOT?: SignalHistoryScalarWhereWithAggregatesInput | SignalHistoryScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"SignalHistory"> | string
+    symbol?: StringWithAggregatesFilter<"SignalHistory"> | string
+    signal?: StringWithAggregatesFilter<"SignalHistory"> | string
+    confidence?: FloatWithAggregatesFilter<"SignalHistory"> | number
+    disagreement?: FloatWithAggregatesFilter<"SignalHistory"> | number
+    instability?: FloatWithAggregatesFilter<"SignalHistory"> | number
+    runsUsed?: IntWithAggregatesFilter<"SignalHistory"> | number
+    windowSize?: IntWithAggregatesFilter<"SignalHistory"> | number
+    sourceRunId?: UuidNullableWithAggregatesFilter<"SignalHistory"> | string | null
+    datasetVersion?: StringNullableWithAggregatesFilter<"SignalHistory"> | string | null
+    strategyProfile?: StringNullableWithAggregatesFilter<"SignalHistory"> | string | null
+    aggregationMode?: StringNullableWithAggregatesFilter<"SignalHistory"> | string | null
+    selectionPolicy?: StringNullableWithAggregatesFilter<"SignalHistory"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"SignalHistory"> | Date | string
+  }
+
   export type ArchetypeCreateInput = {
     id?: string
     name: string
@@ -42268,6 +45756,9 @@ export namespace Prisma {
     seed: number
     modelVersion: string
     datasetVersion: string
+    strategyProfile?: string | null
+    aggregationMode?: string | null
+    selectionPolicy?: string | null
     codeGitSha?: string | null
     schemaVersion: string
     startedAt?: Date | string | null
@@ -42302,6 +45793,9 @@ export namespace Prisma {
     seed: number
     modelVersion: string
     datasetVersion: string
+    strategyProfile?: string | null
+    aggregationMode?: string | null
+    selectionPolicy?: string | null
     codeGitSha?: string | null
     schemaVersion: string
     startedAt?: Date | string | null
@@ -42336,6 +45830,9 @@ export namespace Prisma {
     seed?: IntFieldUpdateOperationsInput | number
     modelVersion?: StringFieldUpdateOperationsInput | string
     datasetVersion?: StringFieldUpdateOperationsInput | string
+    strategyProfile?: NullableStringFieldUpdateOperationsInput | string | null
+    aggregationMode?: NullableStringFieldUpdateOperationsInput | string | null
+    selectionPolicy?: NullableStringFieldUpdateOperationsInput | string | null
     codeGitSha?: NullableStringFieldUpdateOperationsInput | string | null
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -42370,6 +45867,9 @@ export namespace Prisma {
     seed?: IntFieldUpdateOperationsInput | number
     modelVersion?: StringFieldUpdateOperationsInput | string
     datasetVersion?: StringFieldUpdateOperationsInput | string
+    strategyProfile?: NullableStringFieldUpdateOperationsInput | string | null
+    aggregationMode?: NullableStringFieldUpdateOperationsInput | string | null
+    selectionPolicy?: NullableStringFieldUpdateOperationsInput | string | null
     codeGitSha?: NullableStringFieldUpdateOperationsInput | string | null
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -42404,6 +45904,9 @@ export namespace Prisma {
     seed: number
     modelVersion: string
     datasetVersion: string
+    strategyProfile?: string | null
+    aggregationMode?: string | null
+    selectionPolicy?: string | null
     codeGitSha?: string | null
     schemaVersion: string
     startedAt?: Date | string | null
@@ -42424,6 +45927,9 @@ export namespace Prisma {
     seed?: IntFieldUpdateOperationsInput | number
     modelVersion?: StringFieldUpdateOperationsInput | string
     datasetVersion?: StringFieldUpdateOperationsInput | string
+    strategyProfile?: NullableStringFieldUpdateOperationsInput | string | null
+    aggregationMode?: NullableStringFieldUpdateOperationsInput | string | null
+    selectionPolicy?: NullableStringFieldUpdateOperationsInput | string | null
     codeGitSha?: NullableStringFieldUpdateOperationsInput | string | null
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -42444,6 +45950,9 @@ export namespace Prisma {
     seed?: IntFieldUpdateOperationsInput | number
     modelVersion?: StringFieldUpdateOperationsInput | string
     datasetVersion?: StringFieldUpdateOperationsInput | string
+    strategyProfile?: NullableStringFieldUpdateOperationsInput | string | null
+    aggregationMode?: NullableStringFieldUpdateOperationsInput | string | null
+    selectionPolicy?: NullableStringFieldUpdateOperationsInput | string | null
     codeGitSha?: NullableStringFieldUpdateOperationsInput | string | null
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -44993,6 +48502,272 @@ export namespace Prisma {
     isBaseline?: BoolFieldUpdateOperationsInput | boolean
   }
 
+  export type MarketDataPayloadCreateInput = {
+    id?: string
+    provider: string
+    symbol: string
+    payloadJson: JsonNullValueInput | InputJsonValue
+    fetchedAt?: Date | string
+    datasetVersion: string
+  }
+
+  export type MarketDataPayloadUncheckedCreateInput = {
+    id?: string
+    provider: string
+    symbol: string
+    payloadJson: JsonNullValueInput | InputJsonValue
+    fetchedAt?: Date | string
+    datasetVersion: string
+  }
+
+  export type MarketDataPayloadUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    provider?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    payloadJson?: JsonNullValueInput | InputJsonValue
+    fetchedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    datasetVersion?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type MarketDataPayloadUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    provider?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    payloadJson?: JsonNullValueInput | InputJsonValue
+    fetchedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    datasetVersion?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type MarketDataPayloadCreateManyInput = {
+    id?: string
+    provider: string
+    symbol: string
+    payloadJson: JsonNullValueInput | InputJsonValue
+    fetchedAt?: Date | string
+    datasetVersion: string
+  }
+
+  export type MarketDataPayloadUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    provider?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    payloadJson?: JsonNullValueInput | InputJsonValue
+    fetchedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    datasetVersion?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type MarketDataPayloadUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    provider?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    payloadJson?: JsonNullValueInput | InputJsonValue
+    fetchedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    datasetVersion?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type MarketPriceCreateInput = {
+    id?: string
+    datasetVersion: string
+    symbol: string
+    timestamp: Date | string
+    open: number
+    high: number
+    low: number
+    close: number
+    volume?: number | null
+  }
+
+  export type MarketPriceUncheckedCreateInput = {
+    id?: string
+    datasetVersion: string
+    symbol: string
+    timestamp: Date | string
+    open: number
+    high: number
+    low: number
+    close: number
+    volume?: number | null
+  }
+
+  export type MarketPriceUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    datasetVersion?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    timestamp?: DateTimeFieldUpdateOperationsInput | Date | string
+    open?: FloatFieldUpdateOperationsInput | number
+    high?: FloatFieldUpdateOperationsInput | number
+    low?: FloatFieldUpdateOperationsInput | number
+    close?: FloatFieldUpdateOperationsInput | number
+    volume?: NullableIntFieldUpdateOperationsInput | number | null
+  }
+
+  export type MarketPriceUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    datasetVersion?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    timestamp?: DateTimeFieldUpdateOperationsInput | Date | string
+    open?: FloatFieldUpdateOperationsInput | number
+    high?: FloatFieldUpdateOperationsInput | number
+    low?: FloatFieldUpdateOperationsInput | number
+    close?: FloatFieldUpdateOperationsInput | number
+    volume?: NullableIntFieldUpdateOperationsInput | number | null
+  }
+
+  export type MarketPriceCreateManyInput = {
+    id?: string
+    datasetVersion: string
+    symbol: string
+    timestamp: Date | string
+    open: number
+    high: number
+    low: number
+    close: number
+    volume?: number | null
+  }
+
+  export type MarketPriceUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    datasetVersion?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    timestamp?: DateTimeFieldUpdateOperationsInput | Date | string
+    open?: FloatFieldUpdateOperationsInput | number
+    high?: FloatFieldUpdateOperationsInput | number
+    low?: FloatFieldUpdateOperationsInput | number
+    close?: FloatFieldUpdateOperationsInput | number
+    volume?: NullableIntFieldUpdateOperationsInput | number | null
+  }
+
+  export type MarketPriceUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    datasetVersion?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    timestamp?: DateTimeFieldUpdateOperationsInput | Date | string
+    open?: FloatFieldUpdateOperationsInput | number
+    high?: FloatFieldUpdateOperationsInput | number
+    low?: FloatFieldUpdateOperationsInput | number
+    close?: FloatFieldUpdateOperationsInput | number
+    volume?: NullableIntFieldUpdateOperationsInput | number | null
+  }
+
+  export type SignalHistoryCreateInput = {
+    id?: string
+    symbol: string
+    signal: string
+    confidence: number
+    disagreement: number
+    instability: number
+    runsUsed: number
+    windowSize: number
+    sourceRunId?: string | null
+    datasetVersion?: string | null
+    strategyProfile?: string | null
+    aggregationMode?: string | null
+    selectionPolicy?: string | null
+    createdAt?: Date | string
+  }
+
+  export type SignalHistoryUncheckedCreateInput = {
+    id?: string
+    symbol: string
+    signal: string
+    confidence: number
+    disagreement: number
+    instability: number
+    runsUsed: number
+    windowSize: number
+    sourceRunId?: string | null
+    datasetVersion?: string | null
+    strategyProfile?: string | null
+    aggregationMode?: string | null
+    selectionPolicy?: string | null
+    createdAt?: Date | string
+  }
+
+  export type SignalHistoryUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    signal?: StringFieldUpdateOperationsInput | string
+    confidence?: FloatFieldUpdateOperationsInput | number
+    disagreement?: FloatFieldUpdateOperationsInput | number
+    instability?: FloatFieldUpdateOperationsInput | number
+    runsUsed?: IntFieldUpdateOperationsInput | number
+    windowSize?: IntFieldUpdateOperationsInput | number
+    sourceRunId?: NullableStringFieldUpdateOperationsInput | string | null
+    datasetVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    strategyProfile?: NullableStringFieldUpdateOperationsInput | string | null
+    aggregationMode?: NullableStringFieldUpdateOperationsInput | string | null
+    selectionPolicy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SignalHistoryUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    signal?: StringFieldUpdateOperationsInput | string
+    confidence?: FloatFieldUpdateOperationsInput | number
+    disagreement?: FloatFieldUpdateOperationsInput | number
+    instability?: FloatFieldUpdateOperationsInput | number
+    runsUsed?: IntFieldUpdateOperationsInput | number
+    windowSize?: IntFieldUpdateOperationsInput | number
+    sourceRunId?: NullableStringFieldUpdateOperationsInput | string | null
+    datasetVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    strategyProfile?: NullableStringFieldUpdateOperationsInput | string | null
+    aggregationMode?: NullableStringFieldUpdateOperationsInput | string | null
+    selectionPolicy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SignalHistoryCreateManyInput = {
+    id?: string
+    symbol: string
+    signal: string
+    confidence: number
+    disagreement: number
+    instability: number
+    runsUsed: number
+    windowSize: number
+    sourceRunId?: string | null
+    datasetVersion?: string | null
+    strategyProfile?: string | null
+    aggregationMode?: string | null
+    selectionPolicy?: string | null
+    createdAt?: Date | string
+  }
+
+  export type SignalHistoryUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    signal?: StringFieldUpdateOperationsInput | string
+    confidence?: FloatFieldUpdateOperationsInput | number
+    disagreement?: FloatFieldUpdateOperationsInput | number
+    instability?: FloatFieldUpdateOperationsInput | number
+    runsUsed?: IntFieldUpdateOperationsInput | number
+    windowSize?: IntFieldUpdateOperationsInput | number
+    sourceRunId?: NullableStringFieldUpdateOperationsInput | string | null
+    datasetVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    strategyProfile?: NullableStringFieldUpdateOperationsInput | string | null
+    aggregationMode?: NullableStringFieldUpdateOperationsInput | string | null
+    selectionPolicy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SignalHistoryUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    signal?: StringFieldUpdateOperationsInput | string
+    confidence?: FloatFieldUpdateOperationsInput | number
+    disagreement?: FloatFieldUpdateOperationsInput | number
+    instability?: FloatFieldUpdateOperationsInput | number
+    runsUsed?: IntFieldUpdateOperationsInput | number
+    windowSize?: IntFieldUpdateOperationsInput | number
+    sourceRunId?: NullableStringFieldUpdateOperationsInput | string | null
+    datasetVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    strategyProfile?: NullableStringFieldUpdateOperationsInput | string | null
+    aggregationMode?: NullableStringFieldUpdateOperationsInput | string | null
+    selectionPolicy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type UuidFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -45596,6 +49371,9 @@ export namespace Prisma {
     seed?: SortOrder
     modelVersion?: SortOrder
     datasetVersion?: SortOrder
+    strategyProfile?: SortOrder
+    aggregationMode?: SortOrder
+    selectionPolicy?: SortOrder
     codeGitSha?: SortOrder
     schemaVersion?: SortOrder
     startedAt?: SortOrder
@@ -45621,6 +49399,9 @@ export namespace Prisma {
     seed?: SortOrder
     modelVersion?: SortOrder
     datasetVersion?: SortOrder
+    strategyProfile?: SortOrder
+    aggregationMode?: SortOrder
+    selectionPolicy?: SortOrder
     codeGitSha?: SortOrder
     schemaVersion?: SortOrder
     startedAt?: SortOrder
@@ -45640,6 +49421,9 @@ export namespace Prisma {
     seed?: SortOrder
     modelVersion?: SortOrder
     datasetVersion?: SortOrder
+    strategyProfile?: SortOrder
+    aggregationMode?: SortOrder
+    selectionPolicy?: SortOrder
     codeGitSha?: SortOrder
     schemaVersion?: SortOrder
     startedAt?: SortOrder
@@ -47429,6 +51213,156 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedJsonFilter<$PrismaModel>
     _max?: NestedJsonFilter<$PrismaModel>
+  }
+
+  export type MarketDataPayloadCountOrderByAggregateInput = {
+    id?: SortOrder
+    provider?: SortOrder
+    symbol?: SortOrder
+    payloadJson?: SortOrder
+    fetchedAt?: SortOrder
+    datasetVersion?: SortOrder
+  }
+
+  export type MarketDataPayloadMaxOrderByAggregateInput = {
+    id?: SortOrder
+    provider?: SortOrder
+    symbol?: SortOrder
+    fetchedAt?: SortOrder
+    datasetVersion?: SortOrder
+  }
+
+  export type MarketDataPayloadMinOrderByAggregateInput = {
+    id?: SortOrder
+    provider?: SortOrder
+    symbol?: SortOrder
+    fetchedAt?: SortOrder
+    datasetVersion?: SortOrder
+  }
+
+  export type MarketPriceDatasetVersionSymbolTimestampCompoundUniqueInput = {
+    datasetVersion: string
+    symbol: string
+    timestamp: Date | string
+  }
+
+  export type MarketPriceCountOrderByAggregateInput = {
+    id?: SortOrder
+    datasetVersion?: SortOrder
+    symbol?: SortOrder
+    timestamp?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+  }
+
+  export type MarketPriceAvgOrderByAggregateInput = {
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+  }
+
+  export type MarketPriceMaxOrderByAggregateInput = {
+    id?: SortOrder
+    datasetVersion?: SortOrder
+    symbol?: SortOrder
+    timestamp?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+  }
+
+  export type MarketPriceMinOrderByAggregateInput = {
+    id?: SortOrder
+    datasetVersion?: SortOrder
+    symbol?: SortOrder
+    timestamp?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+  }
+
+  export type MarketPriceSumOrderByAggregateInput = {
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+  }
+
+  export type SignalHistoryCountOrderByAggregateInput = {
+    id?: SortOrder
+    symbol?: SortOrder
+    signal?: SortOrder
+    confidence?: SortOrder
+    disagreement?: SortOrder
+    instability?: SortOrder
+    runsUsed?: SortOrder
+    windowSize?: SortOrder
+    sourceRunId?: SortOrder
+    datasetVersion?: SortOrder
+    strategyProfile?: SortOrder
+    aggregationMode?: SortOrder
+    selectionPolicy?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type SignalHistoryAvgOrderByAggregateInput = {
+    confidence?: SortOrder
+    disagreement?: SortOrder
+    instability?: SortOrder
+    runsUsed?: SortOrder
+    windowSize?: SortOrder
+  }
+
+  export type SignalHistoryMaxOrderByAggregateInput = {
+    id?: SortOrder
+    symbol?: SortOrder
+    signal?: SortOrder
+    confidence?: SortOrder
+    disagreement?: SortOrder
+    instability?: SortOrder
+    runsUsed?: SortOrder
+    windowSize?: SortOrder
+    sourceRunId?: SortOrder
+    datasetVersion?: SortOrder
+    strategyProfile?: SortOrder
+    aggregationMode?: SortOrder
+    selectionPolicy?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type SignalHistoryMinOrderByAggregateInput = {
+    id?: SortOrder
+    symbol?: SortOrder
+    signal?: SortOrder
+    confidence?: SortOrder
+    disagreement?: SortOrder
+    instability?: SortOrder
+    runsUsed?: SortOrder
+    windowSize?: SortOrder
+    sourceRunId?: SortOrder
+    datasetVersion?: SortOrder
+    strategyProfile?: SortOrder
+    aggregationMode?: SortOrder
+    selectionPolicy?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type SignalHistorySumOrderByAggregateInput = {
+    confidence?: SortOrder
+    disagreement?: SortOrder
+    instability?: SortOrder
+    runsUsed?: SortOrder
+    windowSize?: SortOrder
   }
 
   export type ArchetypeTraitProfileCreateNestedManyWithoutArchetypeInput = {
@@ -51274,6 +55208,9 @@ export namespace Prisma {
     seed: number
     modelVersion: string
     datasetVersion: string
+    strategyProfile?: string | null
+    aggregationMode?: string | null
+    selectionPolicy?: string | null
     codeGitSha?: string | null
     schemaVersion: string
     startedAt?: Date | string | null
@@ -51307,6 +55244,9 @@ export namespace Prisma {
     seed: number
     modelVersion: string
     datasetVersion: string
+    strategyProfile?: string | null
+    aggregationMode?: string | null
+    selectionPolicy?: string | null
     codeGitSha?: string | null
     schemaVersion: string
     startedAt?: Date | string | null
@@ -51685,6 +55625,9 @@ export namespace Prisma {
     seed?: IntFieldUpdateOperationsInput | number
     modelVersion?: StringFieldUpdateOperationsInput | string
     datasetVersion?: StringFieldUpdateOperationsInput | string
+    strategyProfile?: NullableStringFieldUpdateOperationsInput | string | null
+    aggregationMode?: NullableStringFieldUpdateOperationsInput | string | null
+    selectionPolicy?: NullableStringFieldUpdateOperationsInput | string | null
     codeGitSha?: NullableStringFieldUpdateOperationsInput | string | null
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -51718,6 +55661,9 @@ export namespace Prisma {
     seed?: IntFieldUpdateOperationsInput | number
     modelVersion?: StringFieldUpdateOperationsInput | string
     datasetVersion?: StringFieldUpdateOperationsInput | string
+    strategyProfile?: NullableStringFieldUpdateOperationsInput | string | null
+    aggregationMode?: NullableStringFieldUpdateOperationsInput | string | null
+    selectionPolicy?: NullableStringFieldUpdateOperationsInput | string | null
     codeGitSha?: NullableStringFieldUpdateOperationsInput | string | null
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -52015,6 +55961,9 @@ export namespace Prisma {
     seed: number
     modelVersion: string
     datasetVersion: string
+    strategyProfile?: string | null
+    aggregationMode?: string | null
+    selectionPolicy?: string | null
     codeGitSha?: string | null
     schemaVersion: string
     startedAt?: Date | string | null
@@ -52048,6 +55997,9 @@ export namespace Prisma {
     seed: number
     modelVersion: string
     datasetVersion: string
+    strategyProfile?: string | null
+    aggregationMode?: string | null
+    selectionPolicy?: string | null
     codeGitSha?: string | null
     schemaVersion: string
     startedAt?: Date | string | null
@@ -52337,6 +56289,9 @@ export namespace Prisma {
     seed?: IntFieldUpdateOperationsInput | number
     modelVersion?: StringFieldUpdateOperationsInput | string
     datasetVersion?: StringFieldUpdateOperationsInput | string
+    strategyProfile?: NullableStringFieldUpdateOperationsInput | string | null
+    aggregationMode?: NullableStringFieldUpdateOperationsInput | string | null
+    selectionPolicy?: NullableStringFieldUpdateOperationsInput | string | null
     codeGitSha?: NullableStringFieldUpdateOperationsInput | string | null
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -52370,6 +56325,9 @@ export namespace Prisma {
     seed?: IntFieldUpdateOperationsInput | number
     modelVersion?: StringFieldUpdateOperationsInput | string
     datasetVersion?: StringFieldUpdateOperationsInput | string
+    strategyProfile?: NullableStringFieldUpdateOperationsInput | string | null
+    aggregationMode?: NullableStringFieldUpdateOperationsInput | string | null
+    selectionPolicy?: NullableStringFieldUpdateOperationsInput | string | null
     codeGitSha?: NullableStringFieldUpdateOperationsInput | string | null
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -52591,6 +56549,9 @@ export namespace Prisma {
     seed: number
     modelVersion: string
     datasetVersion: string
+    strategyProfile?: string | null
+    aggregationMode?: string | null
+    selectionPolicy?: string | null
     codeGitSha?: string | null
     schemaVersion: string
     startedAt?: Date | string | null
@@ -52624,6 +56585,9 @@ export namespace Prisma {
     seed: number
     modelVersion: string
     datasetVersion: string
+    strategyProfile?: string | null
+    aggregationMode?: string | null
+    selectionPolicy?: string | null
     codeGitSha?: string | null
     schemaVersion: string
     startedAt?: Date | string | null
@@ -52757,6 +56721,9 @@ export namespace Prisma {
     seed?: IntFieldUpdateOperationsInput | number
     modelVersion?: StringFieldUpdateOperationsInput | string
     datasetVersion?: StringFieldUpdateOperationsInput | string
+    strategyProfile?: NullableStringFieldUpdateOperationsInput | string | null
+    aggregationMode?: NullableStringFieldUpdateOperationsInput | string | null
+    selectionPolicy?: NullableStringFieldUpdateOperationsInput | string | null
     codeGitSha?: NullableStringFieldUpdateOperationsInput | string | null
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -52790,6 +56757,9 @@ export namespace Prisma {
     seed?: IntFieldUpdateOperationsInput | number
     modelVersion?: StringFieldUpdateOperationsInput | string
     datasetVersion?: StringFieldUpdateOperationsInput | string
+    strategyProfile?: NullableStringFieldUpdateOperationsInput | string | null
+    aggregationMode?: NullableStringFieldUpdateOperationsInput | string | null
+    selectionPolicy?: NullableStringFieldUpdateOperationsInput | string | null
     codeGitSha?: NullableStringFieldUpdateOperationsInput | string | null
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -52919,6 +56889,9 @@ export namespace Prisma {
     seed: number
     modelVersion: string
     datasetVersion: string
+    strategyProfile?: string | null
+    aggregationMode?: string | null
+    selectionPolicy?: string | null
     codeGitSha?: string | null
     schemaVersion: string
     startedAt?: Date | string | null
@@ -52952,6 +56925,9 @@ export namespace Prisma {
     seed: number
     modelVersion: string
     datasetVersion: string
+    strategyProfile?: string | null
+    aggregationMode?: string | null
+    selectionPolicy?: string | null
     codeGitSha?: string | null
     schemaVersion: string
     startedAt?: Date | string | null
@@ -53048,6 +57024,9 @@ export namespace Prisma {
     seed?: IntFieldUpdateOperationsInput | number
     modelVersion?: StringFieldUpdateOperationsInput | string
     datasetVersion?: StringFieldUpdateOperationsInput | string
+    strategyProfile?: NullableStringFieldUpdateOperationsInput | string | null
+    aggregationMode?: NullableStringFieldUpdateOperationsInput | string | null
+    selectionPolicy?: NullableStringFieldUpdateOperationsInput | string | null
     codeGitSha?: NullableStringFieldUpdateOperationsInput | string | null
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -53081,6 +57060,9 @@ export namespace Prisma {
     seed?: IntFieldUpdateOperationsInput | number
     modelVersion?: StringFieldUpdateOperationsInput | string
     datasetVersion?: StringFieldUpdateOperationsInput | string
+    strategyProfile?: NullableStringFieldUpdateOperationsInput | string | null
+    aggregationMode?: NullableStringFieldUpdateOperationsInput | string | null
+    selectionPolicy?: NullableStringFieldUpdateOperationsInput | string | null
     codeGitSha?: NullableStringFieldUpdateOperationsInput | string | null
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -53167,6 +57149,9 @@ export namespace Prisma {
     seed: number
     modelVersion: string
     datasetVersion: string
+    strategyProfile?: string | null
+    aggregationMode?: string | null
+    selectionPolicy?: string | null
     codeGitSha?: string | null
     schemaVersion: string
     startedAt?: Date | string | null
@@ -53200,6 +57185,9 @@ export namespace Prisma {
     seed: number
     modelVersion: string
     datasetVersion: string
+    strategyProfile?: string | null
+    aggregationMode?: string | null
+    selectionPolicy?: string | null
     codeGitSha?: string | null
     schemaVersion: string
     startedAt?: Date | string | null
@@ -53249,6 +57237,9 @@ export namespace Prisma {
     seed?: IntFieldUpdateOperationsInput | number
     modelVersion?: StringFieldUpdateOperationsInput | string
     datasetVersion?: StringFieldUpdateOperationsInput | string
+    strategyProfile?: NullableStringFieldUpdateOperationsInput | string | null
+    aggregationMode?: NullableStringFieldUpdateOperationsInput | string | null
+    selectionPolicy?: NullableStringFieldUpdateOperationsInput | string | null
     codeGitSha?: NullableStringFieldUpdateOperationsInput | string | null
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -53282,6 +57273,9 @@ export namespace Prisma {
     seed?: IntFieldUpdateOperationsInput | number
     modelVersion?: StringFieldUpdateOperationsInput | string
     datasetVersion?: StringFieldUpdateOperationsInput | string
+    strategyProfile?: NullableStringFieldUpdateOperationsInput | string | null
+    aggregationMode?: NullableStringFieldUpdateOperationsInput | string | null
+    selectionPolicy?: NullableStringFieldUpdateOperationsInput | string | null
     codeGitSha?: NullableStringFieldUpdateOperationsInput | string | null
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -53315,6 +57309,9 @@ export namespace Prisma {
     seed: number
     modelVersion: string
     datasetVersion: string
+    strategyProfile?: string | null
+    aggregationMode?: string | null
+    selectionPolicy?: string | null
     codeGitSha?: string | null
     schemaVersion: string
     startedAt?: Date | string | null
@@ -53348,6 +57345,9 @@ export namespace Prisma {
     seed: number
     modelVersion: string
     datasetVersion: string
+    strategyProfile?: string | null
+    aggregationMode?: string | null
+    selectionPolicy?: string | null
     codeGitSha?: string | null
     schemaVersion: string
     startedAt?: Date | string | null
@@ -53481,6 +57481,9 @@ export namespace Prisma {
     seed?: IntFieldUpdateOperationsInput | number
     modelVersion?: StringFieldUpdateOperationsInput | string
     datasetVersion?: StringFieldUpdateOperationsInput | string
+    strategyProfile?: NullableStringFieldUpdateOperationsInput | string | null
+    aggregationMode?: NullableStringFieldUpdateOperationsInput | string | null
+    selectionPolicy?: NullableStringFieldUpdateOperationsInput | string | null
     codeGitSha?: NullableStringFieldUpdateOperationsInput | string | null
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -53514,6 +57517,9 @@ export namespace Prisma {
     seed?: IntFieldUpdateOperationsInput | number
     modelVersion?: StringFieldUpdateOperationsInput | string
     datasetVersion?: StringFieldUpdateOperationsInput | string
+    strategyProfile?: NullableStringFieldUpdateOperationsInput | string | null
+    aggregationMode?: NullableStringFieldUpdateOperationsInput | string | null
+    selectionPolicy?: NullableStringFieldUpdateOperationsInput | string | null
     codeGitSha?: NullableStringFieldUpdateOperationsInput | string | null
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -53643,6 +57649,9 @@ export namespace Prisma {
     seed: number
     modelVersion: string
     datasetVersion: string
+    strategyProfile?: string | null
+    aggregationMode?: string | null
+    selectionPolicy?: string | null
     codeGitSha?: string | null
     schemaVersion: string
     startedAt?: Date | string | null
@@ -53676,6 +57685,9 @@ export namespace Prisma {
     seed: number
     modelVersion: string
     datasetVersion: string
+    strategyProfile?: string | null
+    aggregationMode?: string | null
+    selectionPolicy?: string | null
     codeGitSha?: string | null
     schemaVersion: string
     startedAt?: Date | string | null
@@ -53725,6 +57737,9 @@ export namespace Prisma {
     seed?: IntFieldUpdateOperationsInput | number
     modelVersion?: StringFieldUpdateOperationsInput | string
     datasetVersion?: StringFieldUpdateOperationsInput | string
+    strategyProfile?: NullableStringFieldUpdateOperationsInput | string | null
+    aggregationMode?: NullableStringFieldUpdateOperationsInput | string | null
+    selectionPolicy?: NullableStringFieldUpdateOperationsInput | string | null
     codeGitSha?: NullableStringFieldUpdateOperationsInput | string | null
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -53758,6 +57773,9 @@ export namespace Prisma {
     seed?: IntFieldUpdateOperationsInput | number
     modelVersion?: StringFieldUpdateOperationsInput | string
     datasetVersion?: StringFieldUpdateOperationsInput | string
+    strategyProfile?: NullableStringFieldUpdateOperationsInput | string | null
+    aggregationMode?: NullableStringFieldUpdateOperationsInput | string | null
+    selectionPolicy?: NullableStringFieldUpdateOperationsInput | string | null
     codeGitSha?: NullableStringFieldUpdateOperationsInput | string | null
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -53791,6 +57809,9 @@ export namespace Prisma {
     seed: number
     modelVersion: string
     datasetVersion: string
+    strategyProfile?: string | null
+    aggregationMode?: string | null
+    selectionPolicy?: string | null
     codeGitSha?: string | null
     schemaVersion: string
     startedAt?: Date | string | null
@@ -53824,6 +57845,9 @@ export namespace Prisma {
     seed: number
     modelVersion: string
     datasetVersion: string
+    strategyProfile?: string | null
+    aggregationMode?: string | null
+    selectionPolicy?: string | null
     codeGitSha?: string | null
     schemaVersion: string
     startedAt?: Date | string | null
@@ -53957,6 +57981,9 @@ export namespace Prisma {
     seed?: IntFieldUpdateOperationsInput | number
     modelVersion?: StringFieldUpdateOperationsInput | string
     datasetVersion?: StringFieldUpdateOperationsInput | string
+    strategyProfile?: NullableStringFieldUpdateOperationsInput | string | null
+    aggregationMode?: NullableStringFieldUpdateOperationsInput | string | null
+    selectionPolicy?: NullableStringFieldUpdateOperationsInput | string | null
     codeGitSha?: NullableStringFieldUpdateOperationsInput | string | null
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -53990,6 +58017,9 @@ export namespace Prisma {
     seed?: IntFieldUpdateOperationsInput | number
     modelVersion?: StringFieldUpdateOperationsInput | string
     datasetVersion?: StringFieldUpdateOperationsInput | string
+    strategyProfile?: NullableStringFieldUpdateOperationsInput | string | null
+    aggregationMode?: NullableStringFieldUpdateOperationsInput | string | null
+    selectionPolicy?: NullableStringFieldUpdateOperationsInput | string | null
     codeGitSha?: NullableStringFieldUpdateOperationsInput | string | null
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -54119,6 +58149,9 @@ export namespace Prisma {
     seed: number
     modelVersion: string
     datasetVersion: string
+    strategyProfile?: string | null
+    aggregationMode?: string | null
+    selectionPolicy?: string | null
     codeGitSha?: string | null
     schemaVersion: string
     startedAt?: Date | string | null
@@ -54152,6 +58185,9 @@ export namespace Prisma {
     seed: number
     modelVersion: string
     datasetVersion: string
+    strategyProfile?: string | null
+    aggregationMode?: string | null
+    selectionPolicy?: string | null
     codeGitSha?: string | null
     schemaVersion: string
     startedAt?: Date | string | null
@@ -54285,6 +58321,9 @@ export namespace Prisma {
     seed?: IntFieldUpdateOperationsInput | number
     modelVersion?: StringFieldUpdateOperationsInput | string
     datasetVersion?: StringFieldUpdateOperationsInput | string
+    strategyProfile?: NullableStringFieldUpdateOperationsInput | string | null
+    aggregationMode?: NullableStringFieldUpdateOperationsInput | string | null
+    selectionPolicy?: NullableStringFieldUpdateOperationsInput | string | null
     codeGitSha?: NullableStringFieldUpdateOperationsInput | string | null
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -54318,6 +58357,9 @@ export namespace Prisma {
     seed?: IntFieldUpdateOperationsInput | number
     modelVersion?: StringFieldUpdateOperationsInput | string
     datasetVersion?: StringFieldUpdateOperationsInput | string
+    strategyProfile?: NullableStringFieldUpdateOperationsInput | string | null
+    aggregationMode?: NullableStringFieldUpdateOperationsInput | string | null
+    selectionPolicy?: NullableStringFieldUpdateOperationsInput | string | null
     codeGitSha?: NullableStringFieldUpdateOperationsInput | string | null
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -54447,6 +58489,9 @@ export namespace Prisma {
     seed: number
     modelVersion: string
     datasetVersion: string
+    strategyProfile?: string | null
+    aggregationMode?: string | null
+    selectionPolicy?: string | null
     codeGitSha?: string | null
     schemaVersion: string
     startedAt?: Date | string | null
@@ -54480,6 +58525,9 @@ export namespace Prisma {
     seed: number
     modelVersion: string
     datasetVersion: string
+    strategyProfile?: string | null
+    aggregationMode?: string | null
+    selectionPolicy?: string | null
     codeGitSha?: string | null
     schemaVersion: string
     startedAt?: Date | string | null
@@ -54529,6 +58577,9 @@ export namespace Prisma {
     seed?: IntFieldUpdateOperationsInput | number
     modelVersion?: StringFieldUpdateOperationsInput | string
     datasetVersion?: StringFieldUpdateOperationsInput | string
+    strategyProfile?: NullableStringFieldUpdateOperationsInput | string | null
+    aggregationMode?: NullableStringFieldUpdateOperationsInput | string | null
+    selectionPolicy?: NullableStringFieldUpdateOperationsInput | string | null
     codeGitSha?: NullableStringFieldUpdateOperationsInput | string | null
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -54562,6 +58613,9 @@ export namespace Prisma {
     seed?: IntFieldUpdateOperationsInput | number
     modelVersion?: StringFieldUpdateOperationsInput | string
     datasetVersion?: StringFieldUpdateOperationsInput | string
+    strategyProfile?: NullableStringFieldUpdateOperationsInput | string | null
+    aggregationMode?: NullableStringFieldUpdateOperationsInput | string | null
+    selectionPolicy?: NullableStringFieldUpdateOperationsInput | string | null
     codeGitSha?: NullableStringFieldUpdateOperationsInput | string | null
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -54595,6 +58649,9 @@ export namespace Prisma {
     seed: number
     modelVersion: string
     datasetVersion: string
+    strategyProfile?: string | null
+    aggregationMode?: string | null
+    selectionPolicy?: string | null
     codeGitSha?: string | null
     schemaVersion: string
     startedAt?: Date | string | null
@@ -54628,6 +58685,9 @@ export namespace Prisma {
     seed: number
     modelVersion: string
     datasetVersion: string
+    strategyProfile?: string | null
+    aggregationMode?: string | null
+    selectionPolicy?: string | null
     codeGitSha?: string | null
     schemaVersion: string
     startedAt?: Date | string | null
@@ -54677,6 +58737,9 @@ export namespace Prisma {
     seed?: IntFieldUpdateOperationsInput | number
     modelVersion?: StringFieldUpdateOperationsInput | string
     datasetVersion?: StringFieldUpdateOperationsInput | string
+    strategyProfile?: NullableStringFieldUpdateOperationsInput | string | null
+    aggregationMode?: NullableStringFieldUpdateOperationsInput | string | null
+    selectionPolicy?: NullableStringFieldUpdateOperationsInput | string | null
     codeGitSha?: NullableStringFieldUpdateOperationsInput | string | null
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -54710,6 +58773,9 @@ export namespace Prisma {
     seed?: IntFieldUpdateOperationsInput | number
     modelVersion?: StringFieldUpdateOperationsInput | string
     datasetVersion?: StringFieldUpdateOperationsInput | string
+    strategyProfile?: NullableStringFieldUpdateOperationsInput | string | null
+    aggregationMode?: NullableStringFieldUpdateOperationsInput | string | null
+    selectionPolicy?: NullableStringFieldUpdateOperationsInput | string | null
     codeGitSha?: NullableStringFieldUpdateOperationsInput | string | null
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -54743,6 +58809,9 @@ export namespace Prisma {
     seed: number
     modelVersion: string
     datasetVersion: string
+    strategyProfile?: string | null
+    aggregationMode?: string | null
+    selectionPolicy?: string | null
     codeGitSha?: string | null
     schemaVersion: string
     startedAt?: Date | string | null
@@ -54776,6 +58845,9 @@ export namespace Prisma {
     seed: number
     modelVersion: string
     datasetVersion: string
+    strategyProfile?: string | null
+    aggregationMode?: string | null
+    selectionPolicy?: string | null
     codeGitSha?: string | null
     schemaVersion: string
     startedAt?: Date | string | null
@@ -54909,6 +58981,9 @@ export namespace Prisma {
     seed?: IntFieldUpdateOperationsInput | number
     modelVersion?: StringFieldUpdateOperationsInput | string
     datasetVersion?: StringFieldUpdateOperationsInput | string
+    strategyProfile?: NullableStringFieldUpdateOperationsInput | string | null
+    aggregationMode?: NullableStringFieldUpdateOperationsInput | string | null
+    selectionPolicy?: NullableStringFieldUpdateOperationsInput | string | null
     codeGitSha?: NullableStringFieldUpdateOperationsInput | string | null
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -54942,6 +59017,9 @@ export namespace Prisma {
     seed?: IntFieldUpdateOperationsInput | number
     modelVersion?: StringFieldUpdateOperationsInput | string
     datasetVersion?: StringFieldUpdateOperationsInput | string
+    strategyProfile?: NullableStringFieldUpdateOperationsInput | string | null
+    aggregationMode?: NullableStringFieldUpdateOperationsInput | string | null
+    selectionPolicy?: NullableStringFieldUpdateOperationsInput | string | null
     codeGitSha?: NullableStringFieldUpdateOperationsInput | string | null
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -55071,6 +59149,9 @@ export namespace Prisma {
     seed: number
     modelVersion: string
     datasetVersion: string
+    strategyProfile?: string | null
+    aggregationMode?: string | null
+    selectionPolicy?: string | null
     codeGitSha?: string | null
     schemaVersion: string
     startedAt?: Date | string | null
@@ -55104,6 +59185,9 @@ export namespace Prisma {
     seed: number
     modelVersion: string
     datasetVersion: string
+    strategyProfile?: string | null
+    aggregationMode?: string | null
+    selectionPolicy?: string | null
     codeGitSha?: string | null
     schemaVersion: string
     startedAt?: Date | string | null
@@ -55153,6 +59237,9 @@ export namespace Prisma {
     seed?: IntFieldUpdateOperationsInput | number
     modelVersion?: StringFieldUpdateOperationsInput | string
     datasetVersion?: StringFieldUpdateOperationsInput | string
+    strategyProfile?: NullableStringFieldUpdateOperationsInput | string | null
+    aggregationMode?: NullableStringFieldUpdateOperationsInput | string | null
+    selectionPolicy?: NullableStringFieldUpdateOperationsInput | string | null
     codeGitSha?: NullableStringFieldUpdateOperationsInput | string | null
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -55186,6 +59273,9 @@ export namespace Prisma {
     seed?: IntFieldUpdateOperationsInput | number
     modelVersion?: StringFieldUpdateOperationsInput | string
     datasetVersion?: StringFieldUpdateOperationsInput | string
+    strategyProfile?: NullableStringFieldUpdateOperationsInput | string | null
+    aggregationMode?: NullableStringFieldUpdateOperationsInput | string | null
+    selectionPolicy?: NullableStringFieldUpdateOperationsInput | string | null
     codeGitSha?: NullableStringFieldUpdateOperationsInput | string | null
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -55311,6 +59401,9 @@ export namespace Prisma {
     seed: number
     modelVersion: string
     datasetVersion: string
+    strategyProfile?: string | null
+    aggregationMode?: string | null
+    selectionPolicy?: string | null
     codeGitSha?: string | null
     schemaVersion: string
     startedAt?: Date | string | null
@@ -55344,6 +59437,9 @@ export namespace Prisma {
     seed: number
     modelVersion: string
     datasetVersion: string
+    strategyProfile?: string | null
+    aggregationMode?: string | null
+    selectionPolicy?: string | null
     codeGitSha?: string | null
     schemaVersion: string
     startedAt?: Date | string | null
@@ -55448,6 +59544,9 @@ export namespace Prisma {
     seed?: IntFieldUpdateOperationsInput | number
     modelVersion?: StringFieldUpdateOperationsInput | string
     datasetVersion?: StringFieldUpdateOperationsInput | string
+    strategyProfile?: NullableStringFieldUpdateOperationsInput | string | null
+    aggregationMode?: NullableStringFieldUpdateOperationsInput | string | null
+    selectionPolicy?: NullableStringFieldUpdateOperationsInput | string | null
     codeGitSha?: NullableStringFieldUpdateOperationsInput | string | null
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -55481,6 +59580,9 @@ export namespace Prisma {
     seed?: IntFieldUpdateOperationsInput | number
     modelVersion?: StringFieldUpdateOperationsInput | string
     datasetVersion?: StringFieldUpdateOperationsInput | string
+    strategyProfile?: NullableStringFieldUpdateOperationsInput | string | null
+    aggregationMode?: NullableStringFieldUpdateOperationsInput | string | null
+    selectionPolicy?: NullableStringFieldUpdateOperationsInput | string | null
     codeGitSha?: NullableStringFieldUpdateOperationsInput | string | null
     schemaVersion?: StringFieldUpdateOperationsInput | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -57589,6 +61691,18 @@ export namespace Prisma {
      * @deprecated Use BenchWindowSnapshotDefaultArgs instead
      */
     export type BenchWindowSnapshotArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = BenchWindowSnapshotDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use MarketDataPayloadDefaultArgs instead
+     */
+    export type MarketDataPayloadArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = MarketDataPayloadDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use MarketPriceDefaultArgs instead
+     */
+    export type MarketPriceArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = MarketPriceDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use SignalHistoryDefaultArgs instead
+     */
+    export type SignalHistoryArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = SignalHistoryDefaultArgs<ExtArgs>
 
   /**
    * Batch Payload for updateMany & deleteMany & createMany

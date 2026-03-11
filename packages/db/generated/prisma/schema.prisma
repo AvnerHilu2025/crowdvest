@@ -81,23 +81,26 @@ enum SimulationRunStatus {
 }
 
 model SimulationRun {
-  id             String              @id @default(uuid()) @db.Uuid
-  name           String
-  status         SimulationRunStatus @default(PENDING)
-  seed           Int
-  modelVersion   String
-  datasetVersion String
-  codeGitSha     String?
-  schemaVersion  String
-  startedAt      DateTime?
-  finishedAt     DateTime?
-  completedAt    DateTime?
-  failedAt       DateTime?
-  lastError      String?             @db.VarChar(1000)
-  runDurationMs  Int?
-  configJson     Json?
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @updatedAt
+  id              String              @id @default(uuid()) @db.Uuid
+  name            String
+  status          SimulationRunStatus @default(PENDING)
+  seed            Int
+  modelVersion    String
+  datasetVersion  String
+  strategyProfile String?
+  aggregationMode String?
+  selectionPolicy String?
+  codeGitSha      String?
+  schemaVersion   String
+  startedAt       DateTime?
+  finishedAt      DateTime?
+  completedAt     DateTime?
+  failedAt        DateTime?
+  lastError       String?             @db.VarChar(1000)
+  runDurationMs   Int?
+  configJson      Json?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
 
   agentExperiences AgentExperience[]
   crowdSnapshots   CrowdSnapshot[]
@@ -720,4 +723,61 @@ model BenchWindowSnapshot {
   @@index([createdAt])
   @@index([symbols])
   @@index([windows])
+}
+
+// ---------------------------------------------------------------------------
+// Market Data Ingestion (Phase 9.1)
+// ---------------------------------------------------------------------------
+
+model MarketDataPayload {
+  id             String   @id @default(uuid()) @db.Uuid
+  provider       String
+  symbol         String
+  payloadJson    Json
+  fetchedAt      DateTime @default(now())
+  datasetVersion String
+
+  @@index([provider, symbol])
+  @@index([datasetVersion])
+}
+
+model MarketPrice {
+  id             String   @id @default(uuid()) @db.Uuid
+  datasetVersion String
+  symbol         String
+  timestamp      DateTime
+  open           Float
+  high           Float
+  low            Float
+  close          Float
+  volume         Int?
+
+  @@unique([datasetVersion, symbol, timestamp])
+  @@index([symbol, timestamp])
+  @@index([datasetVersion])
+}
+
+// ---------------------------------------------------------------------------
+// Signal history – persisted crowd signals for track-record and validation
+// ---------------------------------------------------------------------------
+
+model SignalHistory {
+  id              String   @id @default(uuid()) @db.Uuid
+  symbol          String
+  signal          String // STRONG_BUY | BUY | NEUTRAL | SELL | STRONG_SELL
+  confidence      Float
+  disagreement    Float
+  instability     Float
+  runsUsed        Int
+  windowSize      Int
+  sourceRunId     String?  @db.Uuid
+  datasetVersion  String?
+  strategyProfile String?
+  aggregationMode String?
+  selectionPolicy String?
+  createdAt       DateTime @default(now())
+
+  @@index([symbol, createdAt])
+  @@index([createdAt])
+  @@index([datasetVersion])
 }

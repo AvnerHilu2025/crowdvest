@@ -133,12 +133,18 @@ type DashboardSummary = {
   };
   signalValidation?: {
     total: number;
-    validated: number;
-    accuracyRate: number | null;
+    actionable?: number;
+    abstained?: number;
+    directionalValidated?: number;
+    directionalAccuracyRate?: number | null;
+    coverageRate?: number | null;
+    validated?: number;
+    accuracyRate?: number | null;
     latestItems: Array<{
       symbol: string;
       signal: string;
       realizedDirection: "UP" | "DOWN" | "FLAT" | null;
+      actionable?: boolean;
       correct: boolean | null;
       confidence: number;
     }>;
@@ -147,6 +153,112 @@ type DashboardSummary = {
     totalSnapshots: number;
     symbolsCovered: number;
   };
+  signalCoverage?: {
+    total: number;
+    actionable: number;
+    abstained: number;
+    coverageRate: number;
+    bySignal?: Record<string, number>;
+  };
+  marketRegime?: {
+    regime: "TRENDING" | "MIXED" | "CHAOTIC";
+    avgSignalStrength: number;
+    avgDisagreement: number;
+    coverageRate: number;
+  };
+  marketTransition?: {
+    trend: "IMPROVING" | "DETERIORATING" | "STABLE";
+    strengthDelta: number;
+    disagreementDelta: number;
+    coverageDelta: number;
+  };
+  marketStress?: {
+    state: "PANIC" | "EUPHORIA" | "FRAGILITY" | "CALM" | "NORMAL";
+    buyDominance: number;
+    sellDominance: number;
+    interpretation: string;
+  };
+  marketAlerts?: Array<{
+    type: string;
+    severity: "LOW" | "MEDIUM" | "HIGH";
+    confidence: number;
+    message: string;
+  }>;
+  signalProbabilities?: {
+    probabilityBuy: number;
+    probabilitySell: number;
+    probabilityNeutral: number;
+    interpretation: string;
+  };
+  watchlistCandidates?: Array<{
+    symbol: string;
+    score: number;
+    status: "EMERGING" | "WATCH" | "IGNORE";
+    reason: string;
+  }>;
+  symbolProbabilities?: Array<{
+    symbol: string;
+    probabilityBuy: number;
+    probabilitySell: number;
+    probabilityNeutral: number;
+    interpretation: string;
+  }>;
+  tradeSetups?: Array<{
+    symbol: string;
+    status: "PREPARE_LONG" | "PREPARE_SHORT" | "WATCH" | "IGNORE";
+    confidence: number;
+    reason: string;
+  }>;
+  crowdDivergence?: Array<{
+    symbol: string;
+    type: "BULLISH_DIVERGENCE" | "BEARISH_DIVERGENCE" | "NONE";
+    strength: number;
+    momentum: number;
+    crowdBias: number;
+    reason: string;
+  }>;
+  crowdAcceleration?: Array<{
+    symbol: string;
+    type: "BULLISH_ACCELERATION" | "BEARISH_ACCELERATION" | "NONE";
+    strength: number;
+    velocity: number;
+    acceleration: number;
+    reason: string;
+  }>;
+  crowdConfidence?: {
+    regime: "LOW_CONFIDENCE" | "BUILDING_CONFIDENCE" | "HIGH_CONFIDENCE";
+    conviction: number;
+    disagreement: number;
+    coverageRate: number;
+    neutralProbability: number;
+    interpretation: string;
+  };
+  signalValidationMetrics?: {
+    totalSignals: number;
+    actionableSignals: number;
+    correctPredictions: number;
+    accuracy: number;
+    avgReturn: number;
+    benchmarkReturn: number;
+    edge: number;
+  };
+  backtestMetrics?: {
+    trades: number;
+    winRate: number | null;
+    avgTradeReturn: number | null;
+    cumulativeReturn: number | null;
+    benchmarkReturn: number | null;
+    edge: number | null;
+    maxDrawdown: number | null;
+  };
+  backtestDiagnostics?: {
+    candidateRows: number;
+    skippedNonPrepare: number;
+    skippedLowSignalStrength: number;
+    skippedHighNeutral: number;
+    skippedLowConviction: number;
+    executedTrades: number;
+  } | null;
 };
 
 export default async function DashboardPage({
@@ -280,6 +392,54 @@ export default async function DashboardPage({
         signalHistoryStats:
           data.signalHistoryStats && typeof data.signalHistoryStats === "object"
             ? data.signalHistoryStats
+            : undefined,
+        signalCoverage:
+          data.signalCoverage && typeof data.signalCoverage === "object"
+            ? data.signalCoverage
+            : undefined,
+        marketRegime:
+          data.marketRegime && typeof data.marketRegime === "object"
+            ? data.marketRegime
+            : undefined,
+        marketTransition:
+          data.marketTransition && typeof data.marketTransition === "object"
+            ? data.marketTransition
+            : undefined,
+        marketStress:
+          data.marketStress && typeof data.marketStress === "object"
+            ? data.marketStress
+            : undefined,
+        marketAlerts:
+          Array.isArray(data.marketAlerts) ? data.marketAlerts : [],
+        signalProbabilities:
+          data.signalProbabilities && typeof data.signalProbabilities === "object"
+            ? data.signalProbabilities
+            : undefined,
+        watchlistCandidates:
+          Array.isArray(data.watchlistCandidates) ? data.watchlistCandidates : [],
+        symbolProbabilities:
+          Array.isArray(data.symbolProbabilities) ? data.symbolProbabilities : [],
+        tradeSetups:
+          Array.isArray(data.tradeSetups) ? data.tradeSetups : [],
+        crowdDivergence:
+          Array.isArray(data.crowdDivergence) ? data.crowdDivergence : [],
+        crowdAcceleration:
+          Array.isArray(data.crowdAcceleration) ? data.crowdAcceleration : [],
+        crowdConfidence:
+          data.crowdConfidence && typeof data.crowdConfidence === "object"
+            ? data.crowdConfidence
+            : undefined,
+        signalValidationMetrics:
+          data.signalValidationMetrics && typeof data.signalValidationMetrics === "object"
+            ? data.signalValidationMetrics
+            : undefined,
+        backtestMetrics:
+          data.backtestMetrics && typeof data.backtestMetrics === "object"
+            ? data.backtestMetrics
+            : undefined,
+        backtestDiagnostics:
+          data.backtestDiagnostics && typeof data.backtestDiagnostics === "object"
+            ? data.backtestDiagnostics
             : undefined,
       }}
       initialQuery={{

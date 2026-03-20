@@ -1,0 +1,4 @@
+# Dependencies for importFullHistory.py (Yahoo Finance full-history import)
+yfinance>=0.2.40
+psycopg2-binary>=2.9.9
+pandas>=2.0.0

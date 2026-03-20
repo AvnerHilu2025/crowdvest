@@ -218,6 +218,7 @@ export type DashboardClientProps = {
       items: Array<{
         symbol: string;
         signal: string;
+        signalStrength?: number;
         confidence: number;
         disagreement: number;
         instability: number;
@@ -226,12 +227,18 @@ export type DashboardClientProps = {
     };
     signalValidation?: {
       total: number;
-      validated: number;
-      accuracyRate: number | null;
+      actionable?: number;
+      abstained?: number;
+      directionalValidated?: number;
+      directionalAccuracyRate?: number | null;
+      coverageRate?: number | null;
+      validated?: number;
+      accuracyRate?: number | null;
       latestItems: Array<{
         symbol: string;
         signal: string;
         realizedDirection: "UP" | "DOWN" | "FLAT" | null;
+        actionable?: boolean;
         correct: boolean | null;
         confidence: number;
       }>;
@@ -240,6 +247,112 @@ export type DashboardClientProps = {
       totalSnapshots: number;
       symbolsCovered: number;
     };
+    signalCoverage?: {
+      total: number;
+      actionable: number;
+      abstained: number;
+      coverageRate: number;
+      bySignal?: Record<string, number>;
+    };
+    marketRegime?: {
+      regime: "TRENDING" | "MIXED" | "CHAOTIC";
+      avgSignalStrength: number;
+      avgDisagreement: number;
+      coverageRate: number;
+    };
+    marketTransition?: {
+      trend: "IMPROVING" | "DETERIORATING" | "STABLE";
+      strengthDelta: number;
+      disagreementDelta: number;
+      coverageDelta: number;
+    };
+    marketStress?: {
+      state: "PANIC" | "EUPHORIA" | "FRAGILITY" | "CALM" | "NORMAL";
+      buyDominance: number;
+      sellDominance: number;
+      interpretation: string;
+    };
+    marketAlerts?: Array<{
+      type: string;
+      severity: "LOW" | "MEDIUM" | "HIGH";
+      confidence: number;
+      message: string;
+    }>;
+    signalProbabilities?: {
+      probabilityBuy: number;
+      probabilitySell: number;
+      probabilityNeutral: number;
+      interpretation: string;
+    };
+    watchlistCandidates?: Array<{
+      symbol: string;
+      score: number;
+      status: "EMERGING" | "WATCH" | "IGNORE";
+      reason: string;
+    }>;
+    symbolProbabilities?: Array<{
+      symbol: string;
+      probabilityBuy: number;
+      probabilitySell: number;
+      probabilityNeutral: number;
+      interpretation: string;
+    }>;
+    tradeSetups?: Array<{
+      symbol: string;
+      status: "PREPARE_LONG" | "PREPARE_SHORT" | "WATCH" | "IGNORE";
+      confidence: number;
+      reason: string;
+    }>;
+    crowdDivergence?: Array<{
+      symbol: string;
+      type: "BULLISH_DIVERGENCE" | "BEARISH_DIVERGENCE" | "NONE";
+      strength: number;
+      momentum: number;
+      crowdBias: number;
+      reason: string;
+    }>;
+    crowdAcceleration?: Array<{
+      symbol: string;
+      type: "BULLISH_ACCELERATION" | "BEARISH_ACCELERATION" | "NONE";
+      strength: number;
+      velocity: number;
+      acceleration: number;
+      reason: string;
+    }>;
+    crowdConfidence?: {
+      regime: "LOW_CONFIDENCE" | "BUILDING_CONFIDENCE" | "HIGH_CONFIDENCE";
+      conviction: number;
+      disagreement: number;
+      coverageRate: number;
+      neutralProbability: number;
+      interpretation: string;
+    };
+    signalValidationMetrics?: {
+      totalSignals: number;
+      actionableSignals: number;
+      correctPredictions: number;
+      accuracy: number;
+      avgReturn: number;
+      benchmarkReturn: number;
+      edge: number;
+    };
+    backtestMetrics?: {
+      trades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    backtestDiagnostics?: {
+      candidateRows: number;
+      skippedNonPrepare: number;
+      skippedLowSignalStrength: number;
+      skippedHighNeutral: number;
+      skippedLowConviction: number;
+      executedTrades: number;
+    } | null;
   };
   initialQuery: {
     assetSymbol: string;
@@ -278,7 +391,7 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
   const searchParams = useSearchParams();
   const drawerRunId = searchParams.get("drawerRunId");
 
-  const { consensus, scaling = [], stability = [], counts = { unstable: 0, diverging: 0, ok: 0, legacy: 0 }, filterLabel = "all", latest, latestScalingRow, driftAsset: initialDriftAsset, driftGlobal: initialDriftGlobal, forecastAccuracy, productionAggregationMode, aggregationModeRanking = [], strategyProfile: initialStrategyProfile, strategyDefaults = FALLBACK_STRATEGY_DEFAULTS, executionPreset = FALLBACK_EXECUTION_PRESET, launchPlan = FALLBACK_LAUNCH_PLAN, crowdSignals: rawCrowdSignals, signalValidation: rawSignalValidation, signalHistoryStats } = initialData ?? {};
+  const { consensus, scaling = [], stability = [], counts = { unstable: 0, diverging: 0, ok: 0, legacy: 0 }, filterLabel = "all", latest, latestScalingRow, driftAsset: initialDriftAsset, driftGlobal: initialDriftGlobal, forecastAccuracy, productionAggregationMode, aggregationModeRanking = [], strategyProfile: initialStrategyProfile, strategyDefaults = FALLBACK_STRATEGY_DEFAULTS, executionPreset = FALLBACK_EXECUTION_PRESET, launchPlan = FALLBACK_LAUNCH_PLAN, crowdSignals: rawCrowdSignals, signalValidation: rawSignalValidation, signalHistoryStats, signalCoverage, marketRegime, marketTransition, marketStress, marketAlerts, signalProbabilities, watchlistCandidates, symbolProbabilities, tradeSetups, crowdDivergence, crowdAcceleration, crowdConfidence, signalValidationMetrics, backtestMetrics, backtestDiagnostics } = initialData ?? {};
   const crowdSignals =
     rawCrowdSignals && typeof rawCrowdSignals === "object" && Array.isArray(rawCrowdSignals.items)
       ? rawCrowdSignals
@@ -287,11 +400,18 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
     rawSignalValidation && typeof rawSignalValidation === "object"
       ? {
           total: typeof rawSignalValidation.total === "number" ? rawSignalValidation.total : 0,
+          actionable: typeof rawSignalValidation.actionable === "number" ? rawSignalValidation.actionable : 0,
+          abstained: typeof rawSignalValidation.abstained === "number" ? rawSignalValidation.abstained : 0,
+          directionalValidated: typeof rawSignalValidation.directionalValidated === "number" ? rawSignalValidation.directionalValidated : rawSignalValidation.validated ?? 0,
+          directionalAccuracyRate: typeof rawSignalValidation.directionalAccuracyRate === "number" ? rawSignalValidation.directionalAccuracyRate : rawSignalValidation.accuracyRate ?? null,
+          coverageRate: typeof rawSignalValidation.coverageRate === "number" ? rawSignalValidation.coverageRate : null,
           validated: typeof rawSignalValidation.validated === "number" ? rawSignalValidation.validated : 0,
           accuracyRate: typeof rawSignalValidation.accuracyRate === "number" ? rawSignalValidation.accuracyRate : null,
           latestItems: Array.isArray(rawSignalValidation.latestItems) ? rawSignalValidation.latestItems : [],
         }
-      : { total: 0, validated: 0, accuracyRate: null as number | null, latestItems: [] as Array<{ symbol: string; signal: string; realizedDirection: "UP" | "DOWN" | "FLAT" | null; correct: boolean | null; confidence: number }> };
+      : { total: 0, actionable: 0, abstained: 0, directionalValidated: 0, directionalAccuracyRate: null,
+          coverageRate: null, validated: 0, accuracyRate: null as number | null,
+          latestItems: [] as Array<{ symbol: string; signal: string; realizedDirection: "UP" | "DOWN" | "FLAT" | null; actionable?: boolean; correct: boolean | null; confidence: number }> };
   const { assetSymbol = "SPY" } = initialQuery ?? {};
 
   const [drawerRun, setDrawerRun] = useState<{
@@ -1190,7 +1310,7 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "60px 1fr 1fr 1fr 1fr 1fr",
+                gridTemplateColumns: "60px 1fr 70px 1fr 1fr 1fr 1fr",
                 gap: 12,
                 fontSize: 11,
                 color: "rgba(15, 23, 42, 0.55)",
@@ -1199,6 +1319,7 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
             >
               <span>Symbol</span>
               <span>Signal</span>
+              <span title="Signal strength">Str</span>
               <span>Confidence</span>
               <span>Disagreement</span>
               <span>Instability</span>
@@ -1210,7 +1331,7 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
                 data-testid="crowd-signal-row"
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "60px 1fr 1fr 1fr 1fr 1fr",
+                  gridTemplateColumns: "60px 1fr 70px 1fr 1fr 1fr 1fr",
                   gap: 12,
                   alignItems: "center",
                   fontSize: 13,
@@ -1233,6 +1354,7 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
                 >
                   {item.signal ?? "NEUTRAL"}
                 </span>
+                <span title="signal strength">{((item.signalStrength ?? 0) * 100).toFixed(1)}%</span>
                 <span title="confidence">{((item.confidence ?? 0) * 100).toFixed(1)}%</span>
                 <span title="disagreement">{((item.disagreement ?? 0) * 100).toFixed(1)}%</span>
                 <span title="instability">{((item.instability ?? 0) * 100).toFixed(1)}%</span>
@@ -1259,14 +1381,26 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
             <div style={{ fontSize: 18, fontWeight: 600 }}>{signalValidation.total ?? 0}</div>
           </div>
           <div>
-            <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Validated</div>
-            <div style={{ fontSize: 18, fontWeight: 600 }}>{signalValidation.validated ?? 0}</div>
+            <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Actionable</div>
+            <div style={{ fontSize: 18, fontWeight: 600 }}>{signalValidation.actionable ?? 0}</div>
           </div>
           <div>
-            <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Accuracy</div>
+            <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Abstained</div>
+            <div style={{ fontSize: 18, fontWeight: 600 }}>{signalValidation.abstained ?? 0}</div>
+          </div>
+          <div>
+            <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Directional Accuracy</div>
             <div style={{ fontSize: 18, fontWeight: 600 }}>
-              {signalValidation.accuracyRate != null
-                ? `${(signalValidation.accuracyRate * 100).toFixed(1)}%`
+              {signalValidation.directionalAccuracyRate != null
+                ? `${(signalValidation.directionalAccuracyRate * 100).toFixed(1)}%`
+                : "—"}
+            </div>
+          </div>
+          <div>
+            <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Coverage Rate</div>
+            <div style={{ fontSize: 18, fontWeight: 600 }}>
+              {signalValidation.coverageRate != null
+                ? `${(signalValidation.coverageRate * 100).toFixed(1)}%`
                 : "—"}
             </div>
           </div>
@@ -1276,7 +1410,7 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "50px 70px 1fr 1fr 1fr",
+                gridTemplateColumns: "50px 70px 40px 1fr 1fr 1fr",
                 gap: 8,
                 fontSize: 11,
                 color: "rgba(15, 23, 42, 0.55)",
@@ -1285,6 +1419,7 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
             >
               <span>Symbol</span>
               <span>Signal</span>
+              <span title="Actionable">Act</span>
               <span>Realized</span>
               <span>Correct</span>
               <span>Conf</span>
@@ -1295,7 +1430,7 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
                 data-testid="signal-validation-row"
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "50px 70px 1fr 1fr 1fr",
+                  gridTemplateColumns: "50px 70px 40px 1fr 1fr 1fr",
                   gap: 8,
                   alignItems: "center",
                   fontSize: 12,
@@ -1307,6 +1442,7 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
               >
                 <span style={{ fontWeight: 600 }}>{item.symbol ?? "—"}</span>
                 <span>{item.signal ?? "—"}</span>
+                <span title={item.actionable ? "Actionable" : "Abstained"}>{item.actionable ? "✓" : "—"}</span>
                 <span>{item.realizedDirection ?? "—"}</span>
                 <span>
                   {item.correct === true ? "✓" : item.correct === false ? "✗" : "—"}
@@ -1324,6 +1460,429 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
           </div>
         ) : null}
       </div>
+
+      {signalCoverage ? (
+        <div
+          data-testid="signal-coverage-card"
+          style={{ border: "1px solid rgba(15, 23, 42, 0.10)", borderRadius: 10, padding: 16, marginBottom: 24 }}
+        >
+          <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 14 }}>Signal Coverage</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(90px, 1fr))", gap: 12, marginBottom: 12 }}>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Total</div>
+              <div style={{ fontSize: 16, fontWeight: 600 }}>{signalCoverage.total ?? 0}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Actionable</div>
+              <div style={{ fontSize: 16, fontWeight: 600 }}>{signalCoverage.actionable ?? 0}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Abstained</div>
+              <div style={{ fontSize: 16, fontWeight: 600 }}>{signalCoverage.abstained ?? 0}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Coverage Rate</div>
+              <div style={{ fontSize: 16, fontWeight: 600 }}>
+                {signalCoverage.coverageRate != null ? `${(signalCoverage.coverageRate * 100).toFixed(1)}%` : "—"}
+              </div>
+            </div>
+          </div>
+          {signalCoverage.bySignal && Object.keys(signalCoverage.bySignal).length > 0 ? (
+            <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {["STRONG_BUY", "BUY", "NEUTRAL", "SELL", "STRONG_SELL"].map((sig) => (
+                <span key={sig}>{sig}: {signalCoverage.bySignal[sig] ?? 0}</span>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {marketRegime ? (
+        <div
+          data-testid="market-regime-card"
+          style={{ border: "1px solid rgba(15, 23, 42, 0.10)", borderRadius: 10, padding: 16, marginBottom: 24 }}
+        >
+          <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 14 }}>Market Regime</div>
+          <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>
+            Regime: {marketRegime.regime}
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))", gap: 12, marginBottom: 8 }}>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Avg Signal Strength</div>
+              <div style={{ fontSize: 14 }}>{(marketRegime.avgSignalStrength * 100).toFixed(1)}%</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Avg Disagreement</div>
+              <div style={{ fontSize: 14 }}>{(marketRegime.avgDisagreement * 100).toFixed(1)}%</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Coverage</div>
+              <div style={{ fontSize: 14 }}>{(marketRegime.coverageRate * 100).toFixed(1)}%</div>
+            </div>
+          </div>
+          <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.6)", fontStyle: "italic" }}>
+            {marketRegime.regime === "TRENDING" && "Crowd consensus present"}
+            {marketRegime.regime === "MIXED" && "Partial consensus"}
+            {marketRegime.regime === "CHAOTIC" && "Crowd disagreement high"}
+          </div>
+        </div>
+      ) : null}
+
+      {marketTransition ? (
+        <div
+          data-testid="market-transition-card"
+          style={{ border: "1px solid rgba(15, 23, 42, 0.10)", borderRadius: 10, padding: 16, marginBottom: 24 }}
+        >
+          <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 14 }}>Market Transition</div>
+          <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>
+            Trend: {marketTransition.trend}
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))", gap: 12, marginBottom: 8 }}>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Δ Strength</div>
+              <div style={{ fontSize: 14 }}>{(marketTransition.strengthDelta * 100).toFixed(1)}%</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Δ Disagreement</div>
+              <div style={{ fontSize: 14 }}>{(marketTransition.disagreementDelta * 100).toFixed(1)}%</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Δ Coverage</div>
+              <div style={{ fontSize: 14 }}>{(marketTransition.coverageDelta * 100).toFixed(1)}%</div>
+            </div>
+          </div>
+          <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.6)", fontStyle: "italic" }}>
+            {marketTransition.trend === "IMPROVING" && "Consensus strengthening"}
+            {marketTransition.trend === "DETERIORATING" && "Consensus weakening"}
+            {marketTransition.trend === "STABLE" && "No significant change"}
+          </div>
+        </div>
+      ) : null}
+
+      {marketStress ? (
+        <div
+          data-testid="market-stress-card"
+          style={{ border: "1px solid rgba(15, 23, 42, 0.10)", borderRadius: 10, padding: 16, marginBottom: 24 }}
+        >
+          <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 14 }}>Market Stress</div>
+          <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>
+            State: {marketStress.state}
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))", gap: 12, marginBottom: 8 }}>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Buy Dominance</div>
+              <div style={{ fontSize: 14 }}>{marketStress.buyDominance ?? 0}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Sell Dominance</div>
+              <div style={{ fontSize: 14 }}>{marketStress.sellDominance ?? 0}</div>
+            </div>
+          </div>
+          <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.6)", fontStyle: "italic" }}>
+            {marketStress.interpretation ?? ""}
+          </div>
+        </div>
+      ) : null}
+
+      {marketAlerts && marketAlerts.length > 0 ? (
+        <div
+          data-testid="market-alerts-card"
+          style={{ border: "1px solid rgba(15, 23, 42, 0.10)", borderRadius: 10, padding: 16, marginBottom: 24 }}
+        >
+          <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 14 }}>Market Alerts</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {marketAlerts.map((a, i) => (
+              <div
+                key={`${a.type}-${i}`}
+                style={{ border: "1px solid rgba(15, 23, 42, 0.08)", borderRadius: 8, padding: 12 }}
+              >
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", marginBottom: 6 }}>
+                  <span style={{ fontWeight: 600, fontSize: 13 }}>{a.type}</span>
+                  <span style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.6)" }}>{a.severity}</span>
+                  <span style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.6)" }}>
+                    {(a.confidence * 100).toFixed(0)}% confidence
+                  </span>
+                </div>
+                <div style={{ fontSize: 12, color: "rgba(15, 23, 42, 0.8)" }}>{a.message}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {signalValidationMetrics ? (
+        <div
+          data-testid="crowd-performance-card"
+          style={{ border: "1px solid rgba(15, 23, 42, 0.10)", borderRadius: 10, padding: 16, marginBottom: 24 }}
+        >
+          <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 14 }}>Crowd Performance</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))", gap: 12 }}>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Accuracy</div>
+              <div style={{ fontSize: 14 }}>{((signalValidationMetrics.accuracy ?? 0) * 100).toFixed(1)}%</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Avg return</div>
+              <div style={{ fontSize: 14 }}>{((signalValidationMetrics.avgReturn ?? 0) * 100).toFixed(2)}%</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Edge vs benchmark</div>
+              <div style={{ fontSize: 14 }}>{((signalValidationMetrics.edge ?? 0) * 100).toFixed(2)}%</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Signals evaluated</div>
+              <div style={{ fontSize: 14 }}>{signalValidationMetrics.actionableSignals ?? 0}</div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {backtestMetrics && backtestMetrics.trades > 0 ? (
+        <div
+          data-testid="backtest-performance-card"
+          style={{ border: "1px solid rgba(15, 23, 42, 0.10)", borderRadius: 10, padding: 16, marginBottom: 24 }}
+        >
+          <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 14 }}>Backtest Performance</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(90px, 1fr))", gap: 12 }}>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Trades</div>
+              <div style={{ fontSize: 14 }}>{backtestMetrics.trades}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Win rate</div>
+              <div style={{ fontSize: 14 }}>{backtestMetrics.winRate != null ? `${(backtestMetrics.winRate * 100).toFixed(1)}%` : "—"}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Avg trade return</div>
+              <div style={{ fontSize: 14 }}>{backtestMetrics.avgTradeReturn != null ? `${(backtestMetrics.avgTradeReturn * 100).toFixed(2)}%` : "—"}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Cumulative return</div>
+              <div style={{ fontSize: 14 }}>{backtestMetrics.cumulativeReturn != null ? `${(backtestMetrics.cumulativeReturn * 100).toFixed(2)}%` : "—"}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Benchmark return</div>
+              <div style={{ fontSize: 14 }}>{backtestMetrics.benchmarkReturn != null ? `${(backtestMetrics.benchmarkReturn * 100).toFixed(2)}%` : "—"}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Edge</div>
+              <div style={{ fontSize: 14 }}>{backtestMetrics.edge != null ? `${(backtestMetrics.edge * 100).toFixed(2)}%` : "—"}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Max drawdown</div>
+              <div style={{ fontSize: 14 }}>{backtestMetrics.maxDrawdown != null ? `${(backtestMetrics.maxDrawdown * 100).toFixed(1)}%` : "—"}</div>
+            </div>
+          </div>
+          {backtestDiagnostics ? (
+            <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(15, 23, 42, 0.08)", fontSize: 11, color: "rgba(15, 23, 42, 0.6)" }}>
+              Diagnostics: {backtestDiagnostics.candidateRows} candidates → {backtestDiagnostics.executedTrades} executed
+              (skipped: {backtestDiagnostics.skippedNonPrepare} non-prepare, {backtestDiagnostics.skippedLowSignalStrength} low signal, {backtestDiagnostics.skippedHighNeutral} high neutral, {backtestDiagnostics.skippedLowConviction} low conviction)
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {crowdConfidence ? (
+        <div
+          data-testid="crowd-confidence-card"
+          style={{ border: "1px solid rgba(15, 23, 42, 0.10)", borderRadius: 10, padding: 16, marginBottom: 24 }}
+        >
+          <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 14 }}>Crowd Confidence</div>
+          <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>Regime: {crowdConfidence.regime}</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))", gap: 12, marginBottom: 8 }}>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Conviction</div>
+              <div style={{ fontSize: 14 }}>{((crowdConfidence.conviction ?? 0) * 100).toFixed(0)}%</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Disagreement</div>
+              <div style={{ fontSize: 14 }}>{((crowdConfidence.disagreement ?? 0) * 100).toFixed(0)}%</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Coverage</div>
+              <div style={{ fontSize: 14 }}>{((crowdConfidence.coverageRate ?? 0) * 100).toFixed(1)}%</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Neutral %</div>
+              <div style={{ fontSize: 14 }}>{((crowdConfidence.neutralProbability ?? 0) * 100).toFixed(1)}%</div>
+            </div>
+          </div>
+          <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.6)", fontStyle: "italic" }}>
+            {crowdConfidence.interpretation ?? ""}
+          </div>
+        </div>
+      ) : null}
+
+      {signalProbabilities ? (
+        <div
+          data-testid="signal-probabilities-card"
+          style={{ border: "1px solid rgba(15, 23, 42, 0.10)", borderRadius: 10, padding: 16, marginBottom: 24 }}
+        >
+          <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 14 }}>Signal Probabilities</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(80px, 1fr))", gap: 12, marginBottom: 8 }}>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Buy %</div>
+              <div style={{ fontSize: 14 }}>{((signalProbabilities.probabilityBuy ?? 0) * 100).toFixed(1)}%</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Sell %</div>
+              <div style={{ fontSize: 14 }}>{((signalProbabilities.probabilitySell ?? 0) * 100).toFixed(1)}%</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Neutral %</div>
+              <div style={{ fontSize: 14 }}>{((signalProbabilities.probabilityNeutral ?? 0) * 100).toFixed(1)}%</div>
+            </div>
+          </div>
+          <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.6)", fontStyle: "italic" }}>
+            {signalProbabilities.interpretation ?? ""}
+          </div>
+        </div>
+      ) : null}
+
+      {symbolProbabilities && symbolProbabilities.length > 0 ? (
+        <div
+          data-testid="symbol-probabilities-card"
+          style={{ border: "1px solid rgba(15, 23, 42, 0.10)", borderRadius: 10, padding: 16, marginBottom: 24 }}
+        >
+          <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 14 }}>Symbol Probabilities</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {symbolProbabilities.map((p) => (
+              <div
+                key={p.symbol}
+                style={{ padding: 10, border: "1px solid rgba(15, 23, 42, 0.08)", borderRadius: 8 }}
+              >
+                <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 6 }}>{p.symbol}</div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 6 }}>
+                  <div>
+                    <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Buy %</div>
+                    <div style={{ fontSize: 13 }}>{((p.probabilityBuy ?? 0) * 100).toFixed(1)}%</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Sell %</div>
+                    <div style={{ fontSize: 13 }}>{((p.probabilitySell ?? 0) * 100).toFixed(1)}%</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>Neutral %</div>
+                    <div style={{ fontSize: 13 }}>{((p.probabilityNeutral ?? 0) * 100).toFixed(1)}%</div>
+                  </div>
+                </div>
+                <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.6)", fontStyle: "italic" }}>
+                  {p.interpretation ?? ""}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {watchlistCandidates && watchlistCandidates.length > 0 ? (
+        <div
+          data-testid="watchlist-candidates-card"
+          style={{ border: "1px solid rgba(15, 23, 42, 0.10)", borderRadius: 10, padding: 16, marginBottom: 24 }}
+        >
+          <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 14 }}>Watchlist Candidates</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {watchlistCandidates.map((c) => (
+              <div
+                key={c.symbol}
+                style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12, padding: 10, border: "1px solid rgba(15, 23, 42, 0.08)", borderRadius: 8 }}
+              >
+                <span style={{ fontWeight: 600, fontSize: 13, minWidth: 48 }}>{c.symbol}</span>
+                <span style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.6)" }}>{c.status}</span>
+                <span style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.6)" }}>{(c.score * 100).toFixed(0)}%</span>
+                <span style={{ fontSize: 12, color: "rgba(15, 23, 42, 0.75)", flex: 1 }}>{c.reason}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {tradeSetups && tradeSetups.length > 0 ? (
+        <div
+          data-testid="trade-setups-card"
+          style={{ border: "1px solid rgba(15, 23, 42, 0.10)", borderRadius: 10, padding: 16, marginBottom: 24 }}
+        >
+          <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 14 }}>Trade Setups</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {tradeSetups.map((s) => (
+              <div
+                key={s.symbol}
+                style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12, padding: 10, border: "1px solid rgba(15, 23, 42, 0.08)", borderRadius: 8 }}
+              >
+                <span style={{ fontWeight: 600, fontSize: 13, minWidth: 48 }}>{s.symbol}</span>
+                <span style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.6)" }}>{s.status}</span>
+                <span style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.6)" }}>{(s.confidence * 100).toFixed(0)}%</span>
+                <span style={{ fontSize: 12, color: "rgba(15, 23, 42, 0.75)", flex: 1 }}>{s.reason}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {crowdDivergence && crowdDivergence.length > 0 ? (
+        <div
+          data-testid="crowd-divergence-card"
+          style={{ border: "1px solid rgba(15, 23, 42, 0.10)", borderRadius: 10, padding: 16, marginBottom: 24 }}
+        >
+          <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 14 }}>Crowd Divergence</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {crowdDivergence.map((d) => (
+              <div
+                key={d.symbol}
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  alignItems: "center",
+                  gap: 12,
+                  padding: 10,
+                  border: "1px solid rgba(15, 23, 42, 0.08)",
+                  borderRadius: 8,
+                  opacity: d.type === "NONE" ? 0.7 : 1,
+                }}
+              >
+                <span style={{ fontWeight: 600, fontSize: 13, minWidth: 48 }}>{d.symbol}</span>
+                <span style={{ fontSize: 11, color: d.type === "NONE" ? "rgba(15, 23, 42, 0.5)" : "rgba(15, 23, 42, 0.6)" }}>{d.type}</span>
+                <span style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.6)" }}>{(d.strength * 100).toFixed(0)}%</span>
+                <span style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.6)" }}>mom: {(d.momentum * 100).toFixed(2)}%</span>
+                <span style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.6)" }}>bias: {(d.crowdBias * 100).toFixed(1)}%</span>
+                <span style={{ fontSize: 12, color: "rgba(15, 23, 42, 0.75)", flex: 1 }}>{d.reason}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {crowdAcceleration && crowdAcceleration.length > 0 ? (
+        <div
+          data-testid="crowd-acceleration-card"
+          style={{ border: "1px solid rgba(15, 23, 42, 0.10)", borderRadius: 10, padding: 16, marginBottom: 24 }}
+        >
+          <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 14 }}>Crowd Acceleration</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {crowdAcceleration.map((a) => (
+              <div
+                key={a.symbol}
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  alignItems: "center",
+                  gap: 12,
+                  padding: 10,
+                  border: "1px solid rgba(15, 23, 42, 0.08)",
+                  borderRadius: 8,
+                  opacity: a.type === "NONE" ? 0.7 : 1,
+                }}
+              >
+                <span style={{ fontWeight: 600, fontSize: 13, minWidth: 48 }}>{a.symbol}</span>
+                <span style={{ fontSize: 11, color: a.type === "NONE" ? "rgba(15, 23, 42, 0.5)" : "rgba(15, 23, 42, 0.6)" }}>{a.type}</span>
+                <span style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.6)" }}>{(a.strength * 100).toFixed(0)}%</span>
+                <span style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.6)" }}>vel: {(a.velocity * 100).toFixed(2)}%</span>
+                <span style={{ fontSize: 12, color: "rgba(15, 23, 42, 0.75)", flex: 1 }}>{a.reason}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       <div
         data-testid="forecast-accuracy-panel"

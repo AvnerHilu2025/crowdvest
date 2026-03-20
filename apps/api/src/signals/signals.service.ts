@@ -1,9 +1,25 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { StrategyProfilesService } from "../strategy-profiles/strategy-profiles.service";
 import { MarketDataService } from "../market-data/market-data.service";
 
 const WINDOW = 20;
+
+export interface SignalThresholdConfig {
+  strongBuyMin: number;
+  buyMin: number;
+  sellMin: number;
+  strongSellMin: number;
+  minDirectionalGap: number;
+}
+
+const DEFAULT_THRESHOLDS: SignalThresholdConfig = {
+  strongBuyMin: 0.66,
+  buyMin: 0.56,
+  sellMin: 0.56,
+  strongSellMin: 0.66,
+  minDirectionalGap: 0.08,
+};
 
 type RealizedDirection = "UP" | "DOWN" | "FLAT";
 
@@ -17,6 +33,7 @@ export type CrowdSignal =
 export interface SignalItem {
   symbol: string;
   signal: CrowdSignal;
+  signalStrength: number;
   confidence: number;
   disagreement: number;
   instability: number;
@@ -25,6 +42,7 @@ export interface SignalItem {
 
 export interface LatestSignalsResponse {
   window: number;
+  thresholds: SignalThresholdConfig;
   signals: SignalItem[];
 }
 
@@ -44,6 +62,8 @@ function stdDev(values: number[]): number {
 
 @Injectable()
 export class SignalsService {
+  private readonly logger = new Logger(SignalsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly strategyProfilesService: StrategyProfilesService,
@@ -156,10 +176,36 @@ export class SignalsService {
     };
   }
 
+  /** Apply threshold config to derive signal from crowd mix. Deterministic. */
+  private applyThresholds(
+    avgBuyPct: number,
+    avgSellPct: number,
+    avgHoldPct: number,
+    cfg: SignalThresholdConfig = DEFAULT_THRESHOLDS,
+  ): { signal: CrowdSignal; signalStrength: number } {
+    const confidence = Math.max(avgBuyPct, avgSellPct, avgHoldPct);
+    const directionalGap = Math.abs(avgBuyPct - avgSellPct);
+    const signalStrength = Math.min(1, Math.max(0, directionalGap * confidence));
+
+    let signal: CrowdSignal = "NEUTRAL";
+    if (avgBuyPct >= cfg.strongBuyMin && avgBuyPct - avgSellPct >= cfg.minDirectionalGap) {
+      signal = "STRONG_BUY";
+    } else if (avgBuyPct >= cfg.buyMin && avgBuyPct - avgSellPct >= cfg.minDirectionalGap) {
+      signal = "BUY";
+    } else if (avgSellPct >= cfg.strongSellMin && avgSellPct - avgBuyPct >= cfg.minDirectionalGap) {
+      signal = "STRONG_SELL";
+    } else if (avgSellPct >= cfg.sellMin && avgSellPct - avgBuyPct >= cfg.minDirectionalGap) {
+      signal = "SELL";
+    }
+
+    return { signal, signalStrength };
+  }
+
   /** Compute rolling signal for a symbol from a list of runs. */
   async computeRollingSignal(
     symbol: string,
     runs: Array<{ id: string }>,
+    thresholds: SignalThresholdConfig = DEFAULT_THRESHOLDS,
   ): Promise<SignalItem | null> {
     if (runs.length === 0) return null;
 
@@ -178,12 +224,7 @@ export class SignalsService {
     const avgHoldPct =
       mixes.reduce((s, m) => s + m.holdPct, 0) / mixes.length;
 
-    let signal: CrowdSignal = "NEUTRAL";
-    if (avgBuyPct >= 0.65) signal = "STRONG_BUY";
-    else if (avgBuyPct >= 0.55) signal = "BUY";
-    else if (avgSellPct >= 0.65) signal = "STRONG_SELL";
-    else if (avgSellPct >= 0.55) signal = "SELL";
-
+    const { signal, signalStrength } = this.applyThresholds(avgBuyPct, avgSellPct, avgHoldPct, thresholds);
     const confidence = Math.max(avgBuyPct, avgSellPct, avgHoldPct);
     const disagreement = Math.max(0, 1 - confidence);
 
@@ -196,6 +237,7 @@ export class SignalsService {
     return {
       symbol,
       signal,
+      signalStrength,
       confidence,
       disagreement,
       instability,
@@ -208,20 +250,21 @@ export class SignalsService {
     try {
       const symbols = this.resolveSymbols(symbolsInput);
       const signals: SignalItem[] = [];
+      const thresholds = DEFAULT_THRESHOLDS;
 
       for (const symbol of symbols) {
         try {
           const runs = await this.getRecentRunsForSymbol(symbol, WINDOW);
-          const item = await this.computeRollingSignal(symbol, runs);
+          const item = await this.computeRollingSignal(symbol, runs, thresholds);
           if (item) signals.push(item);
         } catch {
           /* skip symbol on error */
         }
       }
 
-      return { window: WINDOW, signals };
+      return { window: WINDOW, thresholds, signals };
     } catch {
-      return { window: WINDOW, signals: [] };
+      return { window: WINDOW, thresholds: DEFAULT_THRESHOLDS, signals: [] };
     }
   }
 
@@ -280,7 +323,7 @@ export class SignalsService {
       /* keep null */
     }
 
-    const { window, signals } = await this.getLatestSignals(symbols.join(","));
+    const { window, signals } = await this.getLatestSignals(symbols.join(",") ?? undefined);
     const created: Array<{
       symbol: string;
       signal: string;
@@ -331,6 +374,7 @@ export class SignalsService {
       id: string;
       symbol: string;
       signal: string;
+      signalStrength: number;
       confidence: number;
       disagreement: number;
       instability: number;
@@ -372,30 +416,38 @@ export class SignalsService {
     });
 
     return {
-      items: rows.map((r) => ({
-        id: r.id,
-        symbol: r.symbol,
-        signal: r.signal,
-        confidence: r.confidence,
-        disagreement: r.disagreement,
-        instability: r.instability,
-        runsUsed: r.runsUsed,
-        windowSize: r.windowSize,
-        datasetVersion: r.datasetVersion,
-        strategyProfile: r.strategyProfile,
-        aggregationMode: r.aggregationMode,
-        selectionPolicy: r.selectionPolicy,
-        createdAt: r.createdAt.toISOString(),
-      })),
+      items: rows.map((r) => {
+        const signalStrength = Math.min(1, Math.max(0, r.confidence * (1 - r.disagreement)));
+        return {
+          id: r.id,
+          symbol: r.symbol,
+          signal: r.signal,
+          signalStrength,
+          confidence: r.confidence,
+          disagreement: r.disagreement,
+          instability: r.instability,
+          runsUsed: r.runsUsed,
+          windowSize: r.windowSize,
+          datasetVersion: r.datasetVersion,
+          strategyProfile: r.strategyProfile,
+          aggregationMode: r.aggregationMode,
+          selectionPolicy: r.selectionPolicy,
+          createdAt: r.createdAt.toISOString(),
+        };
+      }),
     };
   }
 
-  /** Map signal to expected direction. */
+  /** Map signal to expected direction. NEUTRAL is interpreted as no actionable edge, not as a flat-price forecast. */
   private signalToDirection(signal: string): RealizedDirection | null {
     if (signal === "STRONG_BUY" || signal === "BUY") return "UP";
     if (signal === "STRONG_SELL" || signal === "SELL") return "DOWN";
-    if (signal === "NEUTRAL") return "FLAT";
+    if (signal === "NEUTRAL") return null;
     return null;
+  }
+
+  private isActionable(signal: string): boolean {
+    return signal === "STRONG_BUY" || signal === "BUY" || signal === "STRONG_SELL" || signal === "SELL";
   }
 
   /** Get validation: compare signal history vs realized market moves. */
@@ -403,14 +455,27 @@ export class SignalsService {
     symbolsInput?: string,
     limit: number = 50,
   ): Promise<{
-    summary: { total: number; validated: number; accuracyRate: number | null };
+    summary: {
+      total: number;
+      actionable: number;
+      abstained: number;
+      directionalValidated: number;
+      directionalAccuracyRate: number | null;
+      coverageRate: number | null;
+      avgSignalStrengthActionable: number | null;
+      avgSignalStrengthAll: number | null;
+      validated: number;
+      accuracyRate: number | null;
+    };
     items: Array<{
       symbol: string;
       signal: string;
       createdAt: string;
       realizedDirection: "UP" | "DOWN" | "FLAT" | null;
+      actionable: boolean;
       correct: boolean | null;
       confidence: number;
+      signalStrength: number;
       instability: number;
     }>;
   }> {
@@ -420,45 +485,62 @@ export class SignalsService {
       signal: string;
       createdAt: string;
       realizedDirection: "UP" | "DOWN" | "FLAT" | null;
+      actionable: boolean;
       correct: boolean | null;
       confidence: number;
+      signalStrength: number;
       instability: number;
     }> = [];
 
-    let validated = 0;
-    let correct = 0;
+    let directionalValidated = 0;
+    let directionalCorrect = 0;
+    let actionable = 0;
+    let abstained = 0;
+    let sumSignalStrengthActionable = 0;
+    let countSignalStrengthActionable = 0;
+    let sumSignalStrengthAll = 0;
 
     for (const h of items) {
+      const actionableRow = this.isActionable(h.signal);
+      if (actionableRow) actionable++;
+      else abstained++;
+
       let realizedDirection: "UP" | "DOWN" | "FLAT" | null = null;
       let correctVal: boolean | null = null;
 
       try {
-        const latestDs = await this.marketDataService.getLatestDataset();
-        const datasetVersion = latestDs?.datasetVersion ?? null;
-        const where: { symbol: string; datasetVersion?: string } = { symbol: h.symbol };
-        if (datasetVersion) where.datasetVersion = datasetVersion;
+        let datasetVersion: string | null = h.datasetVersion ?? null;
+        if (!datasetVersion) {
+          const latestForSymbol = await this.prisma.marketPrice.findFirst({
+            where: { symbol: h.symbol },
+            orderBy: { timestamp: "desc" },
+            select: { datasetVersion: true },
+          });
+          datasetVersion = latestForSymbol?.datasetVersion ?? null;
+        }
+        if (datasetVersion) {
+          const prices = await this.prisma.marketPrice.findMany({
+            where: { symbol: h.symbol, datasetVersion },
+            orderBy: { timestamp: "asc" },
+            select: { timestamp: true, close: true },
+          });
+          const createdAt = new Date(h.createdAt);
+          const atOrBefore = prices.filter((p) => p.timestamp <= createdAt);
+          const current = atOrBefore.length > 0 ? atOrBefore[atOrBefore.length - 1]! : null;
+          if (current) {
+            const afterCurrent = prices.filter((p) => p.timestamp > current.timestamp);
+            const next = afterCurrent.length > 0 ? afterCurrent[0]! : null;
+            if (next) {
+              if (next.close > current.close) realizedDirection = "UP";
+              else if (next.close < current.close) realizedDirection = "DOWN";
+              else realizedDirection = "FLAT";
 
-        const prices = await this.prisma.marketPrice.findMany({
-          where,
-          orderBy: { timestamp: "asc" },
-          select: { timestamp: true, close: true },
-        });
-        const createdAt = new Date(h.createdAt);
-        const atOrBefore = prices.filter((p) => p.timestamp <= createdAt);
-        const current = atOrBefore.length > 0 ? atOrBefore[atOrBefore.length - 1]! : null;
-        if (current) {
-          const afterCurrent = prices.filter((p) => p.timestamp > current.timestamp);
-          const next = afterCurrent.length > 0 ? afterCurrent[0]! : null;
-          if (next) {
-            if (next.close > current.close) realizedDirection = "UP";
-            else if (next.close < current.close) realizedDirection = "DOWN";
-            else realizedDirection = "FLAT";
-
-            const expected = this.signalToDirection(h.signal);
-            if (expected != null) {
-              correctVal = realizedDirection === expected;
-              validated++;
-              if (correctVal) correct++;
+              const expected = this.signalToDirection(h.signal);
+              if (expected != null && realizedDirection != null) {
+                correctVal = realizedDirection === expected;
+                directionalValidated++;
+                if (correctVal) directionalCorrect++;
+              }
             }
           }
         }
@@ -466,22 +548,48 @@ export class SignalsService {
         /* keep nulls */
       }
 
+      const signalStrength = typeof (h as { signalStrength?: number }).signalStrength === "number"
+        ? (h as { signalStrength: number }).signalStrength
+        : Math.min(1, Math.max(0, h.confidence * (1 - (h.disagreement ?? 0))));
+      sumSignalStrengthAll += signalStrength;
+      if (actionableRow && realizedDirection != null) {
+        sumSignalStrengthActionable += signalStrength;
+        countSignalStrengthActionable++;
+      }
+
       validatedItems.push({
         symbol: h.symbol,
         signal: h.signal,
         createdAt: h.createdAt,
         realizedDirection,
+        actionable: actionableRow,
         correct: correctVal,
         confidence: h.confidence,
+        signalStrength,
         instability: h.instability,
       });
     }
 
+    const total = items.length;
+    const directionalAccuracyRate =
+      directionalValidated > 0 ? directionalCorrect / directionalValidated : null;
+    const coverageRate = total > 0 ? actionable / total : null;
+    const avgSignalStrengthActionable =
+      countSignalStrengthActionable > 0 ? sumSignalStrengthActionable / countSignalStrengthActionable : null;
+    const avgSignalStrengthAll = total > 0 ? sumSignalStrengthAll / total : null;
+
     return {
       summary: {
-        total: items.length,
-        validated,
-        accuracyRate: validated > 0 ? correct / validated : null,
+        total,
+        actionable,
+        abstained,
+        directionalValidated,
+        directionalAccuracyRate,
+        coverageRate,
+        avgSignalStrengthActionable,
+        avgSignalStrengthAll,
+        validated: directionalValidated,
+        accuracyRate: directionalAccuracyRate,
       },
       items: validatedItems,
     };
@@ -540,12 +648,9 @@ export class SignalsService {
   /**
    * Map crowd mix to 5-level signal (same thresholds as computeRollingSignal).
    */
-  private mixToSignal(buyPct: number, sellPct: number): CrowdSignal {
-    if (buyPct >= 0.65) return "STRONG_BUY";
-    if (buyPct >= 0.55) return "BUY";
-    if (sellPct >= 0.65) return "STRONG_SELL";
-    if (sellPct >= 0.55) return "SELL";
-    return "NEUTRAL";
+  private mixToSignal(buyPct: number, sellPct: number, cfg: SignalThresholdConfig = DEFAULT_THRESHOLDS): { signal: CrowdSignal; signalStrength: number } {
+    const holdPct = Math.max(0, 1 - buyPct - sellPct);
+    return this.applyThresholds(buyPct, sellPct, holdPct, cfg);
   }
 
   /** Backfill historical signal snapshots from market prices. Idempotent. */
@@ -566,23 +671,7 @@ export class SignalsService {
     const window = Math.max(1, Math.min(opts?.window ?? WINDOW, 100));
     const maxSnapshots = Math.max(1, Math.min(opts?.maxSnapshotsPerSymbol ?? 30, 200));
 
-    let datasetVersion: string | null = null;
-    try {
-      const ds = await this.marketDataService.getLatestDataset();
-      datasetVersion = ds?.datasetVersion ?? null;
-    } catch {
-      /* no market data */
-    }
-    if (!datasetVersion) {
-      return {
-        ok: true,
-        window,
-        symbols,
-        created: 0,
-        skippedExisting: 0,
-        itemsPerSymbol: Object.fromEntries(symbols.map((s) => [s, { created: 0, skippedExisting: 0 }])),
-      };
-    }
+    this.logger.debug(`Backfill start symbols=${symbols.join(",")} window=${window} maxSnapshots=${maxSnapshots}`);
 
     let strategyProfile: string | null = null;
     let aggregationMode: string | null = null;
@@ -604,6 +693,18 @@ export class SignalsService {
       let created = 0;
       let skipped = 0;
 
+      const latestForSymbol = await this.prisma.marketPrice.findFirst({
+        where: { symbol },
+        orderBy: { timestamp: "desc" },
+        select: { datasetVersion: true },
+      });
+      const datasetVersion = latestForSymbol?.datasetVersion ?? null;
+      if (!datasetVersion) {
+        this.logger.debug(`Backfill symbol ${symbol} no market prices found, skipping`);
+        itemsPerSymbol[symbol] = { created: 0, skippedExisting: 0 };
+        continue;
+      }
+
       const allPrices = await this.prisma.marketPrice.findMany({
         where: { symbol, datasetVersion },
         orderBy: { timestamp: "desc" },
@@ -611,9 +712,12 @@ export class SignalsService {
         select: { timestamp: true, close: true },
       });
       if (allPrices.length < 2) {
+        this.logger.debug(`Backfill symbol ${symbol} prices=${allPrices.length} insufficient, skipping`);
         itemsPerSymbol[symbol] = { created: 0, skippedExisting: 0 };
         continue;
       }
+
+      this.logger.debug(`Backfill symbol ${symbol} prices=${allPrices.length} datasetVersion=${datasetVersion}`);
 
       const evalTimestamps = allPrices.slice(0, maxSnapshots).map((p) => p.timestamp);
 
@@ -627,7 +731,7 @@ export class SignalsService {
         if (!mix) continue;
 
         const { buyPct, sellPct, holdPct, instability: inst } = mix;
-        const signal = this.mixToSignal(buyPct, sellPct);
+        const { signal } = this.mixToSignal(buyPct, sellPct);
         const confidence = Math.max(buyPct, sellPct, holdPct);
         const disagreement = Math.max(0, 1 - confidence);
 
@@ -669,6 +773,7 @@ export class SignalsService {
       itemsPerSymbol[symbol] = { created, skippedExisting: skipped };
       totalCreated += created;
       totalSkipped += skipped;
+      this.logger.debug(`Backfill symbol ${symbol} created=${created} skippedExisting=${skipped}`);
     }
 
     return {
@@ -699,17 +804,85 @@ export class SignalsService {
     };
   }
 
+  /** Get coverage diagnostics from signal history. */
+  async getCoverageDiagnostics(
+    symbolsInput?: string,
+    limit: number = 100,
+  ): Promise<{
+    summary: { total: number; actionable: number; abstained: number; coverageRate: number };
+    bySignal: Record<string, number>;
+    bySymbol: Array<{
+      symbol: string;
+      total: number;
+      actionable: number;
+      abstained: number;
+      coverageRate: number;
+    }>;
+  }> {
+    const { items } = await this.getHistory(symbolsInput, limit);
+    const bySignal: Record<string, number> = {
+      STRONG_BUY: 0,
+      BUY: 0,
+      NEUTRAL: 0,
+      SELL: 0,
+      STRONG_SELL: 0,
+    };
+    const bySymbolMap = new Map<string, { total: number; actionable: number }>();
+
+    for (const h of items) {
+      const sig = h.signal in bySignal ? h.signal : "NEUTRAL";
+      bySignal[sig] = (bySignal[sig] ?? 0) + 1;
+
+      const entry = bySymbolMap.get(h.symbol) ?? { total: 0, actionable: 0 };
+      entry.total++;
+      if (this.isActionable(h.signal)) entry.actionable++;
+      bySymbolMap.set(h.symbol, entry);
+    }
+
+    let total = 0;
+    let actionable = 0;
+    for (const e of bySymbolMap.values()) {
+      total += e.total;
+      actionable += e.actionable;
+    }
+    const abstained = total - actionable;
+    const coverageRate = total > 0 ? actionable / total : 0;
+
+    const bySymbol = Array.from(bySymbolMap.entries()).map(([symbol, e]) => ({
+      symbol,
+      total: e.total,
+      actionable: e.actionable,
+      abstained: e.total - e.actionable,
+      coverageRate: e.total > 0 ? e.actionable / e.total : 0,
+    }));
+
+    return {
+      summary: { total, actionable, abstained, coverageRate },
+      bySignal,
+      bySymbol,
+    };
+  }
+
   /** Get signal validation for dashboard summary (never throws). */
   async getSignalValidationForSummary(symbols: string[]): Promise<{
     total: number;
+    actionable: number;
+    abstained: number;
+    directionalValidated: number;
+    directionalAccuracyRate: number | null;
+    coverageRate: number | null;
+    avgSignalStrengthActionable: number | null;
+    avgSignalStrengthAll: number | null;
     validated: number;
     accuracyRate: number | null;
     latestItems: Array<{
       symbol: string;
       signal: string;
       realizedDirection: "UP" | "DOWN" | "FLAT" | null;
+      actionable: boolean;
       correct: boolean | null;
       confidence: number;
+      signalStrength?: number;
     }>;
   }> {
     try {
@@ -719,19 +892,35 @@ export class SignalsService {
       );
       return {
         total: summary.total,
+        actionable: summary.actionable,
+        abstained: summary.abstained,
+        directionalValidated: summary.directionalValidated,
+        directionalAccuracyRate: summary.directionalAccuracyRate,
+        coverageRate: summary.coverageRate,
+        avgSignalStrengthActionable: summary.avgSignalStrengthActionable,
+        avgSignalStrengthAll: summary.avgSignalStrengthAll,
         validated: summary.validated,
         accuracyRate: summary.accuracyRate,
         latestItems: items.slice(0, 10).map((i) => ({
           symbol: i.symbol,
           signal: i.signal,
           realizedDirection: i.realizedDirection,
+          actionable: i.actionable,
           correct: i.correct,
           confidence: i.confidence,
+          signalStrength: i.signalStrength,
         })),
       };
     } catch {
       return {
         total: 0,
+        actionable: 0,
+        abstained: 0,
+        directionalValidated: 0,
+        directionalAccuracyRate: null,
+        coverageRate: null,
+        avgSignalStrengthActionable: null,
+        avgSignalStrengthAll: null,
         validated: 0,
         accuracyRate: null,
         latestItems: [],

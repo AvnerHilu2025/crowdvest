@@ -45,6 +45,19 @@ export class SignalsController {
     return this.signalsService.getHistory(symbols ?? undefined, limitNum);
   }
 
+  /** GET /signals/coverage-diagnostics — coverage stats from signal history. ?symbols=SPY,QQQ,IWM&limit=100 */
+  @Get("coverage-diagnostics")
+  async getCoverageDiagnostics(
+    @Query("symbols") symbols?: string,
+    @Query("limit") limit?: string,
+  ) {
+    const limitNum = Math.min(
+      Math.max(1, parseInt(limit ?? "100", 10) || 100),
+      200,
+    );
+    return this.signalsService.getCoverageDiagnostics(symbols ?? undefined, limitNum);
+  }
+
   /** GET /signals/validation — validate signals vs realized market moves. ?symbols=SPY,QQQ&limit=50 */
   @Get("validation")
   async getValidation(

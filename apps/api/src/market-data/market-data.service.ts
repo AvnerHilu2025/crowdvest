@@ -1,7 +1,9 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { createHash } from "crypto";
+import { ConfigService } from "../config/config.service";
 import { PrismaService } from "../prisma/prisma.service";
 import type { ProviderPricePayload } from "./providers/market-data-provider.interface";
+import { AlphaVantageProvider } from "./providers/alpha-vantage.provider";
 import { DummyMarketProvider } from "./providers/dummy-market.provider";
 
 function computeDatasetVersion(provider: string, symbol: string, points: number, timestamp: string): string {
@@ -9,11 +11,24 @@ function computeDatasetVersion(provider: string, symbol: string, points: number,
   return createHash("sha256").update(input).digest("hex").slice(0, 32);
 }
 
+function computeDatasetVersionAlphaVantage(
+  provider: string,
+  symbol: string,
+  maxTimestamp: string,
+  rowCount: number,
+): string {
+  const input = `${provider}:${symbol}:${maxTimestamp}:${rowCount}`;
+  return createHash("sha256").update(input).digest("hex").slice(0, 32);
+}
+
 @Injectable()
 export class MarketDataService {
   private readonly providers = new Map<string, { fetchPrices: (symbol: string, points: number) => Promise<ProviderPricePayload> }>();
 
-  constructor(private readonly prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
+  ) {
     const dummy = new DummyMarketProvider();
     this.providers.set("dummy", { fetchPrices: (s, p) => dummy.fetchPrices(s, p) });
   }
@@ -120,6 +135,74 @@ export class MarketDataService {
 
   hasMarketDataIngestion(): boolean {
     return this.providers.size > 0;
+  }
+
+  /** Import daily adjusted prices from Alpha Vantage. */
+  async importFromAlphaVantage(symbol: string): Promise<number> {
+    const apiKey = this.configService.getAlphaVantageKey();
+    if (!apiKey?.trim()) {
+      throw new BadRequestException(
+        "ALPHAVANTAGE_API_KEY is not set. Add it to .env and restart the API.",
+      );
+    }
+
+    const provider = new AlphaVantageProvider(apiKey);
+    const rows = await provider.fetchDailySeries(symbol);
+
+    if (rows.length === 0) {
+      return 0;
+    }
+
+    const maxTimestamp = rows.reduce(
+      (max, r) => (r.timestamp > max ? r.timestamp : max),
+      rows[0]!.timestamp,
+    );
+    const datasetVersion = computeDatasetVersionAlphaVantage(
+      "alphavantage",
+      symbol,
+      maxTimestamp.toISOString(),
+      rows.length,
+    );
+
+    await this.prisma.marketDataPayload.create({
+      data: {
+        provider: "alphavantage",
+        symbol,
+        payloadJson: { rowCount: rows.length, maxTimestamp: maxTimestamp.toISOString() } as object,
+        datasetVersion,
+      },
+    });
+
+    for (const row of rows) {
+      await this.prisma.marketPrice.upsert({
+        where: {
+          datasetVersion_symbol_timestamp: {
+            datasetVersion,
+            symbol: row.symbol,
+            timestamp: row.timestamp,
+          },
+        },
+        create: {
+          datasetVersion,
+          symbol: row.symbol,
+          timestamp: row.timestamp,
+          open: row.open,
+          high: row.high,
+          low: row.low,
+          close: row.close,
+          volume: row.volume,
+        },
+        update: {
+          open: row.open,
+          high: row.high,
+          low: row.low,
+          close: row.close,
+          volume: row.volume,
+        },
+      });
+    }
+
+    return rows.length;
   }
 
   /** Returns data source info for dashboard/launch plan. */

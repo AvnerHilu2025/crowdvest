@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import * as path from "path";
+import { AppConfigModule } from "./config/config.module";
 import { PrismaModule } from "./prisma/prisma.module";
 import { HealthModule } from "./health/health.module";
 import { AgentsModule } from "./agents/agents.module";
@@ -35,6 +36,7 @@ import { SignalsModule } from "./signals/signals.module";
         "apps/api/.env",
       ],
     }),
+    AppConfigModule,
     PrismaModule,
     HealthModule,
     DatasetsModule,

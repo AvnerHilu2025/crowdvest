@@ -1571,6 +1571,955 @@ export interface DashboardSummary {
       conviction?: number | null;
     }>;
   };
+  setupShadowAudit?: {
+    sourceDescription: string;
+    variants: {
+      baseOnly: { longSetupCount: number; shortSetupCount: number; noneSetupCount: number };
+      shadow25: { longSetupCount: number; shortSetupCount: number; noneSetupCount: number };
+      shadow50: { longSetupCount: number; shortSetupCount: number; noneSetupCount: number };
+      actual: { longSetupCount: number; shortSetupCount: number; noneSetupCount: number };
+    };
+  };
+  setupScoreAudit?: {
+    sourceDescription: string;
+    attenuationFactor: number;
+    avgSetupScore: number | null;
+    positiveSetupScoreCount: number;
+    negativeSetupScoreCount: number;
+  };
+  officialBaselineAudit?: {
+    signalFlipEnabled: boolean;
+    shortEnabled: boolean;
+    deltaAttenuationFactor: number;
+    macroExcludedFromLiveSetupScore: boolean;
+    sentimentExcludedFromLiveSetupScore: boolean;
+    activeSetupScoreFormula: string;
+  };
+  macroPrunedLiveAudit?: {
+    enabled: boolean;
+    macroIncludedInLiveSetupScore: boolean;
+    signalFlipEnabled: boolean;
+    deltaAttenuationFactor: number;
+    activeSetupScoreFormula: string;
+  };
+  sentimentPrunedLiveAudit?: {
+    enabled: boolean;
+    macroIncludedInLiveSetupScore: boolean;
+    sentimentIncludedInLiveSetupScore: boolean;
+    signalFlipEnabled: boolean;
+    deltaAttenuationFactor: number;
+    activeSetupScoreFormula: string;
+  };
+  baselinePreservationAudit?: {
+    officialBaselineName: string;
+    signalFlipEnabled: boolean;
+    shortEnabled: boolean;
+    deltaAttenuationFactor: number;
+    macroExcludedFromLiveSetupScore: boolean;
+    sentimentExcludedFromLiveSetupScore: boolean;
+    activeSetupScoreFormula: string;
+    baselinePerformanceSnapshot: {
+      trades: number | null;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+  };
+  winningBaselineFeatureAudit?: {
+    allExecutedTrades: {
+      count: number;
+      avgBaseSignal: number | null;
+      avgTechnicalContribution: number | null;
+      avgNoiseContribution: number | null;
+      avgConviction: number | null;
+    };
+    winningTrades: {
+      count: number;
+      avgBaseSignal: number | null;
+      avgTechnicalContribution: number | null;
+      avgNoiseContribution: number | null;
+      avgConviction: number | null;
+    };
+    losingTrades: {
+      count: number;
+      avgBaseSignal: number | null;
+      avgTechnicalContribution: number | null;
+      avgNoiseContribution: number | null;
+      avgConviction: number | null;
+    };
+    comparison: {
+      convictionDeltaWinningMinusLosing: number | null;
+      technicalDeltaWinningMinusLosing: number | null;
+      baseSignalDeltaWinningMinusLosing: number | null;
+      noiseDeltaWinningMinusLosing: number | null;
+    };
+  };
+  experimentHarnessAudit?: {
+    baseline: {
+      name: string;
+      trades: number | null;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    candidateShadow: {
+      name: string;
+      configured: boolean;
+      trades: number | null;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    comparison: {
+      edgeDeltaCandidateMinusBaseline: number | null;
+      cumulativeReturnDeltaCandidateMinusBaseline: number | null;
+      drawdownDeltaCandidateMinusBaseline: number | null;
+      preferredByEdge: string | null;
+      preferredByCumulativeReturn: string | null;
+    };
+  };
+  liveDirectionModeAudit?: {
+    longOnlyMode: boolean;
+    shortEnabled: boolean;
+    signalFlipEnabled: boolean;
+    deltaAttenuationFactor: number;
+    activeSetupScoreFormula: string;
+  };
+  currentStrategyConfigAudit?: {
+    longOnlyMode: boolean;
+    signalFlipEnabled: boolean;
+    deltaAttenuationFactor: number;
+    activeSetupScoreFormula: string;
+  };
+  signalFlipAudit?: {
+    enabled: boolean;
+    scoreSource: string;
+    flipped: boolean;
+    avgInvertedSetupScore: number | null;
+    positiveInvertedSetupScoreCount: number;
+    negativeInvertedSetupScoreCount: number;
+  };
+  setupGateConsistencyAudit?: {
+    sourceDescription: string;
+    setupUses: string;
+    signalStrengthUses: string;
+  };
+  neutralGateConsistencyAudit?: {
+    sourceDescription: string;
+    setupUses: string;
+    signalStrengthUses: string;
+    neutralUses: string;
+  };
+  neutralFilterAudit?: {
+    sourceDescription: string;
+    longPath: {
+      enteredNeutralStageCount: number;
+      passedNeutralCount: number;
+      rejectedNeutralCount: number;
+      avgConvictionAtNeutralStage: number | null;
+      avgNeutralMetricIfExists: number | null;
+    };
+    shortPath: {
+      enteredNeutralStageCount: number;
+      passedNeutralCount: number;
+      rejectedNeutralCount: number;
+      avgConvictionAtNeutralStage: number | null;
+      avgNeutralMetricIfExists: number | null;
+    };
+    neutralRuleDescription: string;
+    sampleRejectedLongs: Array<{
+      symbol: string;
+      timestamp: string;
+      conviction?: number | null;
+      neutralMetricIfExists?: number | null;
+      baseSignal?: number | null;
+      postInformationSignal?: number | null;
+      setupScoreIfExists?: number | null;
+    }>;
+    sampleRejectedShorts: Array<{
+      symbol: string;
+      timestamp: string;
+      conviction?: number | null;
+      neutralMetricIfExists?: number | null;
+      baseSignal?: number | null;
+      postInformationSignal?: number | null;
+      setupScoreIfExists?: number | null;
+    }>;
+  };
+  shadowBenchmarkAudit?: {
+    liveBaseline: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    shadowNoMacroNoSentiment: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    comparison: {
+      edgeDeltaLiveMinusShadow: number | null;
+      cumulativeReturnDeltaLiveMinusShadow: number | null;
+      drawdownDeltaLiveMinusShadow: number | null;
+      currentPreferredMode: string;
+    };
+  };
+  strongSignalLiveAudit?: {
+    enabled: boolean;
+    activeSetupScoreAbsThreshold: number;
+    activeSetupScoreFormula: string;
+  };
+    causalRegimePolicyShadowAudit?: {
+    regimeDefinition: string;
+    baselineEquivalent: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    causalUptrendLong_downtrendShortOnly: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    causalUptrendOnly_flatDowntrend: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    recommendation: {
+      bestVariantByEdge: string | null;
+      bestVariantByCumulativeReturn: string | null;
+      bestVariantByMaxDrawdown: string | null;
+    };
+  };
+  regimePolicyShadowAudit?: {
+    baselineEquivalent: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    uptrendOnly_flatDowntrend: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    uptrendLong_downtrendShortOnly: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    downtrendShortOnly_only: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    recommendation: {
+      bestVariantByEdge: string | null;
+      bestVariantByCumulativeReturn: string | null;
+      bestVariantByMaxDrawdown: string | null;
+    };
+  };
+  downtrendSuppressionShadowAudit?: {
+    baselineEquivalent: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    noDowntrendTrades: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    comparison: {
+      edgeDeltaNoDowntrendMinusBaseline: number | null;
+      cumulativeReturnDeltaNoDowntrendMinusBaseline: number | null;
+      drawdownDeltaNoDowntrendMinusBaseline: number | null;
+    };
+  };
+  regimePerformanceAudit?: {
+    uptrend: {
+      trades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    downtrend: {
+      trades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    comparison: {
+      edgeDeltaUpMinusDown: number | null;
+      winRateDeltaUpMinusDown: number | null;
+    };
+  };
+  liveExitPolicyAudit?: {
+    stopLossEnabled: boolean;
+    stopLossPercent: number;
+    takeProfitEnabled: boolean;
+    methodologyDescription: string;
+  };
+  exitPolicyShadowAudit?: {
+    methodologyDescription: string;
+    baselineEquivalent: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    stopLoss_3pct: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    takeProfit_6pct: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    stopLoss_3pct_takeProfit_6pct: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    recommendation: {
+      bestVariantByEdge: string | null;
+      bestVariantByCumulativeReturn: string | null;
+      bestVariantByMaxDrawdown: string | null;
+    };
+  };
+  strategyV2CandidateAudit?: {
+    strategyId: string;
+    versionLabel: string;
+    status: string;
+    config: {
+      signalFlipEnabled: boolean;
+      shortEnabled: boolean;
+      deltaAttenuationFactor: number;
+      macroExcludedFromLiveSetupScore: boolean;
+      sentimentExcludedFromLiveSetupScore: boolean;
+      activeSetupScoreAbsThreshold: number;
+      sizingMode: string;
+      stopLossEnabled: boolean;
+      stopLossPercent: number;
+      takeProfitEnabled: boolean;
+    };
+    performanceSnapshot: {
+      trades: number | null;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    walkForwardSnapshot: {
+      positiveEdgeSegmentCount: number;
+      positiveCumulativeReturnSegmentCount: number;
+      bestSegmentByEdge: string | null;
+      worstSegmentByEdge: string | null;
+    };
+  };
+  strategyV1CandidateAudit?: {
+    strategyId: string;
+    versionLabel: string;
+    status: string;
+    config: {
+      signalFlipEnabled: boolean;
+      shortEnabled: boolean;
+      deltaAttenuationFactor: number;
+      macroExcludedFromLiveSetupScore: boolean;
+      sentimentExcludedFromLiveSetupScore: boolean;
+      activeSetupScoreAbsThreshold: number;
+      sizingMode: string;
+    };
+    performanceSnapshot: {
+      trades: number | null;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    walkForwardSnapshot: {
+      positiveEdgeSegmentCount: number;
+      positiveCumulativeReturnSegmentCount: number;
+      bestSegmentByEdge: string | null;
+      worstSegmentByEdge: string | null;
+    };
+  };
+  walkForwardAudit?: {
+    splitDescription: string;
+    segments: [
+      { label: string; trades: number; executedLongTrades: number; executedShortTrades: number; winRate: number | null; avgTradeReturn: number | null; cumulativeReturn: number | null; benchmarkReturn: number | null; edge: number | null; maxDrawdown: number | null },
+      { label: string; trades: number; executedLongTrades: number; executedShortTrades: number; winRate: number | null; avgTradeReturn: number | null; cumulativeReturn: number | null; benchmarkReturn: number | null; edge: number | null; maxDrawdown: number | null },
+      { label: string; trades: number; executedLongTrades: number; executedShortTrades: number; winRate: number | null; avgTradeReturn: number | null; cumulativeReturn: number | null; benchmarkReturn: number | null; edge: number | null; maxDrawdown: number | null },
+      { label: string; trades: number; executedLongTrades: number; executedShortTrades: number; winRate: number | null; avgTradeReturn: number | null; cumulativeReturn: number | null; benchmarkReturn: number | null; edge: number | null; maxDrawdown: number | null },
+    ];
+    summary: {
+      positiveEdgeSegmentCount: number;
+      positiveCumulativeReturnSegmentCount: number;
+      bestSegmentByEdge: string | null;
+      worstSegmentByEdge: string | null;
+    };
+  };
+  outOfSampleAudit?: {
+    splitDescription: string;
+    inSample: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    outOfSample: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    comparison: {
+      edgeDeltaOutMinusIn: number | null;
+      cumulativeReturnDeltaOutMinusIn: number | null;
+      winRateDeltaOutMinusIn: number | null;
+    };
+  };
+  strongSignalShadowAudit?: {
+    baselineEquivalent: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    strongerSignal_0_06: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    strongerSignal_0_08: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    strongerSignal_0_10: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    recommendation: {
+      bestVariantByEdge: string | null;
+      bestVariantByCumulativeReturn: string | null;
+    };
+  };
+  signalRankingShadowAudit?: {
+    baselineEquivalent: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    top50pctByAbsSetupScore: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    top30pctByAbsSetupScore: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    top20pctByAbsSetupScore: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    recommendation: {
+      bestVariantByEdge: string | null;
+      bestVariantByCumulativeReturn: string | null;
+      bestVariantByMaxDrawdown: string | null;
+    };
+  };
+  sizingBenchmarkAudit?: {
+    liveEqualWeightBaseline: {
+      trades: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    shadowWeightedByAbsSetupScoreTimesConviction: {
+      trades: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    comparison: {
+      cumulativeReturnDeltaShadowMinusLive: number | null;
+      edgeDeltaShadowMinusLive: number | null;
+      drawdownDeltaShadowMinusLive: number | null;
+      currentPreferredSizingMode: string | null;
+    };
+  };
+  positionSizingShadowAudit?: {
+    equalWeightBaseline: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      weightedAvgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    weightByAbsSetupScore: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      weightedAvgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    weightByConviction: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      weightedAvgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    weightByAbsSetupScoreTimesConviction: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      weightedAvgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    recommendation: {
+      bestVariantByEdge: string | null;
+      bestVariantByCumulativeReturn: string | null;
+      bestVariantByMaxDrawdown: string | null;
+    };
+  };
+  componentPruningShadowAudit?: {
+    currentFull: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    noMacro: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    noSentiment: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    noMacroNoSentiment: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    recommendation: {
+      bestVariantByEdge: string | null;
+      bestVariantByCumulativeReturn: string | null;
+    };
+  };
+  shortReentryShadowAudit?: {
+    longOnlyActualEquivalent: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      longShare: number | null;
+      shortShare: number | null;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    longShortShadow: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      longShare: number | null;
+      shortShare: number | null;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    recommendation: { keepShortDisabled: boolean | null; reason: string };
+  };
+  timingAlphaAudit?: {
+    executedWindows: { count: number; avgBenchmarkReturnPerExecutedWindow: number | null; cumulativeBenchmarkReturnExecutedWindows: number | null };
+    fullHistoryBaseline: { totalRowsConsidered: number | null; avgForwardReturnAllEligibleRows: number | null };
+    selectionAlpha: { avgWindowAlphaVsEligibleBaseline: number | null; cumulativeAlphaVsEligibleBaseline: number | null };
+    participation: { eligibleRowCount: number | null; executedTradeCount: number | null; executionRate: number | null };
+  };
+  invertedSignalPerformanceAudit?: {
+    baseSignal: { trades: number | null; winRate: number | null; avgTradeReturn: number | null; cumulativeReturn: number | null; benchmarkReturn: number | null; edge: number | null };
+    invertedBaseSignal: { trades: number | null; winRate: number | null; avgTradeReturn: number | null; cumulativeReturn: number | null; benchmarkReturn: number | null; edge: number | null };
+    postInformationSignal: { trades: number | null; winRate: number | null; avgTradeReturn: number | null; cumulativeReturn: number | null; benchmarkReturn: number | null; edge: number | null };
+    invertedPostInformationSignal: { trades: number | null; winRate: number | null; avgTradeReturn: number | null; cumulativeReturn: number | null; benchmarkReturn: number | null; edge: number | null };
+  };
+  componentInversionShadowAudit?: {
+    baseSignal: { actualCorrelation: number | null; invertedCorrelation: number | null };
+    postInformationSignal: { actualCorrelation: number | null; invertedCorrelation: number | null };
+    technicalContribution: { actualCorrelation: number | null; invertedCorrelation: number | null };
+    macroContribution: { actualCorrelation: number | null; invertedCorrelation: number | null };
+    sentimentContribution: { actualCorrelation: number | null; invertedCorrelation: number | null };
+  };
+  alphaComponentAudit?: {
+    baseSignal: { correlationWithForwardReturn: number | null; positiveBucketAvgForwardReturn: number | null; negativeBucketAvgForwardReturn: number | null };
+    postInformationSignal: { correlationWithForwardReturn: number | null; positiveBucketAvgForwardReturn: number | null; negativeBucketAvgForwardReturn: number | null };
+    technicalContribution: { correlationWithForwardReturn: number | null; positiveBucketAvgForwardReturn: number | null; negativeBucketAvgForwardReturn: number | null };
+    macroContribution: { correlationWithForwardReturn: number | null; positiveBucketAvgForwardReturn: number | null; negativeBucketAvgForwardReturn: number | null };
+    sentimentContribution: { correlationWithForwardReturn: number | null; positiveBucketAvgForwardReturn: number | null; negativeBucketAvgForwardReturn: number | null };
+    noiseContribution: { correlationWithForwardReturn: number | null; positiveBucketAvgForwardReturn: number | null; negativeBucketAvgForwardReturn: number | null };
+  };
+  longOnlyModeAudit?: {
+    enabled: boolean;
+    skippedShortTrades: number;
+    executedLongTrades: number;
+  };
+  directionCorrectnessAudit?: {
+    longTrades: {
+      count: number;
+      avgReturn: number | null;
+      positiveReturnRate: number | null;
+      avgBenchmarkReturn: number | null;
+    };
+    shortTrades: {
+      count: number;
+      avgReturn: number | null;
+      positiveReturnRate: number | null;
+      avgBenchmarkReturn: number | null;
+    };
+    inversionCheck: {
+      shortWouldBeBetterIfLong: boolean | null;
+      longWouldBeBetterIfShort: boolean | null;
+    };
+  };
+  attenuationRetestNoMacroAudit?: {
+    factor_0_10: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    factor_0_25: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    factor_0_50: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    recommendation: {
+      bestFactorByEdge: string | null;
+      bestFactorByCumulativeReturn: string | null;
+    };
+  };
+  attenuationComparisonAudit?: {
+    factors: Array<{
+      factor: number;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      longShare: number | null;
+      shortShare: number | null;
+      trades: number | null;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    }>;
+    recommendedFactorByEdge: number | null;
+    recommendedFactorByCumulativeReturn: number | null;
+  };
+  postFixPerformanceAudit?: {
+    tradeMix: {
+      executedLongTrades: number;
+      executedShortTrades: number;
+      longShare: number | null;
+      shortShare: number | null;
+    };
+    performance: {
+      trades: number | null;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    directionalQuality: {
+      longWinRateIfAvailable: number | null;
+      shortWinRateIfAvailable: number | null;
+      avgLongReturnIfAvailable: number | null;
+      avgShortReturnIfAvailable: number | null;
+    };
+    scoringPopulation: {
+      longSetupCount: number | null;
+      shortSetupCount: number | null;
+      longExecutedCount: number | null;
+      shortExecutedCount: number | null;
+    };
+  };
+  longSetupAttritionAudit?: {
+    longPath: {
+      setupCount: number;
+      afterSignalThresholdCount: number;
+      afterConvictionCount: number;
+      afterNeutralFilterCount: number;
+      afterPriceValidityCount: number;
+      executedCount: number;
+    };
+    shortPath: {
+      setupCount: number;
+      afterSignalThresholdCount: number;
+      afterConvictionCount: number;
+      afterNeutralFilterCount: number;
+      afterPriceValidityCount: number;
+      executedCount: number;
+    };
+    sampleRejectedLongs: Array<{
+      symbol: string;
+      timestamp: string;
+      rejectionStage: string;
+      baseSignal?: number | null;
+      postInformationSignal?: number | null;
+      conviction?: number | null;
+      setupDirection?: string | null;
+    }>;
+    sampleRejectedShorts: Array<{
+      symbol: string;
+      timestamp: string;
+      rejectionStage: string;
+      baseSignal?: number | null;
+      postInformationSignal?: number | null;
+      conviction?: number | null;
+      setupDirection?: string | null;
+    }>;
+  };
 }
 
 @Injectable()
@@ -2286,6 +3235,48 @@ export class DashboardService {
           aggregationDiagnostics: r.aggregationDiagnostics,
           directionMappingDiagnostics: normalizeDirectionMappingDiagnostics(r.directionMappingDiagnostics),
           setupDirectionAudit: r.setupDirectionAudit,
+          setupShadowAudit: r.setupShadowAudit,
+          setupScoreAudit: r.setupScoreAudit,
+          signalFlipAudit: r.signalFlipAudit,
+          currentStrategyConfigAudit: r.currentStrategyConfigAudit,
+          liveDirectionModeAudit: r.liveDirectionModeAudit,
+          macroPrunedLiveAudit: r.macroPrunedLiveAudit,
+          officialBaselineAudit: r.officialBaselineAudit,
+          sentimentPrunedLiveAudit: r.sentimentPrunedLiveAudit,
+          baselinePreservationAudit: r.baselinePreservationAudit,
+          winningBaselineFeatureAudit: r.winningBaselineFeatureAudit,
+          strongSignalLiveAudit: r.strongSignalLiveAudit,
+          outOfSampleAudit: r.outOfSampleAudit,
+          walkForwardAudit: r.walkForwardAudit,
+          strategyV1CandidateAudit: r.strategyV1CandidateAudit,
+          strategyV2CandidateAudit: r.strategyV2CandidateAudit,
+          liveExitPolicyAudit: r.liveExitPolicyAudit,
+          exitPolicyShadowAudit: r.exitPolicyShadowAudit,
+          regimePerformanceAudit: r.regimePerformanceAudit,
+          downtrendSuppressionShadowAudit: r.downtrendSuppressionShadowAudit,
+          causalRegimePolicyShadowAudit: r.causalRegimePolicyShadowAudit,
+          regimePolicyShadowAudit: r.regimePolicyShadowAudit,
+          experimentHarnessAudit: r.experimentHarnessAudit,
+          setupGateConsistencyAudit: r.setupGateConsistencyAudit,
+          neutralGateConsistencyAudit: r.neutralGateConsistencyAudit,
+          neutralFilterAudit: r.neutralFilterAudit,
+          longSetupAttritionAudit: r.longSetupAttritionAudit,
+          postFixPerformanceAudit: r.postFixPerformanceAudit,
+          attenuationComparisonAudit: r.attenuationComparisonAudit,
+          attenuationRetestNoMacroAudit: r.attenuationRetestNoMacroAudit,
+          directionCorrectnessAudit: r.directionCorrectnessAudit,
+          longOnlyModeAudit: r.longOnlyModeAudit,
+          alphaComponentAudit: r.alphaComponentAudit,
+          componentInversionShadowAudit: r.componentInversionShadowAudit,
+          invertedSignalPerformanceAudit: r.invertedSignalPerformanceAudit,
+          timingAlphaAudit: r.timingAlphaAudit,
+          shortReentryShadowAudit: r.shortReentryShadowAudit,
+          componentPruningShadowAudit: r.componentPruningShadowAudit,
+          signalRankingShadowAudit: r.signalRankingShadowAudit,
+          positionSizingShadowAudit: r.positionSizingShadowAudit,
+          sizingBenchmarkAudit: r.sizingBenchmarkAudit,
+          strongSignalShadowAudit: r.strongSignalShadowAudit,
+          shadowBenchmarkAudit: r.shadowBenchmarkAudit,
         };
       })()),
     };
@@ -2296,6 +3287,7 @@ export class DashboardService {
   private static readonly MOMENTUM_THRESHOLD_SETUP = 0.01;
   /** Phase 29.6: symmetric LONG/SHORT gate; matches directionThreshold in runBacktestWithThresholds. */
   private static readonly SIGNAL_STRENGTH_MIN = 0.05;
+  private static readonly LIVE_ACTIVE_SETUP_SCORE_ABS_THRESHOLD = 0.06;
   private static readonly PROBABILITY_NEUTRAL_MAX = 0.7;
   private static readonly LOCAL_CONVICTION_MIN = 0.25;
   private static readonly NEUTRAL_LOOKBACK = 20;
@@ -2619,15 +3611,95 @@ export class DashboardService {
     directionBiasSamples: NonNullable<DashboardSummary["directionBiasSamples"]>;
     aggregationDiagnostics: NonNullable<DashboardSummary["aggregationDiagnostics"]>;
     directionMappingDiagnostics: NonNullable<DashboardSummary["directionMappingDiagnostics"]>;
+    setupDirectionAudit: NonNullable<DashboardSummary["setupDirectionAudit"]>;
+    setupShadowAudit: NonNullable<DashboardSummary["setupShadowAudit"]>;
+    setupScoreAudit: NonNullable<DashboardSummary["setupScoreAudit"]>;
+    signalFlipAudit: NonNullable<DashboardSummary["signalFlipAudit"]>;
+    currentStrategyConfigAudit: NonNullable<DashboardSummary["currentStrategyConfigAudit"]>;
+    liveDirectionModeAudit: NonNullable<DashboardSummary["liveDirectionModeAudit"]>;
+    macroPrunedLiveAudit: NonNullable<DashboardSummary["macroPrunedLiveAudit"]>;
+    officialBaselineAudit: NonNullable<DashboardSummary["officialBaselineAudit"]>;
+    sentimentPrunedLiveAudit: NonNullable<DashboardSummary["sentimentPrunedLiveAudit"]>;
+    baselinePreservationAudit: NonNullable<DashboardSummary["baselinePreservationAudit"]>;
+    winningBaselineFeatureAudit: NonNullable<DashboardSummary["winningBaselineFeatureAudit"]>;
+    strongSignalLiveAudit: NonNullable<DashboardSummary["strongSignalLiveAudit"]>;
+    outOfSampleAudit: NonNullable<DashboardSummary["outOfSampleAudit"]>;
+    walkForwardAudit: NonNullable<DashboardSummary["walkForwardAudit"]>;
+    strategyV1CandidateAudit: NonNullable<DashboardSummary["strategyV1CandidateAudit"]>;
+    strategyV2CandidateAudit: NonNullable<DashboardSummary["strategyV2CandidateAudit"]>;
+    liveExitPolicyAudit: NonNullable<DashboardSummary["liveExitPolicyAudit"]>;
+    exitPolicyShadowAudit: NonNullable<DashboardSummary["exitPolicyShadowAudit"]>;
+    regimePerformanceAudit: NonNullable<DashboardSummary["regimePerformanceAudit"]>;
+    downtrendSuppressionShadowAudit: NonNullable<DashboardSummary["downtrendSuppressionShadowAudit"]>;
+    causalRegimePolicyShadowAudit: NonNullable<DashboardSummary["causalRegimePolicyShadowAudit"]>;
+    regimePolicyShadowAudit: NonNullable<DashboardSummary["regimePolicyShadowAudit"]>;
+    experimentHarnessAudit: NonNullable<DashboardSummary["experimentHarnessAudit"]>;
+    setupGateConsistencyAudit: NonNullable<DashboardSummary["setupGateConsistencyAudit"]>;
+    neutralGateConsistencyAudit: NonNullable<DashboardSummary["neutralGateConsistencyAudit"]>;
+    neutralFilterAudit: NonNullable<DashboardSummary["neutralFilterAudit"]>;
+    longSetupAttritionAudit: NonNullable<DashboardSummary["longSetupAttritionAudit"]>;
+    postFixPerformanceAudit: NonNullable<DashboardSummary["postFixPerformanceAudit"]>;
+    attenuationComparisonAudit: NonNullable<DashboardSummary["attenuationComparisonAudit"]>;
+    attenuationRetestNoMacroAudit: NonNullable<DashboardSummary["attenuationRetestNoMacroAudit"]>;
+    directionCorrectnessAudit: NonNullable<DashboardSummary["directionCorrectnessAudit"]>;
+    longOnlyModeAudit: NonNullable<DashboardSummary["longOnlyModeAudit"]>;
+    alphaComponentAudit: NonNullable<DashboardSummary["alphaComponentAudit"]>;
+    componentInversionShadowAudit: NonNullable<DashboardSummary["componentInversionShadowAudit"]>;
+    invertedSignalPerformanceAudit: NonNullable<DashboardSummary["invertedSignalPerformanceAudit"]>;
+    timingAlphaAudit: NonNullable<DashboardSummary["timingAlphaAudit"]>;
+    shortReentryShadowAudit: NonNullable<DashboardSummary["shortReentryShadowAudit"]>;
+    componentPruningShadowAudit: NonNullable<DashboardSummary["componentPruningShadowAudit"]>;
+    signalRankingShadowAudit: NonNullable<DashboardSummary["signalRankingShadowAudit"]>;
+    positionSizingShadowAudit: NonNullable<DashboardSummary["positionSizingShadowAudit"]>;
+    sizingBenchmarkAudit: NonNullable<DashboardSummary["sizingBenchmarkAudit"]>;
+    strongSignalShadowAudit: NonNullable<DashboardSummary["strongSignalShadowAudit"]>;
+    shadowBenchmarkAudit: NonNullable<DashboardSummary["shadowBenchmarkAudit"]>;
   } {
     const horizon = DashboardService.HOLDING_PERIOD_DAYS;
     const { signalStrengthThreshold, convictionThreshold, neutralThreshold } = params;
 
+    const ENABLE_SIGNAL_FLIP = true;
+    const ENABLE_SHORT_TRADES = true;
+    const SETUP_DELTA_ATTENUATION = 0.25;
+    const EXCLUDE_MACRO_FROM_LIVE_SETUP_SCORE = true;
+    const EXCLUDE_SENTIMENT_FROM_LIVE_SETUP_SCORE = true;
+    const LIVE_STOP_LOSS_ENABLED = true;
+    const LIVE_STOP_LOSS_PERCENT = 3;
+
+    const strongSignalLiveAudit: NonNullable<DashboardSummary["strongSignalLiveAudit"]> = {
+      enabled: true,
+      activeSetupScoreAbsThreshold: signalStrengthThreshold,
+      activeSetupScoreFormula: `-(baseSignal + (meanSignal - macroContribution - sentimentContribution - baseSignal) * ${SETUP_DELTA_ATTENUATION})`,
+    };
+
     const tradeReturns: number[] = [];
     const benchmarkReturns: number[] = [];
+    const eligibleForwardReturns: number[] = [];
+    const longTradeReturns: number[] = [];
+    const shortTradeReturns: number[] = [];
+    const alphaComponentVals: { baseSignal: number[]; postInformationSignal: number[]; technicalContribution: number[]; macroContribution: number[]; sentimentContribution: number[]; noiseContribution: number[]; rawReturn: number[] } = {
+      baseSignal: [],
+      postInformationSignal: [],
+      technicalContribution: [],
+      macroContribution: [],
+      sentimentContribution: [],
+      noiseContribution: [],
+      rawReturn: [],
+    };
     let executedLongTrades = 0;
     let executedShortTrades = 0;
+    let skippedShortTrades = 0;
     const sampleTradeDirections: NonNullable<DashboardSummary["tradeDirectionDiagnostics"]>["sampleTradeDirections"] = [];
+    const execBaseSignal: number[] = [];
+    const execTechnical: number[] = [];
+    const execNoise: number[] = [];
+    const execConviction: number[] = [];
+    const execTimestamps: number[] = [];
+    const execIsLong: boolean[] = [];
+    const execPriceVsMa20: number[] = [];
+    const execActiveSetupScore: number[] = [];
+    const execSymbol: string[] = [];
+    const execEntryIndex: number[] = [];
 
     let totalSignals = 0;
     let passedSignalStrength = 0;
@@ -2819,10 +3891,50 @@ export class DashboardService {
     const sampleLongSetups: NonNullable<DashboardSummary["setupDirectionAudit"]>["sampleLongSetups"] = [];
     const sampleShortSetups: NonNullable<DashboardSummary["setupDirectionAudit"]>["sampleShortSetups"] = [];
     const sampleNoneSetups: NonNullable<DashboardSummary["setupDirectionAudit"]>["sampleNoneSetups"] = [];
+    const shadowCounts = {
+      baseOnly: { longSetupCount: 0, shortSetupCount: 0, noneSetupCount: 0 },
+      shadow25: { longSetupCount: 0, shortSetupCount: 0, noneSetupCount: 0 },
+      shadow50: { longSetupCount: 0, shortSetupCount: 0, noneSetupCount: 0 },
+      actual: { longSetupCount: 0, shortSetupCount: 0, noneSetupCount: 0 },
+    };
+    let sumSetupScore = 0;
+    let setupScoreCount = 0;
+    let positiveSetupScoreCount = 0;
+    let negativeSetupScoreCount = 0;
     let rejectedLongBelowSignalThreshold = 0;
     let rejectedLongBelowConvictionThreshold = 0;
     let rejectedShortBelowSignalThreshold = 0;
     let rejectedShortBelowConvictionThreshold = 0;
+    const attritionLong = {
+      afterSignalThresholdCount: 0,
+      afterNeutralFilterCount: 0,
+      afterConvictionCount: 0,
+      afterPriceValidityCount: 0,
+    };
+    const attritionShort = {
+      afterSignalThresholdCount: 0,
+      afterNeutralFilterCount: 0,
+      afterConvictionCount: 0,
+      afterPriceValidityCount: 0,
+    };
+    const sampleRejectedLongs: NonNullable<DashboardSummary["longSetupAttritionAudit"]>["sampleRejectedLongs"] = [];
+    const sampleRejectedShorts: NonNullable<DashboardSummary["longSetupAttritionAudit"]>["sampleRejectedShorts"] = [];
+    const neutralAuditLong = {
+      enteredNeutralStageCount: 0,
+      passedNeutralCount: 0,
+      rejectedNeutralCount: 0,
+      sumConviction: 0,
+      sumNeutralMetric: 0,
+    };
+    const neutralAuditShort = {
+      enteredNeutralStageCount: 0,
+      passedNeutralCount: 0,
+      rejectedNeutralCount: 0,
+      sumConviction: 0,
+      sumNeutralMetric: 0,
+    };
+    const sampleNeutralRejectedLongs: NonNullable<DashboardSummary["neutralFilterAudit"]>["sampleRejectedLongs"] = [];
+    const sampleNeutralRejectedShorts: NonNullable<DashboardSummary["neutralFilterAudit"]>["sampleRejectedShorts"] = [];
     let loopIterationCount = 0;
     let featAvailableCount = 0;
 
@@ -2921,9 +4033,21 @@ export class DashboardService {
         else preMappingNeutralCount++;
 
         const directionThreshold = signalStrengthThreshold;
+        const decompForSetup = computeSignalDecomposition(feat, agents, contextSeed, prevContextSeed);
+        const setupBase = decompForSetup.baseSignal;
+        let setupMeanForScore = decompForSetup.meanSignal;
+        if (EXCLUDE_MACRO_FROM_LIVE_SETUP_SCORE) setupMeanForScore -= decompForSetup.macroContribution;
+        if (EXCLUDE_SENTIMENT_FROM_LIVE_SETUP_SCORE) setupMeanForScore -= decompForSetup.sentimentContribution;
+        const setupDelta = setupMeanForScore - setupBase;
+        const rawSetupScore = setupBase + setupDelta * SETUP_DELTA_ATTENUATION;
+        const activeSetupScore = ENABLE_SIGNAL_FLIP ? -rawSetupScore : rawSetupScore;
+        sumSetupScore += rawSetupScore;
+        setupScoreCount++;
+        if (rawSetupScore > 0) positiveSetupScoreCount++;
+        else if (rawSetupScore < 0) negativeSetupScoreCount++;
         let setup: "LONG" | "SHORT" | null = null;
-        if (meanSignal >= directionThreshold) setup = "LONG";
-        else if (meanSignal <= -directionThreshold) setup = "SHORT";
+        if (activeSetupScore >= directionThreshold) setup = "LONG";
+        else if (activeSetupScore <= -directionThreshold) setup = "SHORT";
 
         if (setup === "LONG") longConditionCount++;
         else if (setup === "SHORT") shortConditionCount++;
@@ -2950,8 +4074,13 @@ export class DashboardService {
               k > DashboardService.MIN_LOOKBACK_FOR_FEATURES
                 ? hashString(symbol + ":" + String(k - 1))
                 : undefined;
-            const { meanSignal: mk } = computeAgentAggregatedSignalForFeatures(fk, agents, kSeed, kPrevSeed);
-            if (Math.abs(mk) < signalStrengthThreshold) neutralCount++;
+            const decompK = computeSignalDecomposition(fk, agents, kSeed, kPrevSeed);
+            let meanKForScore = decompK.meanSignal;
+            if (EXCLUDE_MACRO_FROM_LIVE_SETUP_SCORE) meanKForScore -= decompK.macroContribution;
+            if (EXCLUDE_SENTIMENT_FROM_LIVE_SETUP_SCORE) meanKForScore -= decompK.sentimentContribution;
+            const rawK = decompK.baseSignal + (meanKForScore - decompK.baseSignal) * SETUP_DELTA_ATTENUATION;
+            const activeSetupScoreK = ENABLE_SIGNAL_FLIP ? -rawK : rawK;
+            if (Math.abs(activeSetupScoreK) < signalStrengthThreshold) neutralCount++;
           }
           probabilityNeutral = validLookbackDays > 0 ? neutralCount / validLookbackDays : 0.5;
         }
@@ -2980,13 +4109,36 @@ export class DashboardService {
         if (setup === "SHORT") sa.finalShortCount++;
         if (setup == null) sa.finalNoneCount++;
 
-        const decompForSample = computeSignalDecomposition(feat, agents, contextSeed, prevContextSeed);
+        const shadowBase = decompForSetup.baseSignal;
+        const shadowPost = decompForSetup.meanSignal;
+        const shadowDelta = shadowPost - shadowBase;
+        const applySetupRule = (score: number): "LONG" | "SHORT" | "NONE" => {
+          if (score >= directionThreshold) return "LONG";
+          if (score <= -directionThreshold) return "SHORT";
+          return "NONE";
+        };
+        const dirBaseOnly = applySetupRule(shadowBase);
+        const dirShadow25 = applySetupRule(shadowBase + shadowDelta * 0.25);
+        const dirShadow50 = applySetupRule(shadowBase + shadowDelta * 0.5);
+        const dirActual = applySetupRule(shadowPost);
+        if (dirBaseOnly === "LONG") shadowCounts.baseOnly.longSetupCount++;
+        else if (dirBaseOnly === "SHORT") shadowCounts.baseOnly.shortSetupCount++;
+        else shadowCounts.baseOnly.noneSetupCount++;
+        if (dirShadow25 === "LONG") shadowCounts.shadow25.longSetupCount++;
+        else if (dirShadow25 === "SHORT") shadowCounts.shadow25.shortSetupCount++;
+        else shadowCounts.shadow25.noneSetupCount++;
+        if (dirShadow50 === "LONG") shadowCounts.shadow50.longSetupCount++;
+        else if (dirShadow50 === "SHORT") shadowCounts.shadow50.shortSetupCount++;
+        else shadowCounts.shadow50.noneSetupCount++;
+        if (dirActual === "LONG") shadowCounts.actual.longSetupCount++;
+        else if (dirActual === "SHORT") shadowCounts.actual.shortSetupCount++;
+        else shadowCounts.actual.noneSetupCount++;
         const setupSampleEntry = {
           symbol,
           timestamp: (i < timestamps.length ? timestamps[i] : null)?.toISOString() ?? "",
           setupDirection: setup ?? "NONE",
-          baseSignal: decompForSample.baseSignal,
-          postInformationSignal: decompForSample.meanSignal,
+          baseSignal: shadowBase,
+          postInformationSignal: shadowPost,
           conviction: conviction,
         };
         if (setup === "LONG" && sampleLongSetups.length < 10) sampleLongSetups.push(setupSampleEntry);
@@ -3071,8 +4223,23 @@ export class DashboardService {
 
         if (setup == null) continue;
         totalSignals++;
-        if (signalStrength <= signalStrengthThreshold) continue;
+        if (Math.abs(activeSetupScore) <= signalStrengthThreshold) {
+          const rejEntry = {
+            symbol,
+            timestamp: (i < timestamps.length ? timestamps[i] : null)?.toISOString() ?? "",
+            rejectionStage: "signalStrength",
+            baseSignal: shadowBase,
+            postInformationSignal: shadowPost,
+            conviction,
+            setupDirection: setup ?? null,
+          };
+          if (setup === "LONG" && sampleRejectedLongs.length < 10) sampleRejectedLongs.push(rejEntry);
+          if (setup === "SHORT" && sampleRejectedShorts.length < 10) sampleRejectedShorts.push(rejEntry);
+          continue;
+        }
         passedSignalStrength++;
+        if (setup === "LONG") attritionLong.afterSignalThresholdCount++;
+        if (setup === "SHORT") attritionShort.afterSignalThresholdCount++;
 
         const decompPre = computeSignalDecomposition(feat, agents, contextSeed, prevContextSeed);
         preFilterSumBaseSignal += decompPre.baseSignal;
@@ -3086,14 +4253,92 @@ export class DashboardService {
         else if (decompPre.meanSignal < -0.01) preFilterNegativeSignalCount++;
         else preFilterNearZeroSignalCount++;
 
-        if (probabilityNeutral >= neutralThreshold) continue;
+        if (setup === "LONG") {
+          neutralAuditLong.enteredNeutralStageCount++;
+          neutralAuditLong.sumConviction += conviction;
+          neutralAuditLong.sumNeutralMetric += probabilityNeutral;
+        }
+        if (setup === "SHORT") {
+          neutralAuditShort.enteredNeutralStageCount++;
+          neutralAuditShort.sumConviction += conviction;
+          neutralAuditShort.sumNeutralMetric += probabilityNeutral;
+        }
+        if (probabilityNeutral >= neutralThreshold) {
+          const rejEntry = {
+            symbol,
+            timestamp: (i < timestamps.length ? timestamps[i] : null)?.toISOString() ?? "",
+            rejectionStage: "neutral",
+            baseSignal: decompPre.baseSignal,
+            postInformationSignal: decompPre.meanSignal,
+            conviction,
+            setupDirection: setup ?? null,
+          };
+          if (setup === "LONG" && sampleRejectedLongs.length < 10) sampleRejectedLongs.push(rejEntry);
+          if (setup === "SHORT" && sampleRejectedShorts.length < 10) sampleRejectedShorts.push(rejEntry);
+          const neutralRejEntry = {
+            symbol,
+            timestamp: (i < timestamps.length ? timestamps[i] : null)?.toISOString() ?? "",
+            conviction,
+            neutralMetricIfExists: probabilityNeutral,
+            baseSignal: decompPre.baseSignal,
+            postInformationSignal: decompPre.meanSignal,
+            setupScoreIfExists: activeSetupScore,
+          };
+          if (setup === "LONG") {
+            neutralAuditLong.rejectedNeutralCount++;
+            if (sampleNeutralRejectedLongs.length < 10) sampleNeutralRejectedLongs.push(neutralRejEntry);
+          }
+          if (setup === "SHORT") {
+            neutralAuditShort.rejectedNeutralCount++;
+            if (sampleNeutralRejectedShorts.length < 10) sampleNeutralRejectedShorts.push(neutralRejEntry);
+          }
+          continue;
+        }
+        if (setup === "LONG") {
+          attritionLong.afterNeutralFilterCount++;
+          neutralAuditLong.passedNeutralCount++;
+        }
+        if (setup === "SHORT") {
+          attritionShort.afterNeutralFilterCount++;
+          neutralAuditShort.passedNeutralCount++;
+        }
 
-        if (conviction < convictionThreshold) continue;
+        if (conviction < convictionThreshold) {
+          const rejEntry = {
+            symbol,
+            timestamp: (i < timestamps.length ? timestamps[i] : null)?.toISOString() ?? "",
+            rejectionStage: "conviction",
+            baseSignal: decompPre.baseSignal,
+            postInformationSignal: decompPre.meanSignal,
+            conviction,
+            setupDirection: setup ?? null,
+          };
+          if (setup === "LONG" && sampleRejectedLongs.length < 10) sampleRejectedLongs.push(rejEntry);
+          if (setup === "SHORT" && sampleRejectedShorts.length < 10) sampleRejectedShorts.push(rejEntry);
+          continue;
+        }
         passedConviction++;
+        if (setup === "LONG") attritionLong.afterConvictionCount++;
+        if (setup === "SHORT") attritionShort.afterConvictionCount++;
 
         const priceT0 = closes[i]!;
         const priceT1 = closes[i + horizon]!;
-        if (priceT0 <= 0 || !Number.isFinite(priceT0) || !Number.isFinite(priceT1)) continue;
+        if (priceT0 <= 0 || !Number.isFinite(priceT0) || !Number.isFinite(priceT1)) {
+          const rejEntry = {
+            symbol,
+            timestamp: (i < timestamps.length ? timestamps[i] : null)?.toISOString() ?? "",
+            rejectionStage: "priceValidity",
+            baseSignal: decompPre.baseSignal,
+            postInformationSignal: decompPre.meanSignal,
+            conviction,
+            setupDirection: setup ?? null,
+          };
+          if (setup === "LONG" && sampleRejectedLongs.length < 10) sampleRejectedLongs.push(rejEntry);
+          if (setup === "SHORT" && sampleRejectedShorts.length < 10) sampleRejectedShorts.push(rejEntry);
+          continue;
+        }
+        if (setup === "LONG") attritionLong.afterPriceValidityCount++;
+        if (setup === "SHORT") attritionShort.afterPriceValidityCount++;
 
         const decomp = computeSignalDecomposition(feat, agents, contextSeed, prevContextSeed);
         sumBaseSignal += decomp.baseSignal;
@@ -3260,10 +4505,54 @@ export class DashboardService {
           });
         }
 
-        const rawReturn = (priceT1 - priceT0) / priceT0;
-        const tradeReturn = setup === "LONG" ? rawReturn : -rawReturn;
+        let rawReturn = (priceT1 - priceT0) / priceT0;
+        let effectiveStrategyReturn: number | null = null;
+        if (LIVE_STOP_LOSS_ENABLED) {
+          for (let d = 1; d <= horizon; d++) {
+            const pd = closes[i + d]!;
+            const rawD = (pd - priceT0) / priceT0;
+            if (setup === "LONG" && rawD <= -0.03) {
+              rawReturn = rawD;
+              effectiveStrategyReturn = -0.03;
+              break;
+            }
+            if (setup === "SHORT" && rawD >= 0.03) {
+              rawReturn = rawD;
+              effectiveStrategyReturn = -0.03;
+              break;
+            }
+          }
+        }
+        eligibleForwardReturns.push(rawReturn);
+
+        if (!ENABLE_SHORT_TRADES && setup === "SHORT") {
+          skippedShortTrades++;
+          continue;
+        }
+
+        const tradeReturn = effectiveStrategyReturn != null ? effectiveStrategyReturn : (setup === "LONG" ? rawReturn : -rawReturn);
         tradeReturns.push(tradeReturn);
         benchmarkReturns.push(rawReturn);
+        execBaseSignal.push(decomp.baseSignal);
+        execTechnical.push(decomp.technicalContribution);
+        execNoise.push(decomp.noiseContribution);
+        execConviction.push(conviction);
+        execTimestamps.push((i < timestamps.length ? timestamps[i] : null)?.getTime() ?? 0);
+        execIsLong.push(setup === "LONG");
+        execPriceVsMa20.push(priceVsMa20);
+        execActiveSetupScore.push(Math.abs(activeSetupScore));
+        execSymbol.push(symbol);
+        execEntryIndex.push(i);
+        if (setup === "LONG") {
+          longTradeReturns.push(tradeReturn);
+          alphaComponentVals.baseSignal.push(decomp.baseSignal);
+          alphaComponentVals.postInformationSignal.push(decomp.meanSignal);
+          alphaComponentVals.technicalContribution.push(decomp.technicalContribution);
+          alphaComponentVals.macroContribution.push(decomp.macroContribution);
+          alphaComponentVals.sentimentContribution.push(decomp.sentimentContribution);
+          alphaComponentVals.noiseContribution.push(decomp.noiseContribution);
+          alphaComponentVals.rawReturn.push(rawReturn);
+        } else shortTradeReturns.push(tradeReturn);
 
         if (setup === "LONG") {
           executedLongTrades++;
@@ -3285,6 +4574,1439 @@ export class DashboardService {
         }
       }
     }
+
+    const ATTENUATION_FACTORS = [0, 0.1, 0.25, 0.5, 1] as const;
+    const attenuationFactorResults: NonNullable<DashboardSummary["attenuationComparisonAudit"]>["factors"] = [];
+    for (const compFactor of ATTENUATION_FACTORS) {
+      const compTradeReturns: number[] = [];
+      const compBenchmarkReturns: number[] = [];
+      let compExecutedLong = 0;
+      let compExecutedShort = 0;
+      for (const [symbol, { closes, timestamps }] of cachedData) {
+        const features = featuresCache.get(symbol);
+        if (!features) continue;
+        for (let i = 5 + DashboardService.NEUTRAL_LOOKBACK; i < closes.length - horizon; i++) {
+          if (i >= features.length) break;
+          const feat = features[i];
+          if (!feat) continue;
+          const contextSeed = hashString(symbol + ":" + String(i));
+          const prevContextSeed =
+            i > 5 + DashboardService.NEUTRAL_LOOKBACK
+              ? hashString(symbol + ":" + String(i - 1))
+              : undefined;
+          const { disagreement, signalStrength } =
+            computeAgentAggregatedSignalForFeatures(feat, agents, contextSeed, prevContextSeed);
+          const decompForSetup = computeSignalDecomposition(feat, agents, contextSeed, prevContextSeed);
+          const setupBase = decompForSetup.baseSignal;
+          const setupDelta = decompForSetup.meanSignal - setupBase;
+          const setupScore = setupBase + setupDelta * compFactor;
+          let setup: "LONG" | "SHORT" | null = null;
+          if (setupScore >= signalStrengthThreshold) setup = "LONG";
+          else if (setupScore <= -signalStrengthThreshold) setup = "SHORT";
+          if (setup == null) continue;
+          if (Math.abs(setupScore) <= signalStrengthThreshold) continue;
+          let probabilityNeutral = 0.5;
+          let neutralCount = 0;
+          let validLookbackDays = 0;
+          for (let k = i - DashboardService.NEUTRAL_LOOKBACK; k < i && k >= DashboardService.MIN_LOOKBACK_FOR_FEATURES; k++) {
+            const fk = features[k];
+            if (!fk) continue;
+            validLookbackDays++;
+            const kSeed = hashString(symbol + ":" + String(k));
+            const kPrevSeed =
+              k > DashboardService.MIN_LOOKBACK_FOR_FEATURES
+                ? hashString(symbol + ":" + String(k - 1))
+                : undefined;
+            const decompK = computeSignalDecomposition(fk, agents, kSeed, kPrevSeed);
+            const setupScoreK = decompK.baseSignal + (decompK.meanSignal - decompK.baseSignal) * compFactor;
+            if (Math.abs(setupScoreK) < signalStrengthThreshold) neutralCount++;
+          }
+          probabilityNeutral = validLookbackDays > 0 ? neutralCount / validLookbackDays : 0.5;
+          if (probabilityNeutral >= neutralThreshold) continue;
+          const conviction =
+            signalStrength * 0.5 +
+            (1 - disagreement) * 0.3 +
+            (1 - probabilityNeutral) * 0.2;
+          if (conviction < convictionThreshold) continue;
+          const priceT0 = closes[i]!;
+          const priceT1 = closes[i + horizon]!;
+          if (priceT0 <= 0 || !Number.isFinite(priceT0) || !Number.isFinite(priceT1)) continue;
+          const rawReturn = (priceT1 - priceT0) / priceT0;
+          const tradeReturn = setup === "LONG" ? rawReturn : -rawReturn;
+          compTradeReturns.push(tradeReturn);
+          compBenchmarkReturns.push(rawReturn);
+          if (setup === "LONG") compExecutedLong++;
+          else compExecutedShort++;
+        }
+      }
+      const compTrades = compTradeReturns.length;
+      const compWins = compTrades > 0 ? compTradeReturns.filter((r) => r > 0).length : 0;
+      const compCumulativeStrategy = compTrades > 0 ? compTradeReturns.reduce((a, b) => a + b, 0) : 0;
+      const compCumulativeBenchmark = compTrades > 0 ? compBenchmarkReturns.reduce((a, b) => a + b, 0) : 0;
+      let compEquity = 1;
+      let compPeak = 1;
+      let compMaxDrawdown = 0;
+      for (const r of compTradeReturns) {
+        compEquity *= 1 + r;
+        if (compEquity > compPeak) compPeak = compEquity;
+        const dd = compPeak > 0 ? (compPeak - compEquity) / compPeak : 0;
+        if (dd > compMaxDrawdown) compMaxDrawdown = dd;
+      }
+      const compTotal = compExecutedLong + compExecutedShort;
+      attenuationFactorResults.push({
+        factor: compFactor,
+        executedLongTrades: compExecutedLong,
+        executedShortTrades: compExecutedShort,
+        longShare: compTotal > 0 ? compExecutedLong / compTotal : null,
+        shortShare: compTotal > 0 ? compExecutedShort / compTotal : null,
+        trades: compTrades,
+        winRate: compTrades > 0 ? compWins / compTrades : null,
+        avgTradeReturn: compTrades > 0 ? compTradeReturns.reduce((a, b) => a + b, 0) / compTrades : null,
+        cumulativeReturn: compTrades > 0 ? compCumulativeStrategy : null,
+        benchmarkReturn: compTrades > 0 ? compCumulativeBenchmark : null,
+        edge: compTrades > 0 ? compCumulativeStrategy - compCumulativeBenchmark : null,
+        maxDrawdown: compTrades > 0 ? compMaxDrawdown : null,
+      });
+    }
+    const bestByEdge = attenuationFactorResults.filter((r) => r.edge != null).sort((a, b) => (b.edge ?? 0) - (a.edge ?? 0))[0];
+    const bestByCumulative = attenuationFactorResults.filter((r) => r.cumulativeReturn != null).sort((a, b) => (b.cumulativeReturn ?? 0) - (a.cumulativeReturn ?? 0))[0];
+    const attenuationComparisonAudit: NonNullable<DashboardSummary["attenuationComparisonAudit"]> = {
+      factors: attenuationFactorResults,
+      recommendedFactorByEdge: bestByEdge?.factor ?? null,
+      recommendedFactorByCumulativeReturn: bestByCumulative?.factor ?? null,
+    };
+
+    type AttenuationRetestRow = NonNullable<DashboardSummary["attenuationRetestNoMacroAudit"]>["factor_0_10"];
+    const runAttenuationRetestNoMacro = (factor: number): { row: AttenuationRetestRow } => {
+      const tr: number[] = [];
+      const br: number[] = [];
+      let nLong = 0;
+      let nShort = 0;
+      for (const [symbol, { closes }] of cachedData) {
+        const features = featuresCache.get(symbol);
+        if (!features) continue;
+        for (let i = 5 + DashboardService.NEUTRAL_LOOKBACK; i < closes.length - horizon; i++) {
+          if (i >= features.length) break;
+          const feat = features[i];
+          if (!feat) continue;
+          const contextSeed = hashString(symbol + ":" + String(i));
+          const prevContextSeed = i > 5 + DashboardService.NEUTRAL_LOOKBACK ? hashString(symbol + ":" + String(i - 1)) : undefined;
+          const { disagreement, signalStrength } = computeAgentAggregatedSignalForFeatures(feat, agents, contextSeed, prevContextSeed);
+          const decomp = computeSignalDecomposition(feat, agents, contextSeed, prevContextSeed);
+          const meanForScore = decomp.meanSignal - decomp.macroContribution;
+          const rawScore = decomp.baseSignal + (meanForScore - decomp.baseSignal) * factor;
+          const activeScore = -rawScore;
+          let setup: "LONG" | "SHORT" | null = null;
+          if (activeScore >= signalStrengthThreshold) setup = "LONG";
+          else if (activeScore <= -signalStrengthThreshold) setup = "SHORT";
+          if (setup == null) continue;
+          if (Math.abs(activeScore) <= signalStrengthThreshold) continue;
+          let neutralCount = 0;
+          let validLookbackDays = 0;
+          for (let k = i - DashboardService.NEUTRAL_LOOKBACK; k < i && k >= DashboardService.MIN_LOOKBACK_FOR_FEATURES; k++) {
+            const fk = features[k];
+            if (!fk) continue;
+            validLookbackDays++;
+            const decompK = computeSignalDecomposition(fk, agents, hashString(symbol + ":" + String(k)), k > DashboardService.MIN_LOOKBACK_FOR_FEATURES ? hashString(symbol + ":" + String(k - 1)) : undefined);
+            const meanKForScore = decompK.meanSignal - decompK.macroContribution;
+            const rawK = decompK.baseSignal + (meanKForScore - decompK.baseSignal) * factor;
+            const activeK = -rawK;
+            if (Math.abs(activeK) < signalStrengthThreshold) neutralCount++;
+          }
+          const probabilityNeutral = validLookbackDays > 0 ? neutralCount / validLookbackDays : 0.5;
+          if (probabilityNeutral >= neutralThreshold) continue;
+          const conviction = signalStrength * 0.5 + (1 - disagreement) * 0.3 + (1 - probabilityNeutral) * 0.2;
+          if (conviction < convictionThreshold) continue;
+          const priceT0 = closes[i]!;
+          const priceT1 = closes[i + horizon]!;
+          if (priceT0 <= 0 || !Number.isFinite(priceT0) || !Number.isFinite(priceT1)) continue;
+          const rawReturn = (priceT1 - priceT0) / priceT0;
+          const tradeReturn = setup === "LONG" ? rawReturn : -rawReturn;
+          tr.push(tradeReturn);
+          br.push(rawReturn);
+          if (setup === "LONG") nLong++;
+          else nShort++;
+        }
+      }
+      const n = tr.length;
+      if (n === 0) {
+        return {
+          row: {
+            trades: null,
+            executedLongTrades: nLong,
+            executedShortTrades: nShort,
+            winRate: null,
+            avgTradeReturn: null,
+            cumulativeReturn: null,
+            benchmarkReturn: null,
+            edge: null,
+            maxDrawdown: null,
+          },
+        };
+      }
+      const wins = tr.filter((r) => r > 0).length;
+      const cumStrategy = tr.reduce((a, b) => a + b, 0);
+      const cumBench = br.reduce((a, b) => a + b, 0);
+      let equity = 1;
+      let peak = 1;
+      let maxDd = 0;
+      for (const r of tr) {
+        equity *= 1 + r;
+        if (equity > peak) peak = equity;
+        const dd = peak > 0 ? (peak - equity) / peak : 0;
+        if (dd > maxDd) maxDd = dd;
+      }
+      return {
+        row: {
+          trades: n,
+          executedLongTrades: nLong,
+          executedShortTrades: nShort,
+          winRate: wins / n,
+          avgTradeReturn: cumStrategy / n,
+          cumulativeReturn: cumStrategy,
+          benchmarkReturn: cumBench,
+          edge: cumStrategy - cumBench,
+          maxDrawdown: maxDd,
+        },
+      };
+    };
+
+    const retest010 = runAttenuationRetestNoMacro(0.10);
+    const retest025 = runAttenuationRetestNoMacro(0.25);
+    const retest050 = runAttenuationRetestNoMacro(0.5);
+
+    const retestVariants = [
+      { key: "factor_0_10" as const, row: retest010.row },
+      { key: "factor_0_25" as const, row: retest025.row },
+      { key: "factor_0_50" as const, row: retest050.row },
+    ];
+    const retestBestByEdge = retestVariants.filter((v) => v.row.edge != null).sort((a, b) => (b.row.edge ?? 0) - (a.row.edge ?? 0))[0];
+    const retestBestByCum = retestVariants.filter((v) => v.row.cumulativeReturn != null).sort((a, b) => (b.row.cumulativeReturn ?? 0) - (a.row.cumulativeReturn ?? 0))[0];
+
+    const attenuationRetestNoMacroAudit: NonNullable<DashboardSummary["attenuationRetestNoMacroAudit"]> = {
+      factor_0_10: retest010.row,
+      factor_0_25: retest025.row,
+      factor_0_50: retest050.row,
+      recommendation: {
+        bestFactorByEdge: retestBestByEdge?.key ?? null,
+        bestFactorByCumulativeReturn: retestBestByCum?.key ?? null,
+      },
+    };
+
+    type InvertedShadowSource = "baseSignal" | "invertedBaseSignal" | "postInformationSignal" | "invertedPostInformationSignal";
+    const invertedShadowSources: Array<{ key: InvertedShadowSource; getScore: (d: { baseSignal: number; meanSignal: number }) => number; getLookbackScore: (d: { baseSignal: number; meanSignal: number }) => number }> = [
+      { key: "baseSignal", getScore: (d) => d.baseSignal, getLookbackScore: (d) => d.baseSignal },
+      { key: "invertedBaseSignal", getScore: (d) => -d.baseSignal, getLookbackScore: (d) => -d.baseSignal },
+      { key: "postInformationSignal", getScore: (d) => d.meanSignal, getLookbackScore: (d) => d.meanSignal },
+      { key: "invertedPostInformationSignal", getScore: (d) => -d.meanSignal, getLookbackScore: (d) => -d.meanSignal },
+    ];
+    const invertedShadowResults: Record<InvertedShadowSource, { trades: number; tradeReturns: number[]; benchmarkReturns: number[] }> = {
+      baseSignal: { trades: 0, tradeReturns: [], benchmarkReturns: [] },
+      invertedBaseSignal: { trades: 0, tradeReturns: [], benchmarkReturns: [] },
+      postInformationSignal: { trades: 0, tradeReturns: [], benchmarkReturns: [] },
+      invertedPostInformationSignal: { trades: 0, tradeReturns: [], benchmarkReturns: [] },
+    };
+    for (const src of invertedShadowSources) {
+      const tr: number[] = [];
+      const br: number[] = [];
+      for (const [symbol, { closes }] of cachedData) {
+        const features = featuresCache.get(symbol);
+        if (!features) continue;
+        for (let i = 5 + DashboardService.NEUTRAL_LOOKBACK; i < closes.length - horizon; i++) {
+          if (i >= features.length) break;
+          const feat = features[i];
+          if (!feat) continue;
+          const contextSeed = hashString(symbol + ":" + String(i));
+          const prevContextSeed = i > 5 + DashboardService.NEUTRAL_LOOKBACK ? hashString(symbol + ":" + String(i - 1)) : undefined;
+          const { disagreement, signalStrength } = computeAgentAggregatedSignalForFeatures(feat, agents, contextSeed, prevContextSeed);
+          const decomp = computeSignalDecomposition(feat, agents, contextSeed, prevContextSeed);
+          const setupScore = src.getScore(decomp);
+          let setup: "LONG" | "SHORT" | null = null;
+          if (setupScore >= signalStrengthThreshold) setup = "LONG";
+          else if (setupScore <= -signalStrengthThreshold) setup = "SHORT";
+          if (setup == null) continue;
+          if (Math.abs(setupScore) <= signalStrengthThreshold) continue;
+          let probabilityNeutral = 0.5;
+          let neutralCount = 0;
+          let validLookbackDays = 0;
+          for (let k = i - DashboardService.NEUTRAL_LOOKBACK; k < i && k >= DashboardService.MIN_LOOKBACK_FOR_FEATURES; k++) {
+            const fk = features[k];
+            if (!fk) continue;
+            validLookbackDays++;
+            const kSeed = hashString(symbol + ":" + String(k));
+            const kPrevSeed = k > DashboardService.MIN_LOOKBACK_FOR_FEATURES ? hashString(symbol + ":" + String(k - 1)) : undefined;
+            const decompK = computeSignalDecomposition(fk, agents, kSeed, kPrevSeed);
+            const lookbackScore = src.getLookbackScore(decompK);
+            if (Math.abs(lookbackScore) < signalStrengthThreshold) neutralCount++;
+          }
+          probabilityNeutral = validLookbackDays > 0 ? neutralCount / validLookbackDays : 0.5;
+          if (probabilityNeutral >= neutralThreshold) continue;
+          const conviction = signalStrength * 0.5 + (1 - disagreement) * 0.3 + (1 - probabilityNeutral) * 0.2;
+          if (conviction < convictionThreshold) continue;
+          const priceT0 = closes[i]!;
+          const priceT1 = closes[i + horizon]!;
+          if (priceT0 <= 0 || !Number.isFinite(priceT0) || !Number.isFinite(priceT1)) continue;
+          const rawReturn = (priceT1 - priceT0) / priceT0;
+          const tradeReturn = setup === "LONG" ? rawReturn : -rawReturn;
+          if (setup === "LONG") {
+            tr.push(tradeReturn);
+            br.push(rawReturn);
+          }
+        }
+      }
+      invertedShadowResults[src.key] = { trades: tr.length, tradeReturns: tr, benchmarkReturns: br };
+    }
+    const toInvertedShadowRow = (res: { trades: number; tradeReturns: number[]; benchmarkReturns: number[] }) => {
+      const n = res.trades;
+      if (n === 0) return { trades: null, winRate: null, avgTradeReturn: null, cumulativeReturn: null, benchmarkReturn: null, edge: null };
+      const wins = res.tradeReturns.filter((r) => r > 0).length;
+      const cumStrategy = res.tradeReturns.reduce((a, b) => a + b, 0);
+      const cumBench = res.benchmarkReturns.reduce((a, b) => a + b, 0);
+      return {
+        trades: n,
+        winRate: wins / n,
+        avgTradeReturn: cumStrategy / n,
+        cumulativeReturn: cumStrategy,
+        benchmarkReturn: cumBench,
+        edge: cumStrategy - cumBench,
+      };
+    };
+    const invertedSignalPerformanceAudit: NonNullable<DashboardSummary["invertedSignalPerformanceAudit"]> = {
+      baseSignal: toInvertedShadowRow(invertedShadowResults.baseSignal),
+      invertedBaseSignal: toInvertedShadowRow(invertedShadowResults.invertedBaseSignal),
+      postInformationSignal: toInvertedShadowRow(invertedShadowResults.postInformationSignal),
+      invertedPostInformationSignal: toInvertedShadowRow(invertedShadowResults.invertedPostInformationSignal),
+    };
+
+    const execCountForTiming = benchmarkReturns.length;
+    const eligibleCount = eligibleForwardReturns.length;
+    const avgExecBench = execCountForTiming > 0 ? benchmarkReturns.reduce((a, b) => a + b, 0) / execCountForTiming : null;
+    const cumExecBench = execCountForTiming > 0 ? benchmarkReturns.reduce((a, b) => a + b, 0) : null;
+    const avgEligible = eligibleCount > 0 ? eligibleForwardReturns.reduce((a, b) => a + b, 0) / eligibleCount : null;
+    const timingAlphaAudit: NonNullable<DashboardSummary["timingAlphaAudit"]> = {
+      executedWindows: {
+        count: execCountForTiming,
+        avgBenchmarkReturnPerExecutedWindow: avgExecBench,
+        cumulativeBenchmarkReturnExecutedWindows: cumExecBench,
+      },
+      fullHistoryBaseline: {
+        totalRowsConsidered: eligibleCount > 0 ? eligibleCount : null,
+        avgForwardReturnAllEligibleRows: avgEligible,
+      },
+      selectionAlpha: {
+        avgWindowAlphaVsEligibleBaseline: avgExecBench != null && avgEligible != null ? avgExecBench - avgEligible : null,
+        cumulativeAlphaVsEligibleBaseline:
+          cumExecBench != null && avgEligible != null && execCountForTiming > 0
+            ? cumExecBench - avgEligible * execCountForTiming
+            : null,
+      },
+      participation: {
+        eligibleRowCount: eligibleCount,
+        executedTradeCount: execCountForTiming,
+        executionRate: eligibleCount > 0 ? execCountForTiming / eligibleCount : null,
+      },
+    };
+
+    const toShortReentryRow = (
+      tr: number[],
+      br: number[],
+      nLong: number,
+      nShort: number,
+    ): NonNullable<DashboardSummary["shortReentryShadowAudit"]>["longOnlyActualEquivalent"] => {
+      const n = tr.length;
+      if (n === 0) {
+        return {
+          trades: null,
+          executedLongTrades: nLong,
+          executedShortTrades: nShort,
+          longShare: null,
+          shortShare: null,
+          winRate: null,
+          avgTradeReturn: null,
+          cumulativeReturn: null,
+          benchmarkReturn: null,
+          edge: null,
+          maxDrawdown: null,
+        };
+      }
+      const total = nLong + nShort;
+      const wins = tr.filter((r) => r > 0).length;
+      const cumStrategy = tr.reduce((a, b) => a + b, 0);
+      const cumBench = br.reduce((a, b) => a + b, 0);
+      let equity = 1;
+      let peak = 1;
+      let maxDd = 0;
+      for (const r of tr) {
+        equity *= 1 + r;
+        if (equity > peak) peak = equity;
+        const dd = peak > 0 ? (peak - equity) / peak : 0;
+        if (dd > maxDd) maxDd = dd;
+      }
+      return {
+        trades: n,
+        executedLongTrades: nLong,
+        executedShortTrades: nShort,
+        longShare: total > 0 ? nLong / total : null,
+        shortShare: total > 0 ? nShort / total : null,
+        winRate: wins / n,
+        avgTradeReturn: cumStrategy / n,
+        cumulativeReturn: cumStrategy,
+        benchmarkReturn: cumBench,
+        edge: cumStrategy - cumBench,
+        maxDrawdown: maxDd,
+      };
+    };
+
+    const longOnlyRow = toShortReentryRow(tradeReturns, benchmarkReturns, executedLongTrades, executedShortTrades);
+
+    const shadowLongShortTr: number[] = [];
+    const shadowLongShortBr: number[] = [];
+    let shadowLongCount = 0;
+    let shadowShortCount = 0;
+    for (const [symbol, { closes }] of cachedData) {
+      const features = featuresCache.get(symbol);
+      if (!features) continue;
+      for (let i = 5 + DashboardService.NEUTRAL_LOOKBACK; i < closes.length - horizon; i++) {
+        if (i >= features.length) break;
+        const feat = features[i];
+        if (!feat) continue;
+        const contextSeed = hashString(symbol + ":" + String(i));
+        const prevContextSeed = i > 5 + DashboardService.NEUTRAL_LOOKBACK ? hashString(symbol + ":" + String(i - 1)) : undefined;
+        const { disagreement, signalStrength } = computeAgentAggregatedSignalForFeatures(feat, agents, contextSeed, prevContextSeed);
+        const decomp = computeSignalDecomposition(feat, agents, contextSeed, prevContextSeed);
+        let meanForScore = decomp.meanSignal;
+        if (EXCLUDE_MACRO_FROM_LIVE_SETUP_SCORE) meanForScore -= decomp.macroContribution;
+        if (EXCLUDE_SENTIMENT_FROM_LIVE_SETUP_SCORE) meanForScore -= decomp.sentimentContribution;
+        const rawScore = decomp.baseSignal + (meanForScore - decomp.baseSignal) * SETUP_DELTA_ATTENUATION;
+        const activeScore = ENABLE_SIGNAL_FLIP ? -rawScore : rawScore;
+        let setup: "LONG" | "SHORT" | null = null;
+        if (activeScore >= signalStrengthThreshold) setup = "LONG";
+        else if (activeScore <= -signalStrengthThreshold) setup = "SHORT";
+        if (setup == null) continue;
+        if (Math.abs(activeScore) <= signalStrengthThreshold) continue;
+        let neutralCount = 0;
+        let validLookbackDays = 0;
+        for (let k = i - DashboardService.NEUTRAL_LOOKBACK; k < i && k >= DashboardService.MIN_LOOKBACK_FOR_FEATURES; k++) {
+          const fk = features[k];
+          if (!fk) continue;
+          validLookbackDays++;
+          const kSeed = hashString(symbol + ":" + String(k));
+          const kPrevSeed = k > DashboardService.MIN_LOOKBACK_FOR_FEATURES ? hashString(symbol + ":" + String(k - 1)) : undefined;
+          const decompK = computeSignalDecomposition(fk, agents, kSeed, kPrevSeed);
+          let meanKForScore = decompK.meanSignal;
+          if (EXCLUDE_MACRO_FROM_LIVE_SETUP_SCORE) meanKForScore -= decompK.macroContribution;
+          if (EXCLUDE_SENTIMENT_FROM_LIVE_SETUP_SCORE) meanKForScore -= decompK.sentimentContribution;
+          const rawK = decompK.baseSignal + (meanKForScore - decompK.baseSignal) * SETUP_DELTA_ATTENUATION;
+          const activeK = ENABLE_SIGNAL_FLIP ? -rawK : rawK;
+          if (Math.abs(activeK) < signalStrengthThreshold) neutralCount++;
+        }
+        const probabilityNeutral = validLookbackDays > 0 ? neutralCount / validLookbackDays : 0.5;
+        if (probabilityNeutral >= neutralThreshold) continue;
+        const conviction = signalStrength * 0.5 + (1 - disagreement) * 0.3 + (1 - probabilityNeutral) * 0.2;
+        if (conviction < convictionThreshold) continue;
+        const priceT0 = closes[i]!;
+        const priceT1 = closes[i + horizon]!;
+        if (priceT0 <= 0 || !Number.isFinite(priceT0) || !Number.isFinite(priceT1)) continue;
+        const rawReturn = (priceT1 - priceT0) / priceT0;
+        const tradeReturn = setup === "LONG" ? rawReturn : -rawReturn;
+        shadowLongShortTr.push(tradeReturn);
+        shadowLongShortBr.push(rawReturn);
+        if (setup === "LONG") shadowLongCount++;
+        else shadowShortCount++;
+      }
+    }
+    const longShortRow = toShortReentryRow(shadowLongShortTr, shadowLongShortBr, shadowLongCount, shadowShortCount);
+
+    const longOnlyEdge = longOnlyRow.edge ?? 0;
+    const longShortEdge = longShortRow.edge ?? 0;
+    const longOnlyCum = longOnlyRow.cumulativeReturn ?? 0;
+    const longShortCum = longShortRow.cumulativeReturn ?? 0;
+    let keepShortDisabled: boolean | null = null;
+    let reason = "No recommendation (insufficient data)";
+    if (longOnlyRow.trades != null && longOnlyRow.trades > 0 && longShortRow.trades != null && longShortRow.trades > 0) {
+      if (longShortEdge > longOnlyEdge && longShortCum > longOnlyCum) {
+        keepShortDisabled = false;
+        reason = "Shadow LONG+SHORT outperforms LONG-only on edge and cumulative return; consider re-enabling SHORT.";
+      } else if (longShortEdge <= longOnlyEdge || longShortCum <= longOnlyCum) {
+        keepShortDisabled = true;
+        reason = "LONG-only matches or beats shadow LONG+SHORT; keep SHORT disabled.";
+      }
+    }
+
+    const shortReentryShadowAudit: NonNullable<DashboardSummary["shortReentryShadowAudit"]> = {
+      longOnlyActualEquivalent: longOnlyRow,
+      longShortShadow: longShortRow,
+      recommendation: { keepShortDisabled, reason },
+    };
+
+    type ComponentPruningRow = NonNullable<DashboardSummary["componentPruningShadowAudit"]>["currentFull"];
+    const toComponentPruningRow = (
+      tr: number[],
+      br: number[],
+      nLong: number,
+      nShort: number,
+    ): ComponentPruningRow => {
+      const n = tr.length;
+      if (n === 0) {
+        return {
+          trades: null,
+          executedLongTrades: nLong,
+          executedShortTrades: nShort,
+          winRate: null,
+          avgTradeReturn: null,
+          cumulativeReturn: null,
+          benchmarkReturn: null,
+          edge: null,
+          maxDrawdown: null,
+        };
+      }
+      const wins = tr.filter((r) => r > 0).length;
+      const cumStrategy = tr.reduce((a, b) => a + b, 0);
+      const cumBench = br.reduce((a, b) => a + b, 0);
+      let equity = 1;
+      let peak = 1;
+      let maxDd = 0;
+      for (const r of tr) {
+        equity *= 1 + r;
+        if (equity > peak) peak = equity;
+        const dd = peak > 0 ? (peak - equity) / peak : 0;
+        if (dd > maxDd) maxDd = dd;
+      }
+      return {
+        trades: n,
+        executedLongTrades: nLong,
+        executedShortTrades: nShort,
+        winRate: wins / n,
+        avgTradeReturn: cumStrategy / n,
+        cumulativeReturn: cumStrategy,
+        benchmarkReturn: cumBench,
+        edge: cumStrategy - cumBench,
+        maxDrawdown: maxDd,
+      };
+    };
+
+    const currentFullRow = toComponentPruningRow(tradeReturns, benchmarkReturns, executedLongTrades, executedShortTrades);
+
+    const computeWinningBaselineFeatureAudit = (): NonNullable<DashboardSummary["winningBaselineFeatureAudit"]> => {
+      const n = tradeReturns.length;
+      const winIdx = tradeReturns.map((r, i) => (r > 0 ? i : -1)).filter((i) => i >= 0);
+      const loseIdx = tradeReturns.map((r, i) => (r < 0 ? i : -1)).filter((i) => i >= 0);
+      const avg = (arr: number[], indices: number[]) =>
+        indices.length === 0 ? null : indices.reduce((s, i) => s + arr[i]!, 0) / indices.length;
+      const allBase = n > 0 ? execBaseSignal.reduce((a, b) => a + b, 0) / n : null;
+      const allTech = n > 0 ? execTechnical.reduce((a, b) => a + b, 0) / n : null;
+      const allNoise = n > 0 ? execNoise.reduce((a, b) => a + b, 0) / n : null;
+      const allConv = n > 0 ? execConviction.reduce((a, b) => a + b, 0) / n : null;
+      const winBase = avg(execBaseSignal, winIdx);
+      const winTech = avg(execTechnical, winIdx);
+      const winNoise = avg(execNoise, winIdx);
+      const winConv = avg(execConviction, winIdx);
+      const loseBase = avg(execBaseSignal, loseIdx);
+      const loseTech = avg(execTechnical, loseIdx);
+      const loseNoise = avg(execNoise, loseIdx);
+      const loseConv = avg(execConviction, loseIdx);
+      const convD = winConv != null && loseConv != null ? winConv - loseConv : null;
+      const techD = winTech != null && loseTech != null ? winTech - loseTech : null;
+      const baseD = winBase != null && loseBase != null ? winBase - loseBase : null;
+      const noiseD = winNoise != null && loseNoise != null ? winNoise - loseNoise : null;
+      return {
+        allExecutedTrades: { count: n, avgBaseSignal: allBase, avgTechnicalContribution: allTech, avgNoiseContribution: allNoise, avgConviction: allConv },
+        winningTrades: { count: winIdx.length, avgBaseSignal: winBase, avgTechnicalContribution: winTech, avgNoiseContribution: winNoise, avgConviction: winConv },
+        losingTrades: { count: loseIdx.length, avgBaseSignal: loseBase, avgTechnicalContribution: loseTech, avgNoiseContribution: loseNoise, avgConviction: loseConv },
+        comparison: { convictionDeltaWinningMinusLosing: convD, technicalDeltaWinningMinusLosing: techD, baseSignalDeltaWinningMinusLosing: baseD, noiseDeltaWinningMinusLosing: noiseD },
+      };
+    };
+    const winningBaselineFeatureAudit = computeWinningBaselineFeatureAudit();
+
+    type OutOfSampleRow = NonNullable<DashboardSummary["outOfSampleAudit"]>["inSample"];
+    const toOutOfSampleRow = (tr: number[], br: number[], nLong: number, nShort: number): OutOfSampleRow => {
+      const n = tr.length;
+      if (n === 0) return { trades: null, executedLongTrades: nLong, executedShortTrades: nShort, winRate: null, avgTradeReturn: null, cumulativeReturn: null, benchmarkReturn: null, edge: null, maxDrawdown: null };
+      const wins = tr.filter((r) => r > 0).length;
+      const cumStrategy = tr.reduce((a, b) => a + b, 0);
+      const cumBench = br.reduce((a, b) => a + b, 0);
+      let equity = 1, peak = 1, maxDd = 0;
+      for (const r of tr) {
+        equity *= 1 + r;
+        if (equity > peak) peak = equity;
+        const dd = peak > 0 ? (peak - equity) / peak : 0;
+        if (dd > maxDd) maxDd = dd;
+      }
+      return { trades: n, executedLongTrades: nLong, executedShortTrades: nShort, winRate: wins / n, avgTradeReturn: cumStrategy / n, cumulativeReturn: cumStrategy, benchmarkReturn: cumBench, edge: cumStrategy - cumBench, maxDrawdown: maxDd };
+    };
+    const computeOutOfSampleAudit = (): NonNullable<DashboardSummary["outOfSampleAudit"]> => {
+      const n = tradeReturns.length;
+      if (n === 0) {
+        const empty: OutOfSampleRow = { trades: null, executedLongTrades: 0, executedShortTrades: 0, winRate: null, avgTradeReturn: null, cumulativeReturn: null, benchmarkReturn: null, edge: null, maxDrawdown: null };
+        return { splitDescription: "first 70% in-sample, last 30% out-of-sample (chronological)", inSample: empty, outOfSample: empty, comparison: { edgeDeltaOutMinusIn: null, cumulativeReturnDeltaOutMinusIn: null, winRateDeltaOutMinusIn: null } };
+      }
+      const indices = tradeReturns.map((_, i) => i);
+      indices.sort((a, b) => execTimestamps[a]! - execTimestamps[b]!);
+      const splitAt = Math.max(1, Math.floor(n * 0.7));
+      const inIdx = indices.slice(0, splitAt);
+      const outIdx = indices.slice(splitAt);
+      const inTr = inIdx.map((i) => tradeReturns[i]!);
+      const inBr = inIdx.map((i) => benchmarkReturns[i]!);
+      const outTr = outIdx.map((i) => tradeReturns[i]!);
+      const outBr = outIdx.map((i) => benchmarkReturns[i]!);
+      const inLong = inIdx.filter((i) => execIsLong[i]).length;
+      const inShort = inIdx.length - inLong;
+      const outLong = outIdx.filter((i) => execIsLong[i]).length;
+      const outShort = outIdx.length - outLong;
+      const inRow = toOutOfSampleRow(inTr, inBr, inLong, inShort);
+      const outRow = toOutOfSampleRow(outTr, outBr, outLong, outShort);
+      const edgeD = inRow.edge != null && outRow.edge != null ? outRow.edge - inRow.edge : null;
+      const cumD = inRow.cumulativeReturn != null && outRow.cumulativeReturn != null ? outRow.cumulativeReturn - inRow.cumulativeReturn : null;
+      const wrD = inRow.winRate != null && outRow.winRate != null ? outRow.winRate - inRow.winRate : null;
+      return {
+        splitDescription: "first 70% in-sample, last 30% out-of-sample (chronological)",
+        inSample: inRow,
+        outOfSample: outRow,
+        comparison: { edgeDeltaOutMinusIn: edgeD, cumulativeReturnDeltaOutMinusIn: cumD, winRateDeltaOutMinusIn: wrD },
+      };
+    };
+    const outOfSampleAudit = computeOutOfSampleAudit();
+
+    type WalkForwardSegmentRow = NonNullable<DashboardSummary["walkForwardAudit"]>["segments"][number];
+    const toWalkForwardSegmentRow = (
+      label: string,
+      tr: number[],
+      br: number[],
+      nLong: number,
+      nShort: number,
+    ): WalkForwardSegmentRow => {
+      const n = tr.length;
+      if (n === 0) {
+        return { label, trades: 0, executedLongTrades: nLong, executedShortTrades: nShort, winRate: null, avgTradeReturn: null, cumulativeReturn: null, benchmarkReturn: null, edge: null, maxDrawdown: null };
+      }
+      const wins = tr.filter((r) => r > 0).length;
+      const cumStrategy = tr.reduce((a, b) => a + b, 0);
+      const cumBench = br.reduce((a, b) => a + b, 0);
+      let equity = 1;
+      let peak = 1;
+      let maxDd = 0;
+      for (const r of tr) {
+        equity *= 1 + r;
+        if (equity > peak) peak = equity;
+        const dd = peak > 0 ? (peak - equity) / peak : 0;
+        if (dd > maxDd) maxDd = dd;
+      }
+      return { label, trades: n, executedLongTrades: nLong, executedShortTrades: nShort, winRate: wins / n, avgTradeReturn: cumStrategy / n, cumulativeReturn: cumStrategy, benchmarkReturn: cumBench, edge: cumStrategy - cumBench, maxDrawdown: maxDd };
+    };
+    const computeWalkForwardAudit = (): NonNullable<DashboardSummary["walkForwardAudit"]> => {
+      const n = tradeReturns.length;
+      const emptySeg: WalkForwardSegmentRow = { label: "segment", trades: 0, executedLongTrades: 0, executedShortTrades: 0, winRate: null, avgTradeReturn: null, cumulativeReturn: null, benchmarkReturn: null, edge: null, maxDrawdown: null };
+      const emptySegs: [WalkForwardSegmentRow, WalkForwardSegmentRow, WalkForwardSegmentRow, WalkForwardSegmentRow] = [
+        { ...emptySeg, label: "segment_1" },
+        { ...emptySeg, label: "segment_2" },
+        { ...emptySeg, label: "segment_3" },
+        { ...emptySeg, label: "segment_4" },
+      ];
+      if (n === 0) {
+        return {
+          splitDescription: "4 consecutive chronological segments by executed trade order (sorted by entry timestamp), roughly equal trade count per segment; uses current live baseline including 3% stop-loss",
+          segments: emptySegs,
+          summary: { positiveEdgeSegmentCount: 0, positiveCumulativeReturnSegmentCount: 0, bestSegmentByEdge: null, worstSegmentByEdge: null },
+        };
+      }
+      const indices = tradeReturns.map((_, i) => i);
+      indices.sort((a, b) => execTimestamps[a]! - execTimestamps[b]!);
+      const q = Math.max(1, Math.floor(n / 4));
+      const s0 = indices.slice(0, q);
+      const s1 = indices.slice(q, q * 2);
+      const s2 = indices.slice(q * 2, q * 3);
+      const s3 = indices.slice(q * 3);
+      const seg0 = toWalkForwardSegmentRow("segment_1", s0.map((i) => tradeReturns[i]!), s0.map((i) => benchmarkReturns[i]!), s0.filter((i) => execIsLong[i]).length, s0.length - s0.filter((i) => execIsLong[i]).length);
+      const seg1 = toWalkForwardSegmentRow("segment_2", s1.map((i) => tradeReturns[i]!), s1.map((i) => benchmarkReturns[i]!), s1.filter((i) => execIsLong[i]).length, s1.length - s1.filter((i) => execIsLong[i]).length);
+      const seg2 = toWalkForwardSegmentRow("segment_3", s2.map((i) => tradeReturns[i]!), s2.map((i) => benchmarkReturns[i]!), s2.filter((i) => execIsLong[i]).length, s2.length - s2.filter((i) => execIsLong[i]).length);
+      const seg3 = toWalkForwardSegmentRow("segment_4", s3.map((i) => tradeReturns[i]!), s3.map((i) => benchmarkReturns[i]!), s3.filter((i) => execIsLong[i]).length, s3.length - s3.filter((i) => execIsLong[i]).length);
+      const segs = [seg0, seg1, seg2, seg3];
+      const posEdge = segs.filter((s) => s.edge != null && s.edge > 0).length;
+      const posCum = segs.filter((s) => s.cumulativeReturn != null && s.cumulativeReturn > 0).length;
+      const byEdge = segs.filter((s) => s.edge != null).sort((a, b) => (b.edge ?? 0) - (a.edge ?? 0));
+      const bestByEdge = byEdge[0]?.label ?? null;
+      const worstByEdge = byEdge[byEdge.length - 1]?.label ?? null;
+      return {
+        splitDescription: "4 consecutive chronological segments by executed trade order (sorted by entry timestamp), roughly equal trade count per segment; uses current live baseline including 3% stop-loss",
+        segments: [seg0, seg1, seg2, seg3],
+        summary: { positiveEdgeSegmentCount: posEdge, positiveCumulativeReturnSegmentCount: posCum, bestSegmentByEdge: bestByEdge, worstSegmentByEdge: worstByEdge },
+      };
+    };
+    const walkForwardAudit = computeWalkForwardAudit();
+
+    const strategyV1CandidateAudit: NonNullable<DashboardSummary["strategyV1CandidateAudit"]> = {
+      strategyId: "crowdvest_strategy_v1_candidate",
+      versionLabel: "v1-candidate",
+      status: "frozen_for_comparison",
+      config: {
+        signalFlipEnabled: ENABLE_SIGNAL_FLIP,
+        shortEnabled: ENABLE_SHORT_TRADES,
+        deltaAttenuationFactor: SETUP_DELTA_ATTENUATION,
+        macroExcludedFromLiveSetupScore: EXCLUDE_MACRO_FROM_LIVE_SETUP_SCORE,
+        sentimentExcludedFromLiveSetupScore: EXCLUDE_SENTIMENT_FROM_LIVE_SETUP_SCORE,
+        activeSetupScoreAbsThreshold: signalStrengthThreshold,
+        sizingMode: "equal_weight",
+      },
+      performanceSnapshot: {
+        trades: currentFullRow.trades,
+        winRate: currentFullRow.winRate,
+        avgTradeReturn: currentFullRow.avgTradeReturn,
+        cumulativeReturn: currentFullRow.cumulativeReturn,
+        benchmarkReturn: currentFullRow.benchmarkReturn,
+        edge: currentFullRow.edge,
+        maxDrawdown: currentFullRow.maxDrawdown,
+      },
+      walkForwardSnapshot: walkForwardAudit.summary,
+    };
+
+    const strategyV2CandidateAudit: NonNullable<DashboardSummary["strategyV2CandidateAudit"]> = {
+      strategyId: "crowdvest_strategy_v2_candidate",
+      versionLabel: "v2-candidate",
+      status: "frozen_for_comparison",
+      config: {
+        signalFlipEnabled: ENABLE_SIGNAL_FLIP,
+        shortEnabled: ENABLE_SHORT_TRADES,
+        deltaAttenuationFactor: SETUP_DELTA_ATTENUATION,
+        macroExcludedFromLiveSetupScore: EXCLUDE_MACRO_FROM_LIVE_SETUP_SCORE,
+        sentimentExcludedFromLiveSetupScore: EXCLUDE_SENTIMENT_FROM_LIVE_SETUP_SCORE,
+        activeSetupScoreAbsThreshold: signalStrengthThreshold,
+        sizingMode: "equal_weight",
+        stopLossEnabled: LIVE_STOP_LOSS_ENABLED,
+        stopLossPercent: LIVE_STOP_LOSS_PERCENT,
+        takeProfitEnabled: false,
+      },
+      performanceSnapshot: {
+        trades: currentFullRow.trades,
+        winRate: currentFullRow.winRate,
+        avgTradeReturn: currentFullRow.avgTradeReturn,
+        cumulativeReturn: currentFullRow.cumulativeReturn,
+        benchmarkReturn: currentFullRow.benchmarkReturn,
+        edge: currentFullRow.edge,
+        maxDrawdown: currentFullRow.maxDrawdown,
+      },
+      walkForwardSnapshot: walkForwardAudit.summary,
+    };
+
+    const EXIT_METHODOLOGY_DESC = "Exit overlays use daily close-to-close path within the holding window (intrabar high/low unavailable); threshold hit on first close that crosses it; LONG: SL -3% when rawReturn<=-0.03, TP +6% when rawReturn>=0.06; SHORT: SL -3% when rawReturn>=0.03, TP +6% when rawReturn<=-0.06.";
+    type ExitPolicyRow = NonNullable<DashboardSummary["exitPolicyShadowAudit"]>["baselineEquivalent"];
+    const toExitPolicyRow = (tr: number[], br: number[], nLong: number, nShort: number): ExitPolicyRow => {
+      const n = tr.length;
+      if (n === 0) return { trades: null, executedLongTrades: nLong, executedShortTrades: nShort, winRate: null, avgTradeReturn: null, cumulativeReturn: null, benchmarkReturn: null, edge: null, maxDrawdown: null };
+      const wins = tr.filter((r) => r > 0).length;
+      const cumStrategy = tr.reduce((a, b) => a + b, 0);
+      const cumBench = br.reduce((a, b) => a + b, 0);
+      let equity = 1;
+      let peak = 1;
+      let maxDd = 0;
+      for (const r of tr) {
+        equity *= 1 + r;
+        if (equity > peak) peak = equity;
+        const dd = peak > 0 ? (peak - equity) / peak : 0;
+        if (dd > maxDd) maxDd = dd;
+      }
+      return { trades: n, executedLongTrades: nLong, executedShortTrades: nShort, winRate: wins / n, avgTradeReturn: cumStrategy / n, cumulativeReturn: cumStrategy, benchmarkReturn: cumBench, edge: cumStrategy - cumBench, maxDrawdown: maxDd };
+    };
+    const epSl3Tr: number[] = [];
+    const epSl3Br: number[] = [];
+    const epTp6Tr: number[] = [];
+    const epTp6Br: number[] = [];
+    const epSl3Tp6Tr: number[] = [];
+    const epSl3Tp6Br: number[] = [];
+    for (let k = 0; k < tradeReturns.length; k++) {
+      const sym = execSymbol[k]!;
+      const i = execEntryIndex[k]!;
+      const isLong = execIsLong[k]!;
+      const data = cachedData.get(sym);
+      if (!data || i + horizon >= data.closes.length) {
+        epSl3Tr.push(tradeReturns[k]!);
+        epSl3Br.push(benchmarkReturns[k]!);
+        epTp6Tr.push(tradeReturns[k]!);
+        epTp6Br.push(benchmarkReturns[k]!);
+        epSl3Tp6Tr.push(tradeReturns[k]!);
+        epSl3Tp6Br.push(benchmarkReturns[k]!);
+        continue;
+      }
+      const closes = data.closes;
+      const p0 = closes[i]!;
+      let sl3Strategy: number | null = null;
+      let sl3Bench: number | null = null;
+      let tp6Strategy: number | null = null;
+      let tp6Bench: number | null = null;
+      let sl3Day = horizon + 1;
+      let tp6Day = horizon + 1;
+      for (let d = 1; d <= horizon; d++) {
+        const pd = closes[i + d]!;
+        const rawRet = (pd - p0) / p0;
+        if (isLong) {
+          if (rawRet <= -0.03 && sl3Strategy == null) { sl3Strategy = -0.03; sl3Bench = rawRet; }
+          if (rawRet >= 0.06 && tp6Strategy == null) { tp6Strategy = 0.06; tp6Bench = rawRet; }
+          if (rawRet <= -0.03 && d < sl3Day) sl3Day = d;
+          if (rawRet >= 0.06 && d < tp6Day) tp6Day = d;
+        } else {
+          if (rawRet >= 0.03 && sl3Strategy == null) { sl3Strategy = -0.03; sl3Bench = rawRet; }
+          if (rawRet <= -0.06 && tp6Strategy == null) { tp6Strategy = 0.06; tp6Bench = rawRet; }
+          if (rawRet >= 0.03 && d < sl3Day) sl3Day = d;
+          if (rawRet <= -0.06 && d < tp6Day) tp6Day = d;
+        }
+      }
+      let sl3Tp6Strategy: number | null = null;
+      let sl3Tp6Bench: number | null = null;
+      if (sl3Day <= horizon || tp6Day <= horizon) {
+        if (sl3Day <= tp6Day) {
+          sl3Tp6Strategy = -0.03;
+          sl3Tp6Bench = (closes[i + sl3Day]! - p0) / p0;
+        } else {
+          sl3Tp6Strategy = 0.06;
+          sl3Tp6Bench = (closes[i + tp6Day]! - p0) / p0;
+        }
+      }
+      const baseRaw = (closes[i + horizon]! - p0) / p0;
+      const baseStrategy = isLong ? baseRaw : -baseRaw;
+      epSl3Tr.push(sl3Strategy != null ? sl3Strategy : baseStrategy);
+      epSl3Br.push(sl3Bench != null ? sl3Bench : baseRaw);
+      epTp6Tr.push(tp6Strategy != null ? tp6Strategy : baseStrategy);
+      epTp6Br.push(tp6Bench != null ? tp6Bench : baseRaw);
+      epSl3Tp6Tr.push(sl3Tp6Strategy != null ? sl3Tp6Strategy : baseStrategy);
+      epSl3Tp6Br.push(sl3Tp6Bench != null ? sl3Tp6Bench : baseRaw);
+    }
+    const epBaseRow = currentFullRow;
+    const epSl3Row = toExitPolicyRow(epSl3Tr, epSl3Br, executedLongTrades, executedShortTrades);
+    const epTp6Row = toExitPolicyRow(epTp6Tr, epTp6Br, executedLongTrades, executedShortTrades);
+    const epSl3Tp6Row = toExitPolicyRow(epSl3Tp6Tr, epSl3Tp6Br, executedLongTrades, executedShortTrades);
+    const epVariants = [
+      { key: "baselineEquivalent" as const, row: epBaseRow },
+      { key: "stopLoss_3pct" as const, row: epSl3Row },
+      { key: "takeProfit_6pct" as const, row: epTp6Row },
+      { key: "stopLoss_3pct_takeProfit_6pct" as const, row: epSl3Tp6Row },
+    ];
+    const epBestByEdge = epVariants.filter((v) => v.row.edge != null).sort((a, b) => (b.row.edge ?? 0) - (a.row.edge ?? 0))[0];
+    const epBestByCum = epVariants.filter((v) => v.row.cumulativeReturn != null).sort((a, b) => (b.row.cumulativeReturn ?? 0) - (a.row.cumulativeReturn ?? 0))[0];
+    const epBestByDd = epVariants.filter((v) => v.row.maxDrawdown != null).sort((a, b) => (a.row.maxDrawdown ?? 0) - (b.row.maxDrawdown ?? 0))[0];
+    const liveExitPolicyAudit: NonNullable<DashboardSummary["liveExitPolicyAudit"]> = {
+      stopLossEnabled: LIVE_STOP_LOSS_ENABLED,
+      stopLossPercent: LIVE_STOP_LOSS_PERCENT,
+      takeProfitEnabled: false,
+      methodologyDescription: "Live stop-loss uses daily close-to-close path within holding window; LONG: exit at -3% when rawReturn<=-0.03; SHORT: exit at -3% when rawReturn>=0.03.",
+    };
+
+    const exitPolicyShadowAudit: NonNullable<DashboardSummary["exitPolicyShadowAudit"]> = {
+      methodologyDescription: EXIT_METHODOLOGY_DESC,
+      baselineEquivalent: epBaseRow,
+      stopLoss_3pct: epSl3Row,
+      takeProfit_6pct: epTp6Row,
+      stopLoss_3pct_takeProfit_6pct: epSl3Tp6Row,
+      recommendation: {
+        bestVariantByEdge: epBestByEdge?.key ?? null,
+        bestVariantByCumulativeReturn: epBestByCum?.key ?? null,
+        bestVariantByMaxDrawdown: epBestByDd?.key ?? null,
+      },
+    };
+
+    type RegimeRow = NonNullable<DashboardSummary["regimePerformanceAudit"]>["uptrend"];
+    const toRegimeRow = (tr: number[], br: number[]): RegimeRow => {
+      const n = tr.length;
+      if (n === 0) return { trades: 0, winRate: null, avgTradeReturn: null, cumulativeReturn: null, benchmarkReturn: null, edge: null, maxDrawdown: null };
+      const wins = tr.filter((r) => r > 0).length;
+      const cumStrategy = tr.reduce((a, b) => a + b, 0);
+      const cumBench = br.reduce((a, b) => a + b, 0);
+      let equity = 1, peak = 1, maxDd = 0;
+      for (const r of tr) {
+        equity *= 1 + r;
+        if (equity > peak) peak = equity;
+        const dd = peak > 0 ? (peak - equity) / peak : 0;
+        if (dd > maxDd) maxDd = dd;
+      }
+      return { trades: n, winRate: wins / n, avgTradeReturn: cumStrategy / n, cumulativeReturn: cumStrategy, benchmarkReturn: cumBench, edge: cumStrategy - cumBench, maxDrawdown: maxDd };
+    };
+    const computeRegimePerformanceAudit = (): NonNullable<DashboardSummary["regimePerformanceAudit"]> => {
+      const upIdx = benchmarkReturns.map((br, i) => (br > 0 ? i : -1)).filter((i) => i >= 0);
+      const downIdx = benchmarkReturns.map((br, i) => (br < 0 ? i : -1)).filter((i) => i >= 0);
+      const upTr = upIdx.map((i) => tradeReturns[i]!);
+      const upBr = upIdx.map((i) => benchmarkReturns[i]!);
+      const downTr = downIdx.map((i) => tradeReturns[i]!);
+      const downBr = downIdx.map((i) => benchmarkReturns[i]!);
+      const upRow = toRegimeRow(upTr, upBr);
+      const downRow = toRegimeRow(downTr, downBr);
+      const edgeD = upRow.edge != null && downRow.edge != null ? upRow.edge - downRow.edge : null;
+      const wrD = upRow.winRate != null && downRow.winRate != null ? upRow.winRate - downRow.winRate : null;
+      return { uptrend: upRow, downtrend: downRow, comparison: { edgeDeltaUpMinusDown: edgeD, winRateDeltaUpMinusDown: wrD } };
+    };
+    const regimePerformanceAudit = computeRegimePerformanceAudit();
+
+    const uptrendIdx = benchmarkReturns.map((br, i) => (br > 0 ? i : -1)).filter((i) => i >= 0);
+    const noDowntrendTr = uptrendIdx.map((i) => tradeReturns[i]!);
+    const noDowntrendBr = uptrendIdx.map((i) => benchmarkReturns[i]!);
+    const noDowntrendLong = uptrendIdx.filter((i) => execIsLong[i]).length;
+    const noDowntrendShort = uptrendIdx.length - noDowntrendLong;
+    const noDowntrendRow = toComponentPruningRow(noDowntrendTr, noDowntrendBr, noDowntrendLong, noDowntrendShort);
+    const dtsBaseEdge = currentFullRow.edge ?? null;
+    const dtsBaseCum = currentFullRow.cumulativeReturn ?? null;
+    const dtsBaseDd = currentFullRow.maxDrawdown ?? null;
+    const dtsNoDdEdge = noDowntrendRow.edge ?? null;
+    const dtsNoDdCum = noDowntrendRow.cumulativeReturn ?? null;
+    const dtsNoDdDd = noDowntrendRow.maxDrawdown ?? null;
+    const downtrendSuppressionShadowAudit: NonNullable<DashboardSummary["downtrendSuppressionShadowAudit"]> = {
+      baselineEquivalent: currentFullRow,
+      noDowntrendTrades: noDowntrendRow,
+      comparison: {
+        edgeDeltaNoDowntrendMinusBaseline: dtsNoDdEdge != null && dtsBaseEdge != null ? dtsNoDdEdge - dtsBaseEdge : null,
+        cumulativeReturnDeltaNoDowntrendMinusBaseline: dtsNoDdCum != null && dtsBaseCum != null ? dtsNoDdCum - dtsBaseCum : null,
+        drawdownDeltaNoDowntrendMinusBaseline: dtsNoDdDd != null && dtsBaseDd != null ? dtsNoDdDd - dtsBaseDd : null,
+      },
+    };
+
+    const rpUpOnlyIdx = uptrendIdx;
+    const rpUpLongDownShortIdx = tradeReturns.map((_, i) => {
+      const br = benchmarkReturns[i]!;
+      const isLong = execIsLong[i];
+      return (br > 0 && isLong) || (br < 0 && !isLong) ? i : -1;
+    }).filter((i) => i >= 0);
+    const rpDownShortOnlyIdx = benchmarkReturns.map((br, i) => (br < 0 && !execIsLong[i] ? i : -1)).filter((i) => i >= 0);
+    const rpUpOnlyTr = rpUpOnlyIdx.map((i) => tradeReturns[i]!);
+    const rpUpOnlyBr = rpUpOnlyIdx.map((i) => benchmarkReturns[i]!);
+    const rpUpLongDownShortTr = rpUpLongDownShortIdx.map((i) => tradeReturns[i]!);
+    const rpUpLongDownShortBr = rpUpLongDownShortIdx.map((i) => benchmarkReturns[i]!);
+    const rpDownShortOnlyTr = rpDownShortOnlyIdx.map((i) => tradeReturns[i]!);
+    const rpDownShortOnlyBr = rpDownShortOnlyIdx.map((i) => benchmarkReturns[i]!);
+    const rpUpOnlyRow = toComponentPruningRow(rpUpOnlyTr, rpUpOnlyBr, noDowntrendLong, noDowntrendShort);
+    const rpUpLongDownShortRow = toComponentPruningRow(rpUpLongDownShortTr, rpUpLongDownShortBr, rpUpLongDownShortIdx.filter((i) => execIsLong[i]).length, rpUpLongDownShortIdx.length - rpUpLongDownShortIdx.filter((i) => execIsLong[i]).length);
+    const rpDownShortOnlyRow = toComponentPruningRow(rpDownShortOnlyTr, rpDownShortOnlyBr, 0, rpDownShortOnlyIdx.length);
+    const rpVariants = [
+      { key: "baselineEquivalent" as const, row: currentFullRow },
+      { key: "uptrendOnly_flatDowntrend" as const, row: rpUpOnlyRow },
+      { key: "uptrendLong_downtrendShortOnly" as const, row: rpUpLongDownShortRow },
+      { key: "downtrendShortOnly_only" as const, row: rpDownShortOnlyRow },
+    ];
+    const rpBestByEdge = rpVariants.filter((v) => v.row.edge != null).sort((a, b) => (b.row.edge ?? 0) - (a.row.edge ?? 0))[0];
+    const rpBestByCum = rpVariants.filter((v) => v.row.cumulativeReturn != null).sort((a, b) => (b.row.cumulativeReturn ?? 0) - (a.row.cumulativeReturn ?? 0))[0];
+    const rpBestByDd = rpVariants.filter((v) => v.row.maxDrawdown != null).sort((a, b) => (a.row.maxDrawdown ?? 0) - (b.row.maxDrawdown ?? 0))[0];
+    const regimePolicyShadowAudit: NonNullable<DashboardSummary["regimePolicyShadowAudit"]> = {
+      baselineEquivalent: currentFullRow,
+      uptrendOnly_flatDowntrend: rpUpOnlyRow,
+      uptrendLong_downtrendShortOnly: rpUpLongDownShortRow,
+      downtrendShortOnly_only: rpDownShortOnlyRow,
+      recommendation: {
+        bestVariantByEdge: rpBestByEdge?.key ?? null,
+        bestVariantByCumulativeReturn: rpBestByCum?.key ?? null,
+        bestVariantByMaxDrawdown: rpBestByDd?.key ?? null,
+      },
+    };
+
+    const CAUSAL_REGIME_DEF = "uptrend if priceVsMa20 > 0, downtrend if priceVsMa20 < 0 (entry-time causal; priceVsMa20 = (price - MA20) / MA20 at decision bar)";
+    const cpUpLongDownShortIdx = tradeReturns.map((_, i) => {
+      const pv = execPriceVsMa20[i]!;
+      const isLong = execIsLong[i];
+      return (pv > 0 && isLong) || (pv < 0 && !isLong) ? i : -1;
+    }).filter((i) => i >= 0);
+    const cpUpOnlyIdx = tradeReturns.map((_, i) => (execPriceVsMa20[i]! > 0 ? i : -1)).filter((i) => i >= 0);
+    const cpUpLongDownShortTr = cpUpLongDownShortIdx.map((i) => tradeReturns[i]!);
+    const cpUpLongDownShortBr = cpUpLongDownShortIdx.map((i) => benchmarkReturns[i]!);
+    const cpUpOnlyTr = cpUpOnlyIdx.map((i) => tradeReturns[i]!);
+    const cpUpOnlyBr = cpUpOnlyIdx.map((i) => benchmarkReturns[i]!);
+    const cpUpLongDownShortRow = toComponentPruningRow(cpUpLongDownShortTr, cpUpLongDownShortBr, cpUpLongDownShortIdx.filter((i) => execIsLong[i]).length, cpUpLongDownShortIdx.length - cpUpLongDownShortIdx.filter((i) => execIsLong[i]).length);
+    const cpUpOnlyLong = cpUpOnlyIdx.filter((i) => execIsLong[i]).length;
+    const cpUpOnlyShort = cpUpOnlyIdx.length - cpUpOnlyLong;
+    const cpUpOnlyRow = toComponentPruningRow(cpUpOnlyTr, cpUpOnlyBr, cpUpOnlyLong, cpUpOnlyShort);
+    const cpVariants = [
+      { key: "baselineEquivalent" as const, row: currentFullRow },
+      { key: "causalUptrendLong_downtrendShortOnly" as const, row: cpUpLongDownShortRow },
+      { key: "causalUptrendOnly_flatDowntrend" as const, row: cpUpOnlyRow },
+    ];
+    const cpBestByEdge = cpVariants.filter((v) => v.row.edge != null).sort((a, b) => (b.row.edge ?? 0) - (a.row.edge ?? 0))[0];
+    const cpBestByCum = cpVariants.filter((v) => v.row.cumulativeReturn != null).sort((a, b) => (b.row.cumulativeReturn ?? 0) - (a.row.cumulativeReturn ?? 0))[0];
+    const cpBestByDd = cpVariants.filter((v) => v.row.maxDrawdown != null).sort((a, b) => (a.row.maxDrawdown ?? 0) - (b.row.maxDrawdown ?? 0))[0];
+    const causalRegimePolicyShadowAudit: NonNullable<DashboardSummary["causalRegimePolicyShadowAudit"]> = {
+      regimeDefinition: CAUSAL_REGIME_DEF,
+      baselineEquivalent: currentFullRow,
+      causalUptrendLong_downtrendShortOnly: cpUpLongDownShortRow,
+      causalUptrendOnly_flatDowntrend: cpUpOnlyRow,
+      recommendation: {
+        bestVariantByEdge: cpBestByEdge?.key ?? null,
+        bestVariantByCumulativeReturn: cpBestByCum?.key ?? null,
+        bestVariantByMaxDrawdown: cpBestByDd?.key ?? null,
+      },
+    };
+
+    const srSortedIndices = tradeReturns.map((_, i) => i).sort((a, b) => (execActiveSetupScore[b] ?? 0) - (execActiveSetupScore[a] ?? 0));
+    const srN = srSortedIndices.length;
+    const srTop50Idx = srSortedIndices.slice(0, Math.max(0, Math.floor(srN * 0.5)));
+    const srTop30Idx = srSortedIndices.slice(0, Math.max(0, Math.floor(srN * 0.3)));
+    const srTop20Idx = srSortedIndices.slice(0, Math.max(0, Math.floor(srN * 0.2)));
+    const srTop50Tr = srTop50Idx.map((i) => tradeReturns[i]!);
+    const srTop50Br = srTop50Idx.map((i) => benchmarkReturns[i]!);
+    const srTop30Tr = srTop30Idx.map((i) => tradeReturns[i]!);
+    const srTop30Br = srTop30Idx.map((i) => benchmarkReturns[i]!);
+    const srTop20Tr = srTop20Idx.map((i) => tradeReturns[i]!);
+    const srTop20Br = srTop20Idx.map((i) => benchmarkReturns[i]!);
+    const srTop50Row = toComponentPruningRow(srTop50Tr, srTop50Br, srTop50Idx.filter((i) => execIsLong[i]).length, srTop50Idx.length - srTop50Idx.filter((i) => execIsLong[i]).length);
+    const srTop30Row = toComponentPruningRow(srTop30Tr, srTop30Br, srTop30Idx.filter((i) => execIsLong[i]).length, srTop30Idx.length - srTop30Idx.filter((i) => execIsLong[i]).length);
+    const srTop20Row = toComponentPruningRow(srTop20Tr, srTop20Br, srTop20Idx.filter((i) => execIsLong[i]).length, srTop20Idx.length - srTop20Idx.filter((i) => execIsLong[i]).length);
+    const srVariants = [
+      { key: "baselineEquivalent" as const, row: currentFullRow },
+      { key: "top50pctByAbsSetupScore" as const, row: srTop50Row },
+      { key: "top30pctByAbsSetupScore" as const, row: srTop30Row },
+      { key: "top20pctByAbsSetupScore" as const, row: srTop20Row },
+    ];
+    const srBestByEdge = srVariants.filter((v) => v.row.edge != null).sort((a, b) => (b.row.edge ?? 0) - (a.row.edge ?? 0))[0];
+    const srBestByCum = srVariants.filter((v) => v.row.cumulativeReturn != null).sort((a, b) => (b.row.cumulativeReturn ?? 0) - (a.row.cumulativeReturn ?? 0))[0];
+    const srBestByDd = srVariants.filter((v) => v.row.maxDrawdown != null).sort((a, b) => (a.row.maxDrawdown ?? 0) - (b.row.maxDrawdown ?? 0))[0];
+    const signalRankingShadowAudit: NonNullable<DashboardSummary["signalRankingShadowAudit"]> = {
+      baselineEquivalent: currentFullRow,
+      top50pctByAbsSetupScore: srTop50Row,
+      top30pctByAbsSetupScore: srTop30Row,
+      top20pctByAbsSetupScore: srTop20Row,
+      recommendation: {
+        bestVariantByEdge: srBestByEdge?.key ?? null,
+        bestVariantByCumulativeReturn: srBestByCum?.key ?? null,
+        bestVariantByMaxDrawdown: srBestByDd?.key ?? null,
+      },
+    };
+
+    type PositionSizingRow = NonNullable<DashboardSummary["positionSizingShadowAudit"]>["equalWeightBaseline"];
+    const toPositionSizingRow = (
+      tr: number[],
+      br: number[],
+      weights: number[],
+      nLong: number,
+      nShort: number,
+      equalWeight: boolean,
+    ): PositionSizingRow => {
+      const n = tr.length;
+      if (n === 0) {
+        return {
+          trades: null,
+          executedLongTrades: nLong,
+          executedShortTrades: nShort,
+          weightedAvgTradeReturn: null,
+          cumulativeReturn: null,
+          benchmarkReturn: null,
+          edge: null,
+          maxDrawdown: null,
+        };
+      }
+      if (equalWeight) {
+        const cumStrategy = tr.reduce((a, b) => a + b, 0);
+        const cumBench = br.reduce((a, b) => a + b, 0);
+        let equity = 1;
+        let peak = 1;
+        let maxDd = 0;
+        for (const r of tr) {
+          equity *= 1 + r;
+          if (equity > peak) peak = equity;
+          const dd = peak > 0 ? (peak - equity) / peak : 0;
+          if (dd > maxDd) maxDd = dd;
+        }
+        return {
+          trades: n,
+          executedLongTrades: nLong,
+          executedShortTrades: nShort,
+          weightedAvgTradeReturn: cumStrategy / n,
+          cumulativeReturn: cumStrategy,
+          benchmarkReturn: cumBench,
+          edge: cumStrategy - cumBench,
+          maxDrawdown: maxDd,
+        };
+      }
+      const sumW = weights.reduce((a, b) => a + b, 0);
+      const w = sumW > 0 ? weights.map((x) => (x / sumW) * n) : weights.map(() => 1);
+      let cumStrategy = 0;
+      let cumBench = 0;
+      let equity = 1;
+      let peak = 1;
+      let maxDd = 0;
+      for (let i = 0; i < n; i++) {
+        const r = tr[i]!;
+        const b = br[i]!;
+        const wi = w[i]!;
+        cumStrategy += wi * r;
+        cumBench += wi * b;
+        equity *= 1 + wi * r;
+        if (equity > peak) peak = equity;
+        const dd = peak > 0 ? (peak - equity) / peak : 0;
+        if (dd > maxDd) maxDd = dd;
+      }
+      return {
+        trades: n,
+        executedLongTrades: nLong,
+        executedShortTrades: nShort,
+        weightedAvgTradeReturn: cumStrategy / n,
+        cumulativeReturn: cumStrategy,
+        benchmarkReturn: cumBench,
+        edge: cumStrategy - cumBench,
+        maxDrawdown: maxDd,
+      };
+    };
+    const psAbsScoreWeights = execActiveSetupScore.map((s) => s);
+    const psConvictionWeights = execConviction.map((c) => c);
+    const psAbsScoreTimesConvictionWeights = tradeReturns.map((_, i) => (execActiveSetupScore[i] ?? 0) * (execConviction[i] ?? 0));
+    const psEqualRow = toPositionSizingRow(tradeReturns, benchmarkReturns, [], executedLongTrades, executedShortTrades, true);
+    const psAbsScoreRow = toPositionSizingRow(tradeReturns, benchmarkReturns, psAbsScoreWeights, executedLongTrades, executedShortTrades, false);
+    const psConvictionRow = toPositionSizingRow(tradeReturns, benchmarkReturns, psConvictionWeights, executedLongTrades, executedShortTrades, false);
+    const psAbsScoreTimesConvictionRow = toPositionSizingRow(tradeReturns, benchmarkReturns, psAbsScoreTimesConvictionWeights, executedLongTrades, executedShortTrades, false);
+    const psVariants = [
+      { key: "equalWeightBaseline" as const, row: psEqualRow },
+      { key: "weightByAbsSetupScore" as const, row: psAbsScoreRow },
+      { key: "weightByConviction" as const, row: psConvictionRow },
+      { key: "weightByAbsSetupScoreTimesConviction" as const, row: psAbsScoreTimesConvictionRow },
+    ];
+    const psBestByEdge = psVariants.filter((v) => v.row.edge != null).sort((a, b) => (b.row.edge ?? 0) - (a.row.edge ?? 0))[0];
+    const psBestByCum = psVariants.filter((v) => v.row.cumulativeReturn != null).sort((a, b) => (b.row.cumulativeReturn ?? 0) - (a.row.cumulativeReturn ?? 0))[0];
+    const psBestByDd = psVariants.filter((v) => v.row.maxDrawdown != null).sort((a, b) => (a.row.maxDrawdown ?? 0) - (b.row.maxDrawdown ?? 0))[0];
+    const positionSizingShadowAudit: NonNullable<DashboardSummary["positionSizingShadowAudit"]> = {
+      equalWeightBaseline: psEqualRow,
+      weightByAbsSetupScore: psAbsScoreRow,
+      weightByConviction: psConvictionRow,
+      weightByAbsSetupScoreTimesConviction: psAbsScoreTimesConvictionRow,
+      recommendation: {
+        bestVariantByEdge: psBestByEdge?.key ?? null,
+        bestVariantByCumulativeReturn: psBestByCum?.key ?? null,
+        bestVariantByMaxDrawdown: psBestByDd?.key ?? null,
+      },
+    };
+
+    const sbbLive = psEqualRow;
+    const sbbShadow = psAbsScoreTimesConvictionRow;
+    const sbbCumD = sbbLive.cumulativeReturn != null && sbbShadow.cumulativeReturn != null ? sbbShadow.cumulativeReturn - sbbLive.cumulativeReturn : null;
+    const sbbEdgeD = sbbLive.edge != null && sbbShadow.edge != null ? sbbShadow.edge - sbbLive.edge : null;
+    const sbbDdD = sbbLive.maxDrawdown != null && sbbShadow.maxDrawdown != null ? sbbShadow.maxDrawdown - sbbLive.maxDrawdown : null;
+    const MATERIAL_CUM_RETURN_ADVANTAGE = 0.01;
+    let sbbPreferred: string | null = null;
+    if (sbbLive.edge != null && sbbShadow.edge != null && sbbLive.maxDrawdown != null && sbbShadow.maxDrawdown != null) {
+      const liveWinsEdge = sbbLive.edge >= sbbShadow.edge;
+      const liveWinsDd = sbbLive.maxDrawdown <= sbbShadow.maxDrawdown;
+      // Prefer liveEqualWeightBaseline if edge is higher and maxDrawdown is lower
+      if (liveWinsEdge && liveWinsDd) {
+        sbbPreferred = "liveEqualWeightBaseline";
+      } else if (sbbCumD != null && sbbCumD >= MATERIAL_CUM_RETURN_ADVANTAGE) {
+        // Otherwise prefer shadowWeightedByAbsSetupScoreTimesConviction if cumulativeReturn advantage is materially higher
+        sbbPreferred = "shadowWeightedByAbsSetupScoreTimesConviction";
+      }
+    }
+    const sizingBenchmarkAudit: NonNullable<DashboardSummary["sizingBenchmarkAudit"]> = {
+      liveEqualWeightBaseline: {
+        trades: sbbLive.trades,
+        cumulativeReturn: sbbLive.cumulativeReturn,
+        benchmarkReturn: sbbLive.benchmarkReturn,
+        edge: sbbLive.edge,
+        maxDrawdown: sbbLive.maxDrawdown,
+      },
+      shadowWeightedByAbsSetupScoreTimesConviction: {
+        trades: sbbShadow.trades,
+        cumulativeReturn: sbbShadow.cumulativeReturn,
+        benchmarkReturn: sbbShadow.benchmarkReturn,
+        edge: sbbShadow.edge,
+        maxDrawdown: sbbShadow.maxDrawdown,
+      },
+      comparison: {
+        cumulativeReturnDeltaShadowMinusLive: sbbCumD,
+        edgeDeltaShadowMinusLive: sbbEdgeD,
+        drawdownDeltaShadowMinusLive: sbbDdD,
+        currentPreferredSizingMode: sbbPreferred,
+      },
+    };
+
+    const runPruningShadow = (excludeMacro: boolean, excludeSentiment: boolean): { tr: number[]; br: number[]; nLong: number; nShort: number } => {
+      const tr: number[] = [];
+      const br: number[] = [];
+      let nLong = 0;
+      let nShort = 0;
+      for (const [symbol, { closes }] of cachedData) {
+        const features = featuresCache.get(symbol);
+        if (!features) continue;
+        for (let i = 5 + DashboardService.NEUTRAL_LOOKBACK; i < closes.length - horizon; i++) {
+          if (i >= features.length) break;
+          const feat = features[i];
+          if (!feat) continue;
+          const contextSeed = hashString(symbol + ":" + String(i));
+          const prevContextSeed = i > 5 + DashboardService.NEUTRAL_LOOKBACK ? hashString(symbol + ":" + String(i - 1)) : undefined;
+          const { disagreement, signalStrength } = computeAgentAggregatedSignalForFeatures(feat, agents, contextSeed, prevContextSeed);
+          const decomp = computeSignalDecomposition(feat, agents, contextSeed, prevContextSeed);
+          let modMean = decomp.meanSignal;
+          if (excludeMacro) modMean -= decomp.macroContribution;
+          if (excludeSentiment) modMean -= decomp.sentimentContribution;
+          const rawScore = decomp.baseSignal + (modMean - decomp.baseSignal) * SETUP_DELTA_ATTENUATION;
+          const activeScore = ENABLE_SIGNAL_FLIP ? -rawScore : rawScore;
+          let setup: "LONG" | "SHORT" | null = null;
+          if (activeScore >= signalStrengthThreshold) setup = "LONG";
+          else if (activeScore <= -signalStrengthThreshold) setup = "SHORT";
+          if (setup == null) continue;
+          if (Math.abs(activeScore) <= signalStrengthThreshold) continue;
+          let neutralCount = 0;
+          let validLookbackDays = 0;
+          for (let k = i - DashboardService.NEUTRAL_LOOKBACK; k < i && k >= DashboardService.MIN_LOOKBACK_FOR_FEATURES; k++) {
+            const fk = features[k];
+            if (!fk) continue;
+            validLookbackDays++;
+            const decompK = computeSignalDecomposition(fk, agents, hashString(symbol + ":" + String(k)), k > DashboardService.MIN_LOOKBACK_FOR_FEATURES ? hashString(symbol + ":" + String(k - 1)) : undefined);
+            let modMeanK = decompK.meanSignal;
+            if (excludeMacro) modMeanK -= decompK.macroContribution;
+            if (excludeSentiment) modMeanK -= decompK.sentimentContribution;
+            const rawK = decompK.baseSignal + (modMeanK - decompK.baseSignal) * SETUP_DELTA_ATTENUATION;
+            const activeK = ENABLE_SIGNAL_FLIP ? -rawK : rawK;
+            if (Math.abs(activeK) < signalStrengthThreshold) neutralCount++;
+          }
+          const probabilityNeutral = validLookbackDays > 0 ? neutralCount / validLookbackDays : 0.5;
+          if (probabilityNeutral >= neutralThreshold) continue;
+          const conviction = signalStrength * 0.5 + (1 - disagreement) * 0.3 + (1 - probabilityNeutral) * 0.2;
+          if (conviction < convictionThreshold) continue;
+          const priceT0 = closes[i]!;
+          const priceT1 = closes[i + horizon]!;
+          if (priceT0 <= 0 || !Number.isFinite(priceT0) || !Number.isFinite(priceT1)) continue;
+          const rawReturn = (priceT1 - priceT0) / priceT0;
+          const tradeReturn = setup === "LONG" ? rawReturn : -rawReturn;
+          tr.push(tradeReturn);
+          br.push(rawReturn);
+          if (setup === "LONG") nLong++;
+          else nShort++;
+        }
+      }
+      return { tr, br, nLong, nShort };
+    };
+
+    const noMacroRes = runPruningShadow(true, false);
+    const noSentimentRes = runPruningShadow(false, true);
+    const noMacroNoSentimentRes = runPruningShadow(true, true);
+
+    const runStrongerSignalShadow = (minThreshold: number): { tr: number[]; br: number[]; nLong: number; nShort: number } => {
+      const tr: number[] = [];
+      const br: number[] = [];
+      let nLong = 0;
+      let nShort = 0;
+      for (const [symbol, { closes }] of cachedData) {
+        const features = featuresCache.get(symbol);
+        if (!features) continue;
+        for (let i = 5 + DashboardService.NEUTRAL_LOOKBACK; i < closes.length - horizon; i++) {
+          if (i >= features.length) break;
+          const feat = features[i];
+          if (!feat) continue;
+          const contextSeed = hashString(symbol + ":" + String(i));
+          const prevContextSeed = i > 5 + DashboardService.NEUTRAL_LOOKBACK ? hashString(symbol + ":" + String(i - 1)) : undefined;
+          const { disagreement, signalStrength } = computeAgentAggregatedSignalForFeatures(feat, agents, contextSeed, prevContextSeed);
+          const decomp = computeSignalDecomposition(feat, agents, contextSeed, prevContextSeed);
+          let modMean = decomp.meanSignal;
+          modMean -= decomp.macroContribution;
+          modMean -= decomp.sentimentContribution;
+          const rawScore = decomp.baseSignal + (modMean - decomp.baseSignal) * SETUP_DELTA_ATTENUATION;
+          const activeScore = ENABLE_SIGNAL_FLIP ? -rawScore : rawScore;
+          let setup: "LONG" | "SHORT" | null = null;
+          if (activeScore >= minThreshold) setup = "LONG";
+          else if (activeScore <= -minThreshold) setup = "SHORT";
+          if (setup == null) continue;
+          if (Math.abs(activeScore) <= minThreshold) continue;
+          let neutralCount = 0;
+          let validLookbackDays = 0;
+          for (let k = i - DashboardService.NEUTRAL_LOOKBACK; k < i && k >= DashboardService.MIN_LOOKBACK_FOR_FEATURES; k++) {
+            const fk = features[k];
+            if (!fk) continue;
+            validLookbackDays++;
+            const decompK = computeSignalDecomposition(fk, agents, hashString(symbol + ":" + String(k)), k > DashboardService.MIN_LOOKBACK_FOR_FEATURES ? hashString(symbol + ":" + String(k - 1)) : undefined);
+            let modMeanK = decompK.meanSignal;
+            modMeanK -= decompK.macroContribution;
+            modMeanK -= decompK.sentimentContribution;
+            const rawK = decompK.baseSignal + (modMeanK - decompK.baseSignal) * SETUP_DELTA_ATTENUATION;
+            const activeK = ENABLE_SIGNAL_FLIP ? -rawK : rawK;
+            if (Math.abs(activeK) < minThreshold) neutralCount++;
+          }
+          const probabilityNeutral = validLookbackDays > 0 ? neutralCount / validLookbackDays : 0.5;
+          if (probabilityNeutral >= neutralThreshold) continue;
+          const conviction = signalStrength * 0.5 + (1 - disagreement) * 0.3 + (1 - probabilityNeutral) * 0.2;
+          if (conviction < convictionThreshold) continue;
+          const priceT0 = closes[i]!;
+          const priceT1 = closes[i + horizon]!;
+          if (priceT0 <= 0 || !Number.isFinite(priceT0) || !Number.isFinite(priceT1)) continue;
+          const rawReturn = (priceT1 - priceT0) / priceT0;
+          const tradeReturn = setup === "LONG" ? rawReturn : -rawReturn;
+          tr.push(tradeReturn);
+          br.push(rawReturn);
+          if (setup === "LONG") nLong++;
+          else nShort++;
+        }
+      }
+      return { tr, br, nLong, nShort };
+    };
+
+    const strongSignalBase = toComponentPruningRow(noMacroNoSentimentRes.tr, noMacroNoSentimentRes.br, noMacroNoSentimentRes.nLong, noMacroNoSentimentRes.nShort);
+    const strongSignal06Res = runStrongerSignalShadow(0.06);
+    const strongSignal08Res = runStrongerSignalShadow(0.08);
+    const strongSignal10Res = runStrongerSignalShadow(0.10);
+    const strongSignalShadowVariants = [
+      { key: "baselineEquivalent" as const, row: strongSignalBase },
+      { key: "strongerSignal_0_06" as const, row: toComponentPruningRow(strongSignal06Res.tr, strongSignal06Res.br, strongSignal06Res.nLong, strongSignal06Res.nShort) },
+      { key: "strongerSignal_0_08" as const, row: toComponentPruningRow(strongSignal08Res.tr, strongSignal08Res.br, strongSignal08Res.nLong, strongSignal08Res.nShort) },
+      { key: "strongerSignal_0_10" as const, row: toComponentPruningRow(strongSignal10Res.tr, strongSignal10Res.br, strongSignal10Res.nLong, strongSignal10Res.nShort) },
+    ];
+    const strongSignalBestByEdge = strongSignalShadowVariants.filter((v) => v.row.edge != null).sort((a, b) => (b.row.edge ?? 0) - (a.row.edge ?? 0))[0];
+    const strongSignalBestByCum = strongSignalShadowVariants.filter((v) => v.row.cumulativeReturn != null).sort((a, b) => (b.row.cumulativeReturn ?? 0) - (a.row.cumulativeReturn ?? 0))[0];
+    const strongSignalShadowAudit: NonNullable<DashboardSummary["strongSignalShadowAudit"]> = {
+      baselineEquivalent: strongSignalBase,
+      strongerSignal_0_06: toComponentPruningRow(strongSignal06Res.tr, strongSignal06Res.br, strongSignal06Res.nLong, strongSignal06Res.nShort),
+      strongerSignal_0_08: toComponentPruningRow(strongSignal08Res.tr, strongSignal08Res.br, strongSignal08Res.nLong, strongSignal08Res.nShort),
+      strongerSignal_0_10: toComponentPruningRow(strongSignal10Res.tr, strongSignal10Res.br, strongSignal10Res.nLong, strongSignal10Res.nShort),
+      recommendation: {
+        bestVariantByEdge: strongSignalBestByEdge?.key ?? null,
+        bestVariantByCumulativeReturn: strongSignalBestByCum?.key ?? null,
+      },
+    };
+
+    const NOISE_ONLY_SCALE = 5;
+    const runNoiseOnlyShadow = (): { tr: number[]; br: number[]; nLong: number; nShort: number } => {
+      const tr: number[] = [];
+      const br: number[] = [];
+      let nLong = 0;
+      let nShort = 0;
+      for (const [symbol, { closes }] of cachedData) {
+        const features = featuresCache.get(symbol);
+        if (!features) continue;
+        for (let i = 5 + DashboardService.NEUTRAL_LOOKBACK; i < closes.length - horizon; i++) {
+          if (i >= features.length) break;
+          const feat = features[i];
+          if (!feat) continue;
+          const contextSeed = hashString(symbol + ":" + String(i));
+          const prevContextSeed = i > 5 + DashboardService.NEUTRAL_LOOKBACK ? hashString(symbol + ":" + String(i - 1)) : undefined;
+          const { disagreement, signalStrength } = computeAgentAggregatedSignalForFeatures(feat, agents, contextSeed, prevContextSeed);
+          const decomp = computeSignalDecomposition(feat, agents, contextSeed, prevContextSeed);
+          const rawNoiseScore = decomp.noiseContribution * NOISE_ONLY_SCALE;
+          const activeScore = ENABLE_SIGNAL_FLIP ? -rawNoiseScore : rawNoiseScore;
+          let setup: "LONG" | "SHORT" | null = null;
+          if (activeScore >= signalStrengthThreshold) setup = "LONG";
+          else if (activeScore <= -signalStrengthThreshold) setup = "SHORT";
+          if (setup == null) continue;
+          if (Math.abs(activeScore) <= signalStrengthThreshold) continue;
+          let neutralCount = 0;
+          let validLookbackDays = 0;
+          for (let k = i - DashboardService.NEUTRAL_LOOKBACK; k < i && k >= DashboardService.MIN_LOOKBACK_FOR_FEATURES; k++) {
+            const fk = features[k];
+            if (!fk) continue;
+            validLookbackDays++;
+            const decompK = computeSignalDecomposition(fk, agents, hashString(symbol + ":" + String(k)), k > DashboardService.MIN_LOOKBACK_FOR_FEATURES ? hashString(symbol + ":" + String(k - 1)) : undefined);
+            const rawK = decompK.noiseContribution * NOISE_ONLY_SCALE;
+            const activeK = ENABLE_SIGNAL_FLIP ? -rawK : rawK;
+            if (Math.abs(activeK) < signalStrengthThreshold) neutralCount++;
+          }
+          const probabilityNeutral = validLookbackDays > 0 ? neutralCount / validLookbackDays : 0.5;
+          if (probabilityNeutral >= neutralThreshold) continue;
+          const conviction = signalStrength * 0.5 + (1 - disagreement) * 0.3 + (1 - probabilityNeutral) * 0.2;
+          if (conviction < convictionThreshold) continue;
+          const priceT0 = closes[i]!;
+          const priceT1 = closes[i + horizon]!;
+          if (priceT0 <= 0 || !Number.isFinite(priceT0) || !Number.isFinite(priceT1)) continue;
+          const rawReturn = (priceT1 - priceT0) / priceT0;
+          const tradeReturn = setup === "LONG" ? rawReturn : -rawReturn;
+          tr.push(tradeReturn);
+          br.push(rawReturn);
+          if (setup === "LONG") nLong++;
+          else nShort++;
+        }
+      }
+      return { tr, br, nLong, nShort };
+    };
+
+    const noiseOnlyRes = runNoiseOnlyShadow();
+    const noiseOnlyRow = toComponentPruningRow(noiseOnlyRes.tr, noiseOnlyRes.br, noiseOnlyRes.nLong, noiseOnlyRes.nShort);
+
+    const variants: Array<{ key: "currentFull" | "noMacro" | "noSentiment" | "noMacroNoSentiment"; row: ComponentPruningRow }> = [
+      { key: "currentFull", row: currentFullRow },
+      { key: "noMacro", row: toComponentPruningRow(noMacroRes.tr, noMacroRes.br, noMacroRes.nLong, noMacroRes.nShort) },
+      { key: "noSentiment", row: toComponentPruningRow(noSentimentRes.tr, noSentimentRes.br, noSentimentRes.nLong, noSentimentRes.nShort) },
+      { key: "noMacroNoSentiment", row: toComponentPruningRow(noMacroNoSentimentRes.tr, noMacroNoSentimentRes.br, noMacroNoSentimentRes.nLong, noMacroNoSentimentRes.nShort) },
+    ];
+
+    const pruningBestByEdge = variants.filter((v) => v.row.edge != null).sort((a, b) => (b.row.edge ?? 0) - (a.row.edge ?? 0))[0];
+    const pruningBestByCum = variants.filter((v) => v.row.cumulativeReturn != null).sort((a, b) => (b.row.cumulativeReturn ?? 0) - (a.row.cumulativeReturn ?? 0))[0];
+
+    const componentPruningShadowAudit: NonNullable<DashboardSummary["componentPruningShadowAudit"]> = {
+      currentFull: currentFullRow,
+      noMacro: toComponentPruningRow(noMacroRes.tr, noMacroRes.br, noMacroRes.nLong, noMacroRes.nShort),
+      noSentiment: toComponentPruningRow(noSentimentRes.tr, noSentimentRes.br, noSentimentRes.nLong, noSentimentRes.nShort),
+      noMacroNoSentiment: toComponentPruningRow(noMacroNoSentimentRes.tr, noMacroNoSentimentRes.br, noMacroNoSentimentRes.nLong, noMacroNoSentimentRes.nShort),
+      recommendation: {
+        bestVariantByEdge: pruningBestByEdge?.key ?? null,
+        bestVariantByCumulativeReturn: pruningBestByCum?.key ?? null,
+      },
+    };
+
+    const shadowNoMacroNoSentimentRow = componentPruningShadowAudit.noMacroNoSentiment;
+    const liveEdge = currentFullRow.edge ?? null;
+    const shadowEdge = shadowNoMacroNoSentimentRow.edge ?? null;
+    const liveCum = currentFullRow.cumulativeReturn ?? null;
+    const shadowCum = shadowNoMacroNoSentimentRow.cumulativeReturn ?? null;
+    const liveDd = currentFullRow.maxDrawdown ?? null;
+    const shadowDd = shadowNoMacroNoSentimentRow.maxDrawdown ?? null;
+    const edgeDelta = liveEdge != null && shadowEdge != null ? liveEdge - shadowEdge : null;
+    const cumDelta = liveCum != null && shadowCum != null ? liveCum - shadowCum : null;
+    const ddDelta = liveDd != null && shadowDd != null ? liveDd - shadowDd : null;
+    const currentPreferredMode = (liveEdge != null && shadowEdge != null && liveCum != null && shadowCum != null)
+      ? (liveEdge >= shadowEdge && liveCum >= shadowCum ? "liveBaseline" : "shadowNoMacroNoSentiment")
+      : "liveBaseline";
+
+    const shadowBenchmarkAudit: NonNullable<DashboardSummary["shadowBenchmarkAudit"]> = {
+      liveBaseline: currentFullRow,
+      shadowNoMacroNoSentiment: shadowNoMacroNoSentimentRow,
+      comparison: {
+        edgeDeltaLiveMinusShadow: edgeDelta,
+        cumulativeReturnDeltaLiveMinusShadow: cumDelta,
+        drawdownDeltaLiveMinusShadow: ddDelta,
+        currentPreferredMode,
+      },
+    };
+
+    const computeAlphaRow = (vals: number[], returns: number[]) => {
+      const n = vals.length;
+      if (n < 2) return { correlation: null as number | null, posAvg: null as number | null, negAvg: null as number | null };
+      const pos = vals.map((v, i) => ({ v, r: returns[i]! })).filter((x) => x.v > 0);
+      const neg = vals.map((v, i) => ({ v, r: returns[i]! })).filter((x) => x.v < 0);
+      const meanX = vals.reduce((a, b) => a + b, 0) / n;
+      const meanY = returns.reduce((a, b) => a + b, 0) / n;
+      let sumXY = 0;
+      let sumX2 = 0;
+      let sumY2 = 0;
+      for (let i = 0; i < n; i++) {
+        const dx = vals[i]! - meanX;
+        const dy = returns[i]! - meanY;
+        sumXY += dx * dy;
+        sumX2 += dx * dx;
+        sumY2 += dy * dy;
+      }
+      const denom = Math.sqrt(sumX2 * sumY2);
+      const correlation = denom > 1e-12 ? sumXY / denom : null;
+      const posAvg = pos.length > 0 ? pos.reduce((a, x) => a + x.r, 0) / pos.length : null;
+      const negAvg = neg.length > 0 ? neg.reduce((a, x) => a + x.r, 0) / neg.length : null;
+      return { correlation, posAvg, negAvg };
+    };
+    const r = alphaComponentVals.rawReturn;
+    const alphaComponentAudit: NonNullable<DashboardSummary["alphaComponentAudit"]> = {
+      baseSignal: (() => { const x = computeAlphaRow(alphaComponentVals.baseSignal, r); return { correlationWithForwardReturn: x.correlation, positiveBucketAvgForwardReturn: x.posAvg, negativeBucketAvgForwardReturn: x.negAvg }; })(),
+      postInformationSignal: (() => { const x = computeAlphaRow(alphaComponentVals.postInformationSignal, r); return { correlationWithForwardReturn: x.correlation, positiveBucketAvgForwardReturn: x.posAvg, negativeBucketAvgForwardReturn: x.negAvg }; })(),
+      technicalContribution: (() => { const x = computeAlphaRow(alphaComponentVals.technicalContribution, r); return { correlationWithForwardReturn: x.correlation, positiveBucketAvgForwardReturn: x.posAvg, negativeBucketAvgForwardReturn: x.negAvg }; })(),
+      macroContribution: (() => { const x = computeAlphaRow(alphaComponentVals.macroContribution, r); return { correlationWithForwardReturn: x.correlation, positiveBucketAvgForwardReturn: x.posAvg, negativeBucketAvgForwardReturn: x.negAvg }; })(),
+      sentimentContribution: (() => { const x = computeAlphaRow(alphaComponentVals.sentimentContribution, r); return { correlationWithForwardReturn: x.correlation, positiveBucketAvgForwardReturn: x.posAvg, negativeBucketAvgForwardReturn: x.negAvg }; })(),
+      noiseContribution: (() => { const x = computeAlphaRow(alphaComponentVals.noiseContribution, r); return { correlationWithForwardReturn: x.correlation, positiveBucketAvgForwardReturn: x.posAvg, negativeBucketAvgForwardReturn: x.negAvg }; })(),
+    };
+
+    const computeCorr = (x: number[], y: number[]) => {
+      const n = x.length;
+      if (n < 2) return null;
+      const mx = x.reduce((a, b) => a + b, 0) / n;
+      const my = y.reduce((a, b) => a + b, 0) / n;
+      let sumXY = 0, sumX2 = 0, sumY2 = 0;
+      for (let i = 0; i < n; i++) {
+        const dx = x[i]! - mx;
+        const dy = y[i]! - my;
+        sumXY += dx * dy;
+        sumX2 += dx * dx;
+        sumY2 += dy * dy;
+      }
+      const denom = Math.sqrt(sumX2 * sumY2);
+      return denom > 1e-12 ? sumXY / denom : null;
+    };
+    const inv = (arr: number[]) => arr.map((v) => -v);
+    const componentInversionShadowAudit: NonNullable<DashboardSummary["componentInversionShadowAudit"]> = {
+      baseSignal: { actualCorrelation: computeCorr(alphaComponentVals.baseSignal, r), invertedCorrelation: computeCorr(inv(alphaComponentVals.baseSignal), r) },
+      postInformationSignal: { actualCorrelation: computeCorr(alphaComponentVals.postInformationSignal, r), invertedCorrelation: computeCorr(inv(alphaComponentVals.postInformationSignal), r) },
+      technicalContribution: { actualCorrelation: computeCorr(alphaComponentVals.technicalContribution, r), invertedCorrelation: computeCorr(inv(alphaComponentVals.technicalContribution), r) },
+      macroContribution: { actualCorrelation: computeCorr(alphaComponentVals.macroContribution, r), invertedCorrelation: computeCorr(inv(alphaComponentVals.macroContribution), r) },
+      sentimentContribution: { actualCorrelation: computeCorr(alphaComponentVals.sentimentContribution, r), invertedCorrelation: computeCorr(inv(alphaComponentVals.sentimentContribution), r) },
+    };
 
     const totalExecuted = executedLongTrades + executedShortTrades;
     const emptyDirectionDiag: NonNullable<DashboardSummary["tradeDirectionDiagnostics"]> = {
@@ -4085,6 +6807,213 @@ export class DashboardService {
           sampleShortSetups,
           sampleNoneSetups,
         },
+        setupShadowAudit: {
+          sourceDescription: "Feature-available rows; same setup rule (score vs directionThreshold); shadow counts from baseOnly, shadow25, shadow50, actual score variants.",
+          variants: { ...shadowCounts },
+        },
+        setupScoreAudit: {
+          sourceDescription: "Setup direction now uses attenuated information delta: setupScore = baseSignal + delta * 0.25.",
+          attenuationFactor: 0.25,
+          avgSetupScore: setupScoreCount > 0 ? sumSetupScore / setupScoreCount : null,
+          positiveSetupScoreCount,
+          negativeSetupScoreCount,
+        },
+        signalFlipAudit: {
+          enabled: ENABLE_SIGNAL_FLIP,
+          scoreSource: ENABLE_SIGNAL_FLIP ? `-(baseSignal + delta * ${SETUP_DELTA_ATTENUATION})` : `baseSignal + delta * ${SETUP_DELTA_ATTENUATION}`,
+          flipped: ENABLE_SIGNAL_FLIP,
+          avgInvertedSetupScore: setupScoreCount > 0 ? -sumSetupScore / setupScoreCount : null,
+          positiveInvertedSetupScoreCount: negativeSetupScoreCount,
+          negativeInvertedSetupScoreCount: positiveSetupScoreCount,
+        },
+        currentStrategyConfigAudit: {
+          longOnlyMode: !ENABLE_SHORT_TRADES,
+          signalFlipEnabled: ENABLE_SIGNAL_FLIP,
+          deltaAttenuationFactor: SETUP_DELTA_ATTENUATION,
+          activeSetupScoreFormula: ENABLE_SIGNAL_FLIP
+            ? `-(baseSignal + delta * ${SETUP_DELTA_ATTENUATION})`
+            : `baseSignal + delta * ${SETUP_DELTA_ATTENUATION}`,
+        },
+        liveDirectionModeAudit: {
+          longOnlyMode: !ENABLE_SHORT_TRADES,
+          shortEnabled: ENABLE_SHORT_TRADES,
+          signalFlipEnabled: ENABLE_SIGNAL_FLIP,
+          deltaAttenuationFactor: SETUP_DELTA_ATTENUATION,
+          activeSetupScoreFormula: ENABLE_SIGNAL_FLIP
+            ? `-(baseSignal + delta * ${SETUP_DELTA_ATTENUATION})`
+            : `baseSignal + delta * ${SETUP_DELTA_ATTENUATION}`,
+        },
+        macroPrunedLiveAudit: {
+          enabled: EXCLUDE_MACRO_FROM_LIVE_SETUP_SCORE,
+          macroIncludedInLiveSetupScore: !EXCLUDE_MACRO_FROM_LIVE_SETUP_SCORE,
+          signalFlipEnabled: ENABLE_SIGNAL_FLIP,
+          deltaAttenuationFactor: SETUP_DELTA_ATTENUATION,
+          activeSetupScoreFormula: ENABLE_SIGNAL_FLIP
+            ? (EXCLUDE_MACRO_FROM_LIVE_SETUP_SCORE ? `-(baseSignal + (meanSignal - macroContribution - baseSignal) * ${SETUP_DELTA_ATTENUATION})` : `-(baseSignal + delta * ${SETUP_DELTA_ATTENUATION})`)
+            : (EXCLUDE_MACRO_FROM_LIVE_SETUP_SCORE ? `baseSignal + (meanSignal - macroContribution - baseSignal) * ${SETUP_DELTA_ATTENUATION}` : `baseSignal + delta * ${SETUP_DELTA_ATTENUATION}`),
+        },
+        officialBaselineAudit: {
+          signalFlipEnabled: ENABLE_SIGNAL_FLIP,
+          shortEnabled: ENABLE_SHORT_TRADES,
+          deltaAttenuationFactor: SETUP_DELTA_ATTENUATION,
+          macroExcludedFromLiveSetupScore: EXCLUDE_MACRO_FROM_LIVE_SETUP_SCORE,
+          sentimentExcludedFromLiveSetupScore: EXCLUDE_SENTIMENT_FROM_LIVE_SETUP_SCORE,
+          activeSetupScoreFormula: EXCLUDE_SENTIMENT_FROM_LIVE_SETUP_SCORE
+            ? `-(baseSignal + (meanSignal - macroContribution - sentimentContribution - baseSignal) * ${SETUP_DELTA_ATTENUATION})`
+            : `-(baseSignal + (meanSignal - macroContribution - baseSignal) * ${SETUP_DELTA_ATTENUATION})`,
+        },
+        sentimentPrunedLiveAudit: {
+          enabled: true,
+          macroIncludedInLiveSetupScore: false,
+          sentimentIncludedInLiveSetupScore: false,
+          signalFlipEnabled: ENABLE_SIGNAL_FLIP,
+          deltaAttenuationFactor: SETUP_DELTA_ATTENUATION,
+          activeSetupScoreFormula: `-(baseSignal + (meanSignal - macroContribution - sentimentContribution - baseSignal) * ${SETUP_DELTA_ATTENUATION})`,
+        },
+        baselinePreservationAudit: {
+          officialBaselineName: "noMacroNoSentiment",
+          signalFlipEnabled: ENABLE_SIGNAL_FLIP,
+          shortEnabled: ENABLE_SHORT_TRADES,
+          deltaAttenuationFactor: SETUP_DELTA_ATTENUATION,
+          macroExcludedFromLiveSetupScore: EXCLUDE_MACRO_FROM_LIVE_SETUP_SCORE,
+          sentimentExcludedFromLiveSetupScore: EXCLUDE_SENTIMENT_FROM_LIVE_SETUP_SCORE,
+          activeSetupScoreFormula: `-(baseSignal + (meanSignal - macroContribution - sentimentContribution - baseSignal) * ${SETUP_DELTA_ATTENUATION})`,
+          baselinePerformanceSnapshot: {
+            trades: 0,
+            winRate: null,
+            avgTradeReturn: null,
+            cumulativeReturn: null,
+            benchmarkReturn: null,
+            edge: null,
+            maxDrawdown: null,
+          },
+        },
+        winningBaselineFeatureAudit,
+        strongSignalLiveAudit,
+        outOfSampleAudit,
+        walkForwardAudit,
+        strategyV1CandidateAudit,
+        strategyV2CandidateAudit,
+        liveExitPolicyAudit,
+        exitPolicyShadowAudit,
+        regimePerformanceAudit,
+        downtrendSuppressionShadowAudit,
+        causalRegimePolicyShadowAudit,
+        regimePolicyShadowAudit,
+        experimentHarnessAudit: (() => {
+          const bl = { name: "noMacroNoSentiment", trades: 0, winRate: null, avgTradeReturn: null, cumulativeReturn: null, benchmarkReturn: null, edge: null, maxDrawdown: null } as const;
+          const cand = noiseOnlyRow;
+          const expBlEdge = bl.edge;
+          const expBlCum = bl.cumulativeReturn;
+          const expBlDd = bl.maxDrawdown;
+          const expCdEdge = cand.edge;
+          const expCdCum = cand.cumulativeReturn;
+          const expCdDd = cand.maxDrawdown;
+          const expEdgeD = expCdEdge != null && expBlEdge != null ? expCdEdge - expBlEdge : null;
+          const expCumD = expCdCum != null && expBlCum != null ? expCdCum - expBlCum : null;
+          const expDdD = expCdDd != null && expBlDd != null ? expCdDd - expBlDd : null;
+          const prefEdge = expCdEdge != null && expBlEdge != null ? (expCdEdge >= expBlEdge ? "noiseOnlyShadow" : "noMacroNoSentiment") : null;
+          const prefCum = expCdCum != null && expBlCum != null ? (expCdCum >= expBlCum ? "noiseOnlyShadow" : "noMacroNoSentiment") : null;
+          return {
+            baseline: bl,
+            candidateShadow: { name: "noiseOnlyShadow", configured: true, trades: cand.trades, winRate: cand.winRate, avgTradeReturn: cand.avgTradeReturn, cumulativeReturn: cand.cumulativeReturn, benchmarkReturn: cand.benchmarkReturn, edge: cand.edge, maxDrawdown: cand.maxDrawdown },
+            comparison: { edgeDeltaCandidateMinusBaseline: expEdgeD, cumulativeReturnDeltaCandidateMinusBaseline: expCumD, drawdownDeltaCandidateMinusBaseline: expDdD, preferredByEdge: prefEdge, preferredByCumulativeReturn: prefCum },
+          };
+        })(),
+        setupGateConsistencyAudit: {
+          sourceDescription: "Setup direction and signal-strength gate both use setupScore (baseSignal + delta * 0.25) with the same threshold.",
+          setupUses: "setupScore",
+          signalStrengthUses: "setupScore",
+        },
+        neutralGateConsistencyAudit: {
+          sourceDescription: "Setup direction, signal-strength gate, and neutral filter all use setupScore (baseSignal + delta * 0.25) with the same threshold.",
+          setupUses: "setupScore",
+          signalStrengthUses: "setupScore",
+          neutralUses: "setupScore",
+        },
+        neutralFilterAudit: {
+          sourceDescription: "Audit of neutral filter: reject when probabilityNeutral >= neutralThreshold.",
+          longPath: {
+            enteredNeutralStageCount: neutralAuditLong.enteredNeutralStageCount,
+            passedNeutralCount: neutralAuditLong.passedNeutralCount,
+            rejectedNeutralCount: neutralAuditLong.rejectedNeutralCount,
+            avgConvictionAtNeutralStage: neutralAuditLong.enteredNeutralStageCount > 0 ? neutralAuditLong.sumConviction / neutralAuditLong.enteredNeutralStageCount : null,
+            avgNeutralMetricIfExists: neutralAuditLong.enteredNeutralStageCount > 0 ? neutralAuditLong.sumNeutralMetric / neutralAuditLong.enteredNeutralStageCount : null,
+          },
+          shortPath: {
+            enteredNeutralStageCount: neutralAuditShort.enteredNeutralStageCount,
+            passedNeutralCount: neutralAuditShort.passedNeutralCount,
+            rejectedNeutralCount: neutralAuditShort.rejectedNeutralCount,
+            avgConvictionAtNeutralStage: neutralAuditShort.enteredNeutralStageCount > 0 ? neutralAuditShort.sumConviction / neutralAuditShort.enteredNeutralStageCount : null,
+            avgNeutralMetricIfExists: neutralAuditShort.enteredNeutralStageCount > 0 ? neutralAuditShort.sumNeutralMetric / neutralAuditShort.enteredNeutralStageCount : null,
+          },
+          neutralRuleDescription: "Reject when probabilityNeutral >= neutralThreshold, where probabilityNeutral is the fraction of NEUTRAL_LOOKBACK days where |meanSignal| < signalStrengthThreshold.",
+          sampleRejectedLongs: sampleNeutralRejectedLongs,
+          sampleRejectedShorts: sampleNeutralRejectedShorts,
+        },
+        longSetupAttritionAudit: {
+          longPath: {
+            setupCount: longConditionCount,
+            afterSignalThresholdCount: attritionLong.afterSignalThresholdCount,
+            afterConvictionCount: attritionLong.afterConvictionCount,
+            afterNeutralFilterCount: attritionLong.afterNeutralFilterCount,
+            afterPriceValidityCount: attritionLong.afterPriceValidityCount,
+            executedCount: 0,
+          },
+          shortPath: {
+            setupCount: shortConditionCount,
+            afterSignalThresholdCount: attritionShort.afterSignalThresholdCount,
+            afterConvictionCount: attritionShort.afterConvictionCount,
+            afterNeutralFilterCount: attritionShort.afterNeutralFilterCount,
+            afterPriceValidityCount: attritionShort.afterPriceValidityCount,
+            executedCount: 0,
+          },
+          sampleRejectedLongs,
+          sampleRejectedShorts,
+        },
+        postFixPerformanceAudit: {
+          tradeMix: { executedLongTrades: 0, executedShortTrades: 0, longShare: null, shortShare: null },
+          performance: { trades: 0, winRate: null, avgTradeReturn: null, cumulativeReturn: null, benchmarkReturn: null, edge: null, maxDrawdown: null },
+          directionalQuality: { longWinRateIfAvailable: null, shortWinRateIfAvailable: null, avgLongReturnIfAvailable: null, avgShortReturnIfAvailable: null },
+          scoringPopulation: { longSetupCount: longConditionCount, shortSetupCount: shortConditionCount, longExecutedCount: 0, shortExecutedCount: 0 },
+        },
+        attenuationComparisonAudit,
+        attenuationRetestNoMacroAudit,
+        longOnlyModeAudit: { enabled: !ENABLE_SHORT_TRADES, skippedShortTrades, executedLongTrades },
+        alphaComponentAudit: {
+          baseSignal: { correlationWithForwardReturn: null, positiveBucketAvgForwardReturn: null, negativeBucketAvgForwardReturn: null },
+          postInformationSignal: { correlationWithForwardReturn: null, positiveBucketAvgForwardReturn: null, negativeBucketAvgForwardReturn: null },
+          technicalContribution: { correlationWithForwardReturn: null, positiveBucketAvgForwardReturn: null, negativeBucketAvgForwardReturn: null },
+          macroContribution: { correlationWithForwardReturn: null, positiveBucketAvgForwardReturn: null, negativeBucketAvgForwardReturn: null },
+          sentimentContribution: { correlationWithForwardReturn: null, positiveBucketAvgForwardReturn: null, negativeBucketAvgForwardReturn: null },
+          noiseContribution: { correlationWithForwardReturn: null, positiveBucketAvgForwardReturn: null, negativeBucketAvgForwardReturn: null },
+        },
+        componentInversionShadowAudit: {
+          baseSignal: { actualCorrelation: null, invertedCorrelation: null },
+          postInformationSignal: { actualCorrelation: null, invertedCorrelation: null },
+          technicalContribution: { actualCorrelation: null, invertedCorrelation: null },
+          macroContribution: { actualCorrelation: null, invertedCorrelation: null },
+          sentimentContribution: { actualCorrelation: null, invertedCorrelation: null },
+        },
+        invertedSignalPerformanceAudit: {
+          baseSignal: { trades: null, winRate: null, avgTradeReturn: null, cumulativeReturn: null, benchmarkReturn: null, edge: null },
+          invertedBaseSignal: { trades: null, winRate: null, avgTradeReturn: null, cumulativeReturn: null, benchmarkReturn: null, edge: null },
+          postInformationSignal: { trades: null, winRate: null, avgTradeReturn: null, cumulativeReturn: null, benchmarkReturn: null, edge: null },
+          invertedPostInformationSignal: { trades: null, winRate: null, avgTradeReturn: null, cumulativeReturn: null, benchmarkReturn: null, edge: null },
+        },
+        timingAlphaAudit,
+        shortReentryShadowAudit,
+        componentPruningShadowAudit,
+        signalRankingShadowAudit,
+        positionSizingShadowAudit,
+        sizingBenchmarkAudit,
+        strongSignalShadowAudit,
+        shadowBenchmarkAudit,
+        directionCorrectnessAudit: {
+          longTrades: { count: 0, avgReturn: null, positiveReturnRate: null, avgBenchmarkReturn: null },
+          shortTrades: { count: 0, avgReturn: null, positiveReturnRate: null, avgBenchmarkReturn: null },
+          inversionCheck: { shortWouldBeBetterIfLong: null, longWouldBeBetterIfShort: null },
+        },
       };
     }
 
@@ -4137,6 +7066,256 @@ export class DashboardService {
       sampleNoneSetups,
     };
 
+    const setupShadowAudit: NonNullable<DashboardSummary["setupShadowAudit"]> = {
+      sourceDescription: "Feature-available rows; same setup rule (score vs directionThreshold); shadow counts from baseOnly, shadow25, shadow50, actual score variants.",
+      variants: { ...shadowCounts },
+    };
+
+    const setupScoreAudit: NonNullable<DashboardSummary["setupScoreAudit"]> = {
+      sourceDescription: "Setup direction now uses attenuated information delta: setupScore = baseSignal + delta * 0.25.",
+      attenuationFactor: 0.25,
+      avgSetupScore: setupScoreCount > 0 ? sumSetupScore / setupScoreCount : null,
+      positiveSetupScoreCount,
+      negativeSetupScoreCount,
+    };
+    const signalFlipAudit: NonNullable<DashboardSummary["signalFlipAudit"]> = {
+      enabled: ENABLE_SIGNAL_FLIP,
+      scoreSource: ENABLE_SIGNAL_FLIP ? `-(baseSignal + delta * ${SETUP_DELTA_ATTENUATION})` : `baseSignal + delta * ${SETUP_DELTA_ATTENUATION}`,
+      flipped: ENABLE_SIGNAL_FLIP,
+      avgInvertedSetupScore: setupScoreCount > 0 ? -sumSetupScore / setupScoreCount : null,
+      positiveInvertedSetupScoreCount: negativeSetupScoreCount,
+      negativeInvertedSetupScoreCount: positiveSetupScoreCount,
+    };
+    const currentStrategyConfigAudit: NonNullable<DashboardSummary["currentStrategyConfigAudit"]> = {
+      longOnlyMode: !ENABLE_SHORT_TRADES,
+      signalFlipEnabled: ENABLE_SIGNAL_FLIP,
+      deltaAttenuationFactor: SETUP_DELTA_ATTENUATION,
+      activeSetupScoreFormula: ENABLE_SIGNAL_FLIP
+        ? `-(baseSignal + delta * ${SETUP_DELTA_ATTENUATION})`
+        : `baseSignal + delta * ${SETUP_DELTA_ATTENUATION}`,
+    };
+    const liveDirectionModeAudit: NonNullable<DashboardSummary["liveDirectionModeAudit"]> = {
+      longOnlyMode: !ENABLE_SHORT_TRADES,
+      shortEnabled: ENABLE_SHORT_TRADES,
+      signalFlipEnabled: ENABLE_SIGNAL_FLIP,
+      deltaAttenuationFactor: SETUP_DELTA_ATTENUATION,
+      activeSetupScoreFormula: ENABLE_SIGNAL_FLIP
+        ? `-(baseSignal + delta * ${SETUP_DELTA_ATTENUATION})`
+        : `baseSignal + delta * ${SETUP_DELTA_ATTENUATION}`,
+    };
+    const macroPrunedLiveAudit: NonNullable<DashboardSummary["macroPrunedLiveAudit"]> = {
+      enabled: EXCLUDE_MACRO_FROM_LIVE_SETUP_SCORE,
+      macroIncludedInLiveSetupScore: !EXCLUDE_MACRO_FROM_LIVE_SETUP_SCORE,
+      signalFlipEnabled: ENABLE_SIGNAL_FLIP,
+      deltaAttenuationFactor: SETUP_DELTA_ATTENUATION,
+      activeSetupScoreFormula: ENABLE_SIGNAL_FLIP
+        ? (EXCLUDE_MACRO_FROM_LIVE_SETUP_SCORE ? `-(baseSignal + (meanSignal - macroContribution - baseSignal) * ${SETUP_DELTA_ATTENUATION})` : `-(baseSignal + delta * ${SETUP_DELTA_ATTENUATION})`)
+        : (EXCLUDE_MACRO_FROM_LIVE_SETUP_SCORE ? `baseSignal + (meanSignal - macroContribution - baseSignal) * ${SETUP_DELTA_ATTENUATION}` : `baseSignal + delta * ${SETUP_DELTA_ATTENUATION}`),
+    };
+    const officialBaselineAudit: NonNullable<DashboardSummary["officialBaselineAudit"]> = {
+      signalFlipEnabled: ENABLE_SIGNAL_FLIP,
+      shortEnabled: ENABLE_SHORT_TRADES,
+      deltaAttenuationFactor: SETUP_DELTA_ATTENUATION,
+      macroExcludedFromLiveSetupScore: EXCLUDE_MACRO_FROM_LIVE_SETUP_SCORE,
+      sentimentExcludedFromLiveSetupScore: EXCLUDE_SENTIMENT_FROM_LIVE_SETUP_SCORE,
+      activeSetupScoreFormula: EXCLUDE_SENTIMENT_FROM_LIVE_SETUP_SCORE
+        ? `-(baseSignal + (meanSignal - macroContribution - sentimentContribution - baseSignal) * ${SETUP_DELTA_ATTENUATION})`
+        : `-(baseSignal + (meanSignal - macroContribution - baseSignal) * ${SETUP_DELTA_ATTENUATION})`,
+    };
+
+    const sentimentPrunedLiveAudit: NonNullable<DashboardSummary["sentimentPrunedLiveAudit"]> = {
+      enabled: true,
+      macroIncludedInLiveSetupScore: false,
+      sentimentIncludedInLiveSetupScore: false,
+      signalFlipEnabled: ENABLE_SIGNAL_FLIP,
+      deltaAttenuationFactor: SETUP_DELTA_ATTENUATION,
+      activeSetupScoreFormula: `-(baseSignal + (meanSignal - macroContribution - sentimentContribution - baseSignal) * ${SETUP_DELTA_ATTENUATION})`,
+    };
+
+    const baselinePreservationAudit: NonNullable<DashboardSummary["baselinePreservationAudit"]> = {
+      officialBaselineName: "noMacroNoSentiment",
+      signalFlipEnabled: ENABLE_SIGNAL_FLIP,
+      shortEnabled: ENABLE_SHORT_TRADES,
+      deltaAttenuationFactor: SETUP_DELTA_ATTENUATION,
+      macroExcludedFromLiveSetupScore: EXCLUDE_MACRO_FROM_LIVE_SETUP_SCORE,
+      sentimentExcludedFromLiveSetupScore: EXCLUDE_SENTIMENT_FROM_LIVE_SETUP_SCORE,
+      activeSetupScoreFormula: `-(baseSignal + (meanSignal - macroContribution - sentimentContribution - baseSignal) * ${SETUP_DELTA_ATTENUATION})`,
+      baselinePerformanceSnapshot: {
+        trades: trades,
+        winRate,
+        avgTradeReturn: avgStrategyReturn,
+        cumulativeReturn,
+        benchmarkReturn,
+        edge,
+        maxDrawdown,
+      },
+    };
+
+    const expBaselineEdge = edge;
+    const expBaselineCum = cumulativeReturn;
+    const expBaselineDd = maxDrawdown;
+    const expCandEdge = noiseOnlyRow.edge;
+    const expCandCum = noiseOnlyRow.cumulativeReturn;
+    const expCandDd = noiseOnlyRow.maxDrawdown;
+    const expEdgeDelta = expCandEdge != null && expBaselineEdge != null ? expCandEdge - expBaselineEdge : null;
+    const expCumDelta = expCandCum != null && expBaselineCum != null ? expCandCum - expBaselineCum : null;
+    const expDdDelta = expCandDd != null && expBaselineDd != null ? expCandDd - expBaselineDd : null;
+    const expPreferredByEdge =
+      expCandEdge != null && expBaselineEdge != null ? (expCandEdge >= expBaselineEdge ? "noiseOnlyShadow" : "noMacroNoSentiment") : null;
+    const expPreferredByCumulativeReturn =
+      expCandCum != null && expBaselineCum != null ? (expCandCum >= expBaselineCum ? "noiseOnlyShadow" : "noMacroNoSentiment") : null;
+
+    const experimentHarnessAudit: NonNullable<DashboardSummary["experimentHarnessAudit"]> = {
+      baseline: {
+        name: "noMacroNoSentiment",
+        trades: trades,
+        winRate,
+        avgTradeReturn: avgStrategyReturn,
+        cumulativeReturn,
+        benchmarkReturn,
+        edge,
+        maxDrawdown,
+      },
+      candidateShadow: {
+        name: "noiseOnlyShadow",
+        configured: true,
+        trades: noiseOnlyRow.trades,
+        winRate: noiseOnlyRow.winRate,
+        avgTradeReturn: noiseOnlyRow.avgTradeReturn,
+        cumulativeReturn: noiseOnlyRow.cumulativeReturn,
+        benchmarkReturn: noiseOnlyRow.benchmarkReturn,
+        edge: noiseOnlyRow.edge,
+        maxDrawdown: noiseOnlyRow.maxDrawdown,
+      },
+      comparison: {
+        edgeDeltaCandidateMinusBaseline: expEdgeDelta,
+        cumulativeReturnDeltaCandidateMinusBaseline: expCumDelta,
+        drawdownDeltaCandidateMinusBaseline: expDdDelta,
+        preferredByEdge: expPreferredByEdge,
+        preferredByCumulativeReturn: expPreferredByCumulativeReturn,
+      },
+    };
+
+    const setupGateConsistencyAudit: NonNullable<DashboardSummary["setupGateConsistencyAudit"]> = {
+      sourceDescription: "Setup direction and signal-strength gate both use setupScore (baseSignal + delta * 0.25) with the same threshold.",
+      setupUses: "setupScore",
+      signalStrengthUses: "setupScore",
+    };
+
+    const neutralGateConsistencyAudit: NonNullable<DashboardSummary["neutralGateConsistencyAudit"]> = {
+      sourceDescription: "Setup direction, signal-strength gate, and neutral filter all use setupScore (baseSignal + delta * 0.25) with the same threshold.",
+      setupUses: "setupScore",
+      signalStrengthUses: "setupScore",
+      neutralUses: "setupScore",
+    };
+
+    const neutralFilterAudit: NonNullable<DashboardSummary["neutralFilterAudit"]> = {
+      sourceDescription: "Audit of neutral filter: reject when probabilityNeutral >= neutralThreshold.",
+      longPath: {
+        enteredNeutralStageCount: neutralAuditLong.enteredNeutralStageCount,
+        passedNeutralCount: neutralAuditLong.passedNeutralCount,
+        rejectedNeutralCount: neutralAuditLong.rejectedNeutralCount,
+        avgConvictionAtNeutralStage: neutralAuditLong.enteredNeutralStageCount > 0 ? neutralAuditLong.sumConviction / neutralAuditLong.enteredNeutralStageCount : null,
+        avgNeutralMetricIfExists: neutralAuditLong.enteredNeutralStageCount > 0 ? neutralAuditLong.sumNeutralMetric / neutralAuditLong.enteredNeutralStageCount : null,
+      },
+      shortPath: {
+        enteredNeutralStageCount: neutralAuditShort.enteredNeutralStageCount,
+        passedNeutralCount: neutralAuditShort.passedNeutralCount,
+        rejectedNeutralCount: neutralAuditShort.rejectedNeutralCount,
+        avgConvictionAtNeutralStage: neutralAuditShort.enteredNeutralStageCount > 0 ? neutralAuditShort.sumConviction / neutralAuditShort.enteredNeutralStageCount : null,
+        avgNeutralMetricIfExists: neutralAuditShort.enteredNeutralStageCount > 0 ? neutralAuditShort.sumNeutralMetric / neutralAuditShort.enteredNeutralStageCount : null,
+      },
+      neutralRuleDescription: "Reject when probabilityNeutral >= neutralThreshold, where probabilityNeutral is the fraction of NEUTRAL_LOOKBACK days where |meanSignal| < signalStrengthThreshold.",
+      sampleRejectedLongs: sampleNeutralRejectedLongs,
+      sampleRejectedShorts: sampleNeutralRejectedShorts,
+    };
+
+    const longSetupAttritionAudit: NonNullable<DashboardSummary["longSetupAttritionAudit"]> = {
+      longPath: {
+        setupCount: longConditionCount,
+        afterSignalThresholdCount: attritionLong.afterSignalThresholdCount,
+        afterConvictionCount: attritionLong.afterConvictionCount,
+        afterNeutralFilterCount: attritionLong.afterNeutralFilterCount,
+        afterPriceValidityCount: attritionLong.afterPriceValidityCount,
+        executedCount: executedLongTrades,
+      },
+      shortPath: {
+        setupCount: shortConditionCount,
+        afterSignalThresholdCount: attritionShort.afterSignalThresholdCount,
+        afterConvictionCount: attritionShort.afterConvictionCount,
+        afterNeutralFilterCount: attritionShort.afterNeutralFilterCount,
+        afterPriceValidityCount: attritionShort.afterPriceValidityCount,
+        executedCount: executedShortTrades,
+      },
+      sampleRejectedLongs,
+      sampleRejectedShorts,
+    };
+
+    const postFixPerformanceAudit: NonNullable<DashboardSummary["postFixPerformanceAudit"]> = {
+      tradeMix: {
+        executedLongTrades,
+        executedShortTrades,
+        longShare: totalExecuted > 0 ? executedLongTrades / totalExecuted : null,
+        shortShare: totalExecuted > 0 ? executedShortTrades / totalExecuted : null,
+      },
+      performance: {
+        trades: trades,
+        winRate,
+        avgTradeReturn: avgStrategyReturn,
+        cumulativeReturn,
+        benchmarkReturn,
+        edge,
+        maxDrawdown,
+      },
+      directionalQuality: {
+        longWinRateIfAvailable: longTradeReturns.length > 0 ? longTradeReturns.filter((r) => r > 0).length / longTradeReturns.length : null,
+        shortWinRateIfAvailable: shortTradeReturns.length > 0 ? shortTradeReturns.filter((r) => r > 0).length / shortTradeReturns.length : null,
+        avgLongReturnIfAvailable: longTradeReturns.length > 0 ? longTradeReturns.reduce((a, b) => a + b, 0) / longTradeReturns.length : null,
+        avgShortReturnIfAvailable: shortTradeReturns.length > 0 ? shortTradeReturns.reduce((a, b) => a + b, 0) / shortTradeReturns.length : null,
+      },
+      scoringPopulation: {
+        longSetupCount: longConditionCount,
+        shortSetupCount: shortConditionCount,
+        longExecutedCount: executedLongTrades,
+        shortExecutedCount: executedShortTrades,
+      },
+    };
+
+    const nLong = longTradeReturns.length;
+    const nShort = shortTradeReturns.length;
+    const longAvgReturn = nLong > 0 ? longTradeReturns.reduce((a, b) => a + b, 0) / nLong : null;
+    const shortAvgReturn = nShort > 0 ? shortTradeReturns.reduce((a, b) => a + b, 0) / nShort : null;
+    const longAvgBenchmark = nLong > 0 ? longTradeReturns.reduce((a, b) => a + b, 0) / nLong : null;
+    const shortAvgBenchmark = nShort > 0 ? -shortTradeReturns.reduce((a, b) => a + b, 0) / nShort : null;
+    const longOnlyModeAudit: NonNullable<DashboardSummary["longOnlyModeAudit"]> = {
+      enabled: !ENABLE_SHORT_TRADES,
+      skippedShortTrades,
+      executedLongTrades,
+    };
+
+    const directionCorrectnessAudit: NonNullable<DashboardSummary["directionCorrectnessAudit"]> = {
+      longTrades: {
+        count: nLong,
+        avgReturn: longAvgReturn,
+        positiveReturnRate: nLong > 0 ? longTradeReturns.filter((r) => r > 0).length / nLong : null,
+        avgBenchmarkReturn: longAvgBenchmark,
+      },
+      shortTrades: {
+        count: nShort,
+        avgReturn: shortAvgReturn,
+        positiveReturnRate: nShort > 0 ? shortTradeReturns.filter((r) => r > 0).length / nShort : null,
+        avgBenchmarkReturn: shortAvgBenchmark,
+      },
+      inversionCheck: {
+        shortWouldBeBetterIfLong: nShort > 0 && shortAvgReturn != null && shortAvgBenchmark != null
+          ? shortAvgReturn < 0 && shortAvgBenchmark > 0
+          : null,
+        longWouldBeBetterIfShort: nLong > 0 && longAvgReturn != null && longAvgBenchmark != null
+          ? longAvgReturn < 0 && longAvgBenchmark < 0
+          : null,
+      },
+    };
+
     return {
       trades,
       winRate,
@@ -4177,6 +7356,48 @@ export class DashboardService {
       aggregationDiagnostics,
       directionMappingDiagnostics,
       setupDirectionAudit,
+      setupShadowAudit,
+      setupScoreAudit,
+      signalFlipAudit,
+      currentStrategyConfigAudit,
+      liveDirectionModeAudit,
+      macroPrunedLiveAudit,
+      officialBaselineAudit,
+      sentimentPrunedLiveAudit,
+      baselinePreservationAudit,
+      winningBaselineFeatureAudit,
+      strongSignalLiveAudit,
+      outOfSampleAudit,
+      walkForwardAudit,
+      strategyV1CandidateAudit,
+      strategyV2CandidateAudit,
+      liveExitPolicyAudit,
+      exitPolicyShadowAudit,
+      regimePerformanceAudit,
+      downtrendSuppressionShadowAudit,
+      causalRegimePolicyShadowAudit,
+      regimePolicyShadowAudit,
+      experimentHarnessAudit,
+      setupGateConsistencyAudit,
+      neutralGateConsistencyAudit,
+      neutralFilterAudit,
+      longSetupAttritionAudit,
+      postFixPerformanceAudit,
+      attenuationComparisonAudit,
+      attenuationRetestNoMacroAudit,
+      directionCorrectnessAudit,
+      longOnlyModeAudit,
+      alphaComponentAudit,
+      componentInversionShadowAudit,
+      invertedSignalPerformanceAudit,
+      timingAlphaAudit,
+      shortReentryShadowAudit,
+      componentPruningShadowAudit,
+      signalRankingShadowAudit,
+      positionSizingShadowAudit,
+      sizingBenchmarkAudit,
+      strongSignalShadowAudit,
+      shadowBenchmarkAudit,
     };
   }
 
@@ -4220,6 +7441,48 @@ export class DashboardService {
     aggregationDiagnostics: NonNullable<DashboardSummary["aggregationDiagnostics"]>;
     directionMappingDiagnostics: NonNullable<DashboardSummary["directionMappingDiagnostics"]>;
     setupDirectionAudit: NonNullable<DashboardSummary["setupDirectionAudit"]>;
+    setupShadowAudit: NonNullable<DashboardSummary["setupShadowAudit"]>;
+    setupScoreAudit: NonNullable<DashboardSummary["setupScoreAudit"]>;
+    signalFlipAudit: NonNullable<DashboardSummary["signalFlipAudit"]>;
+    currentStrategyConfigAudit: NonNullable<DashboardSummary["currentStrategyConfigAudit"]>;
+    liveDirectionModeAudit: NonNullable<DashboardSummary["liveDirectionModeAudit"]>;
+    macroPrunedLiveAudit: NonNullable<DashboardSummary["macroPrunedLiveAudit"]>;
+    officialBaselineAudit: NonNullable<DashboardSummary["officialBaselineAudit"]>;
+    sentimentPrunedLiveAudit: NonNullable<DashboardSummary["sentimentPrunedLiveAudit"]>;
+    baselinePreservationAudit: NonNullable<DashboardSummary["baselinePreservationAudit"]>;
+    winningBaselineFeatureAudit: NonNullable<DashboardSummary["winningBaselineFeatureAudit"]>;
+    strongSignalLiveAudit: NonNullable<DashboardSummary["strongSignalLiveAudit"]>;
+    outOfSampleAudit: NonNullable<DashboardSummary["outOfSampleAudit"]>;
+    walkForwardAudit: NonNullable<DashboardSummary["walkForwardAudit"]>;
+    strategyV1CandidateAudit: NonNullable<DashboardSummary["strategyV1CandidateAudit"]>;
+    strategyV2CandidateAudit: NonNullable<DashboardSummary["strategyV2CandidateAudit"]>;
+    liveExitPolicyAudit: NonNullable<DashboardSummary["liveExitPolicyAudit"]>;
+    exitPolicyShadowAudit: NonNullable<DashboardSummary["exitPolicyShadowAudit"]>;
+    regimePerformanceAudit: NonNullable<DashboardSummary["regimePerformanceAudit"]>;
+    downtrendSuppressionShadowAudit: NonNullable<DashboardSummary["downtrendSuppressionShadowAudit"]>;
+    causalRegimePolicyShadowAudit: NonNullable<DashboardSummary["causalRegimePolicyShadowAudit"]>;
+    regimePolicyShadowAudit: NonNullable<DashboardSummary["regimePolicyShadowAudit"]>;
+    experimentHarnessAudit: NonNullable<DashboardSummary["experimentHarnessAudit"]>;
+    setupGateConsistencyAudit: NonNullable<DashboardSummary["setupGateConsistencyAudit"]>;
+    neutralGateConsistencyAudit: NonNullable<DashboardSummary["neutralGateConsistencyAudit"]>;
+    neutralFilterAudit: NonNullable<DashboardSummary["neutralFilterAudit"]>;
+    longSetupAttritionAudit: NonNullable<DashboardSummary["longSetupAttritionAudit"]>;
+    postFixPerformanceAudit: NonNullable<DashboardSummary["postFixPerformanceAudit"]>;
+    attenuationComparisonAudit: NonNullable<DashboardSummary["attenuationComparisonAudit"]>;
+    attenuationRetestNoMacroAudit: NonNullable<DashboardSummary["attenuationRetestNoMacroAudit"]>;
+    directionCorrectnessAudit: NonNullable<DashboardSummary["directionCorrectnessAudit"]>;
+    longOnlyModeAudit: NonNullable<DashboardSummary["longOnlyModeAudit"]>;
+    alphaComponentAudit: NonNullable<DashboardSummary["alphaComponentAudit"]>;
+    componentInversionShadowAudit: NonNullable<DashboardSummary["componentInversionShadowAudit"]>;
+    invertedSignalPerformanceAudit: NonNullable<DashboardSummary["invertedSignalPerformanceAudit"]>;
+    timingAlphaAudit: NonNullable<DashboardSummary["timingAlphaAudit"]>;
+    shortReentryShadowAudit: NonNullable<DashboardSummary["shortReentryShadowAudit"]>;
+    componentPruningShadowAudit: NonNullable<DashboardSummary["componentPruningShadowAudit"]>;
+    signalRankingShadowAudit: NonNullable<DashboardSummary["signalRankingShadowAudit"]>;
+    positionSizingShadowAudit: NonNullable<DashboardSummary["positionSizingShadowAudit"]>;
+    sizingBenchmarkAudit: NonNullable<DashboardSummary["sizingBenchmarkAudit"]>;
+    strongSignalShadowAudit: NonNullable<DashboardSummary["strongSignalShadowAudit"]>;
+    shadowBenchmarkAudit: NonNullable<DashboardSummary["shadowBenchmarkAudit"]>;
   }> {
     const cachedData = await this.fetchCachedPriceData(symbols);
     const featuresCache = this.buildFeaturesCache(cachedData);
@@ -4275,7 +7538,7 @@ export class DashboardService {
       featuresCache,
       agents,
       {
-        signalStrengthThreshold: DashboardService.SIGNAL_STRENGTH_MIN,
+        signalStrengthThreshold: DashboardService.LIVE_ACTIVE_SETUP_SCORE_ABS_THRESHOLD,
         convictionThreshold: DashboardService.LOCAL_CONVICTION_MIN,
         neutralThreshold: DashboardService.PROBABILITY_NEUTRAL_MAX,
       },
@@ -4369,6 +7632,48 @@ export class DashboardService {
       aggregationDiagnostics: aggDiag,
       directionMappingDiagnostics: dirMapDiag,
       setupDirectionAudit: dirSetupAudit,
+      setupShadowAudit: dirSetupShadowAudit,
+      setupScoreAudit: dirSetupScoreAudit,
+      signalFlipAudit: dirSignalFlipAudit,
+      currentStrategyConfigAudit: dirCurrentStrategyConfigAudit,
+      liveDirectionModeAudit: dirLiveDirectionModeAudit,
+      macroPrunedLiveAudit: dirMacroPrunedLiveAudit,
+      officialBaselineAudit: dirOfficialBaselineAudit,
+      sentimentPrunedLiveAudit: dirSentimentPrunedLiveAudit,
+      baselinePreservationAudit: dirBaselinePreservationAudit,
+      winningBaselineFeatureAudit: dirWinningBaselineFeatureAudit,
+      strongSignalLiveAudit: dirStrongSignalLiveAudit,
+      outOfSampleAudit: dirOutOfSampleAudit,
+      walkForwardAudit: dirWalkForwardAudit,
+      strategyV1CandidateAudit: dirStrategyV1CandidateAudit,
+      strategyV2CandidateAudit: dirStrategyV2CandidateAudit,
+      liveExitPolicyAudit: dirLiveExitPolicyAudit,
+      exitPolicyShadowAudit: dirExitPolicyShadowAudit,
+      regimePerformanceAudit: dirRegimePerformanceAudit,
+      downtrendSuppressionShadowAudit: dirDowntrendSuppressionShadowAudit,
+      causalRegimePolicyShadowAudit: dirCausalRegimePolicyShadowAudit,
+      regimePolicyShadowAudit: dirRegimePolicyShadowAudit,
+      experimentHarnessAudit: dirExperimentHarnessAudit,
+      setupGateConsistencyAudit: dirSetupGateConsistencyAudit,
+      neutralGateConsistencyAudit: dirNeutralGateConsistencyAudit,
+      neutralFilterAudit: dirNeutralFilterAudit,
+      longSetupAttritionAudit: dirLongSetupAttritionAudit,
+      postFixPerformanceAudit: dirPostFixPerformanceAudit,
+      attenuationComparisonAudit: dirAttenuationComparisonAudit,
+      attenuationRetestNoMacroAudit: dirAttenuationRetestNoMacroAudit,
+      directionCorrectnessAudit: dirDirectionCorrectnessAudit,
+      longOnlyModeAudit: dirLongOnlyModeAudit,
+      alphaComponentAudit: dirAlphaComponentAudit,
+      componentInversionShadowAudit: dirComponentInversionShadowAudit,
+      invertedSignalPerformanceAudit: dirInvertedSignalPerformanceAudit,
+      timingAlphaAudit: dirTimingAlphaAudit,
+      shortReentryShadowAudit: dirShortReentryShadowAudit,
+      componentPruningShadowAudit: dirComponentPruningShadowAudit,
+      signalRankingShadowAudit: dirSignalRankingShadowAudit,
+      positionSizingShadowAudit: dirPositionSizingShadowAudit,
+      sizingBenchmarkAudit: dirSizingBenchmarkAudit,
+      strongSignalShadowAudit: dirStrongSignalShadowAudit,
+      shadowBenchmarkAudit: dirShadowBenchmarkAudit,
       ...metricsOnly
     } = defaultMetrics;
 
@@ -4421,6 +7726,48 @@ export class DashboardService {
       aggregationDiagnostics: aggDiag,
       directionMappingDiagnostics: normalizeDirectionMappingDiagnostics(dirMapDiag),
       setupDirectionAudit: dirSetupAudit,
+      setupShadowAudit: dirSetupShadowAudit,
+      setupScoreAudit: dirSetupScoreAudit,
+      signalFlipAudit: dirSignalFlipAudit,
+      currentStrategyConfigAudit: dirCurrentStrategyConfigAudit,
+      liveDirectionModeAudit: dirLiveDirectionModeAudit,
+      macroPrunedLiveAudit: dirMacroPrunedLiveAudit,
+      officialBaselineAudit: dirOfficialBaselineAudit,
+      sentimentPrunedLiveAudit: dirSentimentPrunedLiveAudit,
+      baselinePreservationAudit: dirBaselinePreservationAudit,
+      winningBaselineFeatureAudit: dirWinningBaselineFeatureAudit,
+      strongSignalLiveAudit: dirStrongSignalLiveAudit,
+      outOfSampleAudit: dirOutOfSampleAudit,
+      walkForwardAudit: dirWalkForwardAudit,
+      strategyV1CandidateAudit: dirStrategyV1CandidateAudit,
+      strategyV2CandidateAudit: dirStrategyV2CandidateAudit,
+      liveExitPolicyAudit: dirLiveExitPolicyAudit,
+      exitPolicyShadowAudit: dirExitPolicyShadowAudit,
+      regimePerformanceAudit: dirRegimePerformanceAudit,
+      downtrendSuppressionShadowAudit: dirDowntrendSuppressionShadowAudit,
+      causalRegimePolicyShadowAudit: dirCausalRegimePolicyShadowAudit,
+      regimePolicyShadowAudit: dirRegimePolicyShadowAudit,
+      experimentHarnessAudit: dirExperimentHarnessAudit,
+      setupGateConsistencyAudit: dirSetupGateConsistencyAudit,
+      neutralGateConsistencyAudit: dirNeutralGateConsistencyAudit,
+      neutralFilterAudit: dirNeutralFilterAudit,
+      longSetupAttritionAudit: dirLongSetupAttritionAudit,
+      postFixPerformanceAudit: dirPostFixPerformanceAudit,
+      attenuationComparisonAudit: dirAttenuationComparisonAudit,
+      attenuationRetestNoMacroAudit: dirAttenuationRetestNoMacroAudit,
+      directionCorrectnessAudit: dirDirectionCorrectnessAudit,
+      longOnlyModeAudit: dirLongOnlyModeAudit,
+      alphaComponentAudit: dirAlphaComponentAudit,
+      componentInversionShadowAudit: dirComponentInversionShadowAudit,
+      invertedSignalPerformanceAudit: dirInvertedSignalPerformanceAudit,
+      timingAlphaAudit: dirTimingAlphaAudit,
+      shortReentryShadowAudit: dirShortReentryShadowAudit,
+      componentPruningShadowAudit: dirComponentPruningShadowAudit,
+      signalRankingShadowAudit: dirSignalRankingShadowAudit,
+      positionSizingShadowAudit: dirPositionSizingShadowAudit,
+      sizingBenchmarkAudit: dirSizingBenchmarkAudit,
+      strongSignalShadowAudit: dirStrongSignalShadowAudit,
+      shadowBenchmarkAudit: dirShadowBenchmarkAudit,
     };
   }
 

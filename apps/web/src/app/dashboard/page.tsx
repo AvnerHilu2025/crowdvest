@@ -259,6 +259,16 @@ type DashboardSummary = {
     skippedLowConviction: number;
     executedTrades: number;
   } | null;
+  strategyComparisonSummaryAudit?: {
+    researchChampion: { strategyId: string; versionLabel: string; trades: number | null; cumulativeReturn: number | null; benchmarkReturn: number | null; edge: number | null; maxDrawdown: number | null };
+    deployableCandidate: { strategyId: string; versionLabel: string; trades: number | null; cumulativeReturn: number | null; benchmarkReturn: number | null; edge: number | null; maxDrawdown: number | null; maxConcurrentOpenTrades: number | null };
+    productInterpretation?: { preferredForResearch?: string | null; preferredForDeployment?: string | null };
+  };
+  directionBiasByAgentType?: {
+    trendFollower: { avgSignal: number; positiveCount: number; negativeCount: number };
+    contrarian: { avgSignal: number; positiveCount: number; negativeCount: number };
+    balanced: { avgSignal: number; positiveCount: number; negativeCount: number };
+  };
 };
 
 export default async function DashboardPage({
@@ -350,6 +360,7 @@ export default async function DashboardPage({
       <DashboardClient
         initialData={{
         consensus: data.consensus,
+        directionBiasByAgentType: data.directionBiasByAgentType,
         scaling: data.scalingRows,
         stability: stabilityDecorated,
         counts,
@@ -440,6 +451,10 @@ export default async function DashboardPage({
         backtestDiagnostics:
           data.backtestDiagnostics && typeof data.backtestDiagnostics === "object"
             ? data.backtestDiagnostics
+            : undefined,
+        strategyComparisonSummaryAudit:
+          data.strategyComparisonSummaryAudit && typeof data.strategyComparisonSummaryAudit === "object"
+            ? data.strategyComparisonSummaryAudit
             : undefined,
       }}
       initialQuery={{

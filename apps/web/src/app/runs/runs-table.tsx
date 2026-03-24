@@ -1,13 +1,21 @@
 "use client";
 
+import React from "react";
 import { useRouter } from "next/navigation";
 import { Table } from "@/components/ui/Table";
 import { Badge } from "@/components/ui/Badge";
-import { ui } from "@/components/ui/ui-styles";
 import { formatDateTimeUTC, formatDurationMs, truncateMiddle } from "@/lib/format";
-import { truncate } from "@/lib/ui";
 
-const cellStyle: React.CSSProperties = ui.td;
+function truncateStr(str: string, maxLen = 40): string {
+  if (!str || str.length <= maxLen) return str;
+  return `${str.slice(0, maxLen)}…`;
+}
+
+const cellStyle: React.CSSProperties = {
+  padding: "10px 10px",
+  borderBottom: "1px solid #EAF0F8",
+  verticalAlign: "middle",
+};
 
 interface RunItem {
   id: string;
@@ -55,9 +63,10 @@ export function RunsTable({ items }: { items: RunItem[] }) {
             }}
             style={{ cursor: "pointer" }}
           >
+            {/* eslint-disable @typescript-eslint/no-unsafe-call -- format* from @/lib/format resolve at build */}
             <td style={cellStyle}>{formatDateTimeUTC(r.createdAt)}</td>
             <td style={cellStyle} title={r.name || r.id}>
-              {truncate(r.name || r.id, 40)}
+              {truncateStr(String(r.name || r.id), 40)}
             </td>
             <td style={cellStyle}>
               <StatusBadge status={r.status} />
@@ -70,6 +79,7 @@ export function RunsTable({ items }: { items: RunItem[] }) {
             <td style={cellStyle} title={r.id}>
               {truncateMiddle(r.id)}
             </td>
+            {/* eslint-enable @typescript-eslint/no-unsafe-call */}
           </tr>
         ))}
       </Table>

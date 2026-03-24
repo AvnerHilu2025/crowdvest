@@ -1,7 +1,29 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { computeCis, stdDev } from "@/lib/cis";
+function computeCisLocal(params: {
+  corr: number | null;
+  directionalAccuracy: number | null;
+  percentileScore?: number;
+  convictionPenalty?: number;
+}): number {
+  const { corr, directionalAccuracy, percentileScore = 0.5, convictionPenalty = 0 } = params;
+  const accuracyScore = directionalAccuracy ?? 0;
+  const corrScore = ((corr ?? 0) + 1) / 2;
+  const cis =
+    0.4 * accuracyScore +
+    0.25 * corrScore +
+    0.25 * percentileScore +
+    0.1 * (1 - convictionPenalty);
+  return Math.max(0, Math.min(1, cis));
+}
+
+function stdDevLocal(xs: number[]): number {
+  if (xs.length === 0) return 0;
+  const m = xs.reduce((a, b) => a + b, 0) / xs.length;
+  const variance = xs.reduce((s, x) => s + (x - m) ** 2, 0) / xs.length;
+  return Math.sqrt(variance);
+}
 import { SectionCard, MetricRows, MetricRow, Badge } from "@/components/ui/dashboard";
 
 interface RunsV2Item {
@@ -94,7 +116,7 @@ export function StabilityCard({
               )
                 return;
 
-              const cis = computeCis({
+              const cis = computeCisLocal({
                 corr: cor,
                 directionalAccuracy: acc,
                 percentileScore: 0.5,
@@ -128,8 +150,8 @@ export function StabilityCard({
           const corrs = samples.map((s) => s.corr);
           const cisValues = samples.map((s) => s.cis);
 
-          accuracyStdDev = stdDev(accs);
-          corrStdDev = stdDev(corrs);
+          accuracyStdDev = stdDevLocal(accs);
+          corrStdDev = stdDevLocal(corrs);
           cisMin = Math.min(...cisValues);
           cisMax = Math.max(...cisValues);
 
@@ -162,7 +184,7 @@ export function StabilityCard({
       }
     }
 
-    load();
+    void load();
     return () => {
       cancelled = true;
     };

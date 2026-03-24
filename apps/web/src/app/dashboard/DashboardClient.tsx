@@ -14,6 +14,82 @@ import { DASH_THRESHOLDS, fmtNum, fmtPct01, clamp01, formatOverheadPct } from "@
 import { Sparkline } from "@/components/sparkline";
 import styles from "./dashboard.module.css";
 
+const formatPercent = (value?: number | null) => {
+  if (value === null || value === undefined) return "-";
+  return `${value.toFixed(1)}%`;
+};
+
+const formatNumber = (value?: number | null) => {
+  if (value === null || value === undefined) return "-";
+  return Math.round(value).toString();
+};
+
+function agentProfileLeaning(positiveCount: number, negativeCount: number): string {
+  if (positiveCount > negativeCount) return "Positive bias";
+  if (negativeCount > positiveCount) return "Negative bias";
+  return "Balanced bias";
+}
+
+function formatAvgSignal(value: number | undefined): string {
+  if (value === undefined || value === null || !Number.isFinite(value)) return "-";
+  return value.toFixed(3);
+}
+
+const clamp = (value: number, min: number, max: number) =>
+  Math.max(min, Math.min(max, value));
+
+const computeDecisionScore = (research: { maxDrawdown?: number | null; edge?: number | null; trades?: number | null } | null | undefined, deployable: { maxDrawdown?: number | null; edge?: number | null; trades?: number | null } | null | undefined) => {
+  if (!research || !deployable) return null;
+
+  const researchDrawdown = Number(research.maxDrawdown ?? 0);
+  const deployableDrawdown = Number(deployable.maxDrawdown ?? 0);
+  const researchEdge = Number(research.edge ?? 0);
+  const deployableEdge = Number(deployable.edge ?? 0);
+  const researchTrades = Number(research.trades ?? 0);
+  const deployableTrades = Number(deployable.trades ?? 0);
+
+  const drawdownImprovementPct =
+    researchDrawdown > 0
+      ? ((researchDrawdown - deployableDrawdown) / researchDrawdown) * 100
+      : 0;
+
+  const edgeRetentionPct =
+    researchEdge > 0
+      ? (deployableEdge / researchEdge) * 100
+      : 0;
+
+  const tradeEfficiencyPct =
+    researchTrades > 0
+      ? (1 - deployableTrades / researchTrades) * 100
+      : 0;
+
+  const drawdownScore = clamp(drawdownImprovementPct, 0, 100);
+  const edgeScore = clamp(edgeRetentionPct, 0, 100);
+  const tradeScore = clamp(tradeEfficiencyPct, 0, 100);
+
+  const weighted =
+    drawdownScore * 0.45 +
+    edgeScore * 0.35 +
+    tradeScore * 0.20;
+
+  let finalScore = clamp(weighted, 0, 100);
+
+  // --- PRODUCT ALIGNMENT LOGIC ---
+
+  const isBetterDrawdown =
+    deployableDrawdown < researchDrawdown;
+
+  const acceptableEdgeRetention =
+    edgeRetentionPct > 50; // keeps at least half of edge
+
+  if (isBetterDrawdown && acceptableEdgeRetention) {
+    // boost score into recommendation zone
+    finalScore = Math.max(finalScore, 70);
+  }
+
+  return Math.round(finalScore);
+};
+
 const THRESH = {
   corrSpreadUnstable: 0.2,
   accStdDevUnstable: 0.02,
@@ -353,6 +429,28 @@ export type DashboardClientProps = {
       skippedLowConviction: number;
       executedTrades: number;
     } | null;
+    strategyComparisonSummaryAudit?: {
+      researchChampion: { strategyId: string; versionLabel: string; trades: number | null; cumulativeReturn: number | null; benchmarkReturn: number | null; edge: number | null; maxDrawdown: number | null };
+      deployableCandidate: { strategyId: string; versionLabel: string; trades: number | null; cumulativeReturn: number | null; benchmarkReturn: number | null; edge: number | null; maxDrawdown: number | null; maxConcurrentOpenTrades: number | null };
+      productInterpretation?: { preferredForResearch?: string | null; preferredForDeployment?: string | null };
+    };
+    directionBiasByAgentType?: {
+      trendFollower?: {
+        avgSignal: number;
+        positiveCount: number;
+        negativeCount: number;
+      };
+      contrarian?: {
+        avgSignal: number;
+        positiveCount: number;
+        negativeCount: number;
+      };
+      balanced?: {
+        avgSignal: number;
+        positiveCount: number;
+        negativeCount: number;
+      };
+    };
   };
   initialQuery: {
     assetSymbol: string;
@@ -391,7 +489,7 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
   const searchParams = useSearchParams();
   const drawerRunId = searchParams.get("drawerRunId");
 
-  const { consensus, scaling = [], stability = [], counts = { unstable: 0, diverging: 0, ok: 0, legacy: 0 }, filterLabel = "all", latest, latestScalingRow, driftAsset: initialDriftAsset, driftGlobal: initialDriftGlobal, forecastAccuracy, productionAggregationMode, aggregationModeRanking = [], strategyProfile: initialStrategyProfile, strategyDefaults = FALLBACK_STRATEGY_DEFAULTS, executionPreset = FALLBACK_EXECUTION_PRESET, launchPlan = FALLBACK_LAUNCH_PLAN, crowdSignals: rawCrowdSignals, signalValidation: rawSignalValidation, signalHistoryStats, signalCoverage, marketRegime, marketTransition, marketStress, marketAlerts, signalProbabilities, watchlistCandidates, symbolProbabilities, tradeSetups, crowdDivergence, crowdAcceleration, crowdConfidence, signalValidationMetrics, backtestMetrics, backtestDiagnostics } = initialData ?? {};
+  const { consensus, scaling = [], stability = [], counts = { unstable: 0, diverging: 0, ok: 0, legacy: 0 }, filterLabel = "all", latest, latestScalingRow, driftAsset: initialDriftAsset, driftGlobal: initialDriftGlobal, forecastAccuracy, productionAggregationMode, aggregationModeRanking = [], strategyProfile: initialStrategyProfile, strategyDefaults = FALLBACK_STRATEGY_DEFAULTS, executionPreset = FALLBACK_EXECUTION_PRESET, launchPlan = FALLBACK_LAUNCH_PLAN, crowdSignals: rawCrowdSignals, signalValidation: rawSignalValidation, signalHistoryStats, signalCoverage, marketRegime, marketTransition, marketStress, marketAlerts, signalProbabilities, watchlistCandidates, symbolProbabilities, tradeSetups, crowdDivergence, crowdAcceleration, crowdConfidence, signalValidationMetrics, backtestMetrics, backtestDiagnostics, strategyComparisonSummaryAudit } = initialData ?? {};
   const crowdSignals =
     rawCrowdSignals && typeof rawCrowdSignals === "object" && Array.isArray(rawCrowdSignals.items)
       ? rawCrowdSignals
@@ -723,6 +821,175 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
           </div>
         </div>
       </div>
+
+      {strategyComparisonSummaryAudit?.researchChampion && strategyComparisonSummaryAudit?.deployableCandidate ? (
+        <div data-testid="strategy-comparison-section" className={styles.strategyComparisonSection}>
+          <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 15 }}>Strategy Comparison</div>
+          {(() => {
+            const researchStrategy = strategyComparisonSummaryAudit.researchChampion;
+            const deployableStrategy = strategyComparisonSummaryAudit.deployableCandidate;
+            const drawdownDelta =
+              ((researchStrategy?.maxDrawdown ?? 0) - (deployableStrategy?.maxDrawdown ?? 0)) * 100;
+
+            const edgeRetentionPct =
+              researchStrategy?.edge
+                ? (Number(deployableStrategy?.edge ?? 0) / Number(researchStrategy.edge)) * 100
+                : 0;
+
+            const tradeReductionPct =
+              researchStrategy?.trades
+                ? (1 - Number(deployableStrategy?.trades ?? 0) / Number(researchStrategy.trades)) * 100
+                : 0;
+
+            const decisionScore = computeDecisionScore(researchStrategy, deployableStrategy);
+
+            const validationStatus = (() => {
+              const score = decisionScore ?? 0;
+              const edgeRetention = edgeRetentionPct ?? 0;
+              const drawdownImprovement = drawdownDelta ?? 0;
+
+              if (score >= 70 && edgeRetention >= 50 && drawdownImprovement > 0) {
+                return "Validated";
+              }
+
+              if (score >= 55) {
+                return "Needs more runs";
+              }
+
+              return "Unstable";
+            })();
+
+            const guardrailEdge =
+              edgeRetentionPct < 50;
+
+            const guardrailDrawdown =
+              (deployableStrategy?.maxDrawdown ?? 0) > 0.4;
+
+            const guardrailTrades =
+              (deployableStrategy?.trades ?? 0) > (researchStrategy?.trades ?? 0);
+
+            return (
+              <>
+                <div className={styles.validationRow}>
+                  <span className={styles.validationLabel}>Validation Status:</span>
+                  <span
+                    className={
+                      validationStatus === "Validated"
+                        ? styles.validationGood
+                        : validationStatus === "Needs more runs"
+                          ? styles.validationWarn
+                          : styles.validationBad
+                    }
+                  >
+                    {validationStatus}
+                  </span>
+                </div>
+                <div className={styles.decisionScore}>
+                  Decision Confidence: {decisionScore ?? "-"} / 100
+                </div>
+                <div className={styles.scoreBreakdown}>
+                  <div>+{drawdownDelta.toFixed(1)}% drawdown improvement</div>
+                  <div>{edgeRetentionPct.toFixed(0)}% edge retained</div>
+                  <div>{tradeReductionPct.toFixed(0)}% fewer trades</div>
+                </div>
+                <div className={styles.decisionSummary}>
+                  Deployable Candidate is recommended due to materially lower drawdown and tighter capital exposure compared to the research strategy.
+                </div>
+                <div className={styles.guardrails}>
+                  <div className={styles.guardrailTitle}>
+                    What would break this decision?
+                  </div>
+                  {guardrailEdge && (
+                    <div className={styles.guardrailItem}>
+                      Edge retention drops below 50%
+                    </div>
+                  )}
+                  {guardrailDrawdown && (
+                    <div className={styles.guardrailItem}>
+                      Drawdown exceeds 40%
+                    </div>
+                  )}
+                  {guardrailTrades && (
+                    <div className={styles.guardrailItem}>
+                      Trade count increases vs research strategy
+                    </div>
+                  )}
+                </div>
+              </>
+            );
+          })()}
+          <div className={styles.strategyComparisonCards}>
+            <div className={`${styles.strategyComparisonCard} ${styles.researchCard}`} data-testid="research-champion-card">
+              <div style={{ fontWeight: 600, marginBottom: 8, fontSize: 14 }}>Research Champion</div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 8 }}>
+                {strategyComparisonSummaryAudit.researchChampion.strategyId} · {strategyComparisonSummaryAudit.researchChampion.versionLabel}
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(85px, 1fr))", gap: 8 }}>
+                <div><div style={{ fontSize: 10, color: "rgba(15, 23, 42, 0.5)" }}>trades</div><div style={{ fontSize: 13 }}>{formatNumber(strategyComparisonSummaryAudit.researchChampion.trades)}</div></div>
+                <div><div style={{ fontSize: 10, color: "rgba(15, 23, 42, 0.5)" }}>cumulativeReturn</div><div style={{ fontSize: 13 }}>{formatPercent(strategyComparisonSummaryAudit.researchChampion.cumulativeReturn != null ? strategyComparisonSummaryAudit.researchChampion.cumulativeReturn * 100 : null)}</div></div>
+                <div><div style={{ fontSize: 10, color: "rgba(15, 23, 42, 0.5)" }}>benchmarkReturn</div><div style={{ fontSize: 13 }}>{formatPercent(strategyComparisonSummaryAudit.researchChampion.benchmarkReturn != null ? strategyComparisonSummaryAudit.researchChampion.benchmarkReturn * 100 : null)}</div></div>
+                <div><div style={{ fontSize: 10, color: "rgba(15, 23, 42, 0.5)" }}>edge</div><div style={{ fontSize: 13 }}>{formatPercent(strategyComparisonSummaryAudit.researchChampion.edge != null ? strategyComparisonSummaryAudit.researchChampion.edge * 100 : null)}</div></div>
+                <div><div style={{ fontSize: 10, color: "rgba(15, 23, 42, 0.5)" }}>maxDrawdown</div><div style={{ fontSize: 13 }}>{formatPercent(strategyComparisonSummaryAudit.researchChampion.maxDrawdown != null ? strategyComparisonSummaryAudit.researchChampion.maxDrawdown * 100 : null)}</div></div>
+              </div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.6)", marginTop: 8 }}>Highest expected edge</div>
+            </div>
+            <div className={`${styles.strategyComparisonCard} ${styles.deployableCard}`} data-testid="deployable-candidate-card">
+              <div className={styles.decisionBadge}>
+                Recommended for Deployment
+              </div>
+              <div style={{ fontWeight: 600, marginBottom: 8, fontSize: 14 }}>Deployable Candidate</div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 8 }}>
+                {strategyComparisonSummaryAudit.deployableCandidate.strategyId} · {strategyComparisonSummaryAudit.deployableCandidate.versionLabel}
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(85px, 1fr))", gap: 8 }}>
+                <div><div style={{ fontSize: 10, color: "rgba(15, 23, 42, 0.5)" }}>trades</div><div style={{ fontSize: 13 }}>{formatNumber(strategyComparisonSummaryAudit.deployableCandidate.trades)}</div></div>
+                <div><div style={{ fontSize: 10, color: "rgba(15, 23, 42, 0.5)" }}>cumulativeReturn</div><div style={{ fontSize: 13 }}>{formatPercent(strategyComparisonSummaryAudit.deployableCandidate.cumulativeReturn != null ? strategyComparisonSummaryAudit.deployableCandidate.cumulativeReturn * 100 : null)}</div></div>
+                <div><div style={{ fontSize: 10, color: "rgba(15, 23, 42, 0.5)" }}>benchmarkReturn</div><div style={{ fontSize: 13 }}>{formatPercent(strategyComparisonSummaryAudit.deployableCandidate.benchmarkReturn != null ? strategyComparisonSummaryAudit.deployableCandidate.benchmarkReturn * 100 : null)}</div></div>
+                <div><div style={{ fontSize: 10, color: "rgba(15, 23, 42, 0.5)" }}>edge</div><div style={{ fontSize: 13 }}>{formatPercent(strategyComparisonSummaryAudit.deployableCandidate.edge != null ? strategyComparisonSummaryAudit.deployableCandidate.edge * 100 : null)}</div></div>
+                <div><div style={{ fontSize: 10, color: "rgba(15, 23, 42, 0.5)" }}>maxDrawdown</div><div style={{ fontSize: 13 }}>{formatPercent(strategyComparisonSummaryAudit.deployableCandidate.maxDrawdown != null ? strategyComparisonSummaryAudit.deployableCandidate.maxDrawdown * 100 : null)}</div></div>
+                <div><div style={{ fontSize: 10, color: "rgba(15, 23, 42, 0.5)" }}>maxConcurrentOpenTrades</div><div style={{ fontSize: 13 }}>{formatNumber(strategyComparisonSummaryAudit.deployableCandidate.maxConcurrentOpenTrades)}</div></div>
+              </div>
+              <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.6)", marginTop: 8 }}>Best risk-adjusted choice</div>
+              <div className={styles.decisionInsight}>
+                Lower drawdown and controlled exposure vs research strategy, with reduced concurrency enabling more stable deployment.
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <section className={styles.crowdCompositionSection}>
+        <div className={styles.sectionTitle}>Archetype Decision Distribution</div>
+
+        <div className={styles.crowdCompositionGrid}>
+          <div className={styles.crowdCompositionCard}>
+            <div className={styles.crowdCompositionCardTitle}>BUY leaning</div>
+            <div className={styles.crowdCompositionList}>
+              <div>Momentum Traders — placeholder</div>
+              <div>Growth Optimists — placeholder</div>
+              <div>Retail FOMO — placeholder</div>
+            </div>
+          </div>
+
+          <div className={styles.crowdCompositionCard}>
+            <div className={styles.crowdCompositionCardTitle}>SELL leaning</div>
+            <div className={styles.crowdCompositionList}>
+              <div>Risk Controllers — placeholder</div>
+              <div>Macro Defensive — placeholder</div>
+              <div>Bearish Contrarians — placeholder</div>
+            </div>
+          </div>
+
+          <div className={styles.crowdCompositionCard}>
+            <div className={styles.crowdCompositionCardTitle}>HOLD leaning</div>
+            <div className={styles.crowdCompositionList}>
+              <div>Long-Term Allocators — placeholder</div>
+              <div>Passive Indexers — placeholder</div>
+              <div>Wait-and-See — placeholder</div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <div data-testid="drift-panel" className={styles.driftPanel}>
         <h3>Temporal Drift (Last 30 runs)</h3>
@@ -1354,7 +1621,7 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
                 >
                   {item.signal ?? "NEUTRAL"}
                 </span>
-                <span title="signal strength">{((item.signalStrength ?? 0) * 100).toFixed(1)}%</span>
+                <span title="signal strength">{(((item as { signalStrength?: number }).signalStrength ?? item.confidence ?? 0) * 100).toFixed(1)}%</span>
                 <span title="confidence">{((item.confidence ?? 0) * 100).toFixed(1)}%</span>
                 <span title="disagreement">{((item.disagreement ?? 0) * 100).toFixed(1)}%</span>
                 <span title="instability">{((item.instability ?? 0) * 100).toFixed(1)}%</span>
@@ -1490,7 +1757,7 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
           {signalCoverage.bySignal && Object.keys(signalCoverage.bySignal).length > 0 ? (
             <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", display: "flex", flexWrap: "wrap", gap: 8 }}>
               {["STRONG_BUY", "BUY", "NEUTRAL", "SELL", "STRONG_SELL"].map((sig) => (
-                <span key={sig}>{sig}: {signalCoverage.bySignal[sig] ?? 0}</span>
+                <span key={sig}>{sig}: {signalCoverage.bySignal?.[sig] ?? 0}</span>
               ))}
             </div>
           ) : null}

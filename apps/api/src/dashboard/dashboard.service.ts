@@ -1993,6 +1993,259 @@ export interface DashboardSummary {
       bestVariantByMaxDrawdown: string | null;
     };
   };
+  executionRealismAudit?: {
+    methodologyDescription: string;
+    frictionlessBaseline: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    feeOnly_10bps_roundTrip: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    slippageOnly_10bps_entry_exit: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    feeAndSlippage_10bps_each: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    comparison: {
+      edgeDeltaFeeAndSlippageMinusBaseline: number | null;
+      cumulativeReturnDeltaFeeAndSlippageMinusBaseline: number | null;
+      drawdownDeltaFeeAndSlippageMinusBaseline: number | null;
+    };
+  };
+  frictionSensitivityAudit?: {
+    methodologyDescription: string;
+    baseline_0bps: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    friction_10bps_total: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    friction_20bps_total: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    friction_30bps_total: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    friction_50bps_total: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    summary: {
+      highestFrictionWithPositiveEdge: string | null;
+      highestFrictionWithPositiveCumulativeReturn: string | null;
+    };
+  };
+  concurrencyExposureAudit?: {
+    methodologyDescription: string;
+    totals: {
+      trades: number;
+      uniqueEntryDates: number | null;
+      avgConcurrentOpenTrades: number | null;
+      maxConcurrentOpenTrades: number | null;
+    };
+    concurrencyDistribution: {
+      oneOpen: number | null;
+      twoOpen: number | null;
+      threeOrMoreOpen: number | null;
+    };
+    byDirectionIfAvailable: {
+      avgConcurrentLongTrades: number | null;
+      avgConcurrentShortTrades: number | null;
+    };
+    interpretation: {
+      overlapRiskLevel: string | null;
+    };
+  };
+  capitalConstraintShadowAudit?: {
+    methodologyDescription: string;
+    unconstrainedBaseline: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+      avgConcurrentOpenTrades: number | null;
+      maxConcurrentOpenTrades: number | null;
+    };
+    max1OpenTrade: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+      avgConcurrentOpenTrades: number | null;
+      maxConcurrentOpenTrades: number | null;
+    };
+    max2OpenTrades: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+      avgConcurrentOpenTrades: number | null;
+      maxConcurrentOpenTrades: number | null;
+    };
+    max3OpenTrades: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+      avgConcurrentOpenTrades: number | null;
+      maxConcurrentOpenTrades: number | null;
+    };
+    recommendation: {
+      bestVariantByEdge: string | null;
+      bestVariantByCumulativeReturn: string | null;
+      bestVariantByMaxDrawdown: string | null;
+      bestDeployableCandidate: string | null;
+    };
+  };
+  deployableStrategyCandidateAudit?: {
+    strategyId: string;
+    versionLabel: string;
+    status: string;
+    constraintProfile: {
+      maxConcurrentOpenTrades: number;
+      selectionPriorityRule: string;
+    };
+    performanceSnapshot: {
+      trades: number | null;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      winRate: number | null;
+      avgTradeReturn: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+      avgConcurrentOpenTrades: number | null;
+      maxConcurrentOpenTrades: number | null;
+    };
+    relationToResearchBaseline: {
+      cumulativeReturnDeltaVsUnconstrained: number | null;
+      edgeDeltaVsUnconstrained: number | null;
+      drawdownDeltaVsUnconstrained: number | null;
+    };
+  };
+  strategyComparisonSummaryAudit?: {
+    researchChampion: {
+      strategyId: string;
+      versionLabel: string;
+      trades: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+    };
+    deployableCandidate: {
+      strategyId: string;
+      versionLabel: string;
+      trades: number | null;
+      cumulativeReturn: number | null;
+      benchmarkReturn: number | null;
+      edge: number | null;
+      maxDrawdown: number | null;
+      maxConcurrentOpenTrades: number | null;
+    };
+    comparison: {
+      cumulativeReturnDeltaDeployableMinusResearch: number | null;
+      edgeDeltaDeployableMinusResearch: number | null;
+      drawdownDeltaDeployableMinusResearch: number | null;
+    };
+    productInterpretation: {
+      preferredForResearch: string | null;
+      preferredForDeployment: string | null;
+    };
+  };
   strategyV2CandidateAudit?: {
     strategyId: string;
     versionLabel: string;
@@ -3252,6 +3505,12 @@ export class DashboardService {
           strategyV2CandidateAudit: r.strategyV2CandidateAudit,
           liveExitPolicyAudit: r.liveExitPolicyAudit,
           exitPolicyShadowAudit: r.exitPolicyShadowAudit,
+          executionRealismAudit: r.executionRealismAudit,
+          frictionSensitivityAudit: r.frictionSensitivityAudit,
+          concurrencyExposureAudit: r.concurrencyExposureAudit,
+          capitalConstraintShadowAudit: r.capitalConstraintShadowAudit,
+          deployableStrategyCandidateAudit: r.deployableStrategyCandidateAudit,
+          strategyComparisonSummaryAudit: r.strategyComparisonSummaryAudit,
           regimePerformanceAudit: r.regimePerformanceAudit,
           downtrendSuppressionShadowAudit: r.downtrendSuppressionShadowAudit,
           causalRegimePolicyShadowAudit: r.causalRegimePolicyShadowAudit,
@@ -3629,6 +3888,12 @@ export class DashboardService {
     strategyV2CandidateAudit: NonNullable<DashboardSummary["strategyV2CandidateAudit"]>;
     liveExitPolicyAudit: NonNullable<DashboardSummary["liveExitPolicyAudit"]>;
     exitPolicyShadowAudit: NonNullable<DashboardSummary["exitPolicyShadowAudit"]>;
+    executionRealismAudit: NonNullable<DashboardSummary["executionRealismAudit"]>;
+    frictionSensitivityAudit: NonNullable<DashboardSummary["frictionSensitivityAudit"]>;
+    concurrencyExposureAudit: NonNullable<DashboardSummary["concurrencyExposureAudit"]>;
+    capitalConstraintShadowAudit: NonNullable<DashboardSummary["capitalConstraintShadowAudit"]>;
+    deployableStrategyCandidateAudit: NonNullable<DashboardSummary["deployableStrategyCandidateAudit"]>;
+    strategyComparisonSummaryAudit: NonNullable<DashboardSummary["strategyComparisonSummaryAudit"]>;
     regimePerformanceAudit: NonNullable<DashboardSummary["regimePerformanceAudit"]>;
     downtrendSuppressionShadowAudit: NonNullable<DashboardSummary["downtrendSuppressionShadowAudit"]>;
     causalRegimePolicyShadowAudit: NonNullable<DashboardSummary["causalRegimePolicyShadowAudit"]>;
@@ -5287,6 +5552,325 @@ export class DashboardService {
       walkForwardSnapshot: walkForwardAudit.summary,
     };
 
+    const EXEC_REALISM_DESC = "Shadow audit of Strategy V2 Candidate under simple transaction-cost and slippage assumptions. Same executed trade set as live baseline. frictionlessBaseline: unchanged. feeOnly_10bps_roundTrip: subtract 0.10% per trade. slippageOnly_10bps_entry_exit: subtract 0.10% adverse entry + 0.10% adverse exit per trade. feeAndSlippage_10bps_each: fee + slippage combined.";
+    type ExecutionRealismRow = NonNullable<DashboardSummary["executionRealismAudit"]>["frictionlessBaseline"];
+    const toExecRealismRow = (tr: number[], br: number[], nLong: number, nShort: number): ExecutionRealismRow => {
+      const n = tr.length;
+      if (n === 0) return { trades: null, executedLongTrades: nLong, executedShortTrades: nShort, winRate: null, avgTradeReturn: null, cumulativeReturn: null, benchmarkReturn: null, edge: null, maxDrawdown: null };
+      const wins = tr.filter((r) => r > 0).length;
+      const cumStrategy = tr.reduce((a, b) => a + b, 0);
+      const cumBench = br.reduce((a, b) => a + b, 0);
+      let equity = 1, peak = 1, maxDd = 0;
+      for (const r of tr) {
+        equity *= 1 + r;
+        if (equity > peak) peak = equity;
+        const dd = peak > 0 ? (peak - equity) / peak : 0;
+        if (dd > maxDd) maxDd = dd;
+      }
+      return { trades: n, executedLongTrades: nLong, executedShortTrades: nShort, winRate: wins / n, avgTradeReturn: cumStrategy / n, cumulativeReturn: cumStrategy, benchmarkReturn: cumBench, edge: cumStrategy - cumBench, maxDrawdown: maxDd };
+    };
+    const FEE_10BPS = 0.001;
+    const SLIPPAGE_10BPS_ENTRY_EXIT = 0.002;
+    const FEE_AND_SLIPPAGE_10BPS = FEE_10BPS + SLIPPAGE_10BPS_ENTRY_EXIT;
+    const frictionlessBaseline = toExecRealismRow(tradeReturns, benchmarkReturns, executedLongTrades, executedShortTrades);
+    const feeOnlyTr = tradeReturns.map((r) => r - FEE_10BPS);
+    const slippageOnlyTr = tradeReturns.map((r) => r - SLIPPAGE_10BPS_ENTRY_EXIT);
+    const feeAndSlippageTr = tradeReturns.map((r) => r - FEE_AND_SLIPPAGE_10BPS);
+    const feeOnlyRow = toExecRealismRow(feeOnlyTr, benchmarkReturns, executedLongTrades, executedShortTrades);
+    const slippageOnlyRow = toExecRealismRow(slippageOnlyTr, benchmarkReturns, executedLongTrades, executedShortTrades);
+    const feeAndSlippageRow = toExecRealismRow(feeAndSlippageTr, benchmarkReturns, executedLongTrades, executedShortTrades);
+    const executionRealismAudit: NonNullable<DashboardSummary["executionRealismAudit"]> = {
+      methodologyDescription: EXEC_REALISM_DESC,
+      frictionlessBaseline,
+      feeOnly_10bps_roundTrip: feeOnlyRow,
+      slippageOnly_10bps_entry_exit: slippageOnlyRow,
+      feeAndSlippage_10bps_each: feeAndSlippageRow,
+      comparison: {
+        edgeDeltaFeeAndSlippageMinusBaseline: frictionlessBaseline.edge != null && feeAndSlippageRow.edge != null ? feeAndSlippageRow.edge - frictionlessBaseline.edge : null,
+        cumulativeReturnDeltaFeeAndSlippageMinusBaseline: frictionlessBaseline.cumulativeReturn != null && feeAndSlippageRow.cumulativeReturn != null ? feeAndSlippageRow.cumulativeReturn - frictionlessBaseline.cumulativeReturn : null,
+        drawdownDeltaFeeAndSlippageMinusBaseline: frictionlessBaseline.maxDrawdown != null && feeAndSlippageRow.maxDrawdown != null ? feeAndSlippageRow.maxDrawdown - frictionlessBaseline.maxDrawdown : null,
+      },
+    };
+
+    const FRICTION_SENSITIVITY_DESC = "Shadow audit of Strategy V2 Candidate under increasing per-trade friction (total adverse return haircut). Same executed trade set as live baseline. baseline_0bps: unchanged. friction_*_total: subtract total bps per trade (e.g. 10bps=0.10%, 50bps=0.50%).";
+    type FrictionSensitivityRow = NonNullable<DashboardSummary["frictionSensitivityAudit"]>["baseline_0bps"];
+    const toFrictionSensitivityRow = (tr: number[], br: number[], nLong: number, nShort: number): FrictionSensitivityRow => {
+      const n = tr.length;
+      if (n === 0) return { trades: null, executedLongTrades: nLong, executedShortTrades: nShort, winRate: null, avgTradeReturn: null, cumulativeReturn: null, benchmarkReturn: null, edge: null, maxDrawdown: null };
+      const wins = tr.filter((r) => r > 0).length;
+      const cumStrategy = tr.reduce((a, b) => a + b, 0);
+      const cumBench = br.reduce((a, b) => a + b, 0);
+      let equity = 1, peak = 1, maxDd = 0;
+      for (const r of tr) {
+        equity *= 1 + r;
+        if (equity > peak) peak = equity;
+        const dd = peak > 0 ? (peak - equity) / peak : 0;
+        if (dd > maxDd) maxDd = dd;
+      }
+      return { trades: n, executedLongTrades: nLong, executedShortTrades: nShort, winRate: wins / n, avgTradeReturn: cumStrategy / n, cumulativeReturn: cumStrategy, benchmarkReturn: cumBench, edge: cumStrategy - cumBench, maxDrawdown: maxDd };
+    };
+    const baseline0Row = toFrictionSensitivityRow(tradeReturns, benchmarkReturns, executedLongTrades, executedShortTrades);
+    const friction10Row = toFrictionSensitivityRow(tradeReturns.map((r) => r - 0.001), benchmarkReturns, executedLongTrades, executedShortTrades);
+    const friction20Row = toFrictionSensitivityRow(tradeReturns.map((r) => r - 0.002), benchmarkReturns, executedLongTrades, executedShortTrades);
+    const friction30Row = toFrictionSensitivityRow(tradeReturns.map((r) => r - 0.003), benchmarkReturns, executedLongTrades, executedShortTrades);
+    const friction50Row = toFrictionSensitivityRow(tradeReturns.map((r) => r - 0.005), benchmarkReturns, executedLongTrades, executedShortTrades);
+    const fsVariants: { key: string; row: FrictionSensitivityRow }[] = [
+      { key: "baseline_0bps", row: baseline0Row },
+      { key: "friction_10bps_total", row: friction10Row },
+      { key: "friction_20bps_total", row: friction20Row },
+      { key: "friction_30bps_total", row: friction30Row },
+      { key: "friction_50bps_total", row: friction50Row },
+    ];
+    const fsByEdgeDesc = [...fsVariants].reverse();
+    const fsHighestPosEdge = fsByEdgeDesc.find((v) => v.row.edge != null && v.row.edge > 0)?.key ?? null;
+    const fsHighestPosCum = fsByEdgeDesc.find((v) => v.row.cumulativeReturn != null && v.row.cumulativeReturn > 0)?.key ?? null;
+    const frictionSensitivityAudit: NonNullable<DashboardSummary["frictionSensitivityAudit"]> = {
+      methodologyDescription: FRICTION_SENSITIVITY_DESC,
+      baseline_0bps: baseline0Row,
+      friction_10bps_total: friction10Row,
+      friction_20bps_total: friction20Row,
+      friction_30bps_total: friction30Row,
+      friction_50bps_total: friction50Row,
+      summary: {
+        highestFrictionWithPositiveEdge: fsHighestPosEdge,
+        highestFrictionWithPositiveCumulativeReturn: fsHighestPosCum,
+      },
+    };
+
+    const CONCURRENCY_EXPOSURE_DESC = "Measure overlap between executed trades by entry/exit windows. A trade is open from entry through exit (holding period). Overlap counted via sweep over time; totals and distribution use time-weighted metrics.";
+    const computeConcurrencyExposureAudit = (): NonNullable<DashboardSummary["concurrencyExposureAudit"]> => {
+      const n = tradeReturns.length;
+      if (n === 0) {
+        return {
+          methodologyDescription: CONCURRENCY_EXPOSURE_DESC,
+          totals: { trades: 0, uniqueEntryDates: null, avgConcurrentOpenTrades: null, maxConcurrentOpenTrades: null },
+          concurrencyDistribution: { oneOpen: null, twoOpen: null, threeOrMoreOpen: null },
+          byDirectionIfAvailable: { avgConcurrentLongTrades: null, avgConcurrentShortTrades: null },
+          interpretation: { overlapRiskLevel: null },
+        };
+      }
+      const uniqueEntryDates = new Set(execTimestamps.map((ts) => new Date(ts).toISOString().slice(0, 10))).size;
+      type Event = { t: number; delta: number; deltaLong: number; deltaShort: number };
+      const events: Event[] = [];
+      for (let k = 0; k < n; k++) {
+        const entryTs = execTimestamps[k]!;
+        const sym = execSymbol[k]!;
+        const idx = execEntryIndex[k]!;
+        const isLong = execIsLong[k]!;
+        const data = cachedData.get(sym);
+        const exitTs = data && idx + horizon < data.timestamps.length ? data.timestamps[idx + horizon]!.getTime() : entryTs + horizon * 86400000;
+        events.push({ t: entryTs, delta: 1, deltaLong: isLong ? 1 : 0, deltaShort: isLong ? 0 : 1 });
+        events.push({ t: exitTs + 1, delta: -1, deltaLong: isLong ? -1 : 0, deltaShort: isLong ? 0 : -1 });
+      }
+      events.sort((a, b) => a.t - b.t);
+      let totalCount = 0;
+      let longCount = 0;
+      let shortCount = 0;
+      let maxConcurrent = 0;
+      let sumWeightedTotal = 0;
+      let sumWeightedLong = 0;
+      let sumWeightedShort = 0;
+      let totalDuration = 0;
+      let oneOpenDur = 0;
+      let twoOpenDur = 0;
+      let threeOrMoreDur = 0;
+      for (let i = 0; i < events.length - 1; i++) {
+        totalCount += events[i]!.delta;
+        longCount += events[i]!.deltaLong;
+        shortCount += events[i]!.deltaShort;
+        if (totalCount > maxConcurrent) maxConcurrent = totalCount;
+        const dt = events[i + 1]!.t - events[i]!.t;
+        if (totalCount > 0) {
+          sumWeightedTotal += totalCount * dt;
+          sumWeightedLong += longCount * dt;
+          sumWeightedShort += shortCount * dt;
+          totalDuration += dt;
+          if (totalCount === 1) oneOpenDur += dt;
+          else if (totalCount === 2) twoOpenDur += dt;
+          else if (totalCount >= 3) threeOrMoreDur += dt;
+        }
+      }
+      const avgConcurrent = totalDuration > 0 ? sumWeightedTotal / totalDuration : null;
+      const avgConcurrentLong = totalDuration > 0 ? sumWeightedLong / totalDuration : null;
+      const avgConcurrentShort = totalDuration > 0 ? sumWeightedShort / totalDuration : null;
+      let overlapRiskLevel: string | null = null;
+      if (maxConcurrent <= 1) overlapRiskLevel = "low";
+      else if (maxConcurrent <= 3) overlapRiskLevel = "medium";
+      else overlapRiskLevel = "high";
+      return {
+        methodologyDescription: CONCURRENCY_EXPOSURE_DESC,
+        totals: { trades: n, uniqueEntryDates, avgConcurrentOpenTrades: avgConcurrent, maxConcurrentOpenTrades: maxConcurrent },
+        concurrencyDistribution: { oneOpen: oneOpenDur, twoOpen: twoOpenDur, threeOrMoreOpen: threeOrMoreDur },
+        byDirectionIfAvailable: { avgConcurrentLongTrades: avgConcurrentLong, avgConcurrentShortTrades: avgConcurrentShort },
+        interpretation: { overlapRiskLevel },
+      };
+    };
+    const concurrencyExposureAudit = computeConcurrencyExposureAudit();
+
+    const CAPITAL_CONSTRAINT_DESC = "Shadow audit of Strategy V2 Candidate under capital constraints (max concurrent open trades). Same entry/exit logic; when capacity is exceeded, new entries are skipped. Selection rule when multiple compete: prioritize larger absolute activeSetupScore first, if tied earlier timestamp first. unconstrainedBaseline: no limit. max1OpenTrade/max2OpenTrades/max3OpenTrades: cap at 1/2/3.";
+    type CapitalConstraintRow = NonNullable<DashboardSummary["capitalConstraintShadowAudit"]>["unconstrainedBaseline"];
+    const runCapitalConstraintShadow = (maxOpen: number): { tr: number[]; br: number[]; nLong: number; nShort: number; avgConc: number | null; maxConc: number } => {
+      const n = tradeReturns.length;
+      if (n === 0) return { tr: [], br: [], nLong: 0, nShort: 0, avgConc: null, maxConc: 0 };
+      type Ev = { t: number; kind: "enter" | "exit"; k: number; score: number };
+      const evs: Ev[] = [];
+      for (let k = 0; k < n; k++) {
+        const entryTs = execTimestamps[k]!;
+        const sym = execSymbol[k]!;
+        const idx = execEntryIndex[k]!;
+        const data = cachedData.get(sym);
+        const exitTs = data && idx + horizon < data.timestamps.length ? data.timestamps[idx + horizon]!.getTime() : entryTs + horizon * 86400000;
+        evs.push({ t: entryTs, kind: "enter", k, score: execActiveSetupScore[k] ?? 0 });
+        evs.push({ t: exitTs + 1, kind: "exit", k, score: 0 });
+      }
+      evs.sort((a, b) => {
+        if (a.t !== b.t) return a.t - b.t;
+        if (a.kind !== b.kind) return a.kind === "exit" ? -1 : 1;
+        const scoreCmp = b.score - a.score;
+        if (scoreCmp !== 0) return scoreCmp;
+        return (execTimestamps[a.k] ?? 0) - (execTimestamps[b.k] ?? 0);
+      });
+      const openSet = new Set<number>();
+      const selected = new Set<number>();
+      for (const e of evs) {
+        if (e.kind === "exit") openSet.delete(e.k);
+        else if (openSet.size < maxOpen) { openSet.add(e.k); selected.add(e.k); }
+      }
+      const idxs = [...selected].sort((a, b) => execTimestamps[a]! - execTimestamps[b]!);
+      const tr = idxs.map((i) => tradeReturns[i]!);
+      const br = idxs.map((i) => benchmarkReturns[i]!);
+      const nLong = idxs.filter((i) => execIsLong[i]).length;
+      const nShort = idxs.length - nLong;
+      let avgConc: number | null = null;
+      let maxConc = 0;
+      if (idxs.length > 0) {
+        const sev: { t: number; delta: number }[] = [];
+        for (const i of idxs) {
+          const entryTs = execTimestamps[i]!;
+          const sym = execSymbol[i]!;
+          const idx = execEntryIndex[i]!;
+          const data = cachedData.get(sym);
+          const exitTs = data && idx + horizon < data.timestamps.length ? data.timestamps[idx + horizon]!.getTime() : entryTs + horizon * 86400000;
+          sev.push({ t: entryTs, delta: 1 });
+          sev.push({ t: exitTs + 1, delta: -1 });
+        }
+        sev.sort((a, b) => a.t - b.t);
+        let c = 0;
+        let sumW = 0;
+        let tot = 0;
+        for (let i = 0; i < sev.length - 1; i++) {
+          c += sev[i]!.delta;
+          if (c > maxConc) maxConc = c;
+          const dt = sev[i + 1]!.t - sev[i]!.t;
+          if (c > 0) { sumW += c * dt; tot += dt; }
+        }
+        avgConc = tot > 0 ? sumW / tot : null;
+      }
+      return { tr, br, nLong, nShort, avgConc, maxConc };
+    };
+    const toCapitalConstraintRow = (res: { tr: number[]; br: number[]; nLong: number; nShort: number; avgConc: number | null; maxConc: number }): CapitalConstraintRow => {
+      const { tr, br, nLong, nShort, avgConc, maxConc } = res;
+      const m = tr.length;
+      if (m === 0) return { trades: null, executedLongTrades: nLong, executedShortTrades: nShort, winRate: null, avgTradeReturn: null, cumulativeReturn: null, benchmarkReturn: null, edge: null, maxDrawdown: null, avgConcurrentOpenTrades: avgConc, maxConcurrentOpenTrades: maxConc };
+      const wins = tr.filter((r) => r > 0).length;
+      const cumStrategy = tr.reduce((a, b) => a + b, 0);
+      const cumBench = br.reduce((a, b) => a + b, 0);
+      let equity = 1, peak = 1, maxDd = 0;
+      for (const r of tr) {
+        equity *= 1 + r;
+        if (equity > peak) peak = equity;
+        const dd = peak > 0 ? (peak - equity) / peak : 0;
+        if (dd > maxDd) maxDd = dd;
+      }
+      return { trades: m, executedLongTrades: nLong, executedShortTrades: nShort, winRate: wins / m, avgTradeReturn: cumStrategy / m, cumulativeReturn: cumStrategy, benchmarkReturn: cumBench, edge: cumStrategy - cumBench, maxDrawdown: maxDd, avgConcurrentOpenTrades: avgConc, maxConcurrentOpenTrades: maxConc };
+    };
+    const ccUnconstrained = runCapitalConstraintShadow(1e9);
+    const ccMax1 = runCapitalConstraintShadow(1);
+    const ccMax2 = runCapitalConstraintShadow(2);
+    const ccMax3 = runCapitalConstraintShadow(3);
+    const ccVariants: { key: string; row: CapitalConstraintRow }[] = [
+      { key: "unconstrainedBaseline", row: toCapitalConstraintRow(ccUnconstrained) },
+      { key: "max1OpenTrade", row: toCapitalConstraintRow(ccMax1) },
+      { key: "max2OpenTrades", row: toCapitalConstraintRow(ccMax2) },
+      { key: "max3OpenTrades", row: toCapitalConstraintRow(ccMax3) },
+    ];
+    const ccBestEdge = ccVariants.filter((v) => v.row.edge != null).sort((a, b) => (b.row.edge ?? 0) - (a.row.edge ?? 0))[0]?.key ?? null;
+    const ccBestCum = ccVariants.filter((v) => v.row.cumulativeReturn != null).sort((a, b) => (b.row.cumulativeReturn ?? 0) - (a.row.cumulativeReturn ?? 0))[0]?.key ?? null;
+    const ccBestDd = ccVariants.filter((v) => v.row.maxDrawdown != null).sort((a, b) => (a.row.maxDrawdown ?? 0) - (b.row.maxDrawdown ?? 0))[0]?.key ?? null;
+    const deployableVariants = ccVariants.filter((v) => v.key !== "unconstrainedBaseline");
+    const ccBestDeployable = deployableVariants.filter((v) => v.row.edge != null).sort((a, b) => (b.row.edge ?? 0) - (a.row.edge ?? 0))[0]?.key ?? null;
+    const capitalConstraintShadowAudit: NonNullable<DashboardSummary["capitalConstraintShadowAudit"]> = {
+      methodologyDescription: CAPITAL_CONSTRAINT_DESC,
+      unconstrainedBaseline: toCapitalConstraintRow(ccUnconstrained),
+      max1OpenTrade: toCapitalConstraintRow(ccMax1),
+      max2OpenTrades: toCapitalConstraintRow(ccMax2),
+      max3OpenTrades: toCapitalConstraintRow(ccMax3),
+      recommendation: { bestVariantByEdge: ccBestEdge, bestVariantByCumulativeReturn: ccBestCum, bestVariantByMaxDrawdown: ccBestDd, bestDeployableCandidate: ccBestDeployable },
+    };
+
+    const deployableRow = capitalConstraintShadowAudit.max3OpenTrades;
+    const unconstrainedRow = capitalConstraintShadowAudit.unconstrainedBaseline;
+    const deployableStrategyCandidateAudit: NonNullable<DashboardSummary["deployableStrategyCandidateAudit"]> = {
+      strategyId: "crowdvest_strategy_v2_deployable_candidate",
+      versionLabel: "v2-deployable-candidate",
+      status: "frozen_for_deployment_comparison",
+      constraintProfile: {
+        maxConcurrentOpenTrades: 3,
+        selectionPriorityRule: "larger absolute activeSetupScore first; ties by earlier timestamp",
+      },
+      performanceSnapshot: {
+        trades: deployableRow.trades,
+        executedLongTrades: deployableRow.executedLongTrades,
+        executedShortTrades: deployableRow.executedShortTrades,
+        winRate: deployableRow.winRate,
+        avgTradeReturn: deployableRow.avgTradeReturn,
+        cumulativeReturn: deployableRow.cumulativeReturn,
+        benchmarkReturn: deployableRow.benchmarkReturn,
+        edge: deployableRow.edge,
+        maxDrawdown: deployableRow.maxDrawdown,
+        avgConcurrentOpenTrades: deployableRow.avgConcurrentOpenTrades,
+        maxConcurrentOpenTrades: deployableRow.maxConcurrentOpenTrades,
+      },
+      relationToResearchBaseline: {
+        cumulativeReturnDeltaVsUnconstrained: deployableRow.cumulativeReturn != null && unconstrainedRow.cumulativeReturn != null ? deployableRow.cumulativeReturn - unconstrainedRow.cumulativeReturn : null,
+        edgeDeltaVsUnconstrained: deployableRow.edge != null && unconstrainedRow.edge != null ? deployableRow.edge - unconstrainedRow.edge : null,
+        drawdownDeltaVsUnconstrained: deployableRow.maxDrawdown != null && unconstrainedRow.maxDrawdown != null ? deployableRow.maxDrawdown - unconstrainedRow.maxDrawdown : null,
+      },
+    };
+
+    const researchPs = strategyV2CandidateAudit.performanceSnapshot;
+    const deployablePs = deployableStrategyCandidateAudit.performanceSnapshot;
+    const strategyComparisonSummaryAudit: NonNullable<DashboardSummary["strategyComparisonSummaryAudit"]> = {
+      researchChampion: {
+        strategyId: strategyV2CandidateAudit.strategyId,
+        versionLabel: strategyV2CandidateAudit.versionLabel,
+        trades: researchPs.trades,
+        cumulativeReturn: researchPs.cumulativeReturn,
+        benchmarkReturn: researchPs.benchmarkReturn,
+        edge: researchPs.edge,
+        maxDrawdown: researchPs.maxDrawdown,
+      },
+      deployableCandidate: {
+        strategyId: deployableStrategyCandidateAudit.strategyId,
+        versionLabel: deployableStrategyCandidateAudit.versionLabel,
+        trades: deployablePs.trades,
+        cumulativeReturn: deployablePs.cumulativeReturn,
+        benchmarkReturn: deployablePs.benchmarkReturn,
+        edge: deployablePs.edge,
+        maxDrawdown: deployablePs.maxDrawdown,
+        maxConcurrentOpenTrades: deployablePs.maxConcurrentOpenTrades,
+      },
+      comparison: {
+        cumulativeReturnDeltaDeployableMinusResearch: researchPs.cumulativeReturn != null && deployablePs.cumulativeReturn != null ? deployablePs.cumulativeReturn - researchPs.cumulativeReturn : null,
+        edgeDeltaDeployableMinusResearch: researchPs.edge != null && deployablePs.edge != null ? deployablePs.edge - researchPs.edge : null,
+        drawdownDeltaDeployableMinusResearch: researchPs.maxDrawdown != null && deployablePs.maxDrawdown != null ? deployablePs.maxDrawdown - researchPs.maxDrawdown : null,
+      },
+      productInterpretation: {
+        preferredForResearch: strategyV2CandidateAudit.strategyId,
+        preferredForDeployment: deployableStrategyCandidateAudit.strategyId,
+      },
+    };
+
     const EXIT_METHODOLOGY_DESC = "Exit overlays use daily close-to-close path within the holding window (intrabar high/low unavailable); threshold hit on first close that crosses it; LONG: SL -3% when rawReturn<=-0.03, TP +6% when rawReturn>=0.06; SHORT: SL -3% when rawReturn>=0.03, TP +6% when rawReturn<=-0.06.";
     type ExitPolicyRow = NonNullable<DashboardSummary["exitPolicyShadowAudit"]>["baselineEquivalent"];
     const toExitPolicyRow = (tr: number[], br: number[], nLong: number, nShort: number): ExitPolicyRow => {
@@ -6896,6 +7480,12 @@ export class DashboardService {
         strategyV2CandidateAudit,
         liveExitPolicyAudit,
         exitPolicyShadowAudit,
+        executionRealismAudit,
+        frictionSensitivityAudit,
+        concurrencyExposureAudit,
+        capitalConstraintShadowAudit,
+        deployableStrategyCandidateAudit,
+        strategyComparisonSummaryAudit,
         regimePerformanceAudit,
         downtrendSuppressionShadowAudit,
         causalRegimePolicyShadowAudit,
@@ -7373,6 +7963,12 @@ export class DashboardService {
       strategyV2CandidateAudit,
       liveExitPolicyAudit,
       exitPolicyShadowAudit,
+      executionRealismAudit,
+      frictionSensitivityAudit,
+      concurrencyExposureAudit,
+      capitalConstraintShadowAudit,
+      deployableStrategyCandidateAudit,
+      strategyComparisonSummaryAudit,
       regimePerformanceAudit,
       downtrendSuppressionShadowAudit,
       causalRegimePolicyShadowAudit,
@@ -7458,6 +8054,12 @@ export class DashboardService {
     strategyV2CandidateAudit: NonNullable<DashboardSummary["strategyV2CandidateAudit"]>;
     liveExitPolicyAudit: NonNullable<DashboardSummary["liveExitPolicyAudit"]>;
     exitPolicyShadowAudit: NonNullable<DashboardSummary["exitPolicyShadowAudit"]>;
+    executionRealismAudit: NonNullable<DashboardSummary["executionRealismAudit"]>;
+    frictionSensitivityAudit: NonNullable<DashboardSummary["frictionSensitivityAudit"]>;
+    concurrencyExposureAudit: NonNullable<DashboardSummary["concurrencyExposureAudit"]>;
+    capitalConstraintShadowAudit: NonNullable<DashboardSummary["capitalConstraintShadowAudit"]>;
+    deployableStrategyCandidateAudit: NonNullable<DashboardSummary["deployableStrategyCandidateAudit"]>;
+    strategyComparisonSummaryAudit: NonNullable<DashboardSummary["strategyComparisonSummaryAudit"]>;
     regimePerformanceAudit: NonNullable<DashboardSummary["regimePerformanceAudit"]>;
     downtrendSuppressionShadowAudit: NonNullable<DashboardSummary["downtrendSuppressionShadowAudit"]>;
     causalRegimePolicyShadowAudit: NonNullable<DashboardSummary["causalRegimePolicyShadowAudit"]>;
@@ -7649,6 +8251,12 @@ export class DashboardService {
       strategyV2CandidateAudit: dirStrategyV2CandidateAudit,
       liveExitPolicyAudit: dirLiveExitPolicyAudit,
       exitPolicyShadowAudit: dirExitPolicyShadowAudit,
+      executionRealismAudit: dirExecutionRealismAudit,
+      frictionSensitivityAudit: dirFrictionSensitivityAudit,
+      concurrencyExposureAudit: dirConcurrencyExposureAudit,
+      capitalConstraintShadowAudit: dirCapitalConstraintShadowAudit,
+      deployableStrategyCandidateAudit: dirDeployableStrategyCandidateAudit,
+      strategyComparisonSummaryAudit: dirStrategyComparisonSummaryAudit,
       regimePerformanceAudit: dirRegimePerformanceAudit,
       downtrendSuppressionShadowAudit: dirDowntrendSuppressionShadowAudit,
       causalRegimePolicyShadowAudit: dirCausalRegimePolicyShadowAudit,
@@ -7743,6 +8351,12 @@ export class DashboardService {
       strategyV2CandidateAudit: dirStrategyV2CandidateAudit,
       liveExitPolicyAudit: dirLiveExitPolicyAudit,
       exitPolicyShadowAudit: dirExitPolicyShadowAudit,
+      executionRealismAudit: dirExecutionRealismAudit,
+      frictionSensitivityAudit: dirFrictionSensitivityAudit,
+      concurrencyExposureAudit: dirConcurrencyExposureAudit,
+      capitalConstraintShadowAudit: dirCapitalConstraintShadowAudit,
+      deployableStrategyCandidateAudit: dirDeployableStrategyCandidateAudit,
+      strategyComparisonSummaryAudit: dirStrategyComparisonSummaryAudit,
       regimePerformanceAudit: dirRegimePerformanceAudit,
       downtrendSuppressionShadowAudit: dirDowntrendSuppressionShadowAudit,
       causalRegimePolicyShadowAudit: dirCausalRegimePolicyShadowAudit,

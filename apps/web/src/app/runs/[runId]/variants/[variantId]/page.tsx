@@ -1,11 +1,9 @@
 import Link from "next/link";
-import {
-  formatPercent,
-  formatNumber,
-  formatDurationMs,
-  truncateMiddle,
-} from "@/lib/format";
-import { stdDev } from "@/lib/cis";
+
+function truncateMiddle(id: string, head = 6, tail = 4): string {
+  if (!id || id.length <= head + tail) return id;
+  return `${id.slice(0, head)}…${id.slice(-tail)}`;
+}
 import {
   SectionCard,
   MetricRows,
@@ -29,6 +27,26 @@ function mean(xs: number[]): number {
   return xs.reduce((a, b) => a + b, 0) / xs.length;
 }
 
+function formatNum(v: unknown, digits: number): string {
+  if (typeof v !== "number" || !Number.isFinite(v)) return "—";
+  return v.toFixed(digits);
+}
+
+function formatPercent(p?: number | null, digits = 2): string {
+  if (p == null || !Number.isFinite(p)) return "—";
+  return `${(p * 100).toFixed(digits)}%`;
+}
+
+function formatNumber(value: number | null | undefined): string {
+  if (value == null || !Number.isFinite(value)) return "—";
+  return String(value);
+}
+
+function formatDurationMs(ms?: number | null): string {
+  if (ms == null || !Number.isFinite(ms)) return "—";
+  return `${(ms / 1000).toFixed(1)}s`;
+}
+
 function stddev(xs: number[]): number {
   if (xs.length === 0) return 0;
   const m = mean(xs);
@@ -36,6 +54,7 @@ function stddev(xs: number[]): number {
     xs.reduce((s, x) => s + (x - m) ** 2, 0) / xs.length;
   return Math.sqrt(variance);
 }
+
 
 interface VariantItem {
   id: string;
@@ -254,8 +273,8 @@ export default async function VariantDetailPage({
     nSeeds > 0 ? seedsWithSummary.map((v) => v.summary!.corr!) : [];
 
   const accMean = accsPct.length > 0 ? mean(accsPct) : 0;
-  const accStd = accsPct.length > 0 ? stdDev(accsPct) : 0;
-  const corrStd = corrs.length > 0 ? stdDev(corrs) : 0;
+  const accStd = accsPct.length > 0 ? stddev(accsPct) : 0;
+  const corrStd = corrs.length > 0 ? stddev(corrs) : 0;
 
   const clamp = (x: number, lo: number, hi: number) =>
     Math.max(lo, Math.min(hi, x));
@@ -533,11 +552,11 @@ export default async function VariantDetailPage({
         >
           <MetricRows>
             <MetricRow label="Seed family size (N)" value={nSeeds} />
-            <MetricRow label="Accuracy Std Dev (%)" value={`${accStd.toFixed(2)}%`} mono />
-            <MetricRow label="Corr Std Dev" value={corrStd.toFixed(4)} mono />
+            <MetricRow label="Accuracy Std Dev (%)" value={`${formatNum(accStd, 2)}%`} mono />
+            <MetricRow label="Corr Std Dev" value={formatNum(corrStd, 4)} mono />
             <MetricRow
               label="Accuracy CI Range"
-              value={`${ciLow.toFixed(1)} – ${ciHigh.toFixed(1)}`}
+              value={`${formatNum(ciLow, 1)} – ${formatNum(ciHigh, 1)}`}
               mono
             />
           </MetricRows>

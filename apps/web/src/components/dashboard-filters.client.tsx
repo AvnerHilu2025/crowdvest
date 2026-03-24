@@ -1,10 +1,15 @@
 "use client";
 
+import React from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 function setParam(params: URLSearchParams, key: string, val: string | null) {
   if (val === null || val === "") params.delete(key);
   else params.set(key, val);
+}
+
+function selectValue(e: React.ChangeEvent<HTMLSelectElement>): string {
+  return String(e.currentTarget.value ?? "");
 }
 
 export default function DashboardFiltersClient(props: {
@@ -35,9 +40,7 @@ export default function DashboardFiltersClient(props: {
           fontSize: 14,
         }}
         value={props.assetSymbol}
-        onChange={(e) =>
-          updateUrl((p) => setParam(p, "assetSymbol", e.target.value))
-        }
+        onChange={(e) => updateUrl((p) => setParam(p, "assetSymbol", selectValue(e)))}
       >
         {["SPY", "QQQ", "IWM"].map((s) => (
           <option key={s} value={s}>
@@ -56,9 +59,7 @@ export default function DashboardFiltersClient(props: {
           fontSize: 14,
         }}
         value={props.topN}
-        onChange={(e) =>
-          updateUrl((p) => setParam(p, "topN", e.target.value))
-        }
+        onChange={(e) => updateUrl((p) => setParam(p, "topN", selectValue(e)))}
       >
         <option value="10">Top 10</option>
         <option value="25">Top 25</option>

@@ -1,3 +1,187 @@
+/* Strategy Comparison section */
+.strategyComparisonSection {
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.strategyComparisonCards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 640px) {
+  .strategyComparisonCards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.strategyComparisonCard {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 8px;
+  padding: 12px;
+  background: rgba(248, 250, 252, 0.5);
+}
+
+.researchCard {
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.deployableCard {
+  border: 1px solid #86efac;
+  background: #f0fdf4;
+  box-shadow: 0 0 0 1px #bbf7d0;
+}
+
+.scoreBreakdown {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #6b7280;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.validationRow {
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.validationLabel {
+  font-weight: 600;
+  color: #111827;
+}
+
+.validationGood {
+  color: #166534;
+  background: #dcfce7;
+  border: 1px solid #86efac;
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.validationWarn {
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.validationBad {
+  color: #991b1b;
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.decisionScore {
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.guardrails {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-left: 3px solid #f59e0b;
+  background: #fffbeb;
+  border-radius: 4px;
+}
+
+.guardrailTitle {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: #92400e;
+}
+
+.guardrailItem {
+  font-size: 12px;
+  color: #78350f;
+}
+
+.decisionSummary {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #065f46;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 6px;
+}
+
+.decisionBadge {
+  display: inline-block;
+  margin-bottom: 6px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #065f46;
+  background: #d1fae5;
+  border: 1px solid #6ee7b7;
+  border-radius: 999px;
+}
+
+.decisionInsight {
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #6b7280;
+}
+
+.crowdCompositionSection {
+  margin-top: 24px;
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.sectionTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.crowdCompositionGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.crowdCompositionCard {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 12px;
+  background: #f9fafb;
+}
+
+.crowdCompositionCardTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 8px;
+}
+
+.crowdCompositionList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: #4b5563;
+}
+
 .controlsRow {
   display: flex;
   gap: 12px;

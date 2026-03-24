@@ -1,7 +1,11 @@
 "use client";
 
 import React from "react";
-import { clamp01 } from "@/lib/dashboardThresholds";
+
+function clamp01(x: number): number {
+  if (!Number.isFinite(x)) return 0;
+  return Math.max(0, Math.min(1, x));
+}
 
 export function HeaderWithTip(props: {
   label: string;

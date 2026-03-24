@@ -4,7 +4,7 @@ export type StabilityRisk = "STABLE" | "DIVERGING" | "UNSTABLE" | "LEGACY";
 
 export function classifyStabilityRisk(args: {
   isLegacyTiming?: boolean;
-  label?: StabilityLabel | string;
+  label?: string;
   corrSpread?: number | null; // 0..1
   accStdDev?: number | null; // 0..1 (fraction)
   signAgreementRate?: number | null; // 0..1
@@ -32,7 +32,7 @@ export function classifyStabilityRisk(args: {
 }
 
 export function stabilityReason(args: {
-  label?: StabilityLabel | string;
+  label?: string;
   corrSpread?: number | null;
   accStdDev?: number | null;
   signAgreementRate?: number | null;
@@ -59,7 +59,7 @@ export function stabilityReason(args: {
 
 export function riskScore(args: {
   isLegacyTiming?: boolean;
-  label?: StabilityLabel | string;
+  label?: string;
   corrSpread?: number | null;
   accStdDev?: number | null;
   signAgreementRate?: number | null;

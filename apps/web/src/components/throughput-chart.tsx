@@ -30,9 +30,10 @@ export function ThroughputChart({ data }: ThroughputChartProps) {
       return { x, y, ...d };
     });
 
+  const first = points[0];
   const pathD =
-    points.length > 0
-      ? "M " + points[0]!.x + " " + points[0]!.y + " " +
+    first !== undefined
+      ? "M " + first.x + " " + first.y + " " +
         points.slice(1).map((p) => "L " + p.x + " " + p.y).join(" ")
       : "";
 

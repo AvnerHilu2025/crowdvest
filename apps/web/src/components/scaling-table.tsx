@@ -2,7 +2,11 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { truncateMiddle } from "@/lib/format";
+
+function truncateMiddle(id: string, head = 6, tail = 4): string {
+  if (!id || id.length <= head + tail) return id;
+  return `${id.slice(0, head)}…${id.slice(-tail)}`;
+}
 
 export interface ScalingRow {
   runId: string;

@@ -4,7 +4,14 @@ import React, { useEffect, useState } from "react";
 import { SeedHeatmap } from "./SeedHeatmap";
 import { SeedProfilePanel } from "./SeedProfilePanel";
 import { AgreementTimeline } from "./AgreementTimeline";
-import { computeConvergenceStats, fmtPct01, fmtNum, classifyConvergenceBand, bandStyles } from "@/lib/convergence";
+import {
+  computeConvergenceStats,
+  fmtPct01,
+  fmtNum,
+  classifyConvergenceBand,
+  bandStyles,
+  type ConvergenceStats,
+} from "@/lib/convergence";
 
 export type ScalingRowForDetails = {
   runId: string;
@@ -161,19 +168,23 @@ export function ScalingDetails({ row, assetSymbol = "SPY" }: ScalingDetailsProps
       ) : null}
       {variantsCount >= 2 ? (
         (() => {
+          /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access -- @/lib/convergence resolves at build */
           const stepAgreementSeries = variantsData.stepAgreement.map(
             (p) => p.agreementPct
           );
-          const conv = computeConvergenceStats(stepAgreementSeries, 90);
+          const conv = computeConvergenceStats(stepAgreementSeries, 90) as ConvergenceStats;
           const band = classifyConvergenceBand({
             csiStepNumber: conv.csiStepNumber,
             pctAboveThreshold: conv.pctAboveThreshold,
             stdDev: conv.stdDev,
           });
-          const bandUi = bandStyles(band);
-          const pctBarWidth = Math.min(100, Math.max(0, conv.pctAboveThreshold ?? 0));
-          const minBarWidth = conv.min != null ? Math.min(100, Math.max(0, conv.min * 100)) : 0;
-          const finalBarWidth = conv.final != null ? Math.min(100, Math.max(0, conv.final * 100)) : 0;
+          const bandUi = bandStyles(band) as { label: string; className: string };
+          const pctVal = conv.pctAboveThreshold;
+          const pctBarWidth = typeof pctVal === "number" && Number.isFinite(pctVal) ? Math.min(100, Math.max(0, pctVal)) : 0;
+          const minVal = conv.min;
+          const minBarWidth = typeof minVal === "number" && Number.isFinite(minVal) ? Math.min(100, Math.max(0, minVal * 100)) : 0;
+          const finalVal = conv.final;
+          const finalBarWidth = typeof finalVal === "number" && Number.isFinite(finalVal) ? Math.min(100, Math.max(0, finalVal * 100)) : 0;
           return (
             <div data-testid="convergence-section" style={{ marginTop: 16 }}>
               <div
@@ -324,6 +335,7 @@ export function ScalingDetails({ row, assetSymbol = "SPY" }: ScalingDetailsProps
               </div>
             </div>
           );
+          /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
         })()
       ) : null}
     </div>

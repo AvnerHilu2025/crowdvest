@@ -129,7 +129,7 @@ export function ScalingCurve({ scalingRows }: ScalingCurveProps) {
           <input
             type="checkbox"
             checked={showOverheadBreakdown}
-            onChange={(e) => setShowOverheadBreakdown(e.target.checked)}
+            onChange={(e) => setShowOverheadBreakdown(Boolean((e.target as HTMLInputElement).checked))}
           />
           Show Overhead Breakdown
         </label>
@@ -143,11 +143,11 @@ export function ScalingCurve({ scalingRows }: ScalingCurveProps) {
                 dataKey="agents"
                 type="number"
                 tick={{ fontSize: 11 }}
-                tickFormatter={(v) => String(v)}
+                tickFormatter={(v: number) => String(v)}
               />
               <YAxis
                 tick={{ fontSize: 11 }}
-                tickFormatter={(v) => String(Math.round(v))}
+                tickFormatter={(v: number) => String(Math.round(v))}
               />
               <Tooltip
                 formatter={(value: number | undefined, name?: string) => [((value ?? 0).toFixed(0)) + " ms", name ?? ""]}
@@ -198,18 +198,18 @@ export function ScalingCurve({ scalingRows }: ScalingCurveProps) {
                 dataKey="agents"
                 type="number"
                 tick={{ fontSize: 11 }}
-                tickFormatter={(v) => String(v)}
+                tickFormatter={(v: number) => String(v)}
               />
               <YAxis
                 yAxisId="left"
                 tick={{ fontSize: 11 }}
-                tickFormatter={(v) => String(Math.round(v))}
+                tickFormatter={(v: number) => String(Math.round(v))}
               />
               <YAxis
                 yAxisId="right"
                 orientation="right"
                 tick={{ fontSize: 11 }}
-                tickFormatter={(v) => `${v}%`}
+                tickFormatter={(v: number) => `${v}%`}
               />
               <Tooltip
                 formatter={(value: number | undefined, name?: string) => {

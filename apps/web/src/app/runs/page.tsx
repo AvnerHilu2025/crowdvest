@@ -112,13 +112,17 @@ export default async function RunsPage({
 
   const scalingRows: ScalingRow[] = [];
   for (let i = 0; i < runsForScaling.length; i++) {
-    const run = runsForScaling[i]!;
+    const run = runsForScaling[i];
+    if (!run) continue;
     const result = variantResults[i];
-    if (result?.status !== "fulfilled" || !result.value?.items?.length) continue;
+    if (!result || result.status !== "fulfilled") continue;
+    const payload = result.value as { items: VariantItem[] } | null;
+    if (!payload?.items?.length) continue;
 
-    const variants = result.value.items;
-    const agents = variants[0]?.agents;
-    const steps = variants[0]?.steps;
+    const variants = payload.items;
+    const firstVariant = variants[0] as VariantItem | undefined;
+    const agents = firstVariant != null ? firstVariant.agents : undefined;
+    const steps = firstVariant != null ? firstVariant.steps : undefined;
     if (agents == null || steps == null || !Number.isFinite(agents) || !Number.isFinite(steps)) continue;
 
     const variantsCount = variants.length;
@@ -127,15 +131,20 @@ export default async function RunsPage({
       0,
     );
     const isLegacyTiming = variantsCount > 0 && sumVariantDurationMs === 0;
-    const effectiveRunDurationMs =
-      run.runDurationMs != null && run.runDurationMs > 0
-        ? run.runDurationMs
-        : deriveRunDurationMs({
-            runDurationMs: run.runDurationMs,
-            startedAt: run.startedAt,
-            finishedAt: run.finishedAt,
-            completedAt: run.completedAt,
-          });
+    const rd = run.runDurationMs;
+    const runDurationMsVal: number | null =
+      typeof rd === "number" && Number.isFinite(rd) && rd > 0 ? rd : null;
+    let derived: number | null = null;
+    if (runDurationMsVal == null) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call -- deriveRunDurationMs from @/lib/duration
+      derived = deriveRunDurationMs({
+        runDurationMs: run.runDurationMs,
+        startedAt: run.startedAt ?? null,
+        finishedAt: run.finishedAt ?? null,
+        completedAt: run.completedAt ?? null,
+      });
+    }
+    const effectiveRunDurationMs: number | null = runDurationMsVal ?? derived;
 
     const decisionsTotal = agents * steps * variantsCount;
     const canComputeOverhead =
@@ -181,6 +190,7 @@ export default async function RunsPage({
     });
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- ScalingRow.agents from scaling-table
   scalingRows.sort((a, b) => a.agents - b.agents);
 
   const from = total === 0 ? 0 : offset + 1;

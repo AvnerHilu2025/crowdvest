@@ -16,7 +16,7 @@ export function computeCis({
   const accuracyScore = directionalAccuracy ?? 0;
   const corrScore = ((corr ?? 0) + 1) / 2;
 
-  let cis =
+  const cis =
     0.4 * accuracyScore +
     0.25 * corrScore +
     0.25 * percentileScore +

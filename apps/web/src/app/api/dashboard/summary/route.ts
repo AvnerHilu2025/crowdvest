@@ -424,9 +424,9 @@ export async function GET(req: NextRequest) {
 
     let shaped: Record<string, unknown>;
     try {
-      shaped = shapeData(data);
+      shaped = shapeData(data as Record<string, unknown>);
     } catch {
-      shaped = data;
+      shaped = (data ?? {}) as Record<string, unknown>;
     }
 
     return NextResponse.json(shaped, {

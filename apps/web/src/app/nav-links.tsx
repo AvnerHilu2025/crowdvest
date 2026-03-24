@@ -3,8 +3,34 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getWalletSummary } from "@/lib/api";
+import { API_BASE } from "@/lib/api";
 import { getOrCreateUserId } from "@/lib/identity";
+
+interface WalletSummary {
+  available: number;
+  locked: number;
+  total: number;
+}
+
+function isWalletSummary(v: unknown): v is WalletSummary {
+  return (
+    v != null &&
+    typeof v === "object" &&
+    typeof (v as WalletSummary).available === "number" &&
+    typeof (v as WalletSummary).locked === "number" &&
+    typeof (v as WalletSummary).total === "number"
+  );
+}
+
+async function fetchWalletSummary(userId: string): Promise<unknown> {
+  const url = `${API_BASE}/wallet/summary?userId=${encodeURIComponent(userId)}`;
+  const res = await fetch(url, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`Wallet summary: ${res.status}`);
+  const json: unknown = await res.json();
+  return json;
+}
 
 const links = [
   { href: "/", label: "Home" },
@@ -16,41 +42,46 @@ const links = [
 
 /** Wallet v4 – Read-only. Shows available / locked / total from GET /wallet/summary. */
 function WalletPanel() {
-  const [summary, setSummary] = useState<{ available: number; locked: number; total: number } | null>(null);
+  const [summary, setSummary] = useState<WalletSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const hasWarned = useRef(false);
 
-  const load = useCallback(() => {
+  const load = useCallback(async () => {
     setLoading(true);
     setError(false);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call -- getOrCreateUserId returns string; @/lib/identity resolves at build
     const userId = getOrCreateUserId();
-    getWalletSummary(userId)
-      .then((s) => {
-        setSummary(s);
-        setError(false);
-        hasWarned.current = false;
-        setLoading(false);
-      })
-      .catch(() => {
-        setSummary(null);
-        setError(true);
-        setLoading(false);
-        if (!hasWarned.current) {
-          hasWarned.current = true;
-          console.warn("[WalletPanel] getWalletSummary failed");
-        }
-      });
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument -- fetchWalletSummary returns unknown; userId from getOrCreateUserId; raw narrowed by isWalletSummary
+      const raw = await fetchWalletSummary(userId);
+      setSummary(isWalletSummary(raw) ? raw : null);
+      setError(false);
+      hasWarned.current = false;
+    } catch {
+      setSummary(null);
+      setError(true);
+      if (!hasWarned.current) {
+        hasWarned.current = true;
+        console.warn("[WalletPanel] getWalletSummary failed");
+      }
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
-    load();
+    void load();
   }, [load]);
 
   useEffect(() => {
-    const handler = () => load();
+    /* eslint-disable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return */
+    const handler: EventListener = () => {
+      void load();
+    };
     window.addEventListener("wallet-updated", handler);
     return () => window.removeEventListener("wallet-updated", handler);
+    /* eslint-enable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return */
   }, [load]);
 
   if (error) {

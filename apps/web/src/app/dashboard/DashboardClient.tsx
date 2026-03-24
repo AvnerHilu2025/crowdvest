@@ -7,7 +7,7 @@ import DashboardFiltersClient from "@/components/dashboard-filters.client";
 import { MiniBar as ScalingMiniBar, Badge } from "@/components/dashboard/mini-bar";
 import { MiniBar, HeaderWithTip, StabilityLegend } from "@/components/dashboard/mini";
 import { ScalingCurve } from "@/components/dashboard/ScalingCurve";
-import { CrowdConsensus } from "@/components/dashboard/CrowdConsensus";
+import { CrowdConsensus, type ConsensusData } from "@/components/dashboard/CrowdConsensus";
 import { ScalingDetails } from "@/components/dashboard/ScalingDetails";
 import { p95, normToP95 } from "@/lib/miniBars";
 import { DASH_THRESHOLDS, fmtNum, fmtPct01, clamp01, formatOverheadPct } from "@/lib/dashboardThresholds";
@@ -209,13 +209,13 @@ function buildDashboardUrl(
 
 export type DashboardClientProps = {
   initialData: {
-    consensus: {
-      buyPct: number;
-      sellPct: number;
-      holdPct: number;
-      majorityPct: number;
-      entropy: number;
-      polarization: number;
+    consensus?: {
+      buyPct?: number;
+      sellPct?: number;
+      holdPct?: number;
+      majorityPct?: number;
+      entropy?: number;
+      polarization?: number;
     } | null;
     scaling: ScalingRow[];
     stability: StabilityRow[];
@@ -489,7 +489,44 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
   const searchParams = useSearchParams();
   const drawerRunId = searchParams.get("drawerRunId");
 
-  const { consensus, scaling = [], stability = [], counts = { unstable: 0, diverging: 0, ok: 0, legacy: 0 }, filterLabel = "all", latest, latestScalingRow, driftAsset: initialDriftAsset, driftGlobal: initialDriftGlobal, forecastAccuracy, productionAggregationMode, aggregationModeRanking = [], strategyProfile: initialStrategyProfile, strategyDefaults = FALLBACK_STRATEGY_DEFAULTS, executionPreset = FALLBACK_EXECUTION_PRESET, launchPlan = FALLBACK_LAUNCH_PLAN, crowdSignals: rawCrowdSignals, signalValidation: rawSignalValidation, signalHistoryStats, signalCoverage, marketRegime, marketTransition, marketStress, marketAlerts, signalProbabilities, watchlistCandidates, symbolProbabilities, tradeSetups, crowdDivergence, crowdAcceleration, crowdConfidence, signalValidationMetrics, backtestMetrics, backtestDiagnostics, strategyComparisonSummaryAudit } = initialData ?? {};
+  const {
+    consensus,
+    directionBiasByAgentType,
+    scaling = [],
+    stability = [],
+    counts = { unstable: 0, diverging: 0, ok: 0, legacy: 0 },
+    filterLabel = "all",
+    latest,
+    latestScalingRow,
+    driftAsset: initialDriftAsset,
+    driftGlobal: initialDriftGlobal,
+    forecastAccuracy,
+    productionAggregationMode,
+    aggregationModeRanking = [],
+    strategyProfile: initialStrategyProfile,
+    strategyDefaults = FALLBACK_STRATEGY_DEFAULTS,
+    executionPreset = FALLBACK_EXECUTION_PRESET,
+    launchPlan = FALLBACK_LAUNCH_PLAN,
+    crowdSignals: rawCrowdSignals,
+    signalValidation: rawSignalValidation,
+    signalHistoryStats,
+    signalCoverage,
+    marketRegime,
+    marketTransition,
+    marketStress,
+    marketAlerts,
+    signalProbabilities,
+    watchlistCandidates,
+    symbolProbabilities,
+    tradeSetups,
+    crowdDivergence,
+    crowdAcceleration,
+    crowdConfidence,
+    signalValidationMetrics,
+    backtestMetrics,
+    backtestDiagnostics,
+    strategyComparisonSummaryAudit,
+  } = initialData ?? {};
   const crowdSignals =
     rawCrowdSignals && typeof rawCrowdSignals === "object" && Array.isArray(rawCrowdSignals.items)
       ? rawCrowdSignals
@@ -959,36 +996,38 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
       ) : null}
 
       <section className={styles.crowdCompositionSection}>
-        <div className={styles.sectionTitle}>Archetype Decision Distribution</div>
+        <div className={styles.sectionTitle}>Agent Profile Bias</div>
 
-        <div className={styles.crowdCompositionGrid}>
-          <div className={styles.crowdCompositionCard}>
-            <div className={styles.crowdCompositionCardTitle}>BUY leaning</div>
-            <div className={styles.crowdCompositionList}>
-              <div>Momentum Traders — placeholder</div>
-              <div>Growth Optimists — placeholder</div>
-              <div>Retail FOMO — placeholder</div>
-            </div>
+        {!directionBiasByAgentType ? (
+          <div style={{ fontSize: 14, color: "rgba(15, 23, 42, 0.65)" }}>
+            No agent profile bias data available
           </div>
-
-          <div className={styles.crowdCompositionCard}>
-            <div className={styles.crowdCompositionCardTitle}>SELL leaning</div>
-            <div className={styles.crowdCompositionList}>
-              <div>Risk Controllers — placeholder</div>
-              <div>Macro Defensive — placeholder</div>
-              <div>Bearish Contrarians — placeholder</div>
-            </div>
+        ) : (
+          <div className={styles.crowdCompositionGrid}>
+            {(
+              [
+                { key: "trendFollower" as const, title: "Trend Follower" },
+                { key: "contrarian" as const, title: "Contrarian" },
+                { key: "balanced" as const, title: "Balanced" },
+              ] as const
+            ).map(({ key, title }) => {
+              const row = directionBiasByAgentType[key];
+              const positiveCount = row?.positiveCount ?? 0;
+              const negativeCount = row?.negativeCount ?? 0;
+              return (
+                <div key={key} className={styles.crowdCompositionCard}>
+                  <div className={styles.crowdCompositionCardTitle}>{title}</div>
+                  <div className={styles.crowdCompositionList}>
+                    <div>Leaning: {agentProfileLeaning(positiveCount, negativeCount)}</div>
+                    <div>Avg signal: {formatAvgSignal(row?.avgSignal)}</div>
+                    <div>Positive count: {formatNumber(row?.positiveCount ?? null)}</div>
+                    <div>Negative count: {formatNumber(row?.negativeCount ?? null)}</div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-
-          <div className={styles.crowdCompositionCard}>
-            <div className={styles.crowdCompositionCardTitle}>HOLD leaning</div>
-            <div className={styles.crowdCompositionList}>
-              <div>Long-Term Allocators — placeholder</div>
-              <div>Passive Indexers — placeholder</div>
-              <div>Wait-and-See — placeholder</div>
-            </div>
-          </div>
-        </div>
+        )}
       </section>
 
       <div data-testid="drift-panel" className={styles.driftPanel}>
@@ -1565,7 +1604,7 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
         </div>
       </div>
 
-      <CrowdConsensus data={consensus} />
+      <CrowdConsensus data={(consensus ?? null) as ConsensusData | null} />
 
       <div
         data-testid="crowd-signals-card"

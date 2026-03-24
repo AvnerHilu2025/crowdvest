@@ -35,6 +35,17 @@ function formatAvgSignal(value: number | undefined): string {
   return value.toFixed(3);
 }
 
+/** Consensus buy/sell/hold are 0–1 shares; display as whole percent 0–100. */
+function consensusPctWhole(share: number | undefined | null): string {
+  if (share == null || !Number.isFinite(share)) return "—";
+  return `${Math.round(share * 100)}%`;
+}
+
+function consensusMetric2(value: number | undefined | null): string {
+  if (value == null || !Number.isFinite(value)) return "—";
+  return value.toFixed(2);
+}
+
 const clamp = (value: number, min: number, max: number) =>
   Math.max(min, Math.min(max, value));
 
@@ -997,6 +1008,139 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
 
       <section className={styles.crowdCompositionSection}>
         <div className={styles.sectionTitle}>Agent Profile Bias</div>
+
+        {consensus == null ? (
+          <div style={{ fontSize: 14, color: "rgba(15, 23, 42, 0.65)", marginBottom: 16 }}>
+            No crowd mix data available
+          </div>
+        ) : (
+          <div
+            style={{
+              marginBottom: 20,
+              padding: 16,
+              borderRadius: 10,
+              border: "1px solid rgba(15, 23, 42, 0.12)",
+              background: "linear-gradient(180deg, rgba(15, 23, 42, 0.045) 0%, rgba(255, 255, 255, 0) 55%)",
+              boxShadow: "0 1px 2px rgba(15, 23, 42, 0.06)",
+            }}
+          >
+            <div
+              style={{
+                fontWeight: 600,
+                marginBottom: 12,
+                fontSize: 13,
+                letterSpacing: "0.03em",
+                textTransform: "uppercase" as const,
+                color: "rgba(15, 23, 42, 0.75)",
+              }}
+            >
+              Crowd Decision Mix
+            </div>
+            <div
+              style={{
+                display: "flex",
+                height: 28,
+                borderRadius: 8,
+                overflow: "hidden",
+                background: "rgba(15, 23, 42, 0.06)",
+                marginBottom: 14,
+              }}
+            >
+              <div
+                style={{
+                  width: `${Math.max(0, Math.min(1, consensus.buyPct ?? 0)) * 100}%`,
+                  background: "#22c55e",
+                  minWidth: (consensus.buyPct ?? 0) > 0 ? 3 : 0,
+                }}
+                title={`BUY ${consensusPctWhole(consensus.buyPct)}`}
+              />
+              <div
+                style={{
+                  width: `${Math.max(0, Math.min(1, consensus.sellPct ?? 0)) * 100}%`,
+                  background: "#ef4444",
+                  minWidth: (consensus.sellPct ?? 0) > 0 ? 3 : 0,
+                }}
+                title={`SELL ${consensusPctWhole(consensus.sellPct)}`}
+              />
+              <div
+                style={{
+                  width: `${Math.max(0, Math.min(1, consensus.holdPct ?? 0)) * 100}%`,
+                  background: "#94a3b8",
+                  minWidth: (consensus.holdPct ?? 0) > 0 ? 3 : 0,
+                }}
+                title={`HOLD ${consensusPctWhole(consensus.holdPct)}`}
+              />
+            </div>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: 12,
+                marginBottom: 12,
+                textAlign: "center" as const,
+              }}
+            >
+              <div>
+                <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.5)", marginBottom: 4, fontWeight: 600 }}>
+                  BUY
+                </div>
+                <div
+                  style={{
+                    fontSize: 22,
+                    fontWeight: 700,
+                    fontVariantNumeric: "tabular-nums",
+                    color: "#15803d",
+                  }}
+                >
+                  {consensusPctWhole(consensus.buyPct)}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.5)", marginBottom: 4, fontWeight: 600 }}>
+                  SELL
+                </div>
+                <div
+                  style={{
+                    fontSize: 22,
+                    fontWeight: 700,
+                    fontVariantNumeric: "tabular-nums",
+                    color: "#b91c1c",
+                  }}
+                >
+                  {consensusPctWhole(consensus.sellPct)}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.5)", marginBottom: 4, fontWeight: 600 }}>
+                  HOLD
+                </div>
+                <div
+                  style={{
+                    fontSize: 22,
+                    fontWeight: 700,
+                    fontVariantNumeric: "tabular-nums",
+                    color: "#475569",
+                  }}
+                >
+                  {consensusPctWhole(consensus.holdPct)}
+                </div>
+              </div>
+            </div>
+            <div
+              style={{
+                fontSize: 12,
+                color: "rgba(15, 23, 42, 0.72)",
+                fontVariantNumeric: "tabular-nums",
+                borderTop: "1px solid rgba(15, 23, 42, 0.1)",
+                paddingTop: 10,
+                lineHeight: 1.5,
+              }}
+            >
+              Majority: {consensusPctWhole(consensus.majorityPct)} · Entropy: {consensusMetric2(consensus.entropy)} ·
+              Polarization: {consensusMetric2(consensus.polarization)}
+            </div>
+          </div>
+        )}
 
         {!directionBiasByAgentType ? (
           <div style={{ fontSize: 14, color: "rgba(15, 23, 42, 0.65)" }}>

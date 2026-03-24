@@ -716,4 +716,3 @@ accuracyRate is returned.
 
 BEGIN IMPLEMENTATION.
 Provide file-level instructions only.
-#t

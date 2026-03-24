@@ -24,3 +24,13 @@ coverage/
 
 .pnpm-store/
 node_modules
+
+# local build/cache
+.turbo/
+.pnpm-store/
+apps/**/.next/
+apps/**/dist/
+packages/**/dist/
+coverage/
+logs/
+*.tsbuildinfo

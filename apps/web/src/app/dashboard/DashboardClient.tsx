@@ -46,6 +46,111 @@ function consensusMetric2(value: number | undefined | null): string {
   return value.toFixed(2);
 }
 
+/** Deterministic PRNG for agent-tick positions (stable across re-renders for same consensus). */
+function mulberry32(seed: number) {
+  let a = seed >>> 0;
+  return function next(): number {
+    a += 0x6d2b79f5;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function crowdMixTickPositionsFromConsensus(consensus: {
+  buyPct?: number;
+  sellPct?: number;
+  holdPct?: number;
+}): number[] {
+  const b = consensus.buyPct ?? 0;
+  const s = consensus.sellPct ?? 0;
+  const h = consensus.holdPct ?? 0;
+  const seed = (Math.floor(b * 100000) ^ Math.floor(s * 100000) ^ Math.floor(h * 100000)) >>> 0 || 0x9e3779b9;
+  const rng = mulberry32(seed);
+  const n = 26;
+  const out: number[] = [];
+  for (let i = 0; i < n; i++) out.push(rng() * 100);
+  out.sort((a, b) => a - b);
+  return out;
+}
+
+type AgentCloudDot = {
+  kind: "buy" | "sell" | "hold";
+  leftPct: number;
+  topPct: number;
+  sizePx: number;
+  delaySec: number;
+  durSec: number;
+  key: number;
+};
+
+function splitAgentCounts(n: number, buyPct: number, sellPct: number, holdPct: number): [number, number, number] {
+  const raw = [buyPct * n, sellPct * n, holdPct * n];
+  const parts = raw.map((x) => Math.floor(x));
+  let rem = n - parts[0] - parts[1] - parts[2];
+  const order = raw
+    .map((x, i) => ({ i, f: x - Math.floor(x) }))
+    .sort((a, b) => b.f - a.f);
+  const asc = [...order].sort((a, b) => a.f - b.f);
+  const out = [...parts];
+  if (rem > 0) {
+    for (let k = 0; k < rem; k++) {
+      out[order[k % 3].i]++;
+    }
+  } else if (rem < 0) {
+    for (let k = 0; k < -rem; k++) {
+      const idx = asc[k % 3].i;
+      if (out[idx] > 0) out[idx]--;
+    }
+  }
+  return [out[0], out[1], out[2]];
+}
+
+function buildAgentCloudDots(consensus: { buyPct?: number; sellPct?: number; holdPct?: number }): AgentCloudDot[] {
+  const b0 = Math.max(0, Math.min(1, consensus.buyPct ?? 0));
+  const s0 = Math.max(0, Math.min(1, consensus.sellPct ?? 0));
+  const h0 = Math.max(0, Math.min(1, consensus.holdPct ?? 0));
+  const sum = b0 + s0 + h0;
+  const b = sum > 0 ? b0 / sum : 1 / 3;
+  const s = sum > 0 ? s0 / sum : 1 / 3;
+  const h = sum > 0 ? h0 / sum : 1 / 3;
+
+  const [buyN, sellN, holdN] = splitAgentCounts(300, b, s, h);
+  const seed =
+    ((Math.floor(b * 1e6) ^ Math.floor(s * 1e6) ^ Math.floor(h * 1e6)) >>> 0) || 0xdeadbeef;
+  const rng = mulberry32(seed);
+
+  const dots: AgentCloudDot[] = [];
+  let key = 0;
+
+  const placeKind = (kind: AgentCloudDot["kind"], count: number) => {
+    for (let i = 0; i < count; i++) {
+      let leftPct: number;
+      if (kind === "buy") {
+        leftPct = rng() * 46 + rng() * 6;
+        leftPct = Math.min(94, Math.max(1, leftPct));
+      } else if (kind === "sell") {
+        leftPct = 30 + rng() * 40;
+      } else {
+        leftPct = 52 + rng() * 46;
+        leftPct = Math.min(98, Math.max(4, leftPct));
+      }
+      const topPct = 4 + rng() * 92;
+      const sizePx = 4 + Math.floor(rng() * 3);
+      const delaySec = rng() * 4;
+      const durSec = 2 + rng() * 3;
+      dots.push({ kind, leftPct, topPct, sizePx, delaySec, durSec, key: key++ });
+    }
+  };
+
+  placeKind("buy", buyN);
+  placeKind("sell", sellN);
+  placeKind("hold", holdN);
+
+  return dots;
+}
+
 type DirectionBiasSlice = {
   avgSignal: number;
   positiveCount: number;
@@ -891,6 +996,16 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
   );
 
   const informationFlowBias = useMemo(() => informationFlowBiasWord(consensus ?? undefined), [consensus]);
+
+  const crowdMixTickPositions = useMemo(
+    () => (consensus ? crowdMixTickPositionsFromConsensus(consensus) : []),
+    [consensus?.buyPct, consensus?.sellPct, consensus?.holdPct],
+  );
+
+  const agentCloudDots = useMemo(
+    () => (consensus ? buildAgentCloudDots(consensus) : []),
+    [consensus?.buyPct, consensus?.sellPct, consensus?.holdPct],
+  );
   const signalValidation =
     rawSignalValidation && typeof rawSignalValidation === "object"
       ? {
@@ -1498,16 +1613,56 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
             No crowd mix data available
           </div>
         ) : (
-          <div
-            style={{
-              marginBottom: 20,
-              padding: 16,
-              borderRadius: 10,
-              border: "1px solid rgba(15, 23, 42, 0.12)",
-              background: "linear-gradient(180deg, rgba(15, 23, 42, 0.045) 0%, rgba(255, 255, 255, 0) 55%)",
-              boxShadow: "0 1px 2px rgba(15, 23, 42, 0.06)",
-            }}
-          >
+          <>
+            <div className={styles.agentCloudSection} style={{ marginBottom: 20 }}>
+              <div
+                style={{
+                  fontWeight: 600,
+                  marginBottom: 8,
+                  fontSize: 13,
+                  letterSpacing: "0.03em",
+                  textTransform: "uppercase" as const,
+                  color: "rgba(15, 23, 42, 0.75)",
+                }}
+              >
+                Crowd Simulation
+              </div>
+              <div className={styles.agentCloudSampleLabel}>Simulated Crowd (300 agents sample)</div>
+              <div className={styles.agentCloudStage} aria-label="Simulated crowd of 300 agents by consensus mix">
+                {agentCloudDots.map((dot) => (
+                  <span
+                    key={dot.key}
+                    className={
+                      dot.kind === "buy"
+                        ? styles.agentCloudDotBuy
+                        : dot.kind === "sell"
+                          ? styles.agentCloudDotSell
+                          : styles.agentCloudDotHold
+                    }
+                    style={{
+                      left: `${dot.leftPct}%`,
+                      top: `${dot.topPct}%`,
+                      width: dot.sizePx,
+                      height: dot.sizePx,
+                      animationDuration: `${dot.durSec}s`,
+                      animationDelay: `${dot.delaySec}s`,
+                    }}
+                    title={dot.kind === "buy" ? "BUY agent" : dot.kind === "sell" ? "SELL agent" : "HOLD agent"}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div
+              style={{
+                marginBottom: 20,
+                padding: 16,
+                borderRadius: 10,
+                border: "1px solid rgba(15, 23, 42, 0.12)",
+                background: "linear-gradient(180deg, rgba(15, 23, 42, 0.045) 0%, rgba(255, 255, 255, 0) 55%)",
+                boxShadow: "0 1px 2px rgba(15, 23, 42, 0.06)",
+              }}
+            >
             <div
               style={{
                 fontWeight: 600,
@@ -1520,40 +1675,47 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
             >
               Crowd Decision Mix
             </div>
-            <div
-              style={{
-                display: "flex",
-                height: 28,
-                borderRadius: 8,
-                overflow: "hidden",
-                background: "rgba(15, 23, 42, 0.06)",
-                marginBottom: 14,
-              }}
-            >
+            <div className={styles.crowdMixLiveLabel}>Live Crowd Distribution</div>
+            <div className={styles.crowdMixBar} data-testid="crowd-mix-bar" aria-label="Live crowd distribution by BUY, SELL, HOLD">
               <div
+                className={`${styles.crowdMixSegment} ${styles.crowdMixSegmentBuy}`}
                 style={{
                   width: `${Math.max(0, Math.min(1, consensus.buyPct ?? 0)) * 100}%`,
-                  background: "#22c55e",
                   minWidth: (consensus.buyPct ?? 0) > 0 ? 3 : 0,
                 }}
                 title={`BUY ${consensusPctWhole(consensus.buyPct)}`}
-              />
+              >
+                <span className={styles.crowdMixShimmer} aria-hidden />
+              </div>
               <div
+                className={`${styles.crowdMixSegment} ${styles.crowdMixSegmentSell}`}
                 style={{
                   width: `${Math.max(0, Math.min(1, consensus.sellPct ?? 0)) * 100}%`,
-                  background: "#ef4444",
                   minWidth: (consensus.sellPct ?? 0) > 0 ? 3 : 0,
                 }}
                 title={`SELL ${consensusPctWhole(consensus.sellPct)}`}
-              />
+              >
+                <span className={`${styles.crowdMixShimmer} ${styles.crowdMixShimmerSell}`} aria-hidden />
+              </div>
               <div
+                className={`${styles.crowdMixSegment} ${styles.crowdMixSegmentHold}`}
                 style={{
                   width: `${Math.max(0, Math.min(1, consensus.holdPct ?? 0)) * 100}%`,
-                  background: "#94a3b8",
                   minWidth: (consensus.holdPct ?? 0) > 0 ? 3 : 0,
                 }}
                 title={`HOLD ${consensusPctWhole(consensus.holdPct)}`}
-              />
+              >
+                <span className={`${styles.crowdMixShimmer} ${styles.crowdMixShimmerHold}`} aria-hidden />
+              </div>
+              <div className={styles.crowdMixTicks} aria-hidden>
+                {crowdMixTickPositions.map((leftPct, i) => (
+                  <span
+                    key={i}
+                    className={styles.crowdMixTick}
+                    style={{ left: `${leftPct}%`, animationDelay: `${(i % 9) * 0.45}s` }}
+                  />
+                ))}
+              </div>
             </div>
             <div
               style={{
@@ -1624,6 +1786,7 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
               Polarization: {consensusMetric2(consensus.polarization)}
             </div>
           </div>
+          </>
         )}
 
         {!directionBiasByAgentType ? (

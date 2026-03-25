@@ -1,10 +1,87 @@
 import React, { Suspense } from "react";
-import { DashboardClient } from "./DashboardClient";
+import {
+  DashboardClient,
+  type DashboardCrowdStateRecommendation,
+  type DashboardLatestRunInfoEvent,
+} from "./DashboardClient";
 import { getWebBase } from "@/lib/web-base";
 import { stabilityReason } from "@/lib/risk";
 import { stabilityRiskScore, riskBand, stabilityCause } from "@/lib/stability-triage";
 
 export const dynamic = "force-dynamic";
+
+const DASHBOARD_INFO_EVENTS_CAP = 20;
+
+function parseInfoEventsFromApi(json: unknown): DashboardLatestRunInfoEvent[] {
+  if (!Array.isArray(json)) return [];
+  const out: DashboardLatestRunInfoEvent[] = [];
+  for (const item of json) {
+    if (!item || typeof item !== "object") continue;
+    const e = item as Record<string, unknown>;
+    if (typeof e.id !== "string" || typeof e.runId !== "string" || typeof e.assetSymbol !== "string") continue;
+    if (typeof e.step !== "number" || !Number.isFinite(e.step)) continue;
+    if (typeof e.topic !== "string") continue;
+    if (typeof e.sentiment !== "number" || !Number.isFinite(e.sentiment)) continue;
+    if (typeof e.credibility !== "number" || !Number.isFinite(e.credibility)) continue;
+    if (typeof e.reach !== "number" || !Number.isFinite(e.reach)) continue;
+    const vol = e.volatilityImpact;
+    const volN =
+      vol == null ? null : typeof vol === "number" && Number.isFinite(vol) ? vol : null;
+    const src = e.source;
+    out.push({
+      id: e.id,
+      runId: e.runId,
+      assetSymbol: e.assetSymbol,
+      step: e.step,
+      topic: e.topic,
+      sentiment: e.sentiment,
+      credibility: e.credibility,
+      reach: e.reach,
+      volatilityImpact: volN,
+      source: src == null ? null : typeof src === "string" ? src : null,
+      createdAt: typeof e.createdAt === "string" ? e.createdAt : undefined,
+    });
+  }
+  return out;
+}
+
+/** Deterministic: higher `reach` first, then higher `step`. */
+function capHighImpactInfoEvents(rows: DashboardLatestRunInfoEvent[]): DashboardLatestRunInfoEvent[] {
+  const sorted = [...rows].sort((a, b) => {
+    const r = b.reach - a.reach;
+    if (r !== 0) return r;
+    return b.step - a.step;
+  });
+  return sorted.slice(0, DASHBOARD_INFO_EVENTS_CAP);
+}
+
+function parseCrowdStateRecommendation(json: unknown): DashboardCrowdStateRecommendation | null {
+  if (!json || typeof json !== "object") return null;
+  const o = json as Record<string, unknown>;
+  const rec = o.recommendation;
+  if (!rec || typeof rec !== "object") return null;
+  const r = rec as Record<string, unknown>;
+  if (typeof r.explanation !== "string") return null;
+  const dir = r.direction;
+  if (dir !== "bullish" && dir !== "bearish" && dir !== "neutral") return null;
+  if (
+    typeof r.strength !== "number" ||
+    !Number.isFinite(r.strength) ||
+    typeof r.confidence !== "number" ||
+    !Number.isFinite(r.confidence) ||
+    typeof r.stability !== "number" ||
+    !Number.isFinite(r.stability)
+  ) {
+    return null;
+  }
+  return {
+    direction: dir,
+    strength: r.strength,
+    confidence: r.confidence,
+    stability: r.stability,
+    explanation: r.explanation,
+  };
+}
 
 type DashboardSummary = {
   consensus: {
@@ -269,6 +346,33 @@ type DashboardSummary = {
     contrarian: { avgSignal: number; positiveCount: number; negativeCount: number };
     balanced: { avgSignal: number; positiveCount: number; negativeCount: number };
   };
+  decisionFunnelDiagnostics?: {
+    totalSignals: number;
+    passedSignalStrength: number;
+    passedConviction: number;
+    passedFinalDecision: number;
+    signalStrengthPassRate: number;
+    convictionPassRate: number;
+    executionRate: number;
+  };
+  informationExposureDiagnostics?: {
+    avgTechnicalWeight: number;
+    avgMacroWeight: number;
+    avgSentimentWeight: number;
+    avgNoiseWeight: number;
+    sampleAgents: unknown[];
+  };
+  directionBiasDiagnostics?: {
+    avgBaseSignal: number;
+    avgPostInformationSignal: number;
+    avgTechnicalContribution: number;
+    avgMacroContribution: number;
+    avgSentimentContribution: number;
+    avgNoiseContribution: number;
+    positiveSignalCount: number;
+    negativeSignalCount: number;
+    nearZeroSignalCount: number;
+  };
 };
 
 export default async function DashboardPage({
@@ -305,6 +409,36 @@ export default async function DashboardPage({
     ? scalingRows.find((r) => r.runId === latestRun.id)
     : null;
   const latest = latestScalingRow ?? latestRun;
+
+  let latestRunInfoEvents: DashboardLatestRunInfoEvent[] | undefined;
+  let latestRunCrowdStateRecommendation: DashboardCrowdStateRecommendation | null | undefined;
+  if (latestRun?.id) {
+    const apiBase = process.env.API_BASE_URL ?? "http://localhost:4001";
+    const runId = latestRun.id;
+    try {
+      const [evRes, csRes] = await Promise.all([
+        fetch(
+          `${apiBase}/runs/${runId}/info-events?assetSymbol=${encodeURIComponent(assetSymbol)}`,
+          { cache: "no-store", headers: { accept: "application/json" } },
+        ),
+        fetch(
+          `${apiBase}/results/crowd-state?runId=${encodeURIComponent(runId)}&assetSymbol=${encodeURIComponent(assetSymbol)}`,
+          { cache: "no-store", headers: { accept: "application/json" } },
+        ),
+      ]);
+      if (evRes.ok) {
+        const raw: unknown = await evRes.json();
+        const parsed = parseInfoEventsFromApi(raw);
+        latestRunInfoEvents = capHighImpactInfoEvents(parsed);
+      }
+      if (csRes.ok) {
+        const cs: unknown = await csRes.json();
+        latestRunCrowdStateRecommendation = parseCrowdStateRecommendation(cs);
+      }
+    } catch {
+      /* leave undefined — API unreachable or parse edge case */
+    }
+  }
 
   const stabilityMapped = stabilityRows.map((r) => {
     const isLegacy = r.label === "missing-variants";
@@ -456,6 +590,20 @@ export default async function DashboardPage({
           data.strategyComparisonSummaryAudit && typeof data.strategyComparisonSummaryAudit === "object"
             ? data.strategyComparisonSummaryAudit
             : undefined,
+        decisionFunnelDiagnostics:
+          data.decisionFunnelDiagnostics != null && typeof data.decisionFunnelDiagnostics === "object"
+            ? data.decisionFunnelDiagnostics
+            : undefined,
+        informationExposureDiagnostics:
+          data.informationExposureDiagnostics != null && typeof data.informationExposureDiagnostics === "object"
+            ? data.informationExposureDiagnostics
+            : undefined,
+        directionBiasDiagnostics:
+          data.directionBiasDiagnostics != null && typeof data.directionBiasDiagnostics === "object"
+            ? data.directionBiasDiagnostics
+            : undefined,
+        latestRunInfoEvents,
+        latestRunCrowdStateRecommendation,
       }}
       initialQuery={{
         assetSymbol,

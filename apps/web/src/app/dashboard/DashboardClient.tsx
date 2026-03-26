@@ -7,7 +7,6 @@ import DashboardFiltersClient from "@/components/dashboard-filters.client";
 import { MiniBar as ScalingMiniBar, Badge } from "@/components/dashboard/mini-bar";
 import { MiniBar, HeaderWithTip, StabilityLegend } from "@/components/dashboard/mini";
 import { ScalingCurve } from "@/components/dashboard/ScalingCurve";
-import { CrowdConsensus, type ConsensusData } from "@/components/dashboard/CrowdConsensus";
 import { ScalingDetails } from "@/components/dashboard/ScalingDetails";
 import { p95, normToP95 } from "@/lib/miniBars";
 import { DASH_THRESHOLDS, fmtNum, fmtPct01, clamp01, formatOverheadPct } from "@/lib/dashboardThresholds";
@@ -30,20 +29,43 @@ function agentProfileLeaning(positiveCount: number, negativeCount: number): stri
   return "Balanced bias";
 }
 
-function formatAvgSignal(value: number | undefined): string {
-  if (value === undefined || value === null || !Number.isFinite(value)) return "-";
-  return value.toFixed(3);
-}
-
 /** Consensus buy/sell/hold are 0–1 shares; display as whole percent 0–100. */
 function consensusPctWhole(share: number | undefined | null): string {
   if (share == null || !Number.isFinite(share)) return "—";
   return `${Math.round(share * 100)}%`;
 }
 
-function consensusMetric2(value: number | undefined | null): string {
-  if (value == null || !Number.isFinite(value)) return "—";
-  return value.toFixed(2);
+/** Display for hero track-record metrics (rates in 0–1 shown as %). */
+function formatHeroTrackRecordMetric(n: number): string {
+  if (!Number.isFinite(n)) return "";
+  if (n >= 0 && n <= 1) return `${(n * 100).toFixed(1)}%`;
+  return n.toFixed(2);
+}
+
+function dominantConsensusAction(
+  c: { buyPct?: number; sellPct?: number; holdPct?: number } | null | undefined,
+): "BUY" | "SELL" | "HOLD" | null {
+  if (c == null) return null;
+  const b = c.buyPct ?? 0;
+  const s = c.sellPct ?? 0;
+  const h = c.holdPct ?? 0;
+  if (b >= s && b >= h) return "BUY";
+  if (s >= b && s >= h) return "SELL";
+  return "HOLD";
+}
+
+function majorityStrengthWord(maj: number | undefined | null): "weak" | "moderate" | "strong" {
+  if (maj == null || !Number.isFinite(maj)) return "weak";
+  if (maj > 0.6) return "strong";
+  if (maj > 0.45) return "moderate";
+  return "weak";
+}
+
+function entropyDisagreementWord(ent: number | undefined | null): "high" | "moderate" | "low" {
+  if (ent == null || !Number.isFinite(ent)) return "moderate";
+  if (ent > 1.5) return "high";
+  if (ent > 1.2) return "moderate";
+  return "low";
 }
 
 /** Deterministic PRNG for agent-tick positions (stable across re-renders for same consensus). */
@@ -186,253 +208,23 @@ function buildCrowdMapZones(
   return zones;
 }
 
-const DECISION_FORMATION_PROFILE_LABEL: Record<"trendFollower" | "contrarian" | "balanced", string> = {
-  trendFollower: "trend follower",
-  contrarian: "contrarian",
-  balanced: "balanced",
-};
-
-/** Returns null if required inputs are missing or incomplete. */
-function buildDecisionFormationSentence(
-  consensus: {
-    buyPct?: number;
-    sellPct?: number;
-    holdPct?: number;
-    majorityPct?: number;
-    entropy?: number;
-  } | null,
-  directionBiasByAgentType: DirectionBiasByAgentTypeInput | null | undefined,
-): string | null {
-  if (consensus == null || directionBiasByAgentType == null) return null;
-
-  const buy = consensus.buyPct;
-  const sell = consensus.sellPct;
-  const hold = consensus.holdPct;
-  const maj = consensus.majorityPct;
-  const ent = consensus.entropy;
-  if (
-    buy == null ||
-    sell == null ||
-    hold == null ||
-    maj == null ||
-    ent == null ||
-    !Number.isFinite(buy) ||
-    !Number.isFinite(sell) ||
-    !Number.isFinite(hold) ||
-    !Number.isFinite(maj) ||
-    !Number.isFinite(ent)
-  ) {
-    return null;
-  }
-
-  let crowdDirection: "buy-leaning" | "sell-leaning" | "mixed";
-  if (buy > sell && buy > hold) crowdDirection = "buy-leaning";
-  else if (sell > buy && sell > hold) crowdDirection = "sell-leaning";
-  else crowdDirection = "mixed";
-
-  let strength: "strong" | "moderate" | "weak";
-  if (maj > 0.6) strength = "strong";
-  else if (maj > 0.45) strength = "moderate";
-  else strength = "weak";
-
-  let disagreement: string;
-  if (ent > 1.5) disagreement = "high disagreement";
-  else if (ent > 1.2) disagreement = "moderate disagreement";
-  else disagreement = "low disagreement";
-
-  const profiles = [
-    { key: "trendFollower" as const, row: directionBiasByAgentType.trendFollower },
-    { key: "contrarian" as const, row: directionBiasByAgentType.contrarian },
-    { key: "balanced" as const, row: directionBiasByAgentType.balanced },
-  ];
-
-  let dominantKey: "trendFollower" | "contrarian" | "balanced" | null = null;
-  let bestAbs = -1;
-  for (const { key, row } of profiles) {
-    if (!row || !Number.isFinite(row.avgSignal)) continue;
-    const abs = Math.abs(row.avgSignal);
-    if (abs > bestAbs) {
-      bestAbs = abs;
-      dominantKey = key;
-    }
-  }
-  if (dominantKey == null) return null;
-
-  const dominantRow = directionBiasByAgentType[dominantKey];
-  if (!dominantRow || !Number.isFinite(dominantRow.positiveCount) || !Number.isFinite(dominantRow.negativeCount)) {
-    return null;
-  }
-
-  let directionWord: "positive" | "negative" | "balanced";
-  if (dominantRow.positiveCount > dominantRow.negativeCount) directionWord = "positive";
-  else if (dominantRow.negativeCount > dominantRow.positiveCount) directionWord = "negative";
-  else directionWord = "balanced";
-
-  const profileLabel = DECISION_FORMATION_PROFILE_LABEL[dominantKey];
-
-  return `The recommendation emerged from a ${strength} ${crowdDirection} crowd, with ${disagreement}, driven primarily by ${profileLabel} agents showing ${directionWord} bias.`;
+function profileDirectionFromCounts(positiveCount: number, negativeCount: number): "Positive" | "Negative" | "Neutral" {
+  if (positiveCount > negativeCount) return "Positive";
+  if (negativeCount > positiveCount) return "Negative";
+  return "Neutral";
 }
 
-/** Pressure label from average signal sign mix across the three profile rows (backtest diagnostics). */
-function profileSignalPressure(
-  directionBiasByAgentType: DirectionBiasByAgentTypeInput | null | undefined,
-): "negative pressure" | "positive pressure" | "conflicting signals" | null {
-  if (directionBiasByAgentType == null) return null;
-  const vals: number[] = [];
-  for (const key of ["trendFollower", "contrarian", "balanced"] as const) {
-    const v = directionBiasByAgentType[key]?.avgSignal;
-    if (v != null && Number.isFinite(v)) vals.push(v);
-  }
-  if (vals.length === 0) return null;
-  const hasPos = vals.some((v) => v > 0);
-  const hasNeg = vals.some((v) => v < 0);
-  if (hasPos && hasNeg) return "conflicting signals";
-  if (hasNeg) return "negative pressure";
-  if (hasPos) return "positive pressure";
-  return "conflicting signals";
+function profileDirectionFromSignal(avgSignal: number | undefined): "Positive" | "Negative" | "Neutral" {
+  if (avgSignal == null || !Number.isFinite(avgSignal)) return "Neutral";
+  if (avgSignal > 0.001) return "Positive";
+  if (avgSignal < -0.001) return "Negative";
+  return "Neutral";
 }
 
-function resolveDominantProfileKey(
-  directionBiasByAgentType: DirectionBiasByAgentTypeInput | null | undefined,
-): "trendFollower" | "contrarian" | "balanced" | null {
-  if (directionBiasByAgentType == null) return null;
-  let dominantKey: "trendFollower" | "contrarian" | "balanced" | null = null;
-  let bestAbs = -1;
-  for (const key of ["trendFollower", "contrarian", "balanced"] as const) {
-    const row = directionBiasByAgentType[key];
-    if (!row || !Number.isFinite(row.avgSignal)) continue;
-    const abs = Math.abs(row.avgSignal);
-    if (abs > bestAbs) {
-      bestAbs = abs;
-      dominantKey = key;
-    }
-  }
-  return dominantKey;
-}
-
-/**
- * Uses only dashboard summary diagnostics already returned by the API (no extra fetches).
- * Returns null if funnel or exposure diagnostics are missing or malformed.
- */
-function buildCausalExplanation(args: {
-  consensus: {
-    buyPct?: number;
-    sellPct?: number;
-    holdPct?: number;
-    majorityPct?: number;
-    entropy?: number;
-  } | null;
-  directionBiasByAgentType: DirectionBiasByAgentTypeInput | null | undefined;
-  decisionFunnelDiagnostics: unknown;
-  informationExposureDiagnostics: unknown;
-  directionBiasDiagnostics: unknown;
-}): string | null {
-  const {
-    consensus,
-    directionBiasByAgentType,
-    decisionFunnelDiagnostics,
-    informationExposureDiagnostics,
-    directionBiasDiagnostics,
-  } = args;
-
-  const funnel = decisionFunnelDiagnostics as Record<string, unknown> | null;
-  if (
-    funnel == null ||
-    typeof funnel !== "object" ||
-    typeof funnel.totalSignals !== "number" ||
-    typeof funnel.passedFinalDecision !== "number" ||
-    !Number.isFinite(funnel.totalSignals) ||
-    !Number.isFinite(funnel.passedFinalDecision)
-  ) {
-    return null;
-  }
-
-  const exposure = informationExposureDiagnostics as Record<string, unknown> | null;
-  if (exposure == null || typeof exposure !== "object") return null;
-  const tw = exposure.avgTechnicalWeight;
-  const mw = exposure.avgMacroWeight;
-  const sw = exposure.avgSentimentWeight;
-  const nw = exposure.avgNoiseWeight;
-  if (
-    typeof tw !== "number" ||
-    typeof mw !== "number" ||
-    typeof sw !== "number" ||
-    typeof nw !== "number" ||
-    !Number.isFinite(tw) ||
-    !Number.isFinite(mw) ||
-    !Number.isFinite(sw) ||
-    !Number.isFinite(nw)
-  ) {
-    return null;
-  }
-
-  const dirBias = directionBiasDiagnostics as Record<string, unknown> | null;
-  if (dirBias == null || typeof dirBias !== "object") return null;
-  const avgBaseSig = dirBias.avgBaseSignal;
-  const avgPostInfoSig = dirBias.avgPostInformationSignal;
-  if (
-    typeof avgBaseSig !== "number" ||
-    typeof avgPostInfoSig !== "number" ||
-    !Number.isFinite(avgBaseSig) ||
-    !Number.isFinite(avgPostInfoSig)
-  ) {
-    return null;
-  }
-
-  if (consensus == null) return null;
-  const buy = consensus.buyPct;
-  const sell = consensus.sellPct;
-  const hold = consensus.holdPct;
-  const maj = consensus.majorityPct;
-  const ent = consensus.entropy;
-  if (
-    buy == null ||
-    sell == null ||
-    hold == null ||
-    maj == null ||
-    ent == null ||
-    !Number.isFinite(buy) ||
-    !Number.isFinite(sell) ||
-    !Number.isFinite(hold) ||
-    !Number.isFinite(maj) ||
-    !Number.isFinite(ent)
-  ) {
-    return null;
-  }
-
-  const pressure = profileSignalPressure(directionBiasByAgentType);
-  if (pressure == null) return null;
-
-  const dominantKey = resolveDominantProfileKey(directionBiasByAgentType);
-  if (dominantKey == null) return null;
-
-  let crowdDirection: "buy-leaning" | "sell-leaning" | "mixed";
-  if (buy > sell && buy > hold) crowdDirection = "buy-leaning";
-  else if (sell > buy && sell > hold) crowdDirection = "sell-leaning";
-  else crowdDirection = "mixed";
-
-  let strength: "strong" | "moderate" | "weak";
-  if (maj > 0.6) strength = "strong";
-  else if (maj > 0.45) strength = "moderate";
-  else strength = "weak";
-
-  let disagreement: string;
-  if (ent > 1.5) disagreement = "high disagreement";
-  else if (ent > 1.2) disagreement = "moderate disagreement";
-  else disagreement = "low disagreement";
-
-  const profileLabel = DECISION_FORMATION_PROFILE_LABEL[dominantKey];
-  const profileCap = profileLabel.charAt(0).toUpperCase() + profileLabel.slice(1);
-
-  const fmtW = (x: number) => x.toFixed(3);
-  const n = funnel.totalSignals as number;
-  const m = funnel.passedFinalDecision as number;
-
-  const s1 = `With mean calibration weights technical ${fmtW(tw)}, macro ${fmtW(mw)}, sentiment ${fmtW(sw)}, and noise ${fmtW(nw)}, the diagnostic funnel processed ${n} signals into ${m} final decisions; direction-bias aggregates averaged base signal ${fmtW(avgBaseSig)} and post-information signal ${fmtW(avgPostInfoSig)}, producing ${pressure} across agent-profile averages.`;
-  const s2 = `${profileCap} agents showed the strongest directional bias, influencing overall behavior.`;
-  const s3 = `This led to a ${strength} ${crowdDirection} consensus with ${disagreement}.`;
-
-  return `${s1} ${s2} ${s3}`;
+function directionArrowFromDir(dir: "Positive" | "Negative" | "Neutral"): { sym: string; color: string } {
+  if (dir === "Positive") return { sym: "↑", color: "#15803d" };
+  if (dir === "Negative") return { sym: "↓", color: "#b91c1c" };
+  return { sym: "→", color: "#94a3b8" };
 }
 
 const CROWD_INFLUENCE_PROFILE_TITLE: Record<"trendFollower" | "contrarian" | "balanced", string> = {
@@ -1039,9 +831,6 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
     backtestMetrics,
     backtestDiagnostics,
     strategyComparisonSummaryAudit,
-    decisionFunnelDiagnostics,
-    informationExposureDiagnostics,
-    directionBiasDiagnostics,
     latestRunInfoEvents,
   } = initialData ?? {};
 
@@ -1050,39 +839,27 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
     [latestRunInfoEvents],
   );
 
-  const causalExplanationSentence = useMemo(() => {
-    if (
-      decisionFunnelDiagnostics == null ||
-      typeof decisionFunnelDiagnostics !== "object" ||
-      Array.isArray(decisionFunnelDiagnostics) ||
-      informationExposureDiagnostics == null ||
-      typeof informationExposureDiagnostics !== "object" ||
-      Array.isArray(informationExposureDiagnostics) ||
-      directionBiasDiagnostics == null ||
-      typeof directionBiasDiagnostics !== "object" ||
-      Array.isArray(directionBiasDiagnostics)
-    ) {
-      return null;
-    }
-    return buildCausalExplanation({
-      consensus: consensus ?? null,
-      directionBiasByAgentType: directionBiasByAgentType ?? null,
-      decisionFunnelDiagnostics,
-      informationExposureDiagnostics,
-      directionBiasDiagnostics,
-    });
-  }, [
-    consensus,
-    directionBiasByAgentType,
-    decisionFunnelDiagnostics,
-    informationExposureDiagnostics,
-    directionBiasDiagnostics,
-  ]);
-
-  const decisionFormationSentence = useMemo(
-    () => buildDecisionFormationSentence(consensus ?? null, directionBiasByAgentType ?? null),
-    [consensus, directionBiasByAgentType],
+  const decisionFlowInformationEvents = useMemo(
+    () => significantInfoEvents.slice(0, 2),
+    [significantInfoEvents],
   );
+
+  /** Period hit rates for the selected asset when summary exposes them; else null (section hidden). */
+  const heroTrackRecord = useMemo((): {
+    yesterday: number | null;
+    d7: number | null;
+    d30: number | null;
+  } => {
+    return { yesterday: null, d7: null, d30: null };
+  }, []);
+
+  const heroTrackRecordCells = useMemo(() => {
+    return [
+      { key: "yesterday" as const, label: "Yesterday", v: heroTrackRecord.yesterday },
+      { key: "7d" as const, label: "7D", v: heroTrackRecord.d7 },
+      { key: "30d" as const, label: "30D", v: heroTrackRecord.d30 },
+    ].filter((c): c is { key: "yesterday" | "7d" | "30d"; label: string; v: number } => c.v != null && Number.isFinite(c.v));
+  }, [heroTrackRecord]);
 
   const crowdInfluenceRows = useMemo(
     () => buildCrowdInfluenceRows(directionBiasByAgentType ?? null),
@@ -1364,7 +1141,385 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
         />
       </div>
 
-      <div data-testid="legend" className={styles.legend}>
+      <div
+        style={{
+          textAlign: "center",
+          padding: "28px 20px 32px",
+          marginBottom: 28,
+          borderRadius: 12,
+          border: "1px solid rgba(15, 23, 42, 0.1)",
+          background: "linear-gradient(180deg, rgba(248, 250, 252, 0.95) 0%, #fff 100%)",
+        }}
+      >
+        {consensus == null ? (
+          <div style={{ fontSize: 15, color: "rgba(15, 23, 42, 0.55)" }}>No crowd snapshot</div>
+        ) : (
+          <>
+            <div
+              style={{
+                fontSize: 56,
+                fontWeight: 800,
+                letterSpacing: "0.06em",
+                lineHeight: 1.1,
+                marginBottom: 14,
+                color:
+                  dominantConsensusAction(consensus) === "BUY"
+                    ? "#15803d"
+                    : dominantConsensusAction(consensus) === "SELL"
+                      ? "#b91c1c"
+                      : "#475569",
+              }}
+            >
+              {dominantConsensusAction(consensus)} {initialQuery.assetSymbol}
+            </div>
+            <div style={{ fontSize: 12, color: "rgba(15, 23, 42, 0.5)", marginBottom: 4 }}>Crowd lean</div>
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                justifyContent: "center",
+                gap: "10px 28px",
+                fontSize: 14,
+                color: "rgba(15, 23, 42, 0.78)",
+              }}
+            >
+              <span>
+                Strength:{" "}
+                <strong style={{ fontWeight: 600, color: "rgba(15, 23, 42, 0.92)" }}>
+                  {majorityStrengthWord(consensus.majorityPct)}
+                </strong>
+              </span>
+              <span>
+                Confidence:{" "}
+                <strong style={{ fontWeight: 600, color: "rgba(15, 23, 42, 0.92)" }}>
+                  {consensusPctWhole(consensus.majorityPct)}
+                </strong>
+              </span>
+              <span>
+                Disagreement:{" "}
+                <strong style={{ fontWeight: 600, color: "rgba(15, 23, 42, 0.92)" }}>
+                  {entropyDisagreementWord(consensus.entropy)}
+                </strong>
+              </span>
+            </div>
+
+            {heroTrackRecordCells.length > 0 ? (
+              <div
+                data-testid="hero-track-record"
+                style={{
+                  marginTop: 20,
+                  paddingTop: 16,
+                  borderTop: "1px solid rgba(15, 23, 42, 0.08)",
+                  width: "100%",
+                  maxWidth: 520,
+                  marginLeft: "auto",
+                  marginRight: "auto",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    letterSpacing: "0.06em",
+                    textTransform: "uppercase" as const,
+                    color: "rgba(15, 23, 42, 0.5)",
+                    marginBottom: 10,
+                    textAlign: "center",
+                  }}
+                >
+                  Recent Track Record
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    gap: 10,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  {heroTrackRecordCells.map((col) => (
+                    <div
+                      key={col.key}
+                      style={{
+                        flex: "1 1 88px",
+                        minWidth: 88,
+                        maxWidth: 140,
+                        textAlign: "center",
+                        padding: "8px 10px",
+                        borderRadius: 8,
+                        background: "rgba(15, 23, 42, 0.035)",
+                        border: "1px solid rgba(15, 23, 42, 0.07)",
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: 10,
+                          color: "rgba(15, 23, 42, 0.48)",
+                          marginBottom: 4,
+                          fontWeight: 600,
+                        }}
+                      >
+                        {col.label}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 14,
+                          fontWeight: 600,
+                          fontVariantNumeric: "tabular-nums",
+                          color: "rgba(15, 23, 42, 0.88)",
+                        }}
+                      >
+                        {formatHeroTrackRecordMetric(col.v)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </>
+        )}
+      </div>
+
+      <section data-testid="decision-flow" style={{ marginBottom: 28 }}>
+        <div className={styles.sectionTitle} style={{ marginBottom: 14 }}>
+          Why This Decision
+        </div>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "stretch",
+            gap: 0,
+            overflowX: "auto",
+            paddingBottom: 4,
+            WebkitOverflowScrolling: "touch",
+          }}
+        >
+          {(
+            [
+              {
+                key: "information",
+                title: "Information",
+                body: (
+                  <>
+                    {decisionFlowInformationEvents.length === 0 ? (
+                      <div style={{ fontSize: 14, color: "rgba(15, 23, 42, 0.72)", lineHeight: 1.4 }}>Mixed signals</div>
+                    ) : (
+                      decisionFlowInformationEvents.map((ev) => {
+                        const pol = sentimentPolarity(ev.sentiment);
+                        const sentimentStyle =
+                          pol === "positive"
+                            ? { bg: "#dcfce7", color: "#166534", label: "Positive" }
+                            : pol === "negative"
+                              ? { bg: "#fee2e2", color: "#991b1b", label: "Negative" }
+                              : { bg: "#f3f4f6", color: "#4b5563", label: "Neutral" };
+                        return (
+                          <div key={ev.id} style={{ marginBottom: decisionFlowInformationEvents.length > 1 ? 10 : 0 }}>
+                            <div
+                              style={{
+                                fontWeight: 600,
+                                fontSize: 13,
+                                color: "rgba(15, 23, 42, 0.92)",
+                                lineHeight: 1.35,
+                                marginBottom: 6,
+                              }}
+                            >
+                              {ev.topic}
+                            </div>
+                            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, fontSize: 12 }}>
+                              <span
+                                style={{
+                                  fontWeight: 600,
+                                  padding: "2px 8px",
+                                  borderRadius: 6,
+                                  background: sentimentStyle.bg,
+                                  color: sentimentStyle.color,
+                                }}
+                              >
+                                {sentimentStyle.label}
+                              </span>
+                              <span style={{ color: "rgba(15, 23, 42, 0.5)", fontSize: 11 }}>
+                                reach {fmtPct01(ev.reach, 0)}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </>
+                ),
+              },
+              {
+                key: "agent",
+                title: "Agent impact",
+                body: (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {(["trendFollower", "contrarian", "balanced"] as const).map((profileKey) => {
+                      const slice = directionBiasByAgentType?.[profileKey];
+                      const dir = slice
+                        ? profileDirectionFromCounts(slice.positiveCount, slice.negativeCount)
+                        : ("Neutral" as const);
+                      const { sym, color } = directionArrowFromDir(dir);
+                      return (
+                        <div
+                          key={profileKey}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            gap: 8,
+                            fontSize: 12,
+                            color: "rgba(15, 23, 42, 0.88)",
+                          }}
+                        >
+                          <span style={{ color: "rgba(15, 23, 42, 0.72)", fontWeight: 500 }}>
+                            {CROWD_INFLUENCE_PROFILE_TITLE[profileKey]}
+                          </span>
+                          <span style={{ fontWeight: 600 }}>{dir}</span>
+                          <span style={{ color, fontSize: 15, fontWeight: 700, lineHeight: 1 }} aria-hidden>
+                            {sym}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ),
+              },
+              {
+                key: "crowd",
+                title: "Crowd reaction",
+                body:
+                  consensus == null ? (
+                    <div style={{ fontSize: 13, color: "rgba(15, 23, 42, 0.55)" }}>No consensus data</div>
+                  ) : (
+                    (() => {
+                      const dom = dominantConsensusAction(consensus);
+                      const rows = [
+                        { label: "BUY" as const, pct: consensus.buyPct, color: "#15803d" },
+                        { label: "SELL" as const, pct: consensus.sellPct, color: "#b91c1c" },
+                        { label: "HOLD" as const, pct: consensus.holdPct, color: "#475569" },
+                      ];
+                      return (
+                        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                          {rows.map((r) => {
+                            const isMajority = dom === r.label;
+                            return (
+                              <div
+                                key={r.label}
+                                style={{
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  alignItems: "baseline",
+                                  gap: 12,
+                                  fontSize: isMajority ? 15 : 12,
+                                  fontWeight: isMajority ? 700 : 500,
+                                  color: r.color,
+                                  padding: isMajority ? "4px 0" : 0,
+                                  borderBottom: isMajority ? `2px solid ${r.color}` : undefined,
+                                }}
+                              >
+                                <span>{r.label}</span>
+                                <span style={{ fontVariantNumeric: "tabular-nums" }}>{consensusPctWhole(r.pct)}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()
+                  ),
+              },
+              {
+                key: "outcome",
+                title: "Outcome",
+                body:
+                  consensus == null ? (
+                    <div style={{ fontSize: 13, color: "rgba(15, 23, 42, 0.55)" }}>—</div>
+                  ) : (
+                    <div style={{ fontSize: 13, color: "rgba(15, 23, 42, 0.82)", lineHeight: 1.55 }}>
+                      <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: "0.04em", marginBottom: 8 }}>
+                        <span
+                          style={{
+                            color:
+                              dominantConsensusAction(consensus) === "BUY"
+                                ? "#15803d"
+                                : dominantConsensusAction(consensus) === "SELL"
+                                  ? "#b91c1c"
+                                  : "#475569",
+                          }}
+                        >
+                          {dominantConsensusAction(consensus)} {initialQuery.assetSymbol}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>
+                        Strength{" "}
+                        <strong style={{ color: "rgba(15, 23, 42, 0.88)", fontWeight: 600 }}>
+                          {majorityStrengthWord(consensus.majorityPct)}
+                        </strong>
+                      </div>
+                      <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>
+                        Confidence{" "}
+                        <strong style={{ color: "rgba(15, 23, 42, 0.88)", fontWeight: 600 }}>
+                          {consensusPctWhole(consensus.majorityPct)}
+                        </strong>
+                      </div>
+                      <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)" }}>
+                        Disagreement{" "}
+                        <strong style={{ color: "rgba(15, 23, 42, 0.88)", fontWeight: 600 }}>
+                          {entropyDisagreementWord(consensus.entropy)}
+                        </strong>
+                      </div>
+                    </div>
+                  ),
+              },
+            ] as const
+          ).map((block, i) => (
+            <React.Fragment key={block.key}>
+              {i > 0 ? (
+                <div
+                  aria-hidden
+                  style={{
+                    flex: "0 0 auto",
+                    alignSelf: "center",
+                    fontSize: 20,
+                    fontWeight: 600,
+                    color: "rgba(148, 163, 184, 0.95)",
+                    padding: "0 6px",
+                    lineHeight: 1,
+                  }}
+                >
+                  →
+                </div>
+              ) : null}
+              <div
+                style={{
+                  flex: "1 1 160px",
+                  minWidth: 148,
+                  maxWidth: 280,
+                  border: "1px solid rgba(15, 23, 42, 0.1)",
+                  borderRadius: 10,
+                  padding: "12px 14px",
+                  background: "rgba(248, 250, 252, 0.95)",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 10,
+                    letterSpacing: "0.06em",
+                    textTransform: "uppercase" as const,
+                    color: "rgba(15, 23, 42, 0.5)",
+                    marginBottom: 10,
+                    fontWeight: 600,
+                  }}
+                >
+                  {block.title}
+                </div>
+                {block.body}
+              </div>
+            </React.Fragment>
+          ))}
+        </div>
+      </section>
+
+      <div data-testid="legend" className={styles.legend} style={{ fontSize: 11 }}>
         <span className={styles.pill}>UNSTABLE if corrSpread &gt; 0.20</span>
         <span className={styles.pill}>or signAgreementRate &lt; 1.00</span>
         <span className={styles.pill}>or accStdDev &gt; 0.02</span>
@@ -1397,52 +1552,10 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
         </div>
       </div>
 
-      <div style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8 }}>Operational Overview</div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 16 }}>
-          <div style={{ border: "1px solid rgba(15, 23, 42, 0.10)", borderRadius: 10, padding: 16 }}>
-            <div style={{ fontSize: 12, color: "rgba(15, 23, 42, 0.55)" }}>Run duration</div>
-            <div style={{ fontSize: 24, fontWeight: 700, marginTop: 4 }}>
-              {latest?.runDurationMs != null ? `${(latest.runDurationMs / 1000).toFixed(1)} s (${latest.runDurationMs} ms)` : "—"}
-            </div>
-            <div style={{ fontSize: 12, color: "rgba(15, 23, 42, 0.5)", marginTop: 4 }}>Latest completed run</div>
-          </div>
-          <div style={{ border: "1px solid rgba(15, 23, 42, 0.10)", borderRadius: 10, padding: 16 }}>
-            <div style={{ fontSize: 12, color: "rgba(15, 23, 42, 0.55)" }}>Decisions/sec</div>
-            <div style={{ fontSize: 24, fontWeight: 700, marginTop: 4 }}>
-              {latestScalingRow?.decisionsPerSec != null ? Math.round(latestScalingRow.decisionsPerSec) : "—"}
-            </div>
-            <div style={{ fontSize: 12, color: "rgba(15, 23, 42, 0.5)", marginTop: 4 }}>Throughput</div>
-          </div>
-          <div style={{ border: "1px solid rgba(15, 23, 42, 0.10)", borderRadius: 10, padding: 16 }}>
-            <div style={{ fontSize: 12, color: "rgba(15, 23, 42, 0.55)" }}>Overhead %</div>
-            <div style={{ fontSize: 24, fontWeight: 700, marginTop: 4 }}>
-              {formatOverheadPct(latestScalingRow?.overheadPct)}
-            </div>
-            <div style={{ fontSize: 12, color: "rgba(15, 23, 42, 0.5)", marginTop: 4 }}>Run wallclock vs variants</div>
-          </div>
-          <div style={{ border: "1px solid rgba(15, 23, 42, 0.10)", borderRadius: 10, padding: 16 }}>
-            <div style={{ fontSize: 12, color: "rgba(15, 23, 42, 0.55)" }}>Efficiency</div>
-            <div style={{ fontSize: 24, fontWeight: 700, marginTop: 4 }}>
-              {latestScalingRow?.efficiencyMsPerDecision != null ? latestScalingRow.efficiencyMsPerDecision.toFixed(4) : "—"}
-            </div>
-            <div style={{ fontSize: 12, color: "rgba(15, 23, 42, 0.5)", marginTop: 4 }}>ms per decision</div>
-          </div>
-        </div>
-      </div>
-
-      <section className={styles.crowdCompositionSection}>
+      {significantInfoEvents.length > 0 ? (
+      <section className={styles.crowdCompositionSection} style={{ marginBottom: 32 }}>
         <div className={styles.sectionTitle}>Key Drivers</div>
-        <p style={{ margin: "0 0 14px 0", fontSize: 13, lineHeight: 1.55, color: "rgba(15, 23, 42, 0.72)" }}>
-          These are the strongest information inputs that influenced the crowd&apos;s behavior.
-        </p>
-        <div style={{ marginBottom: 18 }}>
-          {significantInfoEvents.length === 0 ? (
-            <div style={{ fontSize: 14, color: "rgba(15, 23, 42, 0.65)" }}>
-              No significant information items available
-            </div>
-          ) : (
-            <>
+        <div style={{ marginBottom: 8 }}>
               <div
                 style={{
                   display: "flex",
@@ -1459,160 +1572,56 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
                       : pol === "negative"
                         ? { bg: "#fee2e2", color: "#991b1b", label: "Negative" }
                         : { bg: "#f3f4f6", color: "#4b5563", label: "Neutral" };
-                  const volStr =
-                    ev.volatilityImpact == null || !Number.isFinite(ev.volatilityImpact)
-                      ? "—"
-                      : ev.volatilityImpact.toFixed(3);
                   return (
                     <div
                       key={ev.id}
                       className={styles.strategyComparisonCard}
                       style={{
-                        padding: "10px 12px",
+                        padding: "8px 12px",
                         borderRadius: 8,
                         border: "1px solid rgba(15, 23, 42, 0.1)",
                         background: "rgba(248, 250, 252, 0.85)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 10,
                       }}
                     >
                       <div
                         style={{
-                          display: "flex",
-                          flexWrap: "wrap",
-                          alignItems: "flex-start",
-                          justifyContent: "space-between",
-                          gap: 8,
-                          marginBottom: 6,
+                          fontWeight: 600,
+                          fontSize: 14,
+                          color: "rgba(15, 23, 42, 0.92)",
+                          flex: "1 1 auto",
+                          minWidth: 0,
                         }}
                       >
-                        <div
-                          style={{
-                            fontWeight: 600,
-                            fontSize: 14,
-                            color: "rgba(15, 23, 42, 0.92)",
-                            flex: "1 1 160px",
-                          }}
-                        >
-                          {ev.topic}
-                        </div>
-                        <span
-                          style={{
-                            fontSize: 11,
-                            fontWeight: 600,
-                            padding: "2px 8px",
-                            borderRadius: 999,
-                            background: sentimentStyle.bg,
-                            color: sentimentStyle.color,
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {sentimentStyle.label}
-                        </span>
+                        {ev.topic}
                       </div>
-                      <div style={{ fontSize: 12, color: "rgba(15, 23, 42, 0.65)", marginBottom: 6 }}>
-                        Source: {ev.source != null && ev.source.trim() !== "" ? ev.source : "—"}
-                      </div>
-                      <div style={{ fontSize: 12, color: "rgba(15, 23, 42, 0.78)", marginBottom: 6 }}>
-                        Sentiment: <strong>{ev.sentiment.toFixed(3)}</strong>
-                        {" · "}
-                        Step: <strong>{ev.step}</strong>
-                      </div>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                        <span
-                          style={{
-                            fontSize: 10,
-                            fontWeight: 600,
-                            padding: "2px 8px",
-                            borderRadius: 6,
-                            background: "rgba(15, 23, 42, 0.06)",
-                            color: "rgba(15, 23, 42, 0.78)",
-                          }}
-                        >
-                          Credibility {ev.credibility.toFixed(2)}
-                        </span>
-                        <span
-                          style={{
-                            fontSize: 10,
-                            fontWeight: 600,
-                            padding: "2px 8px",
-                            borderRadius: 6,
-                            background: "rgba(15, 23, 42, 0.06)",
-                            color: "rgba(15, 23, 42, 0.78)",
-                          }}
-                        >
-                          Reach {ev.reach.toFixed(2)}
-                        </span>
-                        <span
-                          style={{
-                            fontSize: 10,
-                            fontWeight: 600,
-                            padding: "2px 8px",
-                            borderRadius: 6,
-                            background: "rgba(15, 23, 42, 0.06)",
-                            color: "rgba(15, 23, 42, 0.78)",
-                          }}
-                        >
-                          Volatility Impact {volStr}
-                        </span>
-                      </div>
+                      <span
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 600,
+                          padding: "2px 8px",
+                          borderRadius: 999,
+                          background: sentimentStyle.bg,
+                          color: sentimentStyle.color,
+                          whiteSpace: "nowrap",
+                          flexShrink: 0,
+                        }}
+                      >
+                        {sentimentStyle.label}
+                      </span>
                     </div>
                   );
                 })}
               </div>
-            </>
-          )}
-        </div>
-
-        <div style={{ marginBottom: 18 }}>
-          <div
-            style={{
-              fontWeight: 600,
-              marginBottom: 8,
-              fontSize: 13,
-              letterSpacing: "0.03em",
-              textTransform: "uppercase" as const,
-              color: "rgba(15, 23, 42, 0.75)",
-            }}
-          >
-            Why This Happened
-          </div>
-          {causalExplanationSentence == null ? (
-            <div style={{ fontSize: 14, color: "rgba(15, 23, 42, 0.65)" }}>
-              Causal explanation data not available
-            </div>
-          ) : (
-            <p style={{ margin: 0, fontSize: 14, lineHeight: 1.55, color: "rgba(15, 23, 42, 0.88)" }}>
-              {causalExplanationSentence}
-            </p>
-          )}
         </div>
       </section>
+      ) : null}
 
-      <section className={styles.crowdCompositionSection}>
+      <section className={styles.crowdCompositionSection} style={{ marginBottom: 32 }}>
         <div className={styles.sectionTitle}>Agent Profile Bias</div>
-
-        {decisionFormationSentence == null ? (
-          <div style={{ fontSize: 14, color: "rgba(15, 23, 42, 0.65)", marginBottom: 16 }}>
-            Decision formation data not available
-          </div>
-        ) : (
-          <div style={{ marginBottom: 18 }}>
-            <div
-              style={{
-                fontWeight: 600,
-                marginBottom: 8,
-                fontSize: 13,
-                letterSpacing: "0.03em",
-                textTransform: "uppercase" as const,
-                color: "rgba(15, 23, 42, 0.75)",
-              }}
-            >
-              Decision Formation
-            </div>
-            <p style={{ margin: 0, fontSize: 14, lineHeight: 1.55, color: "rgba(15, 23, 42, 0.88)" }}>
-              {decisionFormationSentence}
-            </p>
-          </div>
-        )}
 
         {crowdInfluenceRows == null ? (
           <div style={{ fontSize: 14, color: "rgba(15, 23, 42, 0.65)", marginBottom: 16 }}>
@@ -1632,42 +1641,37 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
             >
               Crowd Influence Breakdown
             </div>
-            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10, color: "rgba(15, 23, 42, 0.82)" }}>
-              Primary influence: {crowdInfluenceRows[0].title}
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {crowdInfluenceRows.map((row, i) => {
                 const influenceLabel = CROWD_INFLUENCE_LABELS[Math.min(i, 2)];
+                const dir = profileDirectionFromSignal(row.avgSignal);
                 return (
                 <div
                   key={row.key}
                   style={{
-                    padding: "10px 12px",
+                    padding: "8px 12px",
                     borderRadius: 8,
                     border: "1px solid rgba(15, 23, 42, 0.1)",
                     background: "rgba(15, 23, 42, 0.03)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 10,
                   }}
                 >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6, gap: 8 }}>
-                    <span style={{ fontWeight: 600, fontSize: 14, color: "rgba(15, 23, 42, 0.92)" }}>{row.title}</span>
-                    <span
-                      style={{
-                        fontSize: 11,
-                        fontWeight: 700,
-                        letterSpacing: "0.04em",
-                        color:
-                          i === 0 ? "#15803d" : i === 1 ? "#b45309" : "rgba(15, 23, 42, 0.55)",
-                      }}
-                    >
-                      {influenceLabel}
-                    </span>
-                  </div>
-                  <div style={{ fontSize: 12, color: "rgba(15, 23, 42, 0.75)", lineHeight: 1.5 }}>
-                    <div>Avg signal: {formatAvgSignal(row.avgSignal)}</div>
-                    <div>
-                      Positive: {row.positiveCount} · Negative: {row.negativeCount}
-                    </div>
-                  </div>
+                  <span style={{ fontWeight: 600, fontSize: 14, color: "rgba(15, 23, 42, 0.92)" }}>{row.title}</span>
+                  <span style={{ fontSize: 12, color: "rgba(15, 23, 42, 0.55)", fontWeight: 500 }}>{dir}</span>
+                  <span
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 700,
+                      letterSpacing: "0.04em",
+                      color:
+                        i === 0 ? "#15803d" : i === 1 ? "#b45309" : "rgba(15, 23, 42, 0.55)",
+                    }}
+                  >
+                    {influenceLabel}
+                  </span>
                 </div>
                 );
               })}
@@ -1694,7 +1698,7 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
               >
                 Crowd Simulation
               </div>
-              <div className={styles.crowdMapSampleLabel}>Simulated Crowd (60 agents per profile)</div>
+              <div className={styles.crowdMapSampleLabel} style={{ fontSize: 11 }}>Sample by profile</div>
               {crowdMapZones == null ? (
                 <div style={{ fontSize: 14, color: "rgba(15, 23, 42, 0.65)", marginBottom: 8 }}>
                   Agent profile bias data is required for the crowd map.
@@ -1739,9 +1743,6 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
                       </div>
                     ))}
                   </div>
-                  <p className={styles.crowdMapCaption}>
-                    Each cluster shows a sampled profile population and its internal directional bias.
-                  </p>
                 </>
               )}
             </div>
@@ -1767,11 +1768,33 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
               return (
                 <div key={key} className={styles.crowdCompositionCard}>
                   <div className={styles.crowdCompositionCardTitle}>{title}</div>
-                  <div className={styles.crowdCompositionList}>
-                    <div>Leaning: {agentProfileLeaning(positiveCount, negativeCount)}</div>
-                    <div>Avg signal: {formatAvgSignal(row?.avgSignal)}</div>
-                    <div>Positive count: {formatNumber(row?.positiveCount ?? null)}</div>
-                    <div>Negative count: {formatNumber(row?.negativeCount ?? null)}</div>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      marginTop: 8,
+                      gap: 8,
+                    }}
+                  >
+                    <span style={{ fontSize: 14, fontWeight: 600, color: "rgba(15, 23, 42, 0.88)" }}>
+                      {profileDirectionFromCounts(positiveCount, negativeCount)}
+                    </span>
+                    <span
+                      aria-hidden
+                      style={{
+                        width: 10,
+                        height: 10,
+                        borderRadius: "50%",
+                        flexShrink: 0,
+                        background:
+                          positiveCount > negativeCount
+                            ? "#22c55e"
+                            : negativeCount > positiveCount
+                              ? "#ef4444"
+                              : "#94a3b8",
+                      }}
+                    />
                   </div>
                 </div>
               );
@@ -1802,7 +1825,7 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
             >
               Crowd Decision Mix
             </div>
-            <div className={styles.crowdMixLiveLabel}>Live Crowd Distribution</div>
+            <div className={styles.crowdMixLiveLabel} style={{ fontSize: 11 }}>Buy / sell / hold mix</div>
             <div className={styles.crowdMixBar} data-testid="crowd-mix-bar" aria-label="Live crowd distribution by BUY, SELL, HOLD">
               <div
                 className={`${styles.crowdMixSegment} ${styles.crowdMixSegmentBuy}`}
@@ -1843,74 +1866,6 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
                   />
                 ))}
               </div>
-            </div>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(3, 1fr)",
-                gap: 12,
-                marginBottom: 12,
-                textAlign: "center" as const,
-              }}
-            >
-              <div>
-                <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.5)", marginBottom: 4, fontWeight: 600 }}>
-                  BUY
-                </div>
-                <div
-                  style={{
-                    fontSize: 22,
-                    fontWeight: 700,
-                    fontVariantNumeric: "tabular-nums",
-                    color: "#15803d",
-                  }}
-                >
-                  {consensusPctWhole(consensus.buyPct)}
-                </div>
-              </div>
-              <div>
-                <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.5)", marginBottom: 4, fontWeight: 600 }}>
-                  SELL
-                </div>
-                <div
-                  style={{
-                    fontSize: 22,
-                    fontWeight: 700,
-                    fontVariantNumeric: "tabular-nums",
-                    color: "#b91c1c",
-                  }}
-                >
-                  {consensusPctWhole(consensus.sellPct)}
-                </div>
-              </div>
-              <div>
-                <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.5)", marginBottom: 4, fontWeight: 600 }}>
-                  HOLD
-                </div>
-                <div
-                  style={{
-                    fontSize: 22,
-                    fontWeight: 700,
-                    fontVariantNumeric: "tabular-nums",
-                    color: "#475569",
-                  }}
-                >
-                  {consensusPctWhole(consensus.holdPct)}
-                </div>
-              </div>
-            </div>
-            <div
-              style={{
-                fontSize: 12,
-                color: "rgba(15, 23, 42, 0.72)",
-                fontVariantNumeric: "tabular-nums",
-                borderTop: "1px solid rgba(15, 23, 42, 0.1)",
-                paddingTop: 10,
-                lineHeight: 1.5,
-              }}
-            >
-              Majority: {consensusPctWhole(consensus.majorityPct)} · Entropy: {consensusMetric2(consensus.entropy)} ·
-              Polarization: {consensusMetric2(consensus.polarization)}
             </div>
           </div>
         ) : null}
@@ -2051,6 +2006,51 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
         </div>
       ) : null}
       </section>
+
+      <div style={{ marginBottom: 32 }}>
+        <div
+          style={{
+            fontSize: 13,
+            fontWeight: 600,
+            marginBottom: 10,
+            letterSpacing: "0.03em",
+            textTransform: "uppercase" as const,
+            color: "rgba(15, 23, 42, 0.65)",
+          }}
+        >
+          Operational overview
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
+          <div style={{ border: "1px solid rgba(15, 23, 42, 0.10)", borderRadius: 10, padding: 12 }}>
+            <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.5)" }}>Run duration</div>
+            <div style={{ fontSize: 18, fontWeight: 700, marginTop: 4, color: "rgba(15, 23, 42, 0.92)" }}>
+              {latest?.runDurationMs != null ? `${(latest.runDurationMs / 1000).toFixed(1)} s` : "—"}
+            </div>
+            <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.45)", marginTop: 4 }}>Latest run</div>
+          </div>
+          <div style={{ border: "1px solid rgba(15, 23, 42, 0.10)", borderRadius: 10, padding: 12 }}>
+            <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.5)" }}>Decisions/sec</div>
+            <div style={{ fontSize: 18, fontWeight: 700, marginTop: 4, color: "rgba(15, 23, 42, 0.92)" }}>
+              {latestScalingRow?.decisionsPerSec != null ? Math.round(latestScalingRow.decisionsPerSec) : "—"}
+            </div>
+            <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.45)", marginTop: 4 }}>Throughput</div>
+          </div>
+          <div style={{ border: "1px solid rgba(15, 23, 42, 0.10)", borderRadius: 10, padding: 12 }}>
+            <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.5)" }}>Overhead %</div>
+            <div style={{ fontSize: 18, fontWeight: 700, marginTop: 4, color: "rgba(15, 23, 42, 0.92)" }}>
+              {formatOverheadPct(latestScalingRow?.overheadPct)}
+            </div>
+            <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.45)", marginTop: 4 }}>Wallclock vs variants</div>
+          </div>
+          <div style={{ border: "1px solid rgba(15, 23, 42, 0.10)", borderRadius: 10, padding: 12 }}>
+            <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.5)" }}>Efficiency</div>
+            <div style={{ fontSize: 18, fontWeight: 700, marginTop: 4, color: "rgba(15, 23, 42, 0.92)" }}>
+              {latestScalingRow?.efficiencyMsPerDecision != null ? latestScalingRow.efficiencyMsPerDecision.toFixed(4) : "—"}
+            </div>
+            <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.45)", marginTop: 4 }}>ms per decision</div>
+          </div>
+        </div>
+      </div>
 
       <div data-testid="drift-panel" className={styles.driftPanel}>
         <h3>Temporal Drift (Last 30 runs)</h3>
@@ -2625,8 +2625,6 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
           </div>
         </div>
       </div>
-
-      <CrowdConsensus data={(consensus ?? null) as ConsensusData | null} />
 
       <div
         data-testid="crowd-signals-card"

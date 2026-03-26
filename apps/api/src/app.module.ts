@@ -25,6 +25,8 @@ import { LaunchPlanModule } from "./launch-plan/launch-plan.module";
 import { MarketDataModule } from "./market-data/market-data.module";
 import { DebugModule } from "./debug/debug.module";
 import { SignalsModule } from "./signals/signals.module";
+import { PerformanceController } from "./performance/performance.controller";
+import { PerformanceService } from "./performance/performance.service";
 
 @Module({
   imports: [
@@ -61,5 +63,7 @@ import { SignalsModule } from "./signals/signals.module";
     DebugModule,
     SignalsModule,
   ],
+  controllers: [PerformanceController],
+  providers: [PerformanceService],
 })
 export class AppModule {}

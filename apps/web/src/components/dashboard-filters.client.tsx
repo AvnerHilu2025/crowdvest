@@ -18,16 +18,25 @@ export default function DashboardFiltersClient(props: {
   showOnlyUnstable: boolean;
   showLegacy: boolean;
   sortByRisk: boolean;
+  /** When set, filter changes use this (e.g. dashboard loading overlay + useTransition). */
+  navigateFilters?: (updater: (params: URLSearchParams) => void) => void;
+  filtersDisabled?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
   const sp = useSearchParams();
 
   const updateUrl = (updater: (params: URLSearchParams) => void) => {
+    if (props.navigateFilters) {
+      props.navigateFilters(updater);
+      return;
+    }
     const params = new URLSearchParams(sp.toString());
     updater(params);
     router.push(`${pathname}?${params.toString()}`);
   };
+
+  const disabled = props.filtersDisabled === true;
 
   return (
     <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12 }}>
@@ -38,8 +47,10 @@ export default function DashboardFiltersClient(props: {
           borderRadius: 8,
           padding: "6px 10px",
           fontSize: 14,
+          opacity: disabled ? 0.65 : 1,
         }}
         value={props.assetSymbol}
+        disabled={disabled}
         onChange={(e) => updateUrl((p) => setParam(p, "assetSymbol", selectValue(e)))}
       >
         {["SPY", "QQQ", "IWM"].map((s) => (
@@ -57,8 +68,10 @@ export default function DashboardFiltersClient(props: {
           borderRadius: 8,
           padding: "6px 10px",
           fontSize: 14,
+          opacity: disabled ? 0.65 : 1,
         }}
         value={props.topN}
+        disabled={disabled}
         onChange={(e) => updateUrl((p) => setParam(p, "topN", selectValue(e)))}
       >
         <option value="10">Top 10</option>
@@ -72,6 +85,7 @@ export default function DashboardFiltersClient(props: {
           type="checkbox"
           data-testid="toggle-only-unstable"
           checked={props.showOnlyUnstable}
+          disabled={disabled}
           onChange={(e) =>
             updateUrl((p) => setParam(p, "unstableOnly", e.target.checked ? "1" : null))
           }
@@ -84,6 +98,7 @@ export default function DashboardFiltersClient(props: {
           type="checkbox"
           data-testid="toggle-show-legacy"
           checked={props.showLegacy}
+          disabled={disabled}
           onChange={(e) =>
             updateUrl((p) => setParam(p, "showLegacy", e.target.checked ? "1" : null))
           }
@@ -96,6 +111,7 @@ export default function DashboardFiltersClient(props: {
           type="checkbox"
           data-testid="toggle-sort-risk"
           checked={props.sortByRisk}
+          disabled={disabled}
           onChange={(e) =>
             updateUrl((p) => setParam(p, "sortRisk", e.target.checked ? "1" : "0"))
           }

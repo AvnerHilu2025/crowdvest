@@ -599,3 +599,10 @@ body {
 .cis-rating-gray {
   color: var(--cv-muted);
 }
+
+/* Dashboard filter loader: global name for inline animation in DashboardClient */
+@keyframes dashboardSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}

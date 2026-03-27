@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import React, { useState, useCallback, useEffect, useRef, useMemo, useTransition } from "react";
 import Link from "next/link";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import DashboardFiltersClient from "@/components/dashboard-filters.client";
@@ -35,11 +35,62 @@ function consensusPctWhole(share: number | undefined | null): string {
   return `${Math.round(share * 100)}%`;
 }
 
-/** Display for hero track-record metrics (rates in 0–1 shown as %). */
-function formatHeroTrackRecordMetric(n: number): string {
-  if (!Number.isFinite(n)) return "";
-  if (n >= 0 && n <= 1) return `${(n * 100).toFixed(1)}%`;
-  return n.toFixed(2);
+/** Run accuracy rates from API (0–1) as one-decimal percent. */
+function formatSignalQualityPct01(rate: number): string {
+  return `${(rate * 100).toFixed(1)}%`;
+}
+
+function signalConfidenceTierColor(tier: "HIGH" | "MEDIUM" | "LOW"): string {
+  if (tier === "HIGH") return "#15803d";
+  if (tier === "MEDIUM") return "#ea580c";
+  return "#dc2626";
+}
+
+function disagreementDisplayLabel(word: "high" | "moderate" | "low"): string {
+  if (word === "high") return "High";
+  if (word === "moderate") return "Moderate";
+  return "Low";
+}
+
+function disagreementPenaltyPoints(word: "high" | "moderate" | "low"): number {
+  if (word === "high") return 70;
+  if (word === "moderate") return 40;
+  return 10;
+}
+
+/** Unified 0–100 score: (accuracy% × 0.5) + (confidence% × 0.3) − (disagreementPenalty × 0.2). */
+function decisionQualityTierFromScore(score: number): "HIGH" | "MEDIUM" | "LOW" {
+  if (score >= 65) return "HIGH";
+  if (score >= 45) return "MEDIUM";
+  return "LOW";
+}
+
+/** Trading guidance from decision score only (same breakpoints as quality tier). */
+function recommendedActionFromScore(score: number): {
+  positionSize: "SMALL" | "MEDIUM" | "LARGE";
+  riskLevel: "HIGH" | "MEDIUM" | "LOW";
+  executionStyle: "Conservative" | "Balanced" | "Aggressive";
+} {
+  if (score >= 65) {
+    return { positionSize: "LARGE", riskLevel: "LOW", executionStyle: "Aggressive" };
+  }
+  if (score >= 45) {
+    return { positionSize: "MEDIUM", riskLevel: "MEDIUM", executionStyle: "Balanced" };
+  }
+  return { positionSize: "SMALL", riskLevel: "HIGH", executionStyle: "Conservative" };
+}
+
+/** Steps-based horizon from crowd disagreement (entropy bucket). */
+function signalHorizonFromDisagreement(
+  disagreement: "high" | "moderate" | "low",
+): { horizon: string; description: string } {
+  if (disagreement === "high") {
+    return { horizon: "Short-Term", description: "Next 3–5 steps" };
+  }
+  if (disagreement === "moderate") {
+    return { horizon: "Medium-Term", description: "Next 5–15 steps" };
+  }
+  return { horizon: "Long-Term", description: "Next 15+ steps" };
 }
 
 function dominantConsensusAction(
@@ -500,6 +551,20 @@ function pickSignificantInfoEvents(
     .slice(0, max);
 }
 
+export type DashboardRunPerformance = {
+  runId: string;
+  hitRate: number | null;
+  byAsset?: Array<{
+    assetSymbol: string;
+    totalEvaluations: number;
+    correctCount: number;
+    accuracyRate: number;
+    buyAccuracy: number | null;
+    sellAccuracy: number | null;
+    holdAccuracy: number | null;
+  }>;
+};
+
 export type DashboardClientProps = {
   initialData: {
     consensus?: {
@@ -756,6 +821,8 @@ export type DashboardClientProps = {
     latestRunInfoEvents?: DashboardLatestRunInfoEvent[];
     /** Crowd-state recommendation for the same run + asset (server-fetched). */
     latestRunCrowdStateRecommendation?: DashboardCrowdStateRecommendation | null;
+    /** GET /runs/:runId/performance for latest run (forecast accuracy aggregates). */
+    performance?: DashboardRunPerformance;
   };
   initialQuery: {
     assetSymbol: string;
@@ -773,6 +840,39 @@ const DEFAULTS = {
   showLegacy: "0",
   sortRisk: "1",
 } as const;
+
+/** Mirrors `page.tsx` search-param parsing for filter navigation / loading reconciliation. */
+function parseDashboardFiltersFromSearchParams(sp: URLSearchParams): {
+  assetSymbol: string;
+  topN: string;
+  showOnlyUnstable: boolean;
+  showLegacy: boolean;
+  sortByRisk: boolean;
+} {
+  const assetSymbol = (sp.get("assetSymbol") ?? "").trim() || "SPY";
+  const topNParam = sp.get("topN") || "50";
+  const topN = ["10", "25", "50", "100"].includes(topNParam) ? topNParam : "50";
+  const showOnlyUnstable = (sp.get("unstableOnly") ?? "1") === "1";
+  const showLegacy = (sp.get("showLegacy") ?? "0") === "1";
+  const sortByRisk = (sp.get("sortRisk") ?? "1") !== "0";
+  return { assetSymbol, topN, showOnlyUnstable, showLegacy, sortByRisk };
+}
+
+function dashboardFilterStateKey(q: {
+  assetSymbol: string;
+  topN: string;
+  showOnlyUnstable: boolean;
+  showLegacy: boolean;
+  sortByRisk: boolean;
+}): string {
+  return [
+    q.assetSymbol,
+    q.topN,
+    q.showOnlyUnstable ? "1" : "0",
+    q.showLegacy ? "1" : "0",
+    q.sortByRisk ? "1" : "0",
+  ].join("|");
+}
 
 const FALLBACK_STRATEGY_DEFAULTS = {
   benchmarkDefaults: { aggregationMode: "top_20pct_only", selectionPolicy: "top_20pct_agents", symbols: ["SPY", "QQQ", "IWM"], windows: [29, 60, 120], n: 20 },
@@ -793,6 +893,32 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const drawerRunId = searchParams.get("drawerRunId");
+
+  const [pendingFilterKey, setPendingFilterKey] = useState<string | null>(null);
+  const [, startFilterTransition] = useTransition();
+
+  const navigateFilters = useCallback(
+    (updater: (params: URLSearchParams) => void) => {
+      const params = new URLSearchParams(searchParams.toString());
+      updater(params);
+      const nextFilters = parseDashboardFiltersFromSearchParams(params);
+      setPendingFilterKey(dashboardFilterStateKey(nextFilters));
+      startFilterTransition(() => {
+        router.push(`${pathname}?${params.toString()}`);
+      });
+    },
+    [pathname, router, searchParams, startFilterTransition],
+  );
+
+  const isFilterLoading =
+    pendingFilterKey !== null && dashboardFilterStateKey(initialQuery) !== pendingFilterKey;
+
+  useEffect(() => {
+    if (pendingFilterKey === null) return;
+    if (dashboardFilterStateKey(initialQuery) === pendingFilterKey) {
+      setPendingFilterKey(null);
+    }
+  }, [initialQuery, pendingFilterKey]);
 
   const {
     consensus,
@@ -832,6 +958,7 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
     backtestDiagnostics,
     strategyComparisonSummaryAudit,
     latestRunInfoEvents,
+    performance,
   } = initialData ?? {};
 
   const significantInfoEvents = useMemo(
@@ -844,22 +971,54 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
     [significantInfoEvents],
   );
 
-  /** Period hit rates for the selected asset when summary exposes them; else null (section hidden). */
-  const heroTrackRecord = useMemo((): {
-    yesterday: number | null;
-    d7: number | null;
-    d30: number | null;
-  } => {
-    return { yesterday: null, d7: null, d30: null };
-  }, []);
+  const signalQualityAssetRow = useMemo(() => {
+    const sym = initialQuery.assetSymbol.trim();
+    if (!sym || !performance?.byAsset?.length) return null;
+    return performance.byAsset.find((r) => r.assetSymbol === sym) ?? null;
+  }, [performance?.byAsset, initialQuery.assetSymbol]);
 
-  const heroTrackRecordCells = useMemo(() => {
-    return [
-      { key: "yesterday" as const, label: "Yesterday", v: heroTrackRecord.yesterday },
-      { key: "7d" as const, label: "7D", v: heroTrackRecord.d7 },
-      { key: "30d" as const, label: "30D", v: heroTrackRecord.d30 },
-    ].filter((c): c is { key: "yesterday" | "7d" | "30d"; label: string; v: number } => c.v != null && Number.isFinite(c.v));
-  }, [heroTrackRecord]);
+  /** Primary confidence: selected asset `accuracyRate`, else run-level `hitRate`. */
+  const signalConfidencePrimary01 = useMemo((): number | null => {
+    if (!performance) return null;
+    if (signalQualityAssetRow != null && Number.isFinite(signalQualityAssetRow.accuracyRate)) {
+      return signalQualityAssetRow.accuracyRate;
+    }
+    if (performance.hitRate != null && Number.isFinite(performance.hitRate)) {
+      return performance.hitRate;
+    }
+    return null;
+  }, [performance, signalQualityAssetRow]);
+
+  const decisionQuality = useMemo(() => {
+    if (consensus == null) return null;
+    const acc01 = signalConfidencePrimary01;
+    if (acc01 == null || !Number.isFinite(acc01)) return null;
+    const accuracyPct = acc01 * 100;
+    const maj = consensus.majorityPct;
+    const confidencePct = maj != null && Number.isFinite(maj) ? maj * 100 : 0;
+    const disagreement = entropyDisagreementWord(consensus.entropy);
+    const penalty = disagreementPenaltyPoints(disagreement);
+    const raw = accuracyPct * 0.5 + confidencePct * 0.3 - penalty * 0.2;
+    const score = Math.max(0, Math.min(100, Math.round(raw)));
+    const tier = decisionQualityTierFromScore(score);
+    const bullets: string[] = [];
+    if (accuracyPct < 50) bullets.push("Low signal accuracy");
+    if (disagreement === "high") bullets.push("High disagreement");
+    if (confidencePct < 50) bullets.push("Weak conviction");
+    const filteredBullets =
+      tier === "LOW" ? bullets.filter((b) => b !== "Low signal accuracy") : bullets;
+    return {
+      score,
+      tier,
+      recommendedAction: recommendedActionFromScore(score),
+      signalHorizon: signalHorizonFromDisagreement(disagreement),
+      bullets: filteredBullets.slice(0, 3),
+      accuracyPct,
+      confidencePct,
+      disagreement,
+      acc01,
+    };
+  }, [consensus, signalConfidencePrimary01]);
 
   const crowdInfluenceRows = useMemo(
     () => buildCrowdInfluenceRows(directionBiasByAgentType ?? null),
@@ -1138,9 +1297,13 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
           showOnlyUnstable={initialQuery.showOnlyUnstable}
           showLegacy={initialQuery.showLegacy}
           sortByRisk={initialQuery.sortByRisk}
+          navigateFilters={navigateFilters}
+          filtersDisabled={isFilterLoading}
         />
       </div>
 
+      <div className={styles.dashboardContentShell}>
+        <div className={isFilterLoading ? styles.dashboardMainDimmed : undefined}>
       <div
         style={{
           textAlign: "center",
@@ -1172,110 +1335,129 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
             >
               {dominantConsensusAction(consensus)} {initialQuery.assetSymbol}
             </div>
-            <div style={{ fontSize: 12, color: "rgba(15, 23, 42, 0.5)", marginBottom: 4 }}>Crowd lean</div>
+
+            {decisionQuality != null ? (
+              <div data-testid="hero-decision-quality" className={styles.decisionQualityCard}>
+                <div className={styles.decisionQualityTitle}>Decision Quality</div>
+                <div
+                  className={styles.decisionQualityScore}
+                  style={{ color: signalConfidenceTierColor(decisionQuality.tier) }}
+                >
+                  {decisionQuality.score}
+                </div>
+                <div
+                  className={
+                    decisionQuality.tier === "HIGH"
+                      ? styles.signalConfidenceBadgeHigh
+                      : decisionQuality.tier === "MEDIUM"
+                        ? styles.signalConfidenceBadgeMed
+                        : styles.signalConfidenceBadgeLow
+                  }
+                >
+                  {decisionQuality.tier}
+                </div>
+                <div
+                  className={styles.decisionQualityRecommended}
+                  data-testid="hero-decision-recommended-action"
+                >
+                  <div className={styles.decisionQualityRecommendedTitle}>Recommended Action</div>
+                  <div className={styles.decisionQualityRecommendedGrid}>
+                    <div className={styles.decisionQualityRecommendedCell}>
+                      <div className={styles.decisionQualityRecommendedLabel}>Position Size</div>
+                      <div className={styles.decisionQualityRecommendedValue}>
+                        {decisionQuality.recommendedAction.positionSize}
+                      </div>
+                    </div>
+                    <div className={styles.decisionQualityRecommendedCell}>
+                      <div className={styles.decisionQualityRecommendedLabel}>Risk Level</div>
+                      <div className={styles.decisionQualityRecommendedValue}>
+                        {decisionQuality.recommendedAction.riskLevel}
+                      </div>
+                    </div>
+                    <div className={styles.decisionQualityRecommendedCell}>
+                      <div className={styles.decisionQualityRecommendedLabel}>Execution Style</div>
+                      <div className={styles.decisionQualityRecommendedValue}>
+                        {decisionQuality.recommendedAction.executionStyle}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div
+                  className={styles.decisionQualitySignalHorizon}
+                  data-testid="hero-signal-horizon"
+                >
+                  <div className={styles.decisionQualityRecommendedTitle}>Signal Horizon</div>
+                  <div className={styles.decisionQualitySignalHorizonMain}>
+                    {decisionQuality.signalHorizon.horizon}
+                  </div>
+                  <div className={styles.decisionQualitySignalHorizonSubtitle}>
+                    {decisionQuality.signalHorizon.description}
+                  </div>
+                </div>
+                <div className={styles.decisionQualityBasedOn}>
+                  <div className={styles.decisionQualityBasedOnHeading}>Based on:</div>
+                  <ul className={styles.decisionQualityBasedOnList}>
+                    <li className={styles.decisionQualityBasedOnRow}>
+                      <span>Accuracy</span>
+                      <span className={styles.decisionQualityBasedOnValue}>
+                        {formatSignalQualityPct01(decisionQuality.acc01)}
+                      </span>
+                    </li>
+                    <li className={styles.decisionQualityBasedOnRow}>
+                      <span>Model Confidence</span>
+                      <span className={styles.decisionQualityBasedOnValue}>
+                        {`${Math.round(decisionQuality.confidencePct)}%`}
+                      </span>
+                    </li>
+                    <li className={styles.decisionQualityBasedOnRow}>
+                      <span>Disagreement</span>
+                      <span className={styles.decisionQualityBasedOnValue}>
+                        {disagreementDisplayLabel(decisionQuality.disagreement)}
+                      </span>
+                    </li>
+                  </ul>
+                </div>
+                {decisionQuality.bullets.length > 0 ? (
+                  <ul className={styles.decisionQualityBullets}>
+                    {decisionQuality.bullets.map((b) => (
+                      <li key={b}>{b}</li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+            ) : null}
+
+            <div
+              style={{
+                fontSize: 11,
+                color: "rgba(15, 23, 42, 0.45)",
+                marginBottom: 4,
+                marginTop: decisionQuality != null ? 18 : 10,
+              }}
+            >
+              Crowd lean
+            </div>
             <div
               style={{
                 display: "flex",
                 flexWrap: "wrap",
                 justifyContent: "center",
-                gap: "10px 28px",
-                fontSize: 14,
-                color: "rgba(15, 23, 42, 0.78)",
+                gap: "8px 20px",
+                fontSize: 10,
+                fontWeight: 400,
+                color: "rgba(15, 23, 42, 0.42)",
               }}
             >
               <span>
-                Strength:{" "}
-                <strong style={{ fontWeight: 600, color: "rgba(15, 23, 42, 0.92)" }}>
-                  {majorityStrengthWord(consensus.majorityPct)}
-                </strong>
+                Strength: {majorityStrengthWord(consensus.majorityPct)}
               </span>
               <span>
-                Confidence:{" "}
-                <strong style={{ fontWeight: 600, color: "rgba(15, 23, 42, 0.92)" }}>
-                  {consensusPctWhole(consensus.majorityPct)}
-                </strong>
+                Confidence: {consensusPctWhole(consensus.majorityPct)}
               </span>
               <span>
-                Disagreement:{" "}
-                <strong style={{ fontWeight: 600, color: "rgba(15, 23, 42, 0.92)" }}>
-                  {entropyDisagreementWord(consensus.entropy)}
-                </strong>
+                Disagreement: {disagreementDisplayLabel(entropyDisagreementWord(consensus.entropy))}
               </span>
             </div>
-
-            {heroTrackRecordCells.length > 0 ? (
-              <div
-                data-testid="hero-track-record"
-                style={{
-                  marginTop: 20,
-                  paddingTop: 16,
-                  borderTop: "1px solid rgba(15, 23, 42, 0.08)",
-                  width: "100%",
-                  maxWidth: 520,
-                  marginLeft: "auto",
-                  marginRight: "auto",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 600,
-                    letterSpacing: "0.06em",
-                    textTransform: "uppercase" as const,
-                    color: "rgba(15, 23, 42, 0.5)",
-                    marginBottom: 10,
-                    textAlign: "center",
-                  }}
-                >
-                  Recent Track Record
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    gap: 10,
-                    flexWrap: "wrap",
-                  }}
-                >
-                  {heroTrackRecordCells.map((col) => (
-                    <div
-                      key={col.key}
-                      style={{
-                        flex: "1 1 88px",
-                        minWidth: 88,
-                        maxWidth: 140,
-                        textAlign: "center",
-                        padding: "8px 10px",
-                        borderRadius: 8,
-                        background: "rgba(15, 23, 42, 0.035)",
-                        border: "1px solid rgba(15, 23, 42, 0.07)",
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontSize: 10,
-                          color: "rgba(15, 23, 42, 0.48)",
-                          marginBottom: 4,
-                          fontWeight: 600,
-                        }}
-                      >
-                        {col.label}
-                      </div>
-                      <div
-                        style={{
-                          fontSize: 14,
-                          fontWeight: 600,
-                          fontVariantNumeric: "tabular-nums",
-                          color: "rgba(15, 23, 42, 0.88)",
-                        }}
-                      >
-                        {formatHeroTrackRecordMetric(col.v)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : null}
           </>
         )}
       </div>
@@ -3445,6 +3627,8 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
           </table>
         </div>
       </div>
+        </div>
+      </div>
 
       {drawerRunId && (
         <>
@@ -3563,6 +3747,62 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
             </div>
           </div>
         </>
+      )}
+      {isFilterLoading && (
+        <div
+          data-testid="dashboard-filter-loading"
+          role="status"
+          aria-live="polite"
+          aria-busy="true"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 9999,
+            background: "rgba(15, 23, 42, 0.32)",
+            backdropFilter: "blur(2px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <div
+            style={{
+              width: "320px",
+              maxWidth: "calc(100vw - 32px)",
+              background: "#ffffff",
+              border: "1px solid #d1d5db",
+              borderRadius: "14px",
+              boxShadow: "0 24px 60px rgba(0, 0, 0, 0.35)",
+              padding: "24px 28px",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "14px",
+            }}
+          >
+            <div
+              style={{
+                width: "32px",
+                height: "32px",
+                borderRadius: "999px",
+                border: "3px solid #cbd5e1",
+                borderTopColor: "#111827",
+                animation: "dashboardSpin 0.8s linear infinite",
+              }}
+            />
+            <div
+              style={{
+                fontSize: "16px",
+                lineHeight: 1.4,
+                fontWeight: 600,
+                color: "#111827",
+                textAlign: "center",
+              }}
+            >
+              Analyzing market signals...
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

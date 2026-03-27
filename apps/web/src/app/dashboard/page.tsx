@@ -3,6 +3,7 @@ import {
   DashboardClient,
   type DashboardCrowdStateRecommendation,
   type DashboardLatestRunInfoEvent,
+  type DashboardRunPerformance,
 } from "./DashboardClient";
 import { getWebBase } from "@/lib/web-base";
 import { stabilityReason } from "@/lib/risk";
@@ -80,6 +81,53 @@ function parseCrowdStateRecommendation(json: unknown): DashboardCrowdStateRecomm
     confidence: r.confidence,
     stability: r.stability,
     explanation: r.explanation,
+  };
+}
+
+function finiteNumber(v: unknown): number | undefined {
+  return typeof v === "number" && Number.isFinite(v) ? v : undefined;
+}
+
+function parseDashboardRunPerformance(json: unknown): DashboardRunPerformance | undefined {
+  if (!json || typeof json !== "object") return undefined;
+  const o = json as Record<string, unknown>;
+  if (typeof o.runId !== "string" || o.runId.trim() === "") return undefined;
+  if (!("hitRate" in o)) return undefined;
+  let hitRate: number | null;
+  if (o.hitRate === null) hitRate = null;
+  else {
+    const hr = finiteNumber(o.hitRate);
+    if (hr === undefined) return undefined;
+    hitRate = hr;
+  }
+
+  const byAssetOut: NonNullable<DashboardRunPerformance["byAsset"]> = [];
+  const raw = o.byAsset;
+  if (Array.isArray(raw)) {
+    for (const row of raw) {
+      if (!row || typeof row !== "object") continue;
+      const r = row as Record<string, unknown>;
+      if (typeof r.assetSymbol !== "string" || r.assetSymbol.trim() === "") continue;
+      const accuracyRate = finiteNumber(r.accuracyRate);
+      if (accuracyRate === undefined) continue;
+      const totalEvaluationsRaw = finiteNumber(r.totalEvaluations);
+      const correctCountRaw = finiteNumber(r.correctCount);
+      byAssetOut.push({
+        assetSymbol: r.assetSymbol.trim(),
+        totalEvaluations: totalEvaluationsRaw !== undefined ? Math.trunc(totalEvaluationsRaw) : 0,
+        correctCount: correctCountRaw !== undefined ? Math.trunc(correctCountRaw) : 0,
+        accuracyRate,
+        buyAccuracy: finiteNumber(r.buyAccuracy) ?? null,
+        sellAccuracy: finiteNumber(r.sellAccuracy) ?? null,
+        holdAccuracy: finiteNumber(r.holdAccuracy) ?? null,
+      });
+    }
+  }
+
+  return {
+    runId: o.runId.trim(),
+    hitRate,
+    byAsset: byAssetOut.length > 0 ? byAssetOut : undefined,
   };
 }
 
@@ -412,11 +460,12 @@ export default async function DashboardPage({
 
   let latestRunInfoEvents: DashboardLatestRunInfoEvent[] | undefined;
   let latestRunCrowdStateRecommendation: DashboardCrowdStateRecommendation | null | undefined;
+  let latestRunPerformance: DashboardRunPerformance | undefined;
   if (latestRun?.id) {
     const apiBase = process.env.API_BASE_URL ?? "http://localhost:4001";
     const runId = latestRun.id;
     try {
-      const [evRes, csRes] = await Promise.all([
+      const [evRes, csRes, perfRes] = await Promise.all([
         fetch(
           `${apiBase}/runs/${runId}/info-events?assetSymbol=${encodeURIComponent(assetSymbol)}`,
           { cache: "no-store", headers: { accept: "application/json" } },
@@ -425,6 +474,10 @@ export default async function DashboardPage({
           `${apiBase}/results/crowd-state?runId=${encodeURIComponent(runId)}&assetSymbol=${encodeURIComponent(assetSymbol)}`,
           { cache: "no-store", headers: { accept: "application/json" } },
         ),
+        fetch(`${apiBase}/runs/${runId}/performance`, {
+          cache: "no-store",
+          headers: { accept: "application/json" },
+        }),
       ]);
       if (evRes.ok) {
         const raw: unknown = await evRes.json();
@@ -434,6 +487,10 @@ export default async function DashboardPage({
       if (csRes.ok) {
         const cs: unknown = await csRes.json();
         latestRunCrowdStateRecommendation = parseCrowdStateRecommendation(cs);
+      }
+      if (perfRes.ok) {
+        const perfJson: unknown = await perfRes.json();
+        latestRunPerformance = parseDashboardRunPerformance(perfJson);
       }
     } catch {
       /* leave undefined — API unreachable or parse edge case */
@@ -604,6 +661,7 @@ export default async function DashboardPage({
             : undefined,
         latestRunInfoEvents,
         latestRunCrowdStateRecommendation,
+        performance: latestRunPerformance,
       }}
       initialQuery={{
         assetSymbol,

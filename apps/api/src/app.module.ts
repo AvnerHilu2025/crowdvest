@@ -27,6 +27,7 @@ import { DebugModule } from "./debug/debug.module";
 import { SignalsModule } from "./signals/signals.module";
 import { PerformanceController } from "./performance/performance.controller";
 import { PerformanceService } from "./performance/performance.service";
+import { AnalyticsModule } from "./analytics/analytics.module";
 
 @Module({
   imports: [
@@ -62,6 +63,7 @@ import { PerformanceService } from "./performance/performance.service";
     MarketDataModule,
     DebugModule,
     SignalsModule,
+    AnalyticsModule,
   ],
   controllers: [PerformanceController],
   providers: [PerformanceService],

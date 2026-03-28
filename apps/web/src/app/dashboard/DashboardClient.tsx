@@ -11,6 +11,7 @@ import { ScalingDetails } from "@/components/dashboard/ScalingDetails";
 import { p95, normToP95 } from "@/lib/miniBars";
 import { DASH_THRESHOLDS, fmtNum, fmtPct01, clamp01, formatOverheadPct } from "@/lib/dashboardThresholds";
 import { Sparkline } from "@/components/sparkline";
+import { API_BASE } from "@/lib/api";
 import styles from "./dashboard.module.css";
 
 const formatPercent = (value?: number | null) => {
@@ -33,6 +34,21 @@ function agentProfileLeaning(positiveCount: number, negativeCount: number): stri
 function consensusPctWhole(share: number | undefined | null): string {
   if (share == null || !Number.isFinite(share)) return "—";
   return `${Math.round(share * 100)}%`;
+}
+
+/**
+ * Crowd reaction disagreement badge from the largest BUY/SELL/HOLD share (0–100 scale).
+ * Higher majority share → lower labeled disagreement.
+ */
+function crowdReactionDistributionDisagreementFromMaxPct(maxSharePct: number): {
+  level: "LOW" | "MODERATE" | "HIGH";
+  color: string;
+} {
+  const level: "LOW" | "MODERATE" | "HIGH" =
+    maxSharePct >= 70 ? "LOW" : maxSharePct >= 50 ? "MODERATE" : "HIGH";
+  const color =
+    level === "LOW" ? "#16a34a" : level === "MODERATE" ? "#f59e0b" : "#dc2626";
+  return { level, color };
 }
 
 /** Run accuracy rates from API (0–1) as one-decimal percent. */
@@ -117,6 +133,49 @@ function entropyDisagreementWord(ent: number | undefined | null): "high" | "mode
   if (ent > 1.5) return "high";
   if (ent > 1.2) return "moderate";
   return "low";
+}
+
+/** Dashboard header signal score: HIGH→0.8, MODERATE→0.5, LOW→0.2 (used as disagreement term). */
+function entropyDisagreementSignalWeight(word: "high" | "moderate" | "low"): number {
+  if (word === "high") return 0.8;
+  if (word === "moderate") return 0.5;
+  return 0.2;
+}
+
+function dashboardHeaderSignalLevel(score01: number): "STRONG" | "MODERATE" | "WEAK" {
+  if (score01 > 0.7) return "STRONG";
+  if (score01 < 0.4) return "WEAK";
+  return "MODERATE";
+}
+
+function dashboardHeaderSignalColor(level: "STRONG" | "MODERATE" | "WEAK"): string {
+  if (level === "STRONG") return "#16a34a";
+  if (level === "MODERATE") return "#f59e0b";
+  return "#dc2626";
+}
+
+/** 0–100 market confidence gauge: below 40 red, 40–70 orange, above 70 green */
+function globalMarketConfidenceGaugeColor(score100: number): string {
+  if (score100 < 40) return "#dc2626";
+  if (score100 > 70) return "#16a34a";
+  return "#f59e0b";
+}
+
+/** Hero subline under Decision Quality tier: why crowd confidence reads low / medium / high. */
+function decisionQualityConfidenceExplanation(
+  confidencePct: number,
+  disagreement: "high" | "moderate" | "low",
+): string {
+  if (confidencePct < 50) {
+    if (disagreement === "high") {
+      return "Low confidence due to high disagreement";
+    }
+    return "Low confidence due to weak signal strength";
+  }
+  if (confidencePct <= 70) {
+    return "Moderate confidence with mixed signals";
+  }
+  return "High confidence with strong alignment";
 }
 
 /** Deterministic PRNG for agent-tick positions (stable across re-renders for same consensus). */
@@ -536,6 +595,72 @@ function sentimentPolarity(sentiment: number): "positive" | "negative" | "neutra
   return "neutral";
 }
 
+/** Majority polarity across Information-block items (same `sentimentPolarity` as UI badges). */
+function overallInformationSentiment(events: Array<{ sentiment: number }>): "NEGATIVE" | "POSITIVE" | null {
+  if (events.length === 0) return null;
+  let negative = 0;
+  let positive = 0;
+  for (const ev of events) {
+    const pol = sentimentPolarity(ev.sentiment);
+    if (pol === "negative") negative++;
+    else if (pol === "positive") positive++;
+  }
+  const n = events.length;
+  if (negative > n / 2) return "NEGATIVE";
+  if (positive > n / 2) return "POSITIVE";
+  return null;
+}
+
+type CrowdReactionContradictionInsight =
+  | { kind: "buyAgainstNegative"; buyPct: number }
+  | { kind: "sellAgainstPositive"; sellPct: number };
+
+function crowdReactionContradictionInsight(
+  infoEvents: Array<{ sentiment: number }>,
+  buyShare: number | undefined,
+  sellShare: number | undefined,
+): CrowdReactionContradictionInsight | null {
+  const sentiment = overallInformationSentiment(infoEvents);
+  const buyPct = Math.round((buyShare ?? 0) * 100);
+  const sellPct = Math.round((sellShare ?? 0) * 100);
+  if (sentiment === "NEGATIVE" && buyPct > 20) {
+    return { kind: "buyAgainstNegative", buyPct };
+  }
+  if (sentiment === "POSITIVE" && sellPct > 20) {
+    return { kind: "sellAgainstPositive", sellPct };
+  }
+  return null;
+}
+
+/** Subline under each archetype in decision flow; driven by top INFORMATION event `sentiment`. */
+function agentImpactExplanationForArchetype(
+  profileKey: "trendFollower" | "contrarian" | "balanced",
+  topEventSentiment: number,
+): string {
+  if (topEventSentiment > SENTIMENT_LABEL_EPS) {
+    const m = {
+      trendFollower: "Following positive momentum",
+      contrarian: "Taking profit into strength",
+      balanced: "Increasing exposure cautiously",
+    } as const;
+    return m[profileKey];
+  }
+  if (topEventSentiment < -SENTIMENT_LABEL_EPS) {
+    const m = {
+      trendFollower: "Following negative momentum",
+      contrarian: "Selling due to weak reversal signals",
+      balanced: "Reducing exposure under uncertainty",
+    } as const;
+    return m[profileKey];
+  }
+  const m = {
+    trendFollower: "Weighing headlines without a clear tilt",
+    contrarian: "No sharp reversal to fade yet",
+    balanced: "Holding exposure steady amid mixed news",
+  } as const;
+  return m[profileKey];
+}
+
 /** Rank: highest reach → then credibility → then |sentiment|; cap at `max`. */
 function pickSignificantInfoEvents(
   rows: DashboardLatestRunInfoEvent[] | undefined,
@@ -549,6 +674,59 @@ function pickSignificantInfoEvents(
       return Math.abs(b.sentiment) - Math.abs(a.sentiment);
     })
     .slice(0, max);
+}
+
+/** Same ranking as `pickSignificantInfoEvents`, scoped to one asset (case-insensitive symbol match). */
+function pickTopInfoEventsForAsset(
+  rows: DashboardLatestRunInfoEvent[] | undefined,
+  assetSymbol: string,
+  max: number,
+): DashboardLatestRunInfoEvent[] {
+  if (!rows?.length || !assetSymbol.trim()) return [];
+  const sym = assetSymbol.trim().toUpperCase();
+  const filtered = rows.filter((r) => r.assetSymbol.trim().toUpperCase() === sym);
+  if (!filtered.length) return [];
+  return [...filtered]
+    .sort((a, b) => {
+      if (b.reach !== a.reach) return b.reach - a.reach;
+      if (b.credibility !== a.credibility) return b.credibility - a.credibility;
+      return Math.abs(b.sentiment) - Math.abs(a.sentiment);
+    })
+    .slice(0, max);
+}
+
+/** Parse GET /info-events JSON (same shape as page.tsx). */
+function parseInfoEventsFromApiJson(json: unknown): DashboardLatestRunInfoEvent[] {
+  if (!Array.isArray(json)) return [];
+  const out: DashboardLatestRunInfoEvent[] = [];
+  for (const item of json) {
+    if (!item || typeof item !== "object") continue;
+    const e = item as Record<string, unknown>;
+    if (typeof e.id !== "string" || typeof e.runId !== "string" || typeof e.assetSymbol !== "string") continue;
+    if (typeof e.step !== "number" || !Number.isFinite(e.step)) continue;
+    if (typeof e.topic !== "string") continue;
+    if (typeof e.sentiment !== "number" || !Number.isFinite(e.sentiment)) continue;
+    if (typeof e.credibility !== "number" || !Number.isFinite(e.credibility)) continue;
+    if (typeof e.reach !== "number" || !Number.isFinite(e.reach)) continue;
+    const vol = e.volatilityImpact;
+    const volN =
+      vol == null ? null : typeof vol === "number" && Number.isFinite(vol) ? vol : null;
+    const src = e.source;
+    out.push({
+      id: e.id,
+      runId: e.runId,
+      assetSymbol: e.assetSymbol,
+      step: e.step,
+      topic: e.topic,
+      sentiment: e.sentiment,
+      credibility: e.credibility,
+      reach: e.reach,
+      volatilityImpact: volN,
+      source: src == null ? null : typeof src === "string" ? src : null,
+      createdAt: typeof e.createdAt === "string" ? e.createdAt : undefined,
+    });
+  }
+  return out;
 }
 
 export type DashboardRunPerformance = {
@@ -961,14 +1139,70 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
     performance,
   } = initialData ?? {};
 
+  const dashboardInfoEventsRunId = useMemo(() => {
+    if (latestScalingRow?.runId) return latestScalingRow.runId;
+    if (performance?.runId) return performance.runId;
+    const lr = latest as { id?: string } | null | undefined;
+    if (lr && typeof lr.id === "string" && lr.id.trim() !== "") return lr.id.trim();
+    return null;
+  }, [latestScalingRow?.runId, performance?.runId, latest]);
+
+  const [infoEventsFromFlatFetch, setInfoEventsFromFlatFetch] = useState<DashboardLatestRunInfoEvent[] | null>(
+    null,
+  );
+
+  useEffect(() => {
+    setInfoEventsFromFlatFetch(null);
+    if (!dashboardInfoEventsRunId || !initialQuery.assetSymbol?.trim()) return;
+    if (latestRunInfoEvents != null && latestRunInfoEvents.length > 0) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const url = `${API_BASE}/info-events?runId=${encodeURIComponent(dashboardInfoEventsRunId)}&assetSymbol=${encodeURIComponent(
+          initialQuery.assetSymbol.trim(),
+        )}`;
+        const res = await fetch(url, { cache: "no-store", headers: { accept: "application/json" } });
+        if (!res.ok || cancelled) return;
+        const raw: unknown = await res.json();
+        const parsed = parseInfoEventsFromApiJson(raw);
+        if (!cancelled) setInfoEventsFromFlatFetch(parsed);
+      } catch {
+        if (!cancelled) setInfoEventsFromFlatFetch(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [dashboardInfoEventsRunId, initialQuery.assetSymbol, latestRunInfoEvents]);
+
+  const effectiveLatestRunInfoEvents =
+    latestRunInfoEvents != null && latestRunInfoEvents.length > 0
+      ? latestRunInfoEvents
+      : infoEventsFromFlatFetch !== null
+        ? infoEventsFromFlatFetch
+        : latestRunInfoEvents;
+
   const significantInfoEvents = useMemo(
-    () => pickSignificantInfoEvents(latestRunInfoEvents, SIGNIFICANT_INFO_EVENTS_MAX),
-    [latestRunInfoEvents],
+    () => pickSignificantInfoEvents(effectiveLatestRunInfoEvents, SIGNIFICANT_INFO_EVENTS_MAX),
+    [effectiveLatestRunInfoEvents],
   );
 
   const decisionFlowInformationEvents = useMemo(
-    () => significantInfoEvents.slice(0, 2),
-    [significantInfoEvents],
+    () => pickTopInfoEventsForAsset(effectiveLatestRunInfoEvents, initialQuery.assetSymbol, 2),
+    [effectiveLatestRunInfoEvents, initialQuery.assetSymbol],
+  );
+
+  const crowdReactionContradiction = useMemo(
+    () =>
+      consensus == null
+        ? null
+        : crowdReactionContradictionInsight(
+            decisionFlowInformationEvents,
+            consensus.buyPct,
+            consensus.sellPct,
+          ),
+    [consensus, decisionFlowInformationEvents],
   );
 
   const signalQualityAssetRow = useMemo(() => {
@@ -1017,7 +1251,99 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
       confidencePct,
       disagreement,
       acc01,
+      confidenceExplanation: decisionQualityConfidenceExplanation(confidencePct, disagreement),
     };
+  }, [consensus, signalConfidencePrimary01]);
+
+  /** Header "SIGNAL" line: accuracy (0–1) × 0.4 + confidence × 0.3 + (1 − disagreementWeight) × 0.3 */
+  const dashboardHeaderSignal = useMemo(() => {
+    if (consensus == null) return null;
+    const accuracy = signalConfidencePrimary01;
+    if (accuracy == null || !Number.isFinite(accuracy)) return null;
+    const acc = clamp01(accuracy);
+    const confidence = clamp01(consensus.majorityPct ?? 0);
+    const disagreementWord = entropyDisagreementWord(consensus.entropy);
+    const disagreement = entropyDisagreementSignalWeight(disagreementWord);
+    const score = acc * 0.4 + confidence * 0.3 + (1 - disagreement) * 0.3;
+    const level = dashboardHeaderSignalLevel(score);
+    const buyPct = Math.max(0, Math.min(100, (consensus.buyPct ?? 0) * 100));
+    const sellPct = Math.max(0, Math.min(100, (consensus.sellPct ?? 0) * 100));
+    const holdPct = Math.max(0, Math.min(100, (consensus.holdPct ?? 0) * 100));
+    const maxPct = Math.max(buyPct, sellPct, holdPct);
+    const disagreementLevel = crowdReactionDistributionDisagreementFromMaxPct(maxPct).level;
+
+    const reasons: string[] = [];
+    if (acc < 0.5) {
+      reasons.push("Low accuracy");
+    }
+    if (disagreementLevel === "HIGH") {
+      reasons.push("High disagreement");
+    }
+    if (confidence < 0.5) {
+      reasons.push("Low confidence");
+    }
+
+    return {
+      score,
+      level,
+      color: dashboardHeaderSignalColor(level),
+      reasons,
+    };
+  }, [consensus, signalConfidencePrimary01]);
+
+  const dashboardPositionAdvice = useMemo((): string[] => {
+    if (dashboardHeaderSignal == null) return [];
+    const { reasons, level: signalLevel } = dashboardHeaderSignal;
+
+    if (reasons.length === 0) {
+      if (signalLevel === "WEAK") {
+        return ["Reduce position size", "Wait for confirmation"];
+      }
+      if (signalLevel === "MODERATE") {
+        return ["Trade cautiously", "Monitor trend continuation"];
+      }
+      return ["High conviction signal", "Standard position sizing"];
+    }
+
+    const advice: string[] = [];
+    if (reasons.includes("Low accuracy")) {
+      advice.push("Model is unreliable — avoid trading");
+    }
+    if (reasons.includes("High disagreement")) {
+      advice.push("Wait for consensus to form");
+    }
+    if (reasons.includes("Low confidence")) {
+      advice.push("Reduce exposure until confidence improves");
+    }
+    return advice;
+  }, [dashboardHeaderSignal]);
+
+  const heroExpectedBehaviorOutlook = useMemo((): string | null => {
+    if (consensus == null || dashboardHeaderSignal == null) return null;
+    const buyShare = consensus.buyPct ?? 0;
+    const sellShare = consensus.sellPct ?? 0;
+    const direction = sellShare > buyShare ? "downward" : "upward";
+    const strength = dashboardHeaderSignal.level.toLowerCase();
+    const buyPct100 = Math.max(0, Math.min(100, buyShare * 100));
+    const sellPct100 = Math.max(0, Math.min(100, sellShare * 100));
+    const holdPct100 = Math.max(0, Math.min(100, (consensus.holdPct ?? 0) * 100));
+    const maxPct = Math.max(buyPct100, sellPct100, holdPct100);
+    const disagreementLevel = crowdReactionDistributionDisagreementFromMaxPct(maxPct).level;
+    const uncertainty = disagreementLevel === "HIGH" ? "high uncertainty" : "low uncertainty";
+    return `Expected behavior (next 3–5 steps):\n${strength} ${direction} bias with ${uncertainty}`;
+  }, [consensus, dashboardHeaderSignal]);
+
+  const globalMarketConfidenceScore = useMemo((): number | null => {
+    if (consensus == null) return null;
+    const accuracy = signalConfidencePrimary01;
+    if (accuracy == null || !Number.isFinite(accuracy)) return null;
+    const acc = clamp01(accuracy);
+    const modelConfidence = clamp01(consensus.majorityPct ?? 0);
+    const disagreementWord = entropyDisagreementWord(consensus.entropy);
+    const disagreementValue = entropyDisagreementSignalWeight(disagreementWord);
+    return Math.round(
+      (acc * 0.4 + modelConfidence * 0.3 + (1 - disagreementValue) * 0.3) * 100,
+    );
   }, [consensus, signalConfidencePrimary01]);
 
   const crowdInfluenceRows = useMemo(
@@ -1290,7 +1616,9 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
   return (
     <div data-testid="dashboard-root" style={{ maxWidth: 1152, margin: "0 auto", padding: "32px 24px" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, marginBottom: 24 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700 }}>Dashboard</h1>
+        <div>
+          <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0 }}>Dashboard</h1>
+        </div>
         <DashboardFiltersClient
           assetSymbol={initialQuery.assetSymbol}
           topN={initialQuery.topN}
@@ -1324,7 +1652,7 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
                 fontWeight: 800,
                 letterSpacing: "0.06em",
                 lineHeight: 1.1,
-                marginBottom: 14,
+                marginBottom: 10,
                 color:
                   dominantConsensusAction(consensus) === "BUY"
                     ? "#15803d"
@@ -1336,7 +1664,50 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
               {dominantConsensusAction(consensus)} {initialQuery.assetSymbol}
             </div>
 
+            {globalMarketConfidenceScore != null ? (
+              <div
+                className={styles.globalConfidence}
+                style={{ color: globalMarketConfidenceGaugeColor(globalMarketConfidenceScore) }}
+              >
+                Market Confidence: {globalMarketConfidenceScore} / 100
+              </div>
+            ) : null}
+
+            {dashboardHeaderSignal != null ? (
+              <>
+                <div
+                  className={styles.signal}
+                  style={{ color: dashboardHeaderSignal.color }}
+                  title={`Signal score ${dashboardHeaderSignal.score.toFixed(3)}`}
+                >
+                  SIGNAL: {dashboardHeaderSignal.level}
+                </div>
+                {dashboardHeaderSignal.reasons.length > 0 ? (
+                  <div className={styles.signalReasons}>
+                    {dashboardHeaderSignal.reasons.map((r) => (
+                      <div key={r}>• {r}</div>
+                    ))}
+                  </div>
+                ) : null}
+                {dashboardHeaderSignal.level === "WEAK" ? (
+                  <div className={`${styles.signalWarning} ${styles.signalWarningWeak}`}>
+                    ⚠ Weak signal — high disagreement in the crowd
+                  </div>
+                ) : dashboardHeaderSignal.level === "MODERATE" ? (
+                  <div className={`${styles.signalWarning} ${styles.signalWarningModerate}`}>
+                    ⚠ Moderate signal — mixed crowd alignment
+                  </div>
+                ) : null}
+                <div className={styles.advisor}>
+                  {dashboardPositionAdvice.map((a) => (
+                    <div key={a}>• {a}</div>
+                  ))}
+                </div>
+              </>
+            ) : null}
+
             {decisionQuality != null ? (
+              <>
               <div data-testid="hero-decision-quality" className={styles.decisionQualityCard}>
                 <div className={styles.decisionQualityTitle}>Decision Quality</div>
                 <div
@@ -1355,6 +1726,21 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
                   }
                 >
                   {decisionQuality.tier}
+                </div>
+                <div
+                  data-testid="hero-decision-confidence-explanation"
+                  style={{
+                    marginTop: 8,
+                    fontSize: 12,
+                    lineHeight: 1.35,
+                    color: "rgba(15, 23, 42, 0.48)",
+                    textAlign: "center",
+                    maxWidth: 300,
+                    marginLeft: "auto",
+                    marginRight: "auto",
+                  }}
+                >
+                  {decisionQuality.confidenceExplanation}
                 </div>
                 <div
                   className={styles.decisionQualityRecommended}
@@ -1425,6 +1811,10 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
                   </ul>
                 ) : null}
               </div>
+              {heroExpectedBehaviorOutlook != null ? (
+                <div className={styles.outlook}>{heroExpectedBehaviorOutlook}</div>
+              ) : null}
+              </>
             ) : null}
 
             <div
@@ -1484,48 +1874,93 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
                 body: (
                   <>
                     {decisionFlowInformationEvents.length === 0 ? (
-                      <div style={{ fontSize: 14, color: "rgba(15, 23, 42, 0.72)", lineHeight: 1.4 }}>Mixed signals</div>
+                      <>
+                        <div style={{ fontSize: 14, color: "rgba(15, 23, 42, 0.72)", lineHeight: 1.4 }}>
+                          Mixed signals
+                        </div>
+                        <div style={{ fontSize: 12, color: "rgba(15, 23, 42, 0.5)", lineHeight: 1.35, marginTop: 6 }}>
+                          No high-impact event available for this asset
+                        </div>
+                      </>
                     ) : (
-                      decisionFlowInformationEvents.map((ev) => {
-                        const pol = sentimentPolarity(ev.sentiment);
-                        const sentimentStyle =
-                          pol === "positive"
-                            ? { bg: "#dcfce7", color: "#166534", label: "Positive" }
-                            : pol === "negative"
-                              ? { bg: "#fee2e2", color: "#991b1b", label: "Negative" }
-                              : { bg: "#f3f4f6", color: "#4b5563", label: "Neutral" };
-                        return (
-                          <div key={ev.id} style={{ marginBottom: decisionFlowInformationEvents.length > 1 ? 10 : 0 }}>
+                      <>
+                        {decisionFlowInformationEvents.map((ev, idx) => {
+                          const pol = sentimentPolarity(ev.sentiment);
+                          const sentimentStyle =
+                            pol === "positive"
+                              ? { bg: "#dcfce7", color: "#166534", label: "Positive" }
+                              : pol === "negative"
+                                ? { bg: "#fee2e2", color: "#991b1b", label: "Negative" }
+                                : { bg: "#f3f4f6", color: "#4b5563", label: "Neutral" };
+                          return (
                             <div
+                              key={ev.id}
                               style={{
-                                fontWeight: 600,
-                                fontSize: 13,
-                                color: "rgba(15, 23, 42, 0.92)",
-                                lineHeight: 1.35,
-                                marginBottom: 6,
+                                marginBottom: idx < decisionFlowInformationEvents.length - 1 ? 10 : 0,
+                                padding: "10px 10px",
+                                borderRadius: 8,
+                                border: "1px solid rgba(15, 23, 42, 0.08)",
+                                background: "rgba(255, 255, 255, 0.9)",
                               }}
                             >
-                              {ev.topic}
-                            </div>
-                            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, fontSize: 12 }}>
-                              <span
+                              <div
                                 style={{
                                   fontWeight: 600,
-                                  padding: "2px 8px",
-                                  borderRadius: 6,
-                                  background: sentimentStyle.bg,
-                                  color: sentimentStyle.color,
+                                  fontSize: 13,
+                                  color: "rgba(15, 23, 42, 0.92)",
+                                  lineHeight: 1.35,
+                                  marginBottom: 6,
                                 }}
                               >
-                                {sentimentStyle.label}
-                              </span>
-                              <span style={{ color: "rgba(15, 23, 42, 0.5)", fontSize: 11 }}>
-                                reach {fmtPct01(ev.reach, 0)}
-                              </span>
+                                {ev.topic}
+                              </div>
+                              <div
+                                style={{
+                                  fontSize: 11,
+                                  color: "rgba(15, 23, 42, 0.55)",
+                                  marginBottom: 8,
+                                  lineHeight: 1.3,
+                                }}
+                              >
+                                Source: {ev.source != null && ev.source.trim() !== "" ? ev.source : "—"}
+                              </div>
+                              <div
+                                style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, fontSize: 12 }}
+                              >
+                                <span
+                                  style={{
+                                    fontWeight: 600,
+                                    padding: "2px 8px",
+                                    borderRadius: 6,
+                                    background: sentimentStyle.bg,
+                                    color: sentimentStyle.color,
+                                  }}
+                                >
+                                  {sentimentStyle.label}
+                                </span>
+                                <span style={{ color: "rgba(15, 23, 42, 0.5)", fontSize: 11 }}>
+                                  Reach {fmtPct01(ev.reach, 0)}
+                                </span>
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })
+                          );
+                        })}
+                        <div
+                          style={{
+                            fontSize: 12,
+                            fontWeight: 600,
+                            marginTop: 10,
+                            color: "rgba(15, 23, 42, 0.78)",
+                            lineHeight: 1.35,
+                          }}
+                        >
+                          {decisionFlowInformationEvents[0].sentiment > 0.05
+                            ? "Positive information pressure"
+                            : decisionFlowInformationEvents[0].sentiment < -0.05
+                              ? "Negative information pressure"
+                              : "Mixed information pressure"}
+                        </div>
+                      </>
                     )}
                   </>
                 ),
@@ -1534,32 +1969,49 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
                 key: "agent",
                 title: "Agent impact",
                 body: (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                     {(["trendFollower", "contrarian", "balanced"] as const).map((profileKey) => {
                       const slice = directionBiasByAgentType?.[profileKey];
                       const dir = slice
                         ? profileDirectionFromCounts(slice.positiveCount, slice.negativeCount)
                         : ("Neutral" as const);
                       const { sym, color } = directionArrowFromDir(dir);
+                      const topInfo = decisionFlowInformationEvents[0];
+                      const explainLine =
+                        topInfo != null
+                          ? agentImpactExplanationForArchetype(profileKey, topInfo.sentiment)
+                          : null;
                       return (
-                        <div
-                          key={profileKey}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            gap: 8,
-                            fontSize: 12,
-                            color: "rgba(15, 23, 42, 0.88)",
-                          }}
-                        >
-                          <span style={{ color: "rgba(15, 23, 42, 0.72)", fontWeight: 500 }}>
-                            {CROWD_INFLUENCE_PROFILE_TITLE[profileKey]}
-                          </span>
-                          <span style={{ fontWeight: 600 }}>{dir}</span>
-                          <span style={{ color, fontSize: 15, fontWeight: 700, lineHeight: 1 }} aria-hidden>
-                            {sym}
-                          </span>
+                        <div key={profileKey} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              gap: 8,
+                              fontSize: 12,
+                              color: "rgba(15, 23, 42, 0.88)",
+                            }}
+                          >
+                            <span style={{ color: "rgba(15, 23, 42, 0.72)", fontWeight: 500 }}>
+                              {CROWD_INFLUENCE_PROFILE_TITLE[profileKey]}
+                            </span>
+                            <span style={{ fontWeight: 600 }}>{dir}</span>
+                            <span style={{ color, fontSize: 15, fontWeight: 700, lineHeight: 1 }} aria-hidden>
+                              {sym}
+                            </span>
+                          </div>
+                          {explainLine != null ? (
+                            <div
+                              style={{
+                                fontSize: 11,
+                                lineHeight: 1.35,
+                                color: "rgba(15, 23, 42, 0.52)",
+                              }}
+                            >
+                              {explainLine}
+                            </div>
+                          ) : null}
                         </div>
                       );
                     })}
@@ -1575,6 +2027,12 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
                   ) : (
                     (() => {
                       const dom = dominantConsensusAction(consensus);
+                      const buyPct = Math.max(0, Math.min(100, (consensus.buyPct ?? 0) * 100));
+                      const sellPct = Math.max(0, Math.min(100, (consensus.sellPct ?? 0) * 100));
+                      const holdPct = Math.max(0, Math.min(100, (consensus.holdPct ?? 0) * 100));
+                      const maxPct = Math.max(buyPct, sellPct, holdPct);
+                      const { level: distributionDisagreementLevel, color: distributionDisagreementColor } =
+                        crowdReactionDistributionDisagreementFromMaxPct(maxPct);
                       const rows = [
                         { label: "BUY" as const, pct: consensus.buyPct, color: "#15803d" },
                         { label: "SELL" as const, pct: consensus.sellPct, color: "#b91c1c" },
@@ -1582,6 +2040,17 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
                       ];
                       return (
                         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                          <div
+                            className={styles.disagreementBadge}
+                            style={{ color: distributionDisagreementColor }}
+                          >
+                            {distributionDisagreementLevel} disagreement
+                          </div>
+                          <div className={styles.distributionBar} aria-hidden>
+                            <div className={styles.buySegment} style={{ width: `${buyPct}%` }} />
+                            <div className={styles.sellSegment} style={{ width: `${sellPct}%` }} />
+                            <div className={styles.holdSegment} style={{ width: `${holdPct}%` }} />
+                          </div>
                           {rows.map((r) => {
                             const isMajority = dom === r.label;
                             return (
@@ -1604,6 +2073,19 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
                               </div>
                             );
                           })}
+                          {crowdReactionContradiction ? (
+                            <div className={styles.contradiction}>
+                              <div className={styles.contradictionTitle}>⚠ Contrarian pressure detected</div>
+                              <div>
+                                {crowdReactionContradiction.kind === "buyAgainstNegative"
+                                  ? `${crowdReactionContradiction.buyPct}% of agents are buying against negative sentiment`
+                                  : `${crowdReactionContradiction.sellPct}% of agents are selling against positive sentiment`}
+                              </div>
+                              <div className={styles.contradictionHint}>
+                                This may indicate early reversal or disagreement in market interpretation
+                              </div>
+                            </div>
+                          ) : null}
                         </div>
                       );
                     })()

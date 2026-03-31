@@ -1619,6 +1619,248 @@ export class ResultsService {
     };
   }
 
+  /** Majority vote per step (same tie-break as forecast validation). */
+  private majorityFromCounts(buy: number, sell: number, hold: number): "BUY" | "SELL" | "HOLD" {
+    const max = Math.max(buy, sell, hold);
+    if (buy === max && buy > sell && buy > hold) return "BUY";
+    if (sell === max && sell > buy && sell > hold) return "SELL";
+    return "HOLD";
+  }
+
+  private actualFromReturn(stepReturn: number): "BUY" | "SELL" | "HOLD" {
+    if (stepReturn > 0) return "BUY";
+    if (stepReturn < 0) return "SELL";
+    return "HOLD";
+  }
+
+  /**
+   * Diagnostic only: per-step CrowdMetrics + crowd majority vs next-step return for two RunVariants (same run/asset/seed).
+   * Does not modify simulation or metrics logic.
+   */
+  async getVariantStepwiseComparison(
+    runId: string,
+    labelA: string,
+    labelB: string,
+    opts?: { assetSymbol?: string; seed?: number },
+  ): Promise<{
+    runId: string;
+    assetSymbol: string;
+    seed: number;
+    variantA: { label: string; runVariantId: string; agents: number };
+    variantB: { label: string; runVariantId: string; agents: number };
+    steps: Array<{
+      step: number;
+      a: {
+        herdingIndex: number | null;
+        diversityIndex: number | null;
+        independenceIndex: number | null;
+        wisdomScore: number | null;
+        consensus: number | null;
+        majorityDirection: string;
+        nextStepReturn: number | null;
+        actualDirection: string | null;
+        crowdCorrect: boolean | null;
+      };
+      b: {
+        herdingIndex: number | null;
+        diversityIndex: number | null;
+        independenceIndex: number | null;
+        wisdomScore: number | null;
+        consensus: number | null;
+        majorityDirection: string;
+        nextStepReturn: number | null;
+        actualDirection: string | null;
+        crowdCorrect: boolean | null;
+      };
+    }>;
+    focus: {
+      last10Steps: number[];
+      topHerdingStepsA: number[];
+      topHerdingStepsB: number[];
+      wrongCrowdStepsA: number[];
+      wrongCrowdStepsB: number[];
+    };
+  }> {
+    const assetSymbol = (opts?.assetSymbol ?? "SPY").trim() || "SPY";
+    const seed = typeof opts?.seed === "number" && Number.isFinite(opts.seed) ? Math.floor(opts.seed) : 1;
+
+    const clean = (s: string) => s.trim();
+    const la = clean(labelA);
+    const lb = clean(labelB);
+    if (!la || !lb) {
+      throw new BadRequestException("labelA and labelB are required");
+    }
+
+    const [va, vb] = await Promise.all([
+      this.prisma.runVariant.findUnique({
+        where: {
+          runId_assetSymbol_seed_label: {
+            runId,
+            assetSymbol,
+            seed,
+            label: la,
+          },
+        },
+        select: { id: true, agents: true },
+      }),
+      this.prisma.runVariant.findUnique({
+        where: {
+          runId_assetSymbol_seed_label: {
+            runId,
+            assetSymbol,
+            seed,
+            label: lb,
+          },
+        },
+        select: { id: true, agents: true },
+      }),
+    ]);
+    if (!va) throw new NotFoundException(`RunVariant not found: ${la}`);
+    if (!vb) throw new NotFoundException(`RunVariant not found: ${lb}`);
+
+    const [metricsA, metricsB, returns, decisions] = await Promise.all([
+      this.prisma.crowdMetrics.findMany({
+        where: { runVariantId: va.id },
+        orderBy: { step: "asc" },
+        select: {
+          step: true,
+          herdingIndex: true,
+          diversityIndex: true,
+          independenceIndex: true,
+          wisdomScore: true,
+          consensus: true,
+        },
+      }),
+      this.prisma.crowdMetrics.findMany({
+        where: { runVariantId: vb.id },
+        orderBy: { step: "asc" },
+        select: {
+          step: true,
+          herdingIndex: true,
+          diversityIndex: true,
+          independenceIndex: true,
+          wisdomScore: true,
+          consensus: true,
+        },
+      }),
+      this.prisma.assetStepReturn.findMany({
+        where: { runId, assetSymbol },
+        select: { step: true, stepReturn: true },
+        orderBy: { step: "asc" },
+      }),
+      this.prisma.agentDecision.findMany({
+        where: {
+          runId,
+          assetSymbol,
+          runVariantId: { in: [va.id, vb.id] },
+        },
+        select: { runVariantId: true, step: true, action: true },
+      }),
+    ]);
+
+    const retByStep = new Map<number, number>();
+    for (const r of returns) {
+      retByStep.set(r.step, r.stepReturn);
+    }
+
+    type Tallies = { BUY: number; SELL: number; HOLD: number };
+    const tallyKey = (rvId: string, step: number) => `${rvId}:${step}`;
+    const tallies = new Map<string, Tallies>();
+    for (const d of decisions) {
+      const k = tallyKey(d.runVariantId!, d.step);
+      let t = tallies.get(k);
+      if (!t) {
+        t = { BUY: 0, SELL: 0, HOLD: 0 };
+        tallies.set(k, t);
+      }
+      const a = String(d.action) as keyof Tallies;
+      if (a in t) t[a]++;
+    }
+
+    const byStepA = new Map(metricsA.map((m) => [m.step, m]));
+    const byStepB = new Map(metricsB.map((m) => [m.step, m]));
+    const allSteps = [...new Set([...byStepA.keys(), ...byStepB.keys()])].sort((x, y) => x - y);
+
+    const buildSide = (
+      rvId: string,
+      step: number,
+      row: (typeof metricsA)[0] | undefined,
+    ): {
+      herdingIndex: number | null;
+      diversityIndex: number | null;
+      independenceIndex: number | null;
+      wisdomScore: number | null;
+      consensus: number | null;
+      majorityDirection: string;
+      nextStepReturn: number | null;
+      actualDirection: string | null;
+      crowdCorrect: boolean | null;
+    } => {
+      const t = tallies.get(tallyKey(rvId, step)) ?? { BUY: 0, SELL: 0, HOLD: 0 };
+      const maj = this.majorityFromCounts(t.BUY, t.SELL, t.HOLD);
+      const nextR = retByStep.get(step + 1);
+      const totalV = t.BUY + t.SELL + t.HOLD;
+      let actual: string | null = null;
+      let correct: boolean | null = null;
+      if (nextR != null && Number.isFinite(nextR) && totalV > 0) {
+        actual = this.actualFromReturn(nextR);
+        correct = maj === actual;
+      }
+      return {
+        herdingIndex: row?.herdingIndex ?? null,
+        diversityIndex: row?.diversityIndex ?? null,
+        independenceIndex: row?.independenceIndex ?? null,
+        wisdomScore: row?.wisdomScore ?? null,
+        consensus: row?.consensus ?? null,
+        majorityDirection: maj,
+        nextStepReturn: nextR ?? null,
+        actualDirection: actual,
+        crowdCorrect: correct,
+      };
+    };
+
+    const steps = allSteps.map((step) => ({
+      step,
+      a: buildSide(va.id, step, byStepA.get(step)),
+      b: buildSide(vb.id, step, byStepB.get(step)),
+    }));
+
+    const maxStep = allSteps.length ? Math.max(...allSteps) : 0;
+    const last10Steps = allSteps.filter((s) => s >= maxStep - 9);
+
+    const rankedA = [...steps].sort(
+      (x, y) => (y.a.herdingIndex ?? -1) - (x.a.herdingIndex ?? -1),
+    );
+    const rankedB = [...steps].sort(
+      (x, y) => (y.b.herdingIndex ?? -1) - (x.b.herdingIndex ?? -1),
+    );
+    const topHerdingStepsA = rankedA.slice(0, 5).map((r) => r.step);
+    const topHerdingStepsB = rankedB.slice(0, 5).map((r) => r.step);
+
+    const wrongCrowdStepsA = steps
+      .filter((r) => r.a.crowdCorrect === false)
+      .map((r) => r.step);
+    const wrongCrowdStepsB = steps
+      .filter((r) => r.b.crowdCorrect === false)
+      .map((r) => r.step);
+
+    return {
+      runId,
+      assetSymbol,
+      seed,
+      variantA: { label: la, runVariantId: va.id, agents: va.agents },
+      variantB: { label: lb, runVariantId: vb.id, agents: vb.agents },
+      steps,
+      focus: {
+        last10Steps,
+        topHerdingStepsA,
+        topHerdingStepsB,
+        wrongCrowdStepsA,
+        wrongCrowdStepsB,
+      },
+    };
+  }
+
   /** GET /results/run-debug-counts — counts for debugging (decisions, infoState, experiences, crowdMetrics). Guarded by NODE_ENV or X-Debug header. */
   async getRunDebugCounts(
     runId: string,

@@ -44,6 +44,18 @@ export interface DistortInput {
   biases: Biases;
   humanState: HumanState;
   rng: () => number;
+  /**
+   * CV-VAL-016: strip asymmetric / feedback terms for neutral-crowd experiments.
+   * Skips herding×crowd and loss amplification; noise unchanged.
+   */
+  neutralMode?: boolean;
+  /**
+   * Prior-step majority share in [0,1] — scales herding toward crowd (CV-FIX-001).
+   * Use 0 on first step or when neutralMode.
+   */
+  herdingConsensus?: number;
+  /** Multiplier on crowd-following term (CV-VAL-017; default 1, e.g. 0.5 = weaker herding). */
+  herdingCrowdScale?: number;
 }
 
 /** Apply cognitive biases to distort the base signal. */
@@ -57,16 +69,23 @@ export function distortSignal(input: DistortInput): number {
     biases,
     humanState,
     rng,
+    neutralMode = false,
+    herdingConsensus = 0,
+    herdingCrowdScale = 1,
   } = input;
 
   let distorted = baseSignal;
 
-  distorted += biases.herding * crowdSampleSignal;
+  if (!neutralMode) {
+    distorted +=
+      biases.herding * crowdSampleSignal * herdingConsensus * herdingCrowdScale;
+  }
   if (lastSignal != null) {
     distorted += biases.recencyBias * lastSignal;
   }
 
-  if (distorted < 0) {
+  // CV-FIX-001: symmetric gain salience (same factor for gains and losses).
+  if (!neutralMode && distorted !== 0) {
     distorted *= 1 + biases.lossAversion;
   }
 

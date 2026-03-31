@@ -86,7 +86,7 @@ export class AgentsV1Service {
 
   /** Create N agents for a run with default traits. overwrite=false: no-op if agents exist; overwrite=true: delete and replace. Deterministic: same (runId, datasetVersion, assetSymbol, seed, count) => same agent ids. */
   async generate(runId: string, body: GenerateV1Body): Promise<GenerateV1Result> {
-    const count = Math.min(Math.max(1, Math.floor(body.count ?? 100)), 500);
+    const count = Math.min(Math.max(1, Math.floor(body.count ?? 100)), 10_000);
     const seed =
       typeof body.seed === "number" && Number.isFinite(body.seed)
         ? Math.floor(body.seed)

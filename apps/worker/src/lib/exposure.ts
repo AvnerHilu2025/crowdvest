@@ -27,6 +27,11 @@ export interface InfoEventInput {
   sentiment: number;
   credibility: number;
   reach: number;
+  /** Topic / category (InfoEvent.topic). */
+  topic?: string;
+  source?: string | null;
+  /** Per-source quality in [0, 1]; scales perceived info / events (CV-VAL-018). */
+  signalQuality?: number;
 }
 
 /**
@@ -77,6 +82,8 @@ export function perceivedSentiment(input: PerceptionInput): number {
     return 0;
   }
 
+  const sigQ = clamp01(event.signalQuality ?? 1);
+
   let base = clamp11(event.sentiment);
   let weight = event.credibility;
 
@@ -90,7 +97,7 @@ export function perceivedSentiment(input: PerceptionInput): number {
   const magBoost = 1 + 0.2 * overconfidence;
   base = clamp11(base * magBoost);
 
-  return base * clamp01(weight);
+  return base * clamp01(weight) * sigQ;
 }
 
 export interface AggregatePerceptionInput {
@@ -193,6 +200,35 @@ export function computeEventSignal(input: EventSignalInput): number {
   // Fatigue: reduces signal impact
   applied *= 1 - fatigue * 0.3;
   // Emotional volatility: amplifies strong sentiment
+  const avgSentimentMagnitude =
+    events.length > 0
+      ? events.reduce((sum, e) => sum + Math.abs(e.sentiment), 0) / events.length
+      : 0;
+  applied *= 1 + emotionalVolatility * avgSentimentMagnitude * 0.2;
+
+  return clamp11(applied);
+}
+
+/** Event-channel signal without crowd or herding (CV-ARCH-001 decision independence). */
+export function computeEventSignalIndependent(input: {
+  events: InfoEventInput[];
+  attentionLevel: number;
+  fatigue: number;
+  emotionalVolatility: number;
+}): number {
+  const { events, attentionLevel, fatigue, emotionalVolatility } = input;
+
+  if (events.length === 0) return 0;
+
+  let base = 0;
+  for (const e of events) {
+    const q = clamp01(e.signalQuality ?? 1);
+    base += e.sentiment * e.reach * e.credibility * q;
+  }
+
+  let applied = base;
+  applied *= attentionLevel;
+  applied *= 1 - fatigue * 0.3;
   const avgSentimentMagnitude =
     events.length > 0
       ? events.reduce((sum, e) => sum + Math.abs(e.sentiment), 0) / events.length

@@ -3,6 +3,16 @@
  * Computes CrowdMetrics from AgentDecision and persists.
  * Idempotent: upserts per (runId, assetSymbol, step).
  *
+ * Per-step metrics (all in [0,1] except where noted), compared across variants via GET /variants:
+ * - diversityIndex — disagreement / spread in actions & beliefs (higher ⇒ more heterogeneous crowd).
+ * - independenceIndex — effective independent signal (higher ⇒ less redundant copying).
+ * - herdingIndex — majority concentration (higher ⇒ crowd moves as one block).
+ * - wisdomScore — info-weighted diversity / independence blend (higher ⇒ “wiser” aggregate).
+ *
+ * Run means of these indices help explain accuracy vs crowd size (e.g. very large N often raises
+ * herdingIndex and lowers diversity/independence). Per-step diagnosis: GET
+ * /variants/stepwise-comparison (API) compares two labels on the same run from CrowdMetrics rows.
+ *
  * NOTE: RunVariantSummary (corr, directionalAccuracy, decisionsHash, returnsHash, decisionCounts)
  * is NOT computed here. It is computed in backtest-v0.ts after this script runs per seed.
  */
@@ -49,11 +59,18 @@ function loadEnv(): void {
   }
 }
 
-function parseArgv(): { runId: string; assetSymbol: string; runVariantId: string | undefined; overwrite: boolean } {
+function parseArgv(): {
+  runId: string;
+  assetSymbol: string;
+  runVariantId: string | undefined;
+  label: string | undefined;
+  overwrite: boolean;
+} {
   const args = process.argv.slice(2);
   let runId = "";
   let assetSymbol = "RUN";
   let runVariantId: string | undefined;
+  let label: string | undefined;
   let overwrite = false;
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--runVariantId" && args[i + 1]) {
@@ -62,6 +79,8 @@ function parseArgv(): { runId: string; assetSymbol: string; runVariantId: string
       runId = args[++i]!.trim();
     } else if (args[i] === "--assetSymbol" && args[i + 1]) {
       assetSymbol = args[++i]!.trim() || "RUN";
+    } else if (args[i] === "--label" && args[i + 1]) {
+      label = args[++i]!.trim();
     } else if (args[i] === "--overwrite" && args[i + 1]) {
       overwrite = String(args[++i]).trim().toLowerCase() === "true";
     }
@@ -69,9 +88,9 @@ function parseArgv(): { runId: string; assetSymbol: string; runVariantId: string
   if (runVariantId) {
     if (!runId) runId = ""; // will be resolved from RunVariant
   } else {
-    if (!runId) throw new Error("--runId is required (or use --runVariantId)");
+    if (!runId) throw new Error("--runId is required (or use --runVariantId --label, or --runVariantId)");
   }
-  return { runId, assetSymbol, runVariantId, overwrite };
+  return { runId, assetSymbol, runVariantId, label, overwrite };
 }
 
 function clamp(x: number, lo: number, hi: number): number {
@@ -271,7 +290,12 @@ function log(msg: string): void {
 /** Resolve runId, assetSymbol, runVariantId. If runVariantId given, load from RunVariant; else use runId+assetSymbol and pick latest variant. */
 async function resolveVariant(
   prisma: PrismaClient,
-  argv: { runId: string; assetSymbol: string; runVariantId: string | undefined },
+  argv: {
+    runId: string;
+    assetSymbol: string;
+    runVariantId: string | undefined;
+    label: string | undefined;
+  },
 ): Promise<{ runId: string; assetSymbol: string; runVariantId: string }> {
   if (argv.runVariantId) {
     const v = await prisma.runVariant.findUnique({
@@ -279,6 +303,23 @@ async function resolveVariant(
       select: { id: true, runId: true, assetSymbol: true },
     });
     if (!v) throw new Error(`RunVariant not found: ${argv.runVariantId}`);
+    return { runId: v.runId, assetSymbol: v.assetSymbol, runVariantId: v.id };
+  }
+  if (argv.label) {
+    const run = await prisma.simulationRun.findUnique({
+      where: { id: argv.runId },
+      select: { id: true },
+    });
+    if (!run) throw new Error(`Run not found: ${argv.runId}`);
+    const v = await prisma.runVariant.findFirst({
+      where: { runId: argv.runId, assetSymbol: argv.assetSymbol, label: argv.label },
+      select: { id: true, runId: true, assetSymbol: true },
+    });
+    if (!v) {
+      throw new Error(
+        `No RunVariant for runId=${argv.runId} assetSymbol=${argv.assetSymbol} label=${argv.label}`,
+      );
+    }
     return { runId: v.runId, assetSymbol: v.assetSymbol, runVariantId: v.id };
   }
   const run = await prisma.simulationRun.findUnique({

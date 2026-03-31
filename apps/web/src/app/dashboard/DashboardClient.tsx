@@ -13,6 +13,7 @@ import { DASH_THRESHOLDS, fmtNum, fmtPct01, clamp01, formatOverheadPct } from "@
 import { Sparkline } from "@/components/sparkline";
 import { API_BASE } from "@/lib/api";
 import styles from "./dashboard.module.css";
+import { VariantsPanel } from "./VariantsPanel";
 
 const formatPercent = (value?: number | null) => {
   if (value === null || value === undefined) return "-";
@@ -3626,6 +3627,8 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
           </div>
         </div>
       ) : null}
+
+      <VariantsPanel runId={dashboardInfoEventsRunId} />
 
       {backtestMetrics && backtestMetrics.trades > 0 ? (
         <div

@@ -22,6 +22,8 @@
     "backfill:variant-duration": "tsx src/scripts/backfill-variant-duration.ts",
     "backfill:run-from-variants": "tsx src/scripts/backfill-run-from-variants.ts",
     "backtest-v0": "tsx src/scripts/backtest-v0.ts",
+    "run-variants": "tsx src/scripts/run-variants.ts",
+    "ab-experiment": "tsx src/scripts/ab-experiment-variants.ts",
     "backtest-v0-fresh": "bash scripts/backtest-v0-fresh.sh",
     "import-market-csv": "tsx src/scripts/import-market-csv.ts",
     "settle": "tsx src/scripts/settle.ts",

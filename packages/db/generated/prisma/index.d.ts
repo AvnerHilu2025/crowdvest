@@ -10725,6 +10725,10 @@ export namespace Prisma {
     seed: number | null
     agents: number | null
     steps: number | null
+    accuracy: number | null
+    pnl: number | null
+    baselineBuy: number | null
+    baselineSell: number | null
     durationMs: number | null
   }
 
@@ -10732,6 +10736,10 @@ export namespace Prisma {
     seed: number | null
     agents: number | null
     steps: number | null
+    accuracy: number | null
+    pnl: number | null
+    baselineBuy: number | null
+    baselineSell: number | null
     durationMs: number | null
   }
 
@@ -10743,6 +10751,11 @@ export namespace Prisma {
     agents: number | null
     steps: number | null
     label: string | null
+    name: string | null
+    accuracy: number | null
+    pnl: number | null
+    baselineBuy: number | null
+    baselineSell: number | null
     createdAt: Date | null
     startedAt: Date | null
     completedAt: Date | null
@@ -10757,6 +10770,11 @@ export namespace Prisma {
     agents: number | null
     steps: number | null
     label: string | null
+    name: string | null
+    accuracy: number | null
+    pnl: number | null
+    baselineBuy: number | null
+    baselineSell: number | null
     createdAt: Date | null
     startedAt: Date | null
     completedAt: Date | null
@@ -10771,6 +10789,12 @@ export namespace Prisma {
     agents: number
     steps: number
     label: number
+    name: number
+    config: number
+    accuracy: number
+    pnl: number
+    baselineBuy: number
+    baselineSell: number
     createdAt: number
     startedAt: number
     completedAt: number
@@ -10783,6 +10807,10 @@ export namespace Prisma {
     seed?: true
     agents?: true
     steps?: true
+    accuracy?: true
+    pnl?: true
+    baselineBuy?: true
+    baselineSell?: true
     durationMs?: true
   }
 
@@ -10790,6 +10818,10 @@ export namespace Prisma {
     seed?: true
     agents?: true
     steps?: true
+    accuracy?: true
+    pnl?: true
+    baselineBuy?: true
+    baselineSell?: true
     durationMs?: true
   }
 
@@ -10801,6 +10833,11 @@ export namespace Prisma {
     agents?: true
     steps?: true
     label?: true
+    name?: true
+    accuracy?: true
+    pnl?: true
+    baselineBuy?: true
+    baselineSell?: true
     createdAt?: true
     startedAt?: true
     completedAt?: true
@@ -10815,6 +10852,11 @@ export namespace Prisma {
     agents?: true
     steps?: true
     label?: true
+    name?: true
+    accuracy?: true
+    pnl?: true
+    baselineBuy?: true
+    baselineSell?: true
     createdAt?: true
     startedAt?: true
     completedAt?: true
@@ -10829,6 +10871,12 @@ export namespace Prisma {
     agents?: true
     steps?: true
     label?: true
+    name?: true
+    config?: true
+    accuracy?: true
+    pnl?: true
+    baselineBuy?: true
+    baselineSell?: true
     createdAt?: true
     startedAt?: true
     completedAt?: true
@@ -10930,6 +10978,12 @@ export namespace Prisma {
     agents: number
     steps: number
     label: string | null
+    name: string
+    config: JsonValue | null
+    accuracy: number | null
+    pnl: number | null
+    baselineBuy: number | null
+    baselineSell: number | null
     createdAt: Date
     startedAt: Date | null
     completedAt: Date | null
@@ -10963,6 +11017,12 @@ export namespace Prisma {
     agents?: boolean
     steps?: boolean
     label?: boolean
+    name?: boolean
+    config?: boolean
+    accuracy?: boolean
+    pnl?: boolean
+    baselineBuy?: boolean
+    baselineSell?: boolean
     createdAt?: boolean
     startedAt?: boolean
     completedAt?: boolean
@@ -10987,6 +11047,12 @@ export namespace Prisma {
     agents?: boolean
     steps?: boolean
     label?: boolean
+    name?: boolean
+    config?: boolean
+    accuracy?: boolean
+    pnl?: boolean
+    baselineBuy?: boolean
+    baselineSell?: boolean
     createdAt?: boolean
     startedAt?: boolean
     completedAt?: boolean
@@ -11002,6 +11068,12 @@ export namespace Prisma {
     agents?: boolean
     steps?: boolean
     label?: boolean
+    name?: boolean
+    config?: boolean
+    accuracy?: boolean
+    pnl?: boolean
+    baselineBuy?: boolean
+    baselineSell?: boolean
     createdAt?: boolean
     startedAt?: boolean
     completedAt?: boolean
@@ -11045,6 +11117,12 @@ export namespace Prisma {
       agents: number
       steps: number
       label: string | null
+      name: string
+      config: Prisma.JsonValue | null
+      accuracy: number | null
+      pnl: number | null
+      baselineBuy: number | null
+      baselineSell: number | null
       createdAt: Date
       startedAt: Date | null
       completedAt: Date | null
@@ -11458,6 +11536,12 @@ export namespace Prisma {
     readonly agents: FieldRef<"RunVariant", 'Int'>
     readonly steps: FieldRef<"RunVariant", 'Int'>
     readonly label: FieldRef<"RunVariant", 'String'>
+    readonly name: FieldRef<"RunVariant", 'String'>
+    readonly config: FieldRef<"RunVariant", 'Json'>
+    readonly accuracy: FieldRef<"RunVariant", 'Float'>
+    readonly pnl: FieldRef<"RunVariant", 'Float'>
+    readonly baselineBuy: FieldRef<"RunVariant", 'Float'>
+    readonly baselineSell: FieldRef<"RunVariant", 'Float'>
     readonly createdAt: FieldRef<"RunVariant", 'DateTime'>
     readonly startedAt: FieldRef<"RunVariant", 'DateTime'>
     readonly completedAt: FieldRef<"RunVariant", 'DateTime'>
@@ -41761,6 +41845,12 @@ export namespace Prisma {
     agents: 'agents',
     steps: 'steps',
     label: 'label',
+    name: 'name',
+    config: 'config',
+    accuracy: 'accuracy',
+    pnl: 'pnl',
+    baselineBuy: 'baselineBuy',
+    baselineSell: 'baselineSell',
     createdAt: 'createdAt',
     startedAt: 'startedAt',
     completedAt: 'completedAt',
@@ -42917,6 +43007,12 @@ export namespace Prisma {
     agents?: IntFilter<"RunVariant"> | number
     steps?: IntFilter<"RunVariant"> | number
     label?: StringNullableFilter<"RunVariant"> | string | null
+    name?: StringFilter<"RunVariant"> | string
+    config?: JsonNullableFilter<"RunVariant">
+    accuracy?: FloatNullableFilter<"RunVariant"> | number | null
+    pnl?: FloatNullableFilter<"RunVariant"> | number | null
+    baselineBuy?: FloatNullableFilter<"RunVariant"> | number | null
+    baselineSell?: FloatNullableFilter<"RunVariant"> | number | null
     createdAt?: DateTimeFilter<"RunVariant"> | Date | string
     startedAt?: DateTimeNullableFilter<"RunVariant"> | Date | string | null
     completedAt?: DateTimeNullableFilter<"RunVariant"> | Date | string | null
@@ -42940,6 +43036,12 @@ export namespace Prisma {
     agents?: SortOrder
     steps?: SortOrder
     label?: SortOrderInput | SortOrder
+    name?: SortOrder
+    config?: SortOrderInput | SortOrder
+    accuracy?: SortOrderInput | SortOrder
+    pnl?: SortOrderInput | SortOrder
+    baselineBuy?: SortOrderInput | SortOrder
+    baselineSell?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     startedAt?: SortOrderInput | SortOrder
     completedAt?: SortOrderInput | SortOrder
@@ -42967,6 +43069,12 @@ export namespace Prisma {
     agents?: IntFilter<"RunVariant"> | number
     steps?: IntFilter<"RunVariant"> | number
     label?: StringNullableFilter<"RunVariant"> | string | null
+    name?: StringFilter<"RunVariant"> | string
+    config?: JsonNullableFilter<"RunVariant">
+    accuracy?: FloatNullableFilter<"RunVariant"> | number | null
+    pnl?: FloatNullableFilter<"RunVariant"> | number | null
+    baselineBuy?: FloatNullableFilter<"RunVariant"> | number | null
+    baselineSell?: FloatNullableFilter<"RunVariant"> | number | null
     createdAt?: DateTimeFilter<"RunVariant"> | Date | string
     startedAt?: DateTimeNullableFilter<"RunVariant"> | Date | string | null
     completedAt?: DateTimeNullableFilter<"RunVariant"> | Date | string | null
@@ -42990,6 +43098,12 @@ export namespace Prisma {
     agents?: SortOrder
     steps?: SortOrder
     label?: SortOrderInput | SortOrder
+    name?: SortOrder
+    config?: SortOrderInput | SortOrder
+    accuracy?: SortOrderInput | SortOrder
+    pnl?: SortOrderInput | SortOrder
+    baselineBuy?: SortOrderInput | SortOrder
+    baselineSell?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     startedAt?: SortOrderInput | SortOrder
     completedAt?: SortOrderInput | SortOrder
@@ -43012,6 +43126,12 @@ export namespace Prisma {
     agents?: IntWithAggregatesFilter<"RunVariant"> | number
     steps?: IntWithAggregatesFilter<"RunVariant"> | number
     label?: StringNullableWithAggregatesFilter<"RunVariant"> | string | null
+    name?: StringWithAggregatesFilter<"RunVariant"> | string
+    config?: JsonNullableWithAggregatesFilter<"RunVariant">
+    accuracy?: FloatNullableWithAggregatesFilter<"RunVariant"> | number | null
+    pnl?: FloatNullableWithAggregatesFilter<"RunVariant"> | number | null
+    baselineBuy?: FloatNullableWithAggregatesFilter<"RunVariant"> | number | null
+    baselineSell?: FloatNullableWithAggregatesFilter<"RunVariant"> | number | null
     createdAt?: DateTimeWithAggregatesFilter<"RunVariant"> | Date | string
     startedAt?: DateTimeNullableWithAggregatesFilter<"RunVariant"> | Date | string | null
     completedAt?: DateTimeNullableWithAggregatesFilter<"RunVariant"> | Date | string | null
@@ -45973,6 +46093,12 @@ export namespace Prisma {
     agents: number
     steps: number
     label?: string | null
+    name?: string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: number | null
+    pnl?: number | null
+    baselineBuy?: number | null
+    baselineSell?: number | null
     createdAt?: Date | string
     startedAt?: Date | string | null
     completedAt?: Date | string | null
@@ -45996,6 +46122,12 @@ export namespace Prisma {
     agents: number
     steps: number
     label?: string | null
+    name?: string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: number | null
+    pnl?: number | null
+    baselineBuy?: number | null
+    baselineSell?: number | null
     createdAt?: Date | string
     startedAt?: Date | string | null
     completedAt?: Date | string | null
@@ -46017,6 +46149,12 @@ export namespace Prisma {
     agents?: IntFieldUpdateOperationsInput | number
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: NullableFloatFieldUpdateOperationsInput | number | null
+    pnl?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineBuy?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineSell?: NullableFloatFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -46040,6 +46178,12 @@ export namespace Prisma {
     agents?: IntFieldUpdateOperationsInput | number
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: NullableFloatFieldUpdateOperationsInput | number | null
+    pnl?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineBuy?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineSell?: NullableFloatFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -46062,6 +46206,12 @@ export namespace Prisma {
     agents: number
     steps: number
     label?: string | null
+    name?: string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: number | null
+    pnl?: number | null
+    baselineBuy?: number | null
+    baselineSell?: number | null
     createdAt?: Date | string
     startedAt?: Date | string | null
     completedAt?: Date | string | null
@@ -46075,6 +46225,12 @@ export namespace Prisma {
     agents?: IntFieldUpdateOperationsInput | number
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: NullableFloatFieldUpdateOperationsInput | number | null
+    pnl?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineBuy?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineSell?: NullableFloatFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -46089,6 +46245,12 @@ export namespace Prisma {
     agents?: IntFieldUpdateOperationsInput | number
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: NullableFloatFieldUpdateOperationsInput | number | null
+    pnl?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineBuy?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineSell?: NullableFloatFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -49532,6 +49694,12 @@ export namespace Prisma {
     agents?: SortOrder
     steps?: SortOrder
     label?: SortOrder
+    name?: SortOrder
+    config?: SortOrder
+    accuracy?: SortOrder
+    pnl?: SortOrder
+    baselineBuy?: SortOrder
+    baselineSell?: SortOrder
     createdAt?: SortOrder
     startedAt?: SortOrder
     completedAt?: SortOrder
@@ -49542,6 +49710,10 @@ export namespace Prisma {
     seed?: SortOrder
     agents?: SortOrder
     steps?: SortOrder
+    accuracy?: SortOrder
+    pnl?: SortOrder
+    baselineBuy?: SortOrder
+    baselineSell?: SortOrder
     durationMs?: SortOrder
   }
 
@@ -49553,6 +49725,11 @@ export namespace Prisma {
     agents?: SortOrder
     steps?: SortOrder
     label?: SortOrder
+    name?: SortOrder
+    accuracy?: SortOrder
+    pnl?: SortOrder
+    baselineBuy?: SortOrder
+    baselineSell?: SortOrder
     createdAt?: SortOrder
     startedAt?: SortOrder
     completedAt?: SortOrder
@@ -49567,6 +49744,11 @@ export namespace Prisma {
     agents?: SortOrder
     steps?: SortOrder
     label?: SortOrder
+    name?: SortOrder
+    accuracy?: SortOrder
+    pnl?: SortOrder
+    baselineBuy?: SortOrder
+    baselineSell?: SortOrder
     createdAt?: SortOrder
     startedAt?: SortOrder
     completedAt?: SortOrder
@@ -49577,6 +49759,10 @@ export namespace Prisma {
     seed?: SortOrder
     agents?: SortOrder
     steps?: SortOrder
+    accuracy?: SortOrder
+    pnl?: SortOrder
+    baselineBuy?: SortOrder
+    baselineSell?: SortOrder
     durationMs?: SortOrder
   }
 
@@ -54716,6 +54902,12 @@ export namespace Prisma {
     agents: number
     steps: number
     label?: string | null
+    name?: string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: number | null
+    pnl?: number | null
+    baselineBuy?: number | null
+    baselineSell?: number | null
     createdAt?: Date | string
     startedAt?: Date | string | null
     completedAt?: Date | string | null
@@ -54737,6 +54929,12 @@ export namespace Prisma {
     agents: number
     steps: number
     label?: string | null
+    name?: string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: number | null
+    pnl?: number | null
+    baselineBuy?: number | null
+    baselineSell?: number | null
     createdAt?: Date | string
     startedAt?: Date | string | null
     completedAt?: Date | string | null
@@ -55195,6 +55393,12 @@ export namespace Prisma {
     agents?: IntFilter<"RunVariant"> | number
     steps?: IntFilter<"RunVariant"> | number
     label?: StringNullableFilter<"RunVariant"> | string | null
+    name?: StringFilter<"RunVariant"> | string
+    config?: JsonNullableFilter<"RunVariant">
+    accuracy?: FloatNullableFilter<"RunVariant"> | number | null
+    pnl?: FloatNullableFilter<"RunVariant"> | number | null
+    baselineBuy?: FloatNullableFilter<"RunVariant"> | number | null
+    baselineSell?: FloatNullableFilter<"RunVariant"> | number | null
     createdAt?: DateTimeFilter<"RunVariant"> | Date | string
     startedAt?: DateTimeNullableFilter<"RunVariant"> | Date | string | null
     completedAt?: DateTimeNullableFilter<"RunVariant"> | Date | string | null
@@ -55861,6 +56065,12 @@ export namespace Prisma {
     agents: number
     steps: number
     label?: string | null
+    name?: string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: number | null
+    pnl?: number | null
+    baselineBuy?: number | null
+    baselineSell?: number | null
     createdAt?: Date | string
     startedAt?: Date | string | null
     completedAt?: Date | string | null
@@ -55883,6 +56093,12 @@ export namespace Prisma {
     agents: number
     steps: number
     label?: string | null
+    name?: string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: number | null
+    pnl?: number | null
+    baselineBuy?: number | null
+    baselineSell?: number | null
     createdAt?: Date | string
     startedAt?: Date | string | null
     completedAt?: Date | string | null
@@ -55919,6 +56135,12 @@ export namespace Prisma {
     agents?: IntFieldUpdateOperationsInput | number
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: NullableFloatFieldUpdateOperationsInput | number | null
+    pnl?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineBuy?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineSell?: NullableFloatFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -55941,6 +56163,12 @@ export namespace Prisma {
     agents?: IntFieldUpdateOperationsInput | number
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: NullableFloatFieldUpdateOperationsInput | number | null
+    pnl?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineBuy?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineSell?: NullableFloatFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -56626,6 +56854,12 @@ export namespace Prisma {
     agents: number
     steps: number
     label?: string | null
+    name?: string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: number | null
+    pnl?: number | null
+    baselineBuy?: number | null
+    baselineSell?: number | null
     createdAt?: Date | string
     startedAt?: Date | string | null
     completedAt?: Date | string | null
@@ -56648,6 +56882,12 @@ export namespace Prisma {
     agents: number
     steps: number
     label?: string | null
+    name?: string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: number | null
+    pnl?: number | null
+    baselineBuy?: number | null
+    baselineSell?: number | null
     createdAt?: Date | string
     startedAt?: Date | string | null
     completedAt?: Date | string | null
@@ -56804,6 +57044,12 @@ export namespace Prisma {
     agents?: IntFieldUpdateOperationsInput | number
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: NullableFloatFieldUpdateOperationsInput | number | null
+    pnl?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineBuy?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineSell?: NullableFloatFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -56826,6 +57072,12 @@ export namespace Prisma {
     agents?: IntFieldUpdateOperationsInput | number
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: NullableFloatFieldUpdateOperationsInput | number | null
+    pnl?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineBuy?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineSell?: NullableFloatFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -56966,6 +57218,12 @@ export namespace Prisma {
     agents: number
     steps: number
     label?: string | null
+    name?: string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: number | null
+    pnl?: number | null
+    baselineBuy?: number | null
+    baselineSell?: number | null
     createdAt?: Date | string
     startedAt?: Date | string | null
     completedAt?: Date | string | null
@@ -56988,6 +57246,12 @@ export namespace Prisma {
     agents: number
     steps: number
     label?: string | null
+    name?: string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: number | null
+    pnl?: number | null
+    baselineBuy?: number | null
+    baselineSell?: number | null
     createdAt?: Date | string
     startedAt?: Date | string | null
     completedAt?: Date | string | null
@@ -57107,6 +57371,12 @@ export namespace Prisma {
     agents?: IntFieldUpdateOperationsInput | number
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: NullableFloatFieldUpdateOperationsInput | number | null
+    pnl?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineBuy?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineSell?: NullableFloatFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -57129,6 +57399,12 @@ export namespace Prisma {
     agents?: IntFieldUpdateOperationsInput | number
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: NullableFloatFieldUpdateOperationsInput | number | null
+    pnl?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineBuy?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineSell?: NullableFloatFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -57386,6 +57662,12 @@ export namespace Prisma {
     agents: number
     steps: number
     label?: string | null
+    name?: string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: number | null
+    pnl?: number | null
+    baselineBuy?: number | null
+    baselineSell?: number | null
     createdAt?: Date | string
     startedAt?: Date | string | null
     completedAt?: Date | string | null
@@ -57408,6 +57690,12 @@ export namespace Prisma {
     agents: number
     steps: number
     label?: string | null
+    name?: string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: number | null
+    pnl?: number | null
+    baselineBuy?: number | null
+    baselineSell?: number | null
     createdAt?: Date | string
     startedAt?: Date | string | null
     completedAt?: Date | string | null
@@ -57564,6 +57852,12 @@ export namespace Prisma {
     agents?: IntFieldUpdateOperationsInput | number
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: NullableFloatFieldUpdateOperationsInput | number | null
+    pnl?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineBuy?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineSell?: NullableFloatFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -57586,6 +57880,12 @@ export namespace Prisma {
     agents?: IntFieldUpdateOperationsInput | number
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: NullableFloatFieldUpdateOperationsInput | number | null
+    pnl?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineBuy?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineSell?: NullableFloatFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -57886,6 +58186,12 @@ export namespace Prisma {
     agents: number
     steps: number
     label?: string | null
+    name?: string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: number | null
+    pnl?: number | null
+    baselineBuy?: number | null
+    baselineSell?: number | null
     createdAt?: Date | string
     startedAt?: Date | string | null
     completedAt?: Date | string | null
@@ -57908,6 +58214,12 @@ export namespace Prisma {
     agents: number
     steps: number
     label?: string | null
+    name?: string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: number | null
+    pnl?: number | null
+    baselineBuy?: number | null
+    baselineSell?: number | null
     createdAt?: Date | string
     startedAt?: Date | string | null
     completedAt?: Date | string | null
@@ -58064,6 +58376,12 @@ export namespace Prisma {
     agents?: IntFieldUpdateOperationsInput | number
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: NullableFloatFieldUpdateOperationsInput | number | null
+    pnl?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineBuy?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineSell?: NullableFloatFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -58086,6 +58404,12 @@ export namespace Prisma {
     agents?: IntFieldUpdateOperationsInput | number
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: NullableFloatFieldUpdateOperationsInput | number | null
+    pnl?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineBuy?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineSell?: NullableFloatFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -58226,6 +58550,12 @@ export namespace Prisma {
     agents: number
     steps: number
     label?: string | null
+    name?: string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: number | null
+    pnl?: number | null
+    baselineBuy?: number | null
+    baselineSell?: number | null
     createdAt?: Date | string
     startedAt?: Date | string | null
     completedAt?: Date | string | null
@@ -58248,6 +58578,12 @@ export namespace Prisma {
     agents: number
     steps: number
     label?: string | null
+    name?: string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: number | null
+    pnl?: number | null
+    baselineBuy?: number | null
+    baselineSell?: number | null
     createdAt?: Date | string
     startedAt?: Date | string | null
     completedAt?: Date | string | null
@@ -58404,6 +58740,12 @@ export namespace Prisma {
     agents?: IntFieldUpdateOperationsInput | number
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: NullableFloatFieldUpdateOperationsInput | number | null
+    pnl?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineBuy?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineSell?: NullableFloatFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -58426,6 +58768,12 @@ export namespace Prisma {
     agents?: IntFieldUpdateOperationsInput | number
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: NullableFloatFieldUpdateOperationsInput | number | null
+    pnl?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineBuy?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineSell?: NullableFloatFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -58886,6 +59234,12 @@ export namespace Prisma {
     agents: number
     steps: number
     label?: string | null
+    name?: string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: number | null
+    pnl?: number | null
+    baselineBuy?: number | null
+    baselineSell?: number | null
     createdAt?: Date | string
     startedAt?: Date | string | null
     completedAt?: Date | string | null
@@ -58908,6 +59262,12 @@ export namespace Prisma {
     agents: number
     steps: number
     label?: string | null
+    name?: string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: number | null
+    pnl?: number | null
+    baselineBuy?: number | null
+    baselineSell?: number | null
     createdAt?: Date | string
     startedAt?: Date | string | null
     completedAt?: Date | string | null
@@ -59064,6 +59424,12 @@ export namespace Prisma {
     agents?: IntFieldUpdateOperationsInput | number
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: NullableFloatFieldUpdateOperationsInput | number | null
+    pnl?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineBuy?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineSell?: NullableFloatFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -59086,6 +59452,12 @@ export namespace Prisma {
     agents?: IntFieldUpdateOperationsInput | number
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: NullableFloatFieldUpdateOperationsInput | number | null
+    pnl?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineBuy?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineSell?: NullableFloatFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -59677,6 +60049,12 @@ export namespace Prisma {
     agents: number
     steps: number
     label?: string | null
+    name?: string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: number | null
+    pnl?: number | null
+    baselineBuy?: number | null
+    baselineSell?: number | null
     createdAt?: Date | string
     startedAt?: Date | string | null
     completedAt?: Date | string | null
@@ -59699,6 +60077,12 @@ export namespace Prisma {
     agents: number
     steps: number
     label?: string | null
+    name?: string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: number | null
+    pnl?: number | null
+    baselineBuy?: number | null
+    baselineSell?: number | null
     createdAt?: Date | string
     startedAt?: Date | string | null
     completedAt?: Date | string | null
@@ -59735,6 +60119,12 @@ export namespace Prisma {
     agents?: IntFieldUpdateOperationsInput | number
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: NullableFloatFieldUpdateOperationsInput | number | null
+    pnl?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineBuy?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineSell?: NullableFloatFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -59757,6 +60147,12 @@ export namespace Prisma {
     agents?: IntFieldUpdateOperationsInput | number
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: NullableFloatFieldUpdateOperationsInput | number | null
+    pnl?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineBuy?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineSell?: NullableFloatFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -60093,6 +60489,12 @@ export namespace Prisma {
     agents: number
     steps: number
     label?: string | null
+    name?: string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: number | null
+    pnl?: number | null
+    baselineBuy?: number | null
+    baselineSell?: number | null
     createdAt?: Date | string
     startedAt?: Date | string | null
     completedAt?: Date | string | null
@@ -60618,6 +61020,12 @@ export namespace Prisma {
     agents?: IntFieldUpdateOperationsInput | number
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: NullableFloatFieldUpdateOperationsInput | number | null
+    pnl?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineBuy?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineSell?: NullableFloatFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -60639,6 +61047,12 @@ export namespace Prisma {
     agents?: IntFieldUpdateOperationsInput | number
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: NullableFloatFieldUpdateOperationsInput | number | null
+    pnl?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineBuy?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineSell?: NullableFloatFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -60660,6 +61074,12 @@ export namespace Prisma {
     agents?: IntFieldUpdateOperationsInput | number
     steps?: IntFieldUpdateOperationsInput | number
     label?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    accuracy?: NullableFloatFieldUpdateOperationsInput | number | null
+    pnl?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineBuy?: NullableFloatFieldUpdateOperationsInput | number | null
+    baselineSell?: NullableFloatFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null

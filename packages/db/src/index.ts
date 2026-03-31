@@ -1,4 +1,4 @@
-export { PrismaClient, SimulationRunStatus } from "../generated/prisma";
+export { Prisma, PrismaClient, SimulationRunStatus } from "../generated/prisma";
 export {
   setRunStatus,
   type RunStatus,

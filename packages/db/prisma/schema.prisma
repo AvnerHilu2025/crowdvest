@@ -132,6 +132,12 @@ model RunVariant {
   agents      Int
   steps       Int
   label       String? // optional batch tag (e.g. "smoke-variants")
+  name        String    @default("")
+  config      Json?
+  accuracy    Float?
+  pnl         Float?
+  baselineBuy Float?
+  baselineSell Float?
   createdAt   DateTime  @default(now())
   startedAt   DateTime?
   completedAt DateTime?

@@ -125,17 +125,23 @@ model SimulationRun {
 // ---------------------------------------------------------------------------
 
 model RunVariant {
-  id          String    @id @default(uuid()) @db.Uuid
-  runId       String    @db.Uuid
-  assetSymbol String
-  seed        Int
-  agents      Int
-  steps       Int
-  label       String? // optional batch tag (e.g. "smoke-variants")
-  createdAt   DateTime  @default(now())
-  startedAt   DateTime?
-  completedAt DateTime?
-  durationMs  Int?
+  id           String    @id @default(uuid()) @db.Uuid
+  runId        String    @db.Uuid
+  assetSymbol  String
+  seed         Int
+  agents       Int
+  steps        Int
+  label        String? // optional batch tag (e.g. "smoke-variants")
+  name         String    @default("")
+  config       Json?
+  accuracy     Float?
+  pnl          Float?
+  baselineBuy  Float?
+  baselineSell Float?
+  createdAt    DateTime  @default(now())
+  startedAt    DateTime?
+  completedAt  DateTime?
+  durationMs   Int?
 
   run              SimulationRun      @relation(fields: [runId], references: [id], onDelete: Cascade)
   agentDecisions   AgentDecision[]

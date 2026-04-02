@@ -3926,11 +3926,13 @@ export namespace Prisma {
   export type ArchetypeCountOutputType = {
     traitProfiles: number
     agents: number
+    runAgents: number
   }
 
   export type ArchetypeCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     traitProfiles?: boolean | ArchetypeCountOutputTypeCountTraitProfilesArgs
     agents?: boolean | ArchetypeCountOutputTypeCountAgentsArgs
+    runAgents?: boolean | ArchetypeCountOutputTypeCountRunAgentsArgs
   }
 
   // Custom InputTypes
@@ -3956,6 +3958,13 @@ export namespace Prisma {
    */
   export type ArchetypeCountOutputTypeCountAgentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: AgentWhereInput
+  }
+
+  /**
+   * ArchetypeCountOutputType without action
+   */
+  export type ArchetypeCountOutputTypeCountRunAgentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RunAgentWhereInput
   }
 
 
@@ -4522,6 +4531,7 @@ export namespace Prisma {
     updatedAt?: boolean
     traitProfiles?: boolean | Archetype$traitProfilesArgs<ExtArgs>
     agents?: boolean | Archetype$agentsArgs<ExtArgs>
+    runAgents?: boolean | Archetype$runAgentsArgs<ExtArgs>
     _count?: boolean | ArchetypeCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["archetype"]>
 
@@ -4544,6 +4554,7 @@ export namespace Prisma {
   export type ArchetypeInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     traitProfiles?: boolean | Archetype$traitProfilesArgs<ExtArgs>
     agents?: boolean | Archetype$agentsArgs<ExtArgs>
+    runAgents?: boolean | Archetype$runAgentsArgs<ExtArgs>
     _count?: boolean | ArchetypeCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type ArchetypeIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -4553,6 +4564,7 @@ export namespace Prisma {
     objects: {
       traitProfiles: Prisma.$ArchetypeTraitProfilePayload<ExtArgs>[]
       agents: Prisma.$AgentPayload<ExtArgs>[]
+      runAgents: Prisma.$RunAgentPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -4926,6 +4938,7 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     traitProfiles<T extends Archetype$traitProfilesArgs<ExtArgs> = {}>(args?: Subset<T, Archetype$traitProfilesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ArchetypeTraitProfilePayload<ExtArgs>, T, "findMany"> | Null>
     agents<T extends Archetype$agentsArgs<ExtArgs> = {}>(args?: Subset<T, Archetype$agentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AgentPayload<ExtArgs>, T, "findMany"> | Null>
+    runAgents<T extends Archetype$runAgentsArgs<ExtArgs> = {}>(args?: Subset<T, Archetype$runAgentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RunAgentPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -5311,6 +5324,26 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: AgentScalarFieldEnum | AgentScalarFieldEnum[]
+  }
+
+  /**
+   * Archetype.runAgents
+   */
+  export type Archetype$runAgentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RunAgent
+     */
+    select?: RunAgentSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RunAgentInclude<ExtArgs> | null
+    where?: RunAgentWhereInput
+    orderBy?: RunAgentOrderByWithRelationInput | RunAgentOrderByWithRelationInput[]
+    cursor?: RunAgentWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: RunAgentScalarFieldEnum | RunAgentScalarFieldEnum[]
   }
 
   /**
@@ -13075,6 +13108,7 @@ export namespace Prisma {
     runId: string | null
     name: string | null
     archetype: string | null
+    archetypeId: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -13084,6 +13118,7 @@ export namespace Prisma {
     runId: string | null
     name: string | null
     archetype: string | null
+    archetypeId: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -13093,6 +13128,7 @@ export namespace Prisma {
     runId: number
     name: number
     archetype: number
+    archetypeId: number
     biases: number
     humanState: number
     createdAt: number
@@ -13106,6 +13142,7 @@ export namespace Prisma {
     runId?: true
     name?: true
     archetype?: true
+    archetypeId?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -13115,6 +13152,7 @@ export namespace Prisma {
     runId?: true
     name?: true
     archetype?: true
+    archetypeId?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -13124,6 +13162,7 @@ export namespace Prisma {
     runId?: true
     name?: true
     archetype?: true
+    archetypeId?: true
     biases?: true
     humanState?: true
     createdAt?: true
@@ -13208,6 +13247,7 @@ export namespace Prisma {
     runId: string
     name: string
     archetype: string | null
+    archetypeId: string | null
     biases: JsonValue | null
     humanState: JsonValue | null
     createdAt: Date
@@ -13236,11 +13276,13 @@ export namespace Prisma {
     runId?: boolean
     name?: boolean
     archetype?: boolean
+    archetypeId?: boolean
     biases?: boolean
     humanState?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     run?: boolean | SimulationRunDefaultArgs<ExtArgs>
+    archetypeRef?: boolean | RunAgent$archetypeRefArgs<ExtArgs>
     traits?: boolean | RunAgent$traitsArgs<ExtArgs>
     decisions?: boolean | RunAgent$decisionsArgs<ExtArgs>
     infoStates?: boolean | RunAgent$infoStatesArgs<ExtArgs>
@@ -13255,11 +13297,13 @@ export namespace Prisma {
     runId?: boolean
     name?: boolean
     archetype?: boolean
+    archetypeId?: boolean
     biases?: boolean
     humanState?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     run?: boolean | SimulationRunDefaultArgs<ExtArgs>
+    archetypeRef?: boolean | RunAgent$archetypeRefArgs<ExtArgs>
   }, ExtArgs["result"]["runAgent"]>
 
   export type RunAgentSelectScalar = {
@@ -13267,6 +13311,7 @@ export namespace Prisma {
     runId?: boolean
     name?: boolean
     archetype?: boolean
+    archetypeId?: boolean
     biases?: boolean
     humanState?: boolean
     createdAt?: boolean
@@ -13275,6 +13320,7 @@ export namespace Prisma {
 
   export type RunAgentInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     run?: boolean | SimulationRunDefaultArgs<ExtArgs>
+    archetypeRef?: boolean | RunAgent$archetypeRefArgs<ExtArgs>
     traits?: boolean | RunAgent$traitsArgs<ExtArgs>
     decisions?: boolean | RunAgent$decisionsArgs<ExtArgs>
     infoStates?: boolean | RunAgent$infoStatesArgs<ExtArgs>
@@ -13285,12 +13331,14 @@ export namespace Prisma {
   }
   export type RunAgentIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     run?: boolean | SimulationRunDefaultArgs<ExtArgs>
+    archetypeRef?: boolean | RunAgent$archetypeRefArgs<ExtArgs>
   }
 
   export type $RunAgentPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "RunAgent"
     objects: {
       run: Prisma.$SimulationRunPayload<ExtArgs>
+      archetypeRef: Prisma.$ArchetypePayload<ExtArgs> | null
       traits: Prisma.$RunAgentTraitPayload<ExtArgs>[]
       decisions: Prisma.$AgentDecisionPayload<ExtArgs>[]
       infoStates: Prisma.$AgentInfoStatePayload<ExtArgs>[]
@@ -13302,7 +13350,14 @@ export namespace Prisma {
       id: string
       runId: string
       name: string
+      /**
+       * Display / engineering label (pool rotation name or structured role: trend | contrarian | noise | fundamental).
+       */
       archetype: string | null
+      /**
+       * Optional FK to reference Archetype row (pool rotation or structured role).
+       */
+      archetypeId: string | null
       biases: Prisma.JsonValue | null
       humanState: Prisma.JsonValue | null
       createdAt: Date
@@ -13672,6 +13727,7 @@ export namespace Prisma {
   export interface Prisma__RunAgentClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     run<T extends SimulationRunDefaultArgs<ExtArgs> = {}>(args?: Subset<T, SimulationRunDefaultArgs<ExtArgs>>): Prisma__SimulationRunClient<$Result.GetResult<Prisma.$SimulationRunPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    archetypeRef<T extends RunAgent$archetypeRefArgs<ExtArgs> = {}>(args?: Subset<T, RunAgent$archetypeRefArgs<ExtArgs>>): Prisma__ArchetypeClient<$Result.GetResult<Prisma.$ArchetypePayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     traits<T extends RunAgent$traitsArgs<ExtArgs> = {}>(args?: Subset<T, RunAgent$traitsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RunAgentTraitPayload<ExtArgs>, T, "findMany"> | Null>
     decisions<T extends RunAgent$decisionsArgs<ExtArgs> = {}>(args?: Subset<T, RunAgent$decisionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AgentDecisionPayload<ExtArgs>, T, "findMany"> | Null>
     infoStates<T extends RunAgent$infoStatesArgs<ExtArgs> = {}>(args?: Subset<T, RunAgent$infoStatesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AgentInfoStatePayload<ExtArgs>, T, "findMany"> | Null>
@@ -13711,6 +13767,7 @@ export namespace Prisma {
     readonly runId: FieldRef<"RunAgent", 'String'>
     readonly name: FieldRef<"RunAgent", 'String'>
     readonly archetype: FieldRef<"RunAgent", 'String'>
+    readonly archetypeId: FieldRef<"RunAgent", 'String'>
     readonly biases: FieldRef<"RunAgent", 'Json'>
     readonly humanState: FieldRef<"RunAgent", 'Json'>
     readonly createdAt: FieldRef<"RunAgent", 'DateTime'>
@@ -14030,6 +14087,21 @@ export namespace Prisma {
      * Filter which RunAgents to delete
      */
     where?: RunAgentWhereInput
+  }
+
+  /**
+   * RunAgent.archetypeRef
+   */
+  export type RunAgent$archetypeRefArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Archetype
+     */
+    select?: ArchetypeSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArchetypeInclude<ExtArgs> | null
+    where?: ArchetypeWhereInput
   }
 
   /**
@@ -41881,6 +41953,7 @@ export namespace Prisma {
     runId: 'runId',
     name: 'name',
     archetype: 'archetype',
+    archetypeId: 'archetypeId',
     biases: 'biases',
     humanState: 'humanState',
     createdAt: 'createdAt',
@@ -42536,6 +42609,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Archetype"> | Date | string
     traitProfiles?: ArchetypeTraitProfileListRelationFilter
     agents?: AgentListRelationFilter
+    runAgents?: RunAgentListRelationFilter
   }
 
   export type ArchetypeOrderByWithRelationInput = {
@@ -42546,6 +42620,7 @@ export namespace Prisma {
     updatedAt?: SortOrder
     traitProfiles?: ArchetypeTraitProfileOrderByRelationAggregateInput
     agents?: AgentOrderByRelationAggregateInput
+    runAgents?: RunAgentOrderByRelationAggregateInput
   }
 
   export type ArchetypeWhereUniqueInput = Prisma.AtLeast<{
@@ -42559,6 +42634,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Archetype"> | Date | string
     traitProfiles?: ArchetypeTraitProfileListRelationFilter
     agents?: AgentListRelationFilter
+    runAgents?: RunAgentListRelationFilter
   }, "id" | "name">
 
   export type ArchetypeOrderByWithAggregationInput = {
@@ -43228,11 +43304,13 @@ export namespace Prisma {
     runId?: UuidFilter<"RunAgent"> | string
     name?: StringFilter<"RunAgent"> | string
     archetype?: StringNullableFilter<"RunAgent"> | string | null
+    archetypeId?: UuidNullableFilter<"RunAgent"> | string | null
     biases?: JsonNullableFilter<"RunAgent">
     humanState?: JsonNullableFilter<"RunAgent">
     createdAt?: DateTimeFilter<"RunAgent"> | Date | string
     updatedAt?: DateTimeFilter<"RunAgent"> | Date | string
     run?: XOR<SimulationRunRelationFilter, SimulationRunWhereInput>
+    archetypeRef?: XOR<ArchetypeNullableRelationFilter, ArchetypeWhereInput> | null
     traits?: RunAgentTraitListRelationFilter
     decisions?: AgentDecisionListRelationFilter
     infoStates?: AgentInfoStateListRelationFilter
@@ -43246,11 +43324,13 @@ export namespace Prisma {
     runId?: SortOrder
     name?: SortOrder
     archetype?: SortOrderInput | SortOrder
+    archetypeId?: SortOrderInput | SortOrder
     biases?: SortOrderInput | SortOrder
     humanState?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     run?: SimulationRunOrderByWithRelationInput
+    archetypeRef?: ArchetypeOrderByWithRelationInput
     traits?: RunAgentTraitOrderByRelationAggregateInput
     decisions?: AgentDecisionOrderByRelationAggregateInput
     infoStates?: AgentInfoStateOrderByRelationAggregateInput
@@ -43267,11 +43347,13 @@ export namespace Prisma {
     runId?: UuidFilter<"RunAgent"> | string
     name?: StringFilter<"RunAgent"> | string
     archetype?: StringNullableFilter<"RunAgent"> | string | null
+    archetypeId?: UuidNullableFilter<"RunAgent"> | string | null
     biases?: JsonNullableFilter<"RunAgent">
     humanState?: JsonNullableFilter<"RunAgent">
     createdAt?: DateTimeFilter<"RunAgent"> | Date | string
     updatedAt?: DateTimeFilter<"RunAgent"> | Date | string
     run?: XOR<SimulationRunRelationFilter, SimulationRunWhereInput>
+    archetypeRef?: XOR<ArchetypeNullableRelationFilter, ArchetypeWhereInput> | null
     traits?: RunAgentTraitListRelationFilter
     decisions?: AgentDecisionListRelationFilter
     infoStates?: AgentInfoStateListRelationFilter
@@ -43285,6 +43367,7 @@ export namespace Prisma {
     runId?: SortOrder
     name?: SortOrder
     archetype?: SortOrderInput | SortOrder
+    archetypeId?: SortOrderInput | SortOrder
     biases?: SortOrderInput | SortOrder
     humanState?: SortOrderInput | SortOrder
     createdAt?: SortOrder
@@ -43302,6 +43385,7 @@ export namespace Prisma {
     runId?: UuidWithAggregatesFilter<"RunAgent"> | string
     name?: StringWithAggregatesFilter<"RunAgent"> | string
     archetype?: StringNullableWithAggregatesFilter<"RunAgent"> | string | null
+    archetypeId?: UuidNullableWithAggregatesFilter<"RunAgent"> | string | null
     biases?: JsonNullableWithAggregatesFilter<"RunAgent">
     humanState?: JsonNullableWithAggregatesFilter<"RunAgent">
     createdAt?: DateTimeWithAggregatesFilter<"RunAgent"> | Date | string
@@ -45574,6 +45658,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     traitProfiles?: ArchetypeTraitProfileCreateNestedManyWithoutArchetypeInput
     agents?: AgentCreateNestedManyWithoutArchetypeInput
+    runAgents?: RunAgentCreateNestedManyWithoutArchetypeRefInput
   }
 
   export type ArchetypeUncheckedCreateInput = {
@@ -45584,6 +45669,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     traitProfiles?: ArchetypeTraitProfileUncheckedCreateNestedManyWithoutArchetypeInput
     agents?: AgentUncheckedCreateNestedManyWithoutArchetypeInput
+    runAgents?: RunAgentUncheckedCreateNestedManyWithoutArchetypeRefInput
   }
 
   export type ArchetypeUpdateInput = {
@@ -45594,6 +45680,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     traitProfiles?: ArchetypeTraitProfileUpdateManyWithoutArchetypeNestedInput
     agents?: AgentUpdateManyWithoutArchetypeNestedInput
+    runAgents?: RunAgentUpdateManyWithoutArchetypeRefNestedInput
   }
 
   export type ArchetypeUncheckedUpdateInput = {
@@ -45604,6 +45691,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     traitProfiles?: ArchetypeTraitProfileUncheckedUpdateManyWithoutArchetypeNestedInput
     agents?: AgentUncheckedUpdateManyWithoutArchetypeNestedInput
+    runAgents?: RunAgentUncheckedUpdateManyWithoutArchetypeRefNestedInput
   }
 
   export type ArchetypeCreateManyInput = {
@@ -46356,6 +46444,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     run: SimulationRunCreateNestedOneWithoutRunAgentsInput
+    archetypeRef?: ArchetypeCreateNestedOneWithoutRunAgentsInput
     traits?: RunAgentTraitCreateNestedManyWithoutAgentInput
     decisions?: AgentDecisionCreateNestedManyWithoutAgentInput
     infoStates?: AgentInfoStateCreateNestedManyWithoutAgentInput
@@ -46369,6 +46458,7 @@ export namespace Prisma {
     runId: string
     name: string
     archetype?: string | null
+    archetypeId?: string | null
     biases?: NullableJsonNullValueInput | InputJsonValue
     humanState?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
@@ -46390,6 +46480,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     run?: SimulationRunUpdateOneRequiredWithoutRunAgentsNestedInput
+    archetypeRef?: ArchetypeUpdateOneWithoutRunAgentsNestedInput
     traits?: RunAgentTraitUpdateManyWithoutAgentNestedInput
     decisions?: AgentDecisionUpdateManyWithoutAgentNestedInput
     infoStates?: AgentInfoStateUpdateManyWithoutAgentNestedInput
@@ -46403,6 +46494,7 @@ export namespace Prisma {
     runId?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     archetype?: NullableStringFieldUpdateOperationsInput | string | null
+    archetypeId?: NullableStringFieldUpdateOperationsInput | string | null
     biases?: NullableJsonNullValueInput | InputJsonValue
     humanState?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -46420,6 +46512,7 @@ export namespace Prisma {
     runId: string
     name: string
     archetype?: string | null
+    archetypeId?: string | null
     biases?: NullableJsonNullValueInput | InputJsonValue
     humanState?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
@@ -46441,6 +46534,7 @@ export namespace Prisma {
     runId?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     archetype?: NullableStringFieldUpdateOperationsInput | string | null
+    archetypeId?: NullableStringFieldUpdateOperationsInput | string | null
     biases?: NullableJsonNullValueInput | InputJsonValue
     humanState?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -48995,6 +49089,12 @@ export namespace Prisma {
     none?: AgentWhereInput
   }
 
+  export type RunAgentListRelationFilter = {
+    every?: RunAgentWhereInput
+    some?: RunAgentWhereInput
+    none?: RunAgentWhereInput
+  }
+
   export type SortOrderInput = {
     sort: SortOrder
     nulls?: NullsOrder
@@ -49005,6 +49105,10 @@ export namespace Prisma {
   }
 
   export type AgentOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type RunAgentOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -49419,12 +49523,6 @@ export namespace Prisma {
     none?: RunTimeSeriesWhereInput
   }
 
-  export type RunAgentListRelationFilter = {
-    every?: RunAgentWhereInput
-    some?: RunAgentWhereInput
-    none?: RunAgentWhereInput
-  }
-
   export type AgentDecisionListRelationFilter = {
     every?: AgentDecisionWhereInput
     some?: AgentDecisionWhereInput
@@ -49482,10 +49580,6 @@ export namespace Prisma {
   }
 
   export type RunTimeSeriesOrderByRelationAggregateInput = {
-    _count?: SortOrder
-  }
-
-  export type RunAgentOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -49818,6 +49912,23 @@ export namespace Prisma {
     pairsCount?: SortOrder
   }
 
+  export type UuidNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedUuidNullableFilter<$PrismaModel> | string | null
+  }
+
+  export type ArchetypeNullableRelationFilter = {
+    is?: ArchetypeWhereInput | null
+    isNot?: ArchetypeWhereInput | null
+  }
+
   export type RunAgentTraitListRelationFilter = {
     every?: RunAgentTraitWhereInput
     some?: RunAgentTraitWhereInput
@@ -49833,6 +49944,7 @@ export namespace Prisma {
     runId?: SortOrder
     name?: SortOrder
     archetype?: SortOrder
+    archetypeId?: SortOrder
     biases?: SortOrder
     humanState?: SortOrder
     createdAt?: SortOrder
@@ -49844,6 +49956,7 @@ export namespace Prisma {
     runId?: SortOrder
     name?: SortOrder
     archetype?: SortOrder
+    archetypeId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -49853,8 +49966,24 @@ export namespace Prisma {
     runId?: SortOrder
     name?: SortOrder
     archetype?: SortOrder
+    archetypeId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+  }
+
+  export type UuidNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedUuidNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
   export type RunAgentRelationFilter = {
@@ -49895,18 +50024,6 @@ export namespace Prisma {
 
   export type RunAgentTraitSumOrderByAggregateInput = {
     valueNum?: SortOrder
-  }
-
-  export type UuidNullableFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
-    not?: NestedUuidNullableFilter<$PrismaModel> | string | null
   }
 
   export type EnumAgentDecisionActionFilter<$PrismaModel = never> = {
@@ -50021,21 +50138,6 @@ export namespace Prisma {
     prefBUY?: SortOrder
     prefSELL?: SortOrder
     prefHOLD?: SortOrder
-  }
-
-  export type UuidNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
-    not?: NestedUuidNullableWithAggregatesFilter<$PrismaModel> | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedStringNullableFilter<$PrismaModel>
-    _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
   export type EnumAgentDecisionActionWithAggregatesFilter<$PrismaModel = never> = {
@@ -51565,6 +51667,13 @@ export namespace Prisma {
     connect?: AgentWhereUniqueInput | AgentWhereUniqueInput[]
   }
 
+  export type RunAgentCreateNestedManyWithoutArchetypeRefInput = {
+    create?: XOR<RunAgentCreateWithoutArchetypeRefInput, RunAgentUncheckedCreateWithoutArchetypeRefInput> | RunAgentCreateWithoutArchetypeRefInput[] | RunAgentUncheckedCreateWithoutArchetypeRefInput[]
+    connectOrCreate?: RunAgentCreateOrConnectWithoutArchetypeRefInput | RunAgentCreateOrConnectWithoutArchetypeRefInput[]
+    createMany?: RunAgentCreateManyArchetypeRefInputEnvelope
+    connect?: RunAgentWhereUniqueInput | RunAgentWhereUniqueInput[]
+  }
+
   export type ArchetypeTraitProfileUncheckedCreateNestedManyWithoutArchetypeInput = {
     create?: XOR<ArchetypeTraitProfileCreateWithoutArchetypeInput, ArchetypeTraitProfileUncheckedCreateWithoutArchetypeInput> | ArchetypeTraitProfileCreateWithoutArchetypeInput[] | ArchetypeTraitProfileUncheckedCreateWithoutArchetypeInput[]
     connectOrCreate?: ArchetypeTraitProfileCreateOrConnectWithoutArchetypeInput | ArchetypeTraitProfileCreateOrConnectWithoutArchetypeInput[]
@@ -51577,6 +51686,13 @@ export namespace Prisma {
     connectOrCreate?: AgentCreateOrConnectWithoutArchetypeInput | AgentCreateOrConnectWithoutArchetypeInput[]
     createMany?: AgentCreateManyArchetypeInputEnvelope
     connect?: AgentWhereUniqueInput | AgentWhereUniqueInput[]
+  }
+
+  export type RunAgentUncheckedCreateNestedManyWithoutArchetypeRefInput = {
+    create?: XOR<RunAgentCreateWithoutArchetypeRefInput, RunAgentUncheckedCreateWithoutArchetypeRefInput> | RunAgentCreateWithoutArchetypeRefInput[] | RunAgentUncheckedCreateWithoutArchetypeRefInput[]
+    connectOrCreate?: RunAgentCreateOrConnectWithoutArchetypeRefInput | RunAgentCreateOrConnectWithoutArchetypeRefInput[]
+    createMany?: RunAgentCreateManyArchetypeRefInputEnvelope
+    connect?: RunAgentWhereUniqueInput | RunAgentWhereUniqueInput[]
   }
 
   export type StringFieldUpdateOperationsInput = {
@@ -51619,6 +51735,20 @@ export namespace Prisma {
     deleteMany?: AgentScalarWhereInput | AgentScalarWhereInput[]
   }
 
+  export type RunAgentUpdateManyWithoutArchetypeRefNestedInput = {
+    create?: XOR<RunAgentCreateWithoutArchetypeRefInput, RunAgentUncheckedCreateWithoutArchetypeRefInput> | RunAgentCreateWithoutArchetypeRefInput[] | RunAgentUncheckedCreateWithoutArchetypeRefInput[]
+    connectOrCreate?: RunAgentCreateOrConnectWithoutArchetypeRefInput | RunAgentCreateOrConnectWithoutArchetypeRefInput[]
+    upsert?: RunAgentUpsertWithWhereUniqueWithoutArchetypeRefInput | RunAgentUpsertWithWhereUniqueWithoutArchetypeRefInput[]
+    createMany?: RunAgentCreateManyArchetypeRefInputEnvelope
+    set?: RunAgentWhereUniqueInput | RunAgentWhereUniqueInput[]
+    disconnect?: RunAgentWhereUniqueInput | RunAgentWhereUniqueInput[]
+    delete?: RunAgentWhereUniqueInput | RunAgentWhereUniqueInput[]
+    connect?: RunAgentWhereUniqueInput | RunAgentWhereUniqueInput[]
+    update?: RunAgentUpdateWithWhereUniqueWithoutArchetypeRefInput | RunAgentUpdateWithWhereUniqueWithoutArchetypeRefInput[]
+    updateMany?: RunAgentUpdateManyWithWhereWithoutArchetypeRefInput | RunAgentUpdateManyWithWhereWithoutArchetypeRefInput[]
+    deleteMany?: RunAgentScalarWhereInput | RunAgentScalarWhereInput[]
+  }
+
   export type ArchetypeTraitProfileUncheckedUpdateManyWithoutArchetypeNestedInput = {
     create?: XOR<ArchetypeTraitProfileCreateWithoutArchetypeInput, ArchetypeTraitProfileUncheckedCreateWithoutArchetypeInput> | ArchetypeTraitProfileCreateWithoutArchetypeInput[] | ArchetypeTraitProfileUncheckedCreateWithoutArchetypeInput[]
     connectOrCreate?: ArchetypeTraitProfileCreateOrConnectWithoutArchetypeInput | ArchetypeTraitProfileCreateOrConnectWithoutArchetypeInput[]
@@ -51645,6 +51775,20 @@ export namespace Prisma {
     update?: AgentUpdateWithWhereUniqueWithoutArchetypeInput | AgentUpdateWithWhereUniqueWithoutArchetypeInput[]
     updateMany?: AgentUpdateManyWithWhereWithoutArchetypeInput | AgentUpdateManyWithWhereWithoutArchetypeInput[]
     deleteMany?: AgentScalarWhereInput | AgentScalarWhereInput[]
+  }
+
+  export type RunAgentUncheckedUpdateManyWithoutArchetypeRefNestedInput = {
+    create?: XOR<RunAgentCreateWithoutArchetypeRefInput, RunAgentUncheckedCreateWithoutArchetypeRefInput> | RunAgentCreateWithoutArchetypeRefInput[] | RunAgentUncheckedCreateWithoutArchetypeRefInput[]
+    connectOrCreate?: RunAgentCreateOrConnectWithoutArchetypeRefInput | RunAgentCreateOrConnectWithoutArchetypeRefInput[]
+    upsert?: RunAgentUpsertWithWhereUniqueWithoutArchetypeRefInput | RunAgentUpsertWithWhereUniqueWithoutArchetypeRefInput[]
+    createMany?: RunAgentCreateManyArchetypeRefInputEnvelope
+    set?: RunAgentWhereUniqueInput | RunAgentWhereUniqueInput[]
+    disconnect?: RunAgentWhereUniqueInput | RunAgentWhereUniqueInput[]
+    delete?: RunAgentWhereUniqueInput | RunAgentWhereUniqueInput[]
+    connect?: RunAgentWhereUniqueInput | RunAgentWhereUniqueInput[]
+    update?: RunAgentUpdateWithWhereUniqueWithoutArchetypeRefInput | RunAgentUpdateWithWhereUniqueWithoutArchetypeRefInput[]
+    updateMany?: RunAgentUpdateManyWithWhereWithoutArchetypeRefInput | RunAgentUpdateManyWithWhereWithoutArchetypeRefInput[]
+    deleteMany?: RunAgentScalarWhereInput | RunAgentScalarWhereInput[]
   }
 
   export type ArchetypeTraitProfileCreateNestedManyWithoutTraitDefinitionInput = {
@@ -52797,6 +52941,12 @@ export namespace Prisma {
     connect?: SimulationRunWhereUniqueInput
   }
 
+  export type ArchetypeCreateNestedOneWithoutRunAgentsInput = {
+    create?: XOR<ArchetypeCreateWithoutRunAgentsInput, ArchetypeUncheckedCreateWithoutRunAgentsInput>
+    connectOrCreate?: ArchetypeCreateOrConnectWithoutRunAgentsInput
+    connect?: ArchetypeWhereUniqueInput
+  }
+
   export type RunAgentTraitCreateNestedManyWithoutAgentInput = {
     create?: XOR<RunAgentTraitCreateWithoutAgentInput, RunAgentTraitUncheckedCreateWithoutAgentInput> | RunAgentTraitCreateWithoutAgentInput[] | RunAgentTraitUncheckedCreateWithoutAgentInput[]
     connectOrCreate?: RunAgentTraitCreateOrConnectWithoutAgentInput | RunAgentTraitCreateOrConnectWithoutAgentInput[]
@@ -52887,6 +53037,16 @@ export namespace Prisma {
     upsert?: SimulationRunUpsertWithoutRunAgentsInput
     connect?: SimulationRunWhereUniqueInput
     update?: XOR<XOR<SimulationRunUpdateToOneWithWhereWithoutRunAgentsInput, SimulationRunUpdateWithoutRunAgentsInput>, SimulationRunUncheckedUpdateWithoutRunAgentsInput>
+  }
+
+  export type ArchetypeUpdateOneWithoutRunAgentsNestedInput = {
+    create?: XOR<ArchetypeCreateWithoutRunAgentsInput, ArchetypeUncheckedCreateWithoutRunAgentsInput>
+    connectOrCreate?: ArchetypeCreateOrConnectWithoutRunAgentsInput
+    upsert?: ArchetypeUpsertWithoutRunAgentsInput
+    disconnect?: ArchetypeWhereInput | boolean
+    delete?: ArchetypeWhereInput | boolean
+    connect?: ArchetypeWhereUniqueInput
+    update?: XOR<XOR<ArchetypeUpdateToOneWithWhereWithoutRunAgentsInput, ArchetypeUpdateWithoutRunAgentsInput>, ArchetypeUncheckedUpdateWithoutRunAgentsInput>
   }
 
   export type RunAgentTraitUpdateManyWithoutAgentNestedInput = {
@@ -53810,13 +53970,6 @@ export namespace Prisma {
     not?: NestedUuidNullableFilter<$PrismaModel> | string | null
   }
 
-  export type NestedEnumAgentDecisionActionFilter<$PrismaModel = never> = {
-    equals?: $Enums.AgentDecisionAction | EnumAgentDecisionActionFieldRefInput<$PrismaModel>
-    in?: $Enums.AgentDecisionAction[] | ListEnumAgentDecisionActionFieldRefInput<$PrismaModel>
-    notIn?: $Enums.AgentDecisionAction[] | ListEnumAgentDecisionActionFieldRefInput<$PrismaModel>
-    not?: NestedEnumAgentDecisionActionFilter<$PrismaModel> | $Enums.AgentDecisionAction
-  }
-
   export type NestedUuidNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel> | null
     in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
@@ -53829,6 +53982,13 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedStringNullableFilter<$PrismaModel>
     _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
+  export type NestedEnumAgentDecisionActionFilter<$PrismaModel = never> = {
+    equals?: $Enums.AgentDecisionAction | EnumAgentDecisionActionFieldRefInput<$PrismaModel>
+    in?: $Enums.AgentDecisionAction[] | ListEnumAgentDecisionActionFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AgentDecisionAction[] | ListEnumAgentDecisionActionFieldRefInput<$PrismaModel>
+    not?: NestedEnumAgentDecisionActionFilter<$PrismaModel> | $Enums.AgentDecisionAction
   }
 
   export type NestedEnumAgentDecisionActionWithAggregatesFilter<$PrismaModel = never> = {
@@ -53977,6 +54137,50 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type RunAgentCreateWithoutArchetypeRefInput = {
+    id?: string
+    name: string
+    archetype?: string | null
+    biases?: NullableJsonNullValueInput | InputJsonValue
+    humanState?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    run: SimulationRunCreateNestedOneWithoutRunAgentsInput
+    traits?: RunAgentTraitCreateNestedManyWithoutAgentInput
+    decisions?: AgentDecisionCreateNestedManyWithoutAgentInput
+    infoStates?: AgentInfoStateCreateNestedManyWithoutAgentInput
+    agentStates?: AgentStateCreateNestedManyWithoutAgentInput
+    experiences?: AgentExperienceCreateNestedManyWithoutRunAgentInput
+    agentRewards?: AgentRewardCreateNestedManyWithoutAgentInput
+  }
+
+  export type RunAgentUncheckedCreateWithoutArchetypeRefInput = {
+    id?: string
+    runId: string
+    name: string
+    archetype?: string | null
+    biases?: NullableJsonNullValueInput | InputJsonValue
+    humanState?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    traits?: RunAgentTraitUncheckedCreateNestedManyWithoutAgentInput
+    decisions?: AgentDecisionUncheckedCreateNestedManyWithoutAgentInput
+    infoStates?: AgentInfoStateUncheckedCreateNestedManyWithoutAgentInput
+    agentStates?: AgentStateUncheckedCreateNestedManyWithoutAgentInput
+    experiences?: AgentExperienceUncheckedCreateNestedManyWithoutRunAgentInput
+    agentRewards?: AgentRewardUncheckedCreateNestedManyWithoutAgentInput
+  }
+
+  export type RunAgentCreateOrConnectWithoutArchetypeRefInput = {
+    where: RunAgentWhereUniqueInput
+    create: XOR<RunAgentCreateWithoutArchetypeRefInput, RunAgentUncheckedCreateWithoutArchetypeRefInput>
+  }
+
+  export type RunAgentCreateManyArchetypeRefInputEnvelope = {
+    data: RunAgentCreateManyArchetypeRefInput | RunAgentCreateManyArchetypeRefInput[]
+    skipDuplicates?: boolean
+  }
+
   export type ArchetypeTraitProfileUpsertWithWhereUniqueWithoutArchetypeInput = {
     where: ArchetypeTraitProfileWhereUniqueInput
     update: XOR<ArchetypeTraitProfileUpdateWithoutArchetypeInput, ArchetypeTraitProfileUncheckedUpdateWithoutArchetypeInput>
@@ -54030,6 +54234,37 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Agent"> | Date | string
   }
 
+  export type RunAgentUpsertWithWhereUniqueWithoutArchetypeRefInput = {
+    where: RunAgentWhereUniqueInput
+    update: XOR<RunAgentUpdateWithoutArchetypeRefInput, RunAgentUncheckedUpdateWithoutArchetypeRefInput>
+    create: XOR<RunAgentCreateWithoutArchetypeRefInput, RunAgentUncheckedCreateWithoutArchetypeRefInput>
+  }
+
+  export type RunAgentUpdateWithWhereUniqueWithoutArchetypeRefInput = {
+    where: RunAgentWhereUniqueInput
+    data: XOR<RunAgentUpdateWithoutArchetypeRefInput, RunAgentUncheckedUpdateWithoutArchetypeRefInput>
+  }
+
+  export type RunAgentUpdateManyWithWhereWithoutArchetypeRefInput = {
+    where: RunAgentScalarWhereInput
+    data: XOR<RunAgentUpdateManyMutationInput, RunAgentUncheckedUpdateManyWithoutArchetypeRefInput>
+  }
+
+  export type RunAgentScalarWhereInput = {
+    AND?: RunAgentScalarWhereInput | RunAgentScalarWhereInput[]
+    OR?: RunAgentScalarWhereInput[]
+    NOT?: RunAgentScalarWhereInput | RunAgentScalarWhereInput[]
+    id?: UuidFilter<"RunAgent"> | string
+    runId?: UuidFilter<"RunAgent"> | string
+    name?: StringFilter<"RunAgent"> | string
+    archetype?: StringNullableFilter<"RunAgent"> | string | null
+    archetypeId?: UuidNullableFilter<"RunAgent"> | string | null
+    biases?: JsonNullableFilter<"RunAgent">
+    humanState?: JsonNullableFilter<"RunAgent">
+    createdAt?: DateTimeFilter<"RunAgent"> | Date | string
+    updatedAt?: DateTimeFilter<"RunAgent"> | Date | string
+  }
+
   export type ArchetypeTraitProfileCreateWithoutTraitDefinitionInput = {
     baselineValue: number
     archetype: ArchetypeCreateNestedOneWithoutTraitProfilesInput
@@ -54073,6 +54308,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     agents?: AgentCreateNestedManyWithoutArchetypeInput
+    runAgents?: RunAgentCreateNestedManyWithoutArchetypeRefInput
   }
 
   export type ArchetypeUncheckedCreateWithoutTraitProfilesInput = {
@@ -54082,6 +54318,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     agents?: AgentUncheckedCreateNestedManyWithoutArchetypeInput
+    runAgents?: RunAgentUncheckedCreateNestedManyWithoutArchetypeRefInput
   }
 
   export type ArchetypeCreateOrConnectWithoutTraitProfilesInput = {
@@ -54136,6 +54373,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     agents?: AgentUpdateManyWithoutArchetypeNestedInput
+    runAgents?: RunAgentUpdateManyWithoutArchetypeRefNestedInput
   }
 
   export type ArchetypeUncheckedUpdateWithoutTraitProfilesInput = {
@@ -54145,6 +54383,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     agents?: AgentUncheckedUpdateManyWithoutArchetypeNestedInput
+    runAgents?: RunAgentUncheckedUpdateManyWithoutArchetypeRefNestedInput
   }
 
   export type TraitDefinitionUpsertWithoutArchetypeProfilesInput = {
@@ -54189,6 +54428,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     traitProfiles?: ArchetypeTraitProfileCreateNestedManyWithoutArchetypeInput
+    runAgents?: RunAgentCreateNestedManyWithoutArchetypeRefInput
   }
 
   export type ArchetypeUncheckedCreateWithoutAgentsInput = {
@@ -54198,6 +54438,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     traitProfiles?: ArchetypeTraitProfileUncheckedCreateNestedManyWithoutArchetypeInput
+    runAgents?: RunAgentUncheckedCreateNestedManyWithoutArchetypeRefInput
   }
 
   export type ArchetypeCreateOrConnectWithoutAgentsInput = {
@@ -54286,6 +54527,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     traitProfiles?: ArchetypeTraitProfileUpdateManyWithoutArchetypeNestedInput
+    runAgents?: RunAgentUpdateManyWithoutArchetypeRefNestedInput
   }
 
   export type ArchetypeUncheckedUpdateWithoutAgentsInput = {
@@ -54295,6 +54537,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     traitProfiles?: ArchetypeTraitProfileUncheckedUpdateManyWithoutArchetypeNestedInput
+    runAgents?: RunAgentUncheckedUpdateManyWithoutArchetypeRefNestedInput
   }
 
   export type AgentWalletUpsertWithoutAgentInput = {
@@ -54577,6 +54820,7 @@ export namespace Prisma {
     humanState?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
+    archetypeRef?: ArchetypeCreateNestedOneWithoutRunAgentsInput
     traits?: RunAgentTraitCreateNestedManyWithoutAgentInput
     decisions?: AgentDecisionCreateNestedManyWithoutAgentInput
     infoStates?: AgentInfoStateCreateNestedManyWithoutAgentInput
@@ -54589,6 +54833,7 @@ export namespace Prisma {
     id?: string
     name: string
     archetype?: string | null
+    archetypeId?: string | null
     biases?: NullableJsonNullValueInput | InputJsonValue
     humanState?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
@@ -55103,20 +55348,6 @@ export namespace Prisma {
   export type RunAgentUpdateManyWithWhereWithoutRunInput = {
     where: RunAgentScalarWhereInput
     data: XOR<RunAgentUpdateManyMutationInput, RunAgentUncheckedUpdateManyWithoutRunInput>
-  }
-
-  export type RunAgentScalarWhereInput = {
-    AND?: RunAgentScalarWhereInput | RunAgentScalarWhereInput[]
-    OR?: RunAgentScalarWhereInput[]
-    NOT?: RunAgentScalarWhereInput | RunAgentScalarWhereInput[]
-    id?: UuidFilter<"RunAgent"> | string
-    runId?: UuidFilter<"RunAgent"> | string
-    name?: StringFilter<"RunAgent"> | string
-    archetype?: StringNullableFilter<"RunAgent"> | string | null
-    biases?: JsonNullableFilter<"RunAgent">
-    humanState?: JsonNullableFilter<"RunAgent">
-    createdAt?: DateTimeFilter<"RunAgent"> | Date | string
-    updatedAt?: DateTimeFilter<"RunAgent"> | Date | string
   }
 
   export type AgentDecisionUpsertWithWhereUniqueWithoutRunInput = {
@@ -56259,6 +56490,31 @@ export namespace Prisma {
     create: XOR<SimulationRunCreateWithoutRunAgentsInput, SimulationRunUncheckedCreateWithoutRunAgentsInput>
   }
 
+  export type ArchetypeCreateWithoutRunAgentsInput = {
+    id?: string
+    name: string
+    description?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    traitProfiles?: ArchetypeTraitProfileCreateNestedManyWithoutArchetypeInput
+    agents?: AgentCreateNestedManyWithoutArchetypeInput
+  }
+
+  export type ArchetypeUncheckedCreateWithoutRunAgentsInput = {
+    id?: string
+    name: string
+    description?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    traitProfiles?: ArchetypeTraitProfileUncheckedCreateNestedManyWithoutArchetypeInput
+    agents?: AgentUncheckedCreateNestedManyWithoutArchetypeInput
+  }
+
+  export type ArchetypeCreateOrConnectWithoutRunAgentsInput = {
+    where: ArchetypeWhereUniqueInput
+    create: XOR<ArchetypeCreateWithoutRunAgentsInput, ArchetypeUncheckedCreateWithoutRunAgentsInput>
+  }
+
   export type RunAgentTraitCreateWithoutAgentInput = {
     id?: string
     key: string
@@ -56582,6 +56838,37 @@ export namespace Prisma {
     runVariants?: RunVariantUncheckedUpdateManyWithoutRunNestedInput
   }
 
+  export type ArchetypeUpsertWithoutRunAgentsInput = {
+    update: XOR<ArchetypeUpdateWithoutRunAgentsInput, ArchetypeUncheckedUpdateWithoutRunAgentsInput>
+    create: XOR<ArchetypeCreateWithoutRunAgentsInput, ArchetypeUncheckedCreateWithoutRunAgentsInput>
+    where?: ArchetypeWhereInput
+  }
+
+  export type ArchetypeUpdateToOneWithWhereWithoutRunAgentsInput = {
+    where?: ArchetypeWhereInput
+    data: XOR<ArchetypeUpdateWithoutRunAgentsInput, ArchetypeUncheckedUpdateWithoutRunAgentsInput>
+  }
+
+  export type ArchetypeUpdateWithoutRunAgentsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    traitProfiles?: ArchetypeTraitProfileUpdateManyWithoutArchetypeNestedInput
+    agents?: AgentUpdateManyWithoutArchetypeNestedInput
+  }
+
+  export type ArchetypeUncheckedUpdateWithoutRunAgentsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    traitProfiles?: ArchetypeTraitProfileUncheckedUpdateManyWithoutArchetypeNestedInput
+    agents?: AgentUncheckedUpdateManyWithoutArchetypeNestedInput
+  }
+
   export type RunAgentTraitUpsertWithWhereUniqueWithoutAgentInput = {
     where: RunAgentTraitWhereUniqueInput
     update: XOR<RunAgentTraitUpdateWithoutAgentInput, RunAgentTraitUncheckedUpdateWithoutAgentInput>
@@ -56699,6 +56986,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     run: SimulationRunCreateNestedOneWithoutRunAgentsInput
+    archetypeRef?: ArchetypeCreateNestedOneWithoutRunAgentsInput
     decisions?: AgentDecisionCreateNestedManyWithoutAgentInput
     infoStates?: AgentInfoStateCreateNestedManyWithoutAgentInput
     agentStates?: AgentStateCreateNestedManyWithoutAgentInput
@@ -56711,6 +56999,7 @@ export namespace Prisma {
     runId: string
     name: string
     archetype?: string | null
+    archetypeId?: string | null
     biases?: NullableJsonNullValueInput | InputJsonValue
     humanState?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
@@ -56747,6 +57036,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     run?: SimulationRunUpdateOneRequiredWithoutRunAgentsNestedInput
+    archetypeRef?: ArchetypeUpdateOneWithoutRunAgentsNestedInput
     decisions?: AgentDecisionUpdateManyWithoutAgentNestedInput
     infoStates?: AgentInfoStateUpdateManyWithoutAgentNestedInput
     agentStates?: AgentStateUpdateManyWithoutAgentNestedInput
@@ -56759,6 +57049,7 @@ export namespace Prisma {
     runId?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     archetype?: NullableStringFieldUpdateOperationsInput | string | null
+    archetypeId?: NullableStringFieldUpdateOperationsInput | string | null
     biases?: NullableJsonNullValueInput | InputJsonValue
     humanState?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -56915,6 +57206,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     run: SimulationRunCreateNestedOneWithoutRunAgentsInput
+    archetypeRef?: ArchetypeCreateNestedOneWithoutRunAgentsInput
     traits?: RunAgentTraitCreateNestedManyWithoutAgentInput
     infoStates?: AgentInfoStateCreateNestedManyWithoutAgentInput
     agentStates?: AgentStateCreateNestedManyWithoutAgentInput
@@ -56927,6 +57219,7 @@ export namespace Prisma {
     runId: string
     name: string
     archetype?: string | null
+    archetypeId?: string | null
     biases?: NullableJsonNullValueInput | InputJsonValue
     humanState?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
@@ -57111,6 +57404,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     run?: SimulationRunUpdateOneRequiredWithoutRunAgentsNestedInput
+    archetypeRef?: ArchetypeUpdateOneWithoutRunAgentsNestedInput
     traits?: RunAgentTraitUpdateManyWithoutAgentNestedInput
     infoStates?: AgentInfoStateUpdateManyWithoutAgentNestedInput
     agentStates?: AgentStateUpdateManyWithoutAgentNestedInput
@@ -57123,6 +57417,7 @@ export namespace Prisma {
     runId?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     archetype?: NullableStringFieldUpdateOperationsInput | string | null
+    archetypeId?: NullableStringFieldUpdateOperationsInput | string | null
     biases?: NullableJsonNullValueInput | InputJsonValue
     humanState?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -57723,6 +58018,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     run: SimulationRunCreateNestedOneWithoutRunAgentsInput
+    archetypeRef?: ArchetypeCreateNestedOneWithoutRunAgentsInput
     traits?: RunAgentTraitCreateNestedManyWithoutAgentInput
     decisions?: AgentDecisionCreateNestedManyWithoutAgentInput
     infoStates?: AgentInfoStateCreateNestedManyWithoutAgentInput
@@ -57735,6 +58031,7 @@ export namespace Prisma {
     runId: string
     name: string
     archetype?: string | null
+    archetypeId?: string | null
     biases?: NullableJsonNullValueInput | InputJsonValue
     humanState?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
@@ -57919,6 +58216,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     run?: SimulationRunUpdateOneRequiredWithoutRunAgentsNestedInput
+    archetypeRef?: ArchetypeUpdateOneWithoutRunAgentsNestedInput
     traits?: RunAgentTraitUpdateManyWithoutAgentNestedInput
     decisions?: AgentDecisionUpdateManyWithoutAgentNestedInput
     infoStates?: AgentInfoStateUpdateManyWithoutAgentNestedInput
@@ -57931,6 +58229,7 @@ export namespace Prisma {
     runId?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     archetype?: NullableStringFieldUpdateOperationsInput | string | null
+    archetypeId?: NullableStringFieldUpdateOperationsInput | string | null
     biases?: NullableJsonNullValueInput | InputJsonValue
     humanState?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -58247,6 +58546,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     run: SimulationRunCreateNestedOneWithoutRunAgentsInput
+    archetypeRef?: ArchetypeCreateNestedOneWithoutRunAgentsInput
     traits?: RunAgentTraitCreateNestedManyWithoutAgentInput
     decisions?: AgentDecisionCreateNestedManyWithoutAgentInput
     agentStates?: AgentStateCreateNestedManyWithoutAgentInput
@@ -58259,6 +58559,7 @@ export namespace Prisma {
     runId: string
     name: string
     archetype?: string | null
+    archetypeId?: string | null
     biases?: NullableJsonNullValueInput | InputJsonValue
     humanState?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
@@ -58443,6 +58744,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     run?: SimulationRunUpdateOneRequiredWithoutRunAgentsNestedInput
+    archetypeRef?: ArchetypeUpdateOneWithoutRunAgentsNestedInput
     traits?: RunAgentTraitUpdateManyWithoutAgentNestedInput
     decisions?: AgentDecisionUpdateManyWithoutAgentNestedInput
     agentStates?: AgentStateUpdateManyWithoutAgentNestedInput
@@ -58455,6 +58757,7 @@ export namespace Prisma {
     runId?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     archetype?: NullableStringFieldUpdateOperationsInput | string | null
+    archetypeId?: NullableStringFieldUpdateOperationsInput | string | null
     biases?: NullableJsonNullValueInput | InputJsonValue
     humanState?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -58611,6 +58914,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     run: SimulationRunCreateNestedOneWithoutRunAgentsInput
+    archetypeRef?: ArchetypeCreateNestedOneWithoutRunAgentsInput
     traits?: RunAgentTraitCreateNestedManyWithoutAgentInput
     decisions?: AgentDecisionCreateNestedManyWithoutAgentInput
     infoStates?: AgentInfoStateCreateNestedManyWithoutAgentInput
@@ -58623,6 +58927,7 @@ export namespace Prisma {
     runId: string
     name: string
     archetype?: string | null
+    archetypeId?: string | null
     biases?: NullableJsonNullValueInput | InputJsonValue
     humanState?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
@@ -58807,6 +59112,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     run?: SimulationRunUpdateOneRequiredWithoutRunAgentsNestedInput
+    archetypeRef?: ArchetypeUpdateOneWithoutRunAgentsNestedInput
     traits?: RunAgentTraitUpdateManyWithoutAgentNestedInput
     decisions?: AgentDecisionUpdateManyWithoutAgentNestedInput
     infoStates?: AgentInfoStateUpdateManyWithoutAgentNestedInput
@@ -58819,6 +59125,7 @@ export namespace Prisma {
     runId?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     archetype?: NullableStringFieldUpdateOperationsInput | string | null
+    archetypeId?: NullableStringFieldUpdateOperationsInput | string | null
     biases?: NullableJsonNullValueInput | InputJsonValue
     humanState?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -59295,6 +59602,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     run: SimulationRunCreateNestedOneWithoutRunAgentsInput
+    archetypeRef?: ArchetypeCreateNestedOneWithoutRunAgentsInput
     traits?: RunAgentTraitCreateNestedManyWithoutAgentInput
     decisions?: AgentDecisionCreateNestedManyWithoutAgentInput
     infoStates?: AgentInfoStateCreateNestedManyWithoutAgentInput
@@ -59307,6 +59615,7 @@ export namespace Prisma {
     runId: string
     name: string
     archetype?: string | null
+    archetypeId?: string | null
     biases?: NullableJsonNullValueInput | InputJsonValue
     humanState?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
@@ -59491,6 +59800,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     run?: SimulationRunUpdateOneRequiredWithoutRunAgentsNestedInput
+    archetypeRef?: ArchetypeUpdateOneWithoutRunAgentsNestedInput
     traits?: RunAgentTraitUpdateManyWithoutAgentNestedInput
     decisions?: AgentDecisionUpdateManyWithoutAgentNestedInput
     infoStates?: AgentInfoStateUpdateManyWithoutAgentNestedInput
@@ -59503,6 +59813,7 @@ export namespace Prisma {
     runId?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     archetype?: NullableStringFieldUpdateOperationsInput | string | null
+    archetypeId?: NullableStringFieldUpdateOperationsInput | string | null
     biases?: NullableJsonNullValueInput | InputJsonValue
     humanState?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -60179,6 +60490,17 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
+  export type RunAgentCreateManyArchetypeRefInput = {
+    id?: string
+    runId: string
+    name: string
+    archetype?: string | null
+    biases?: NullableJsonNullValueInput | InputJsonValue
+    humanState?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type ArchetypeTraitProfileUpdateWithoutArchetypeInput = {
     baselineValue?: FloatFieldUpdateOperationsInput | number
     traitDefinition?: TraitDefinitionUpdateOneRequiredWithoutArchetypeProfilesNestedInput
@@ -60218,6 +60540,51 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     displayName?: StringFieldUpdateOperationsInput | string
     stateJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RunAgentUpdateWithoutArchetypeRefInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    archetype?: NullableStringFieldUpdateOperationsInput | string | null
+    biases?: NullableJsonNullValueInput | InputJsonValue
+    humanState?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    run?: SimulationRunUpdateOneRequiredWithoutRunAgentsNestedInput
+    traits?: RunAgentTraitUpdateManyWithoutAgentNestedInput
+    decisions?: AgentDecisionUpdateManyWithoutAgentNestedInput
+    infoStates?: AgentInfoStateUpdateManyWithoutAgentNestedInput
+    agentStates?: AgentStateUpdateManyWithoutAgentNestedInput
+    experiences?: AgentExperienceUpdateManyWithoutRunAgentNestedInput
+    agentRewards?: AgentRewardUpdateManyWithoutAgentNestedInput
+  }
+
+  export type RunAgentUncheckedUpdateWithoutArchetypeRefInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    archetype?: NullableStringFieldUpdateOperationsInput | string | null
+    biases?: NullableJsonNullValueInput | InputJsonValue
+    humanState?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    traits?: RunAgentTraitUncheckedUpdateManyWithoutAgentNestedInput
+    decisions?: AgentDecisionUncheckedUpdateManyWithoutAgentNestedInput
+    infoStates?: AgentInfoStateUncheckedUpdateManyWithoutAgentNestedInput
+    agentStates?: AgentStateUncheckedUpdateManyWithoutAgentNestedInput
+    experiences?: AgentExperienceUncheckedUpdateManyWithoutRunAgentNestedInput
+    agentRewards?: AgentRewardUncheckedUpdateManyWithoutAgentNestedInput
+  }
+
+  export type RunAgentUncheckedUpdateManyWithoutArchetypeRefInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    archetype?: NullableStringFieldUpdateOperationsInput | string | null
+    biases?: NullableJsonNullValueInput | InputJsonValue
+    humanState?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -60369,6 +60736,7 @@ export namespace Prisma {
     id?: string
     name: string
     archetype?: string | null
+    archetypeId?: string | null
     biases?: NullableJsonNullValueInput | InputJsonValue
     humanState?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
@@ -60658,6 +61026,7 @@ export namespace Prisma {
     humanState?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    archetypeRef?: ArchetypeUpdateOneWithoutRunAgentsNestedInput
     traits?: RunAgentTraitUpdateManyWithoutAgentNestedInput
     decisions?: AgentDecisionUpdateManyWithoutAgentNestedInput
     infoStates?: AgentInfoStateUpdateManyWithoutAgentNestedInput
@@ -60670,6 +61039,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     archetype?: NullableStringFieldUpdateOperationsInput | string | null
+    archetypeId?: NullableStringFieldUpdateOperationsInput | string | null
     biases?: NullableJsonNullValueInput | InputJsonValue
     humanState?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -60686,6 +61056,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     archetype?: NullableStringFieldUpdateOperationsInput | string | null
+    archetypeId?: NullableStringFieldUpdateOperationsInput | string | null
     biases?: NullableJsonNullValueInput | InputJsonValue
     humanState?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string

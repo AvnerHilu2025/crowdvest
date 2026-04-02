@@ -115,6 +115,11 @@ export class AgentsV1Service {
     const rng = createSeededRng(seed);
     const pad = String(count).length;
 
+    const archetypes = await this.prisma.archetype.findMany({
+      orderBy: { id: "asc" },
+      select: { id: true, name: true },
+    });
+
     await this.prisma.$transaction(async (tx) => {
       if (overwrite && existingCount > 0) {
         await tx.runAgent.deleteMany({ where: { runId } });
@@ -135,12 +140,14 @@ export class AgentsV1Service {
         const deterministicName = `${runId}:${datasetVersion}:${assetSymbol}:${seed}:${i}`;
         const agentId = uuidFromName(deterministicName);
         const name = `Agent ${String(i + 1).padStart(pad, "0")}`;
+        const rot = archetypes.length > 0 ? archetypes[i % archetypes.length]! : null;
         const agent = await tx.runAgent.create({
           data: {
             id: agentId,
             runId,
             name,
-            archetype: null,
+            archetype: rot?.name ?? null,
+            archetypeId: rot?.id ?? null,
             biases: {
               herding,
               lossAversion,

@@ -21,6 +21,7 @@ model Archetype {
 
   traitProfiles ArchetypeTraitProfile[]
   agents        Agent[]
+  runAgents     RunAgent[]
 }
 
 model TraitDefinition {
@@ -179,16 +180,20 @@ model RunVariantSummary {
 // ---------------------------------------------------------------------------
 
 model RunAgent {
-  id         String   @id @default(uuid()) @db.Uuid
-  runId      String   @db.Uuid
-  name       String
-  archetype  String?
-  biases     Json?
-  humanState Json?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id          String   @id @default(uuid()) @db.Uuid
+  runId       String   @db.Uuid
+  name        String
+  /// Display / engineering label (pool rotation name or structured role: trend | contrarian | noise | fundamental).
+  archetype   String?
+  /// Optional FK to reference Archetype row (pool rotation or structured role).
+  archetypeId String?  @db.Uuid
+  biases      Json?
+  humanState  Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   run          SimulationRun     @relation(fields: [runId], references: [id], onDelete: Cascade)
+  archetypeRef Archetype?        @relation(fields: [archetypeId], references: [id], onDelete: SetNull)
   traits       RunAgentTrait[]
   decisions    AgentDecision[]
   infoStates   AgentInfoState[]
@@ -197,6 +202,7 @@ model RunAgent {
   agentRewards AgentReward[]
 
   @@index([runId])
+  @@index([archetypeId])
 }
 
 model RunAgentTrait {

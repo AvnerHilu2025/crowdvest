@@ -65,7 +65,6 @@ import { chunk } from "../lib/chunk";
 import {
   decisionModelKindForAgent,
   computeBaseSignal,
-  computeBaseSignalMasked,
   computeBaseSignalWithWeights,
   computeBaseSignalWithSharedPreset,
   featureMaskForAgent,
@@ -82,8 +81,15 @@ import {
   goldLagAlpha,
   interpolateHistory,
   type CvVal024ModeLetter,
+  type FeatureMask,
   type GoldSoftWeights,
 } from "../lib/agent-decision-models";
+import {
+  applyVolatilityToSignal,
+  confidenceFromProfile,
+  effectiveArchetypeProfileForAgent,
+  type EffectiveArchetypeProfile,
+} from "../lib/archetype-profile";
 
 /** Extra Gaussian shock scale for low-rationality agents (CV-ARCH-002). */
 const RATIONALITY_NOISE_SCALE = 0.18;
@@ -195,6 +201,9 @@ type CvVal029TransformMode =
   | "amplify_extremes"
   | "diverse_agents";
 
+/** CV-VAL-048: lean structured mix labels (trend / contrarian / noise / fundamental %). */
+type CvVal048MixLetter = "A" | "B" | "C" | "D";
+
 /** Compact decimal for cv_val033 / cv_val034 explicit labels (0.4 → 0p4). */
 function cvVal029ExplicitNumToken(x: number): string {
   const r = Math.round(x * 10000) / 10000;
@@ -228,6 +237,12 @@ function parseArgv(): {
   cvVal038: boolean;
   /** CV-VAL-039: tuned (weaker) diversity ranges + cv_val039 label. */
   cvVal039: boolean;
+  /** CV-VAL-040: structured archetypes on transformMode=none (with --cvVal029). */
+  cvVal040: boolean;
+  /** CV-VAL-046: structured mix sweep (1–5), mutually exclusive with --cvVal040. */
+  cvVal046MixId: number | undefined;
+  /** CV-VAL-048: lean structured mix (A–D), mutually exclusive with --cvVal040 / --cvVal046MixId. */
+  cvVal048MixLetter: CvVal048MixLetter | undefined;
   weightPreset: string;
   /** CV-VAL-029 only: optional weight/threshold overrides (sweep / experiments). */
   overrideSyn: number | undefined;
@@ -261,6 +276,9 @@ function parseArgv(): {
   let cvVal029 = false;
   let cvVal038 = false;
   let cvVal039 = false;
+  let cvVal040 = false;
+  let cvVal046MixId: number | undefined;
+  let cvVal048MixLetter: CvVal048MixLetter | undefined;
   let weightPreset = "baseline";
   let overrideSyn: number | undefined;
   let overrideInfo: number | undefined;
@@ -347,6 +365,14 @@ function parseArgv(): {
       cvVal038 = true;
     } else if (arg === "--cvVal039") {
       cvVal039 = true;
+    } else if (arg === "--cvVal040") {
+      cvVal040 = true;
+    } else if (arg === "--cvVal046MixId" && args[i + 1]) {
+      const raw = parseInt(args[++i]!, 10);
+      if (Number.isFinite(raw) && raw >= 1 && raw <= 5) cvVal046MixId = raw;
+    } else if (arg === "--cvVal048MixLetter" && args[i + 1]) {
+      const raw = args[++i]!.trim().toUpperCase();
+      if (raw === "A" || raw === "B" || raw === "C" || raw === "D") cvVal048MixLetter = raw;
     } else if (arg === "--weightPreset" && args[i + 1]) {
       weightPreset = args[++i]!.trim();
     } else if (arg === "--overrideSyn" && args[i + 1]) {
@@ -403,6 +429,24 @@ function parseArgv(): {
   if (cvVal038 && cvVal039) {
     throw new Error("--cvVal038 and --cvVal039 are mutually exclusive");
   }
+  if (cvVal040 && (cvVal038 || cvVal039)) {
+    throw new Error("--cvVal040 is mutually exclusive with --cvVal038 and --cvVal039");
+  }
+  if (cvVal046MixId != null && (cvVal038 || cvVal039)) {
+    throw new Error("--cvVal046MixId is mutually exclusive with --cvVal038 and --cvVal039");
+  }
+  if (cvVal046MixId != null && cvVal040) {
+    throw new Error("--cvVal046MixId is mutually exclusive with --cvVal040");
+  }
+  if (cvVal048MixLetter != null && (cvVal038 || cvVal039)) {
+    throw new Error("--cvVal048MixLetter is mutually exclusive with --cvVal038 and --cvVal039");
+  }
+  if (cvVal048MixLetter != null && cvVal040) {
+    throw new Error("--cvVal048MixLetter is mutually exclusive with --cvVal040");
+  }
+  if (cvVal048MixLetter != null && cvVal046MixId != null) {
+    throw new Error("--cvVal048MixLetter is mutually exclusive with --cvVal046MixId");
+  }
   if (cvVal038) {
     if (!cvVal029) {
       throw new Error("--cvVal038 requires --cvVal029");
@@ -419,25 +463,57 @@ function parseArgv(): {
       throw new Error("--cvVal039 requires explicit --transformMode none");
     }
   }
+  if (cvVal040) {
+    if (!cvVal029) {
+      throw new Error("--cvVal040 requires --cvVal029");
+    }
+    if (!transformModeExplicit || transformMode !== "none") {
+      throw new Error("--cvVal040 requires explicit --transformMode none");
+    }
+  }
+  if (cvVal046MixId != null) {
+    if (!cvVal029) {
+      throw new Error("--cvVal046MixId requires --cvVal029");
+    }
+    if (!transformModeExplicit || transformMode !== "none") {
+      throw new Error("--cvVal046MixId requires explicit --transformMode none");
+    }
+  }
+  if (cvVal048MixLetter != null) {
+    if (!cvVal029) {
+      throw new Error("--cvVal048MixLetter requires --cvVal029");
+    }
+    if (!transformModeExplicit || transformMode !== "none") {
+      throw new Error("--cvVal048MixLetter requires explicit --transformMode none");
+    }
+  }
   if (cvVal029 && label == null) {
     if (transformModeExplicit) {
-      const w = getSharedWeightPreset(weightPreset);
-      const effSyn = overrideSyn ?? w.syn;
-      const effInfo = overrideInfo ?? w.info;
-      const effEvt = overrideEvt ?? w.evt;
-      const effReg = overrideReg ?? w.reg;
-      const effTh = overrideThreshold ?? 0.02;
-      const effDs = overrideDecisionScale ?? 0.7;
-      const labelTail =
-        `syn${cvVal029ExplicitNumToken(effSyn)}_info${cvVal029ExplicitNumToken(effInfo)}_evt${cvVal029ExplicitNumToken(effEvt)}_reg${cvVal029ExplicitNumToken(effReg)}_th${cvVal029ExplicitNumToken(effTh)}_ds${cvVal029ExplicitNumToken(effDs)}_n${agents}`;
-      label =
-        transformMode === "amplify_extremes"
-          ? `cv_val037_amplify_extremes_${labelTail}`
-          : cvVal039
-            ? `cv_val039_diverse_tuned_${labelTail}`
-            : transformMode === "diverse_agents" || cvVal038
-              ? `cv_val038_diverse_agents_${labelTail}`
-              : `cv_val034_${transformMode}_${labelTail}`;
+      if (cvVal048MixLetter != null) {
+        label = `cv_val048_mix${cvVal048MixLetter}_n${agents}`;
+      } else if (cvVal046MixId != null) {
+        label = `cv_val046_mix${cvVal046MixId}_n${agents}`;
+      } else {
+        const w = getSharedWeightPreset(weightPreset);
+        const effSyn = overrideSyn ?? w.syn;
+        const effInfo = overrideInfo ?? w.info;
+        const effEvt = overrideEvt ?? w.evt;
+        const effReg = overrideReg ?? w.reg;
+        const effTh = overrideThreshold ?? 0.02;
+        const effDs = overrideDecisionScale ?? 0.7;
+        const labelTail =
+          `syn${cvVal029ExplicitNumToken(effSyn)}_info${cvVal029ExplicitNumToken(effInfo)}_evt${cvVal029ExplicitNumToken(effEvt)}_reg${cvVal029ExplicitNumToken(effReg)}_th${cvVal029ExplicitNumToken(effTh)}_ds${cvVal029ExplicitNumToken(effDs)}_n${agents}`;
+        label =
+          transformMode === "amplify_extremes"
+            ? `cv_val037_amplify_extremes_${labelTail}`
+            : cvVal040
+              ? `cv_val040_structured_agents_${labelTail}`
+              : cvVal039
+                ? `cv_val039_diverse_tuned_${labelTail}`
+                : transformMode === "diverse_agents" || cvVal038
+                  ? `cv_val038_diverse_agents_${labelTail}`
+                  : `cv_val034_${transformMode}_${labelTail}`;
+      }
     } else {
       label = `cv_val029_${weightPreset}_${agents}`;
     }
@@ -485,6 +561,9 @@ function parseArgv(): {
     cvVal029,
     cvVal038,
     cvVal039,
+    cvVal040,
+    cvVal046MixId,
+    cvVal048MixLetter,
     weightPreset,
     overrideSyn,
     overrideInfo,
@@ -515,6 +594,55 @@ function hashToSeed(s: string): number {
     h = ((h << 5) - h + s.charCodeAt(i)) | 0;
   }
   return h >>> 0;
+}
+
+/** Legacy CV-ARCH-001 mix scaled by CV-ARCH-052 effective archetype weights (default path). */
+const ARCH052_LEGACY_SYN = 0.38;
+const ARCH052_LEGACY_INFO = 0.38;
+const ARCH052_LEGACY_EVT = 0.14;
+const ARCH052_LEGACY_REG = 0.5;
+
+function baseSignalArch052Default(
+  channels: {
+    synthetic_i: number;
+    regime_i: number;
+    infoSignal: number;
+    eventSignal: number;
+  },
+  mask: FeatureMask | null,
+  ap: EffectiveArchetypeProfile,
+): number {
+  if (mask) {
+    const ws = (mask.syn ? ARCH052_LEGACY_SYN : 0) * ap.wSyn;
+    const wi = (mask.info ? ARCH052_LEGACY_INFO : 0) * ap.wInfo;
+    const we = (mask.evt ? ARCH052_LEGACY_EVT : 0) * ap.wEvt;
+    const wr = (mask.reg ? ARCH052_LEGACY_REG : 0) * ap.wReg;
+    const sum = ws + wi + we + wr;
+    if (sum < 1e-9) return 0;
+    return clamp11(
+      (ws * channels.synthetic_i +
+        wi * channels.infoSignal +
+        we * channels.eventSignal +
+        wr * channels.regime_i) /
+        sum,
+    );
+  }
+  return computeBaseSignalWithWeights(channels, {
+    wSyn: ARCH052_LEGACY_SYN * ap.wSyn,
+    wInfo: ARCH052_LEGACY_INFO * ap.wInfo,
+    wEvt: ARCH052_LEGACY_EVT * ap.wEvt,
+    wReg: ARCH052_LEGACY_REG * ap.wReg,
+  });
+}
+
+/** Default path gains a small symmetric deadband; archetype scales the band width. */
+const ARCH052_DEFAULT_BASE_TH = 0.011;
+
+function actionFromSignalArch052Default(signal: number, thresholdMul: number): Action {
+  const th = ARCH052_DEFAULT_BASE_TH * thresholdMul;
+  if (signal > th) return "BUY";
+  if (signal < -th) return "SELL";
+  return "HOLD";
 }
 
 /** Deterministic UUID from name (sha256 first 16 bytes, UUID v4 form). */
@@ -551,6 +679,109 @@ function cv039DiverseParamsForAgent(agentId: string, globalSeed: number): Cv038D
     sensitivity: uniform(rng, 0.9, 1.1),
     thresholdFactor: uniform(rng, 0.9, 1.1),
   };
+}
+
+/** CV-ARCH-040: four structured archetypes; no random sigma/sensitivity/threshold. */
+const CV040_STRUCTURED_TYPES = ["trend", "contrarian", "noise", "fundamental"] as const;
+type Cv040StructuredType = (typeof CV040_STRUCTURED_TYPES)[number];
+
+/** Even split: sort agent ids, assign types[i % 4] (deterministic). */
+function cv040StructuredTypeByAgentFromList(agents: { id: string }[]): Map<string, Cv040StructuredType> {
+  const sorted = [...agents].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  const m = new Map<string, Cv040StructuredType>();
+  for (let i = 0; i < sorted.length; i++) {
+    m.set(sorted[i]!.id, CV040_STRUCTURED_TYPES[i % 4]!);
+  }
+  return m;
+}
+
+/** CV-ARCH-046: percent mix (trend, contrarian, noise, fundamental), must sum to 100. */
+const CV046_MIXES: Record<number, [number, number, number, number]> = {
+  1: [25, 25, 25, 25],
+  2: [30, 20, 20, 30],
+  3: [35, 15, 15, 35],
+  4: [20, 30, 10, 40],
+  5: [40, 20, 10, 30],
+};
+
+/** CV-VAL-048: lean mixes (trend, contrarian, noise, fundamental), each sums to 100. */
+const CV048_MIXES: Record<CvVal048MixLetter, [number, number, number, number]> = {
+  A: [35, 5, 10, 50],
+  B: [40, 5, 5, 50],
+  C: [30, 10, 10, 50],
+  D: [25, 5, 5, 65],
+};
+
+function cv046StructuredTypeByMix(agents: { id: string }[], mixId: number): Map<string, Cv040StructuredType> {
+  const pct = CV046_MIXES[mixId];
+  if (!pct) {
+    throw new Error(`CV-046: mixId must be 1–5, got ${mixId}`);
+  }
+  const n = agents.length;
+  const sorted = [...agents].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  const counts = pct.map((p) => Math.floor((n * p) / 100));
+  let deficit = n - counts.reduce((a, b) => a + b, 0);
+  let di = 0;
+  while (deficit > 0) {
+    counts[di % 4]++;
+    di++;
+    deficit--;
+  }
+  const seq: Cv040StructuredType[] = [];
+  for (let t = 0; t < 4; t++) {
+    for (let k = 0; k < counts[t]!; k++) {
+      seq.push(CV040_STRUCTURED_TYPES[t]!);
+    }
+  }
+  while (seq.length < n) seq.push("fundamental");
+  while (seq.length > n) seq.pop();
+  const m = new Map<string, Cv040StructuredType>();
+  for (let i = 0; i < sorted.length; i++) {
+    m.set(sorted[i]!.id, seq[i]!);
+  }
+  return m;
+}
+
+function cv048StructuredTypeByMix(agents: { id: string }[], letter: CvVal048MixLetter): Map<string, Cv040StructuredType> {
+  const pct = CV048_MIXES[letter];
+  const n = agents.length;
+  const sorted = [...agents].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  const counts = pct.map((p) => Math.floor((n * p) / 100));
+  let deficit = n - counts.reduce((a, b) => a + b, 0);
+  let di = 0;
+  while (deficit > 0) {
+    counts[di % 4]++;
+    di++;
+    deficit--;
+  }
+  const seq: Cv040StructuredType[] = [];
+  for (let t = 0; t < 4; t++) {
+    for (let k = 0; k < counts[t]!; k++) {
+      seq.push(CV040_STRUCTURED_TYPES[t]!);
+    }
+  }
+  while (seq.length < n) seq.push("fundamental");
+  while (seq.length > n) seq.pop();
+  const m = new Map<string, Cv040StructuredType>();
+  for (let i = 0; i < sorted.length; i++) {
+    m.set(sorted[i]!.id, seq[i]!);
+  }
+  return m;
+}
+
+/** CV-ARCH-050: ensure Archetype reference rows for structured roles; returns role name -> Archetype.id. */
+async function ensureCvStructuredArchetypeRows(prisma: PrismaClient): Promise<Map<Cv040StructuredType, string>> {
+  const m = new Map<Cv040StructuredType, string>();
+  for (const name of CV040_STRUCTURED_TYPES) {
+    const row = await prisma.archetype.upsert({
+      where: { name },
+      create: { name, description: "CV structured crowd role (engineering)" },
+      update: {},
+      select: { id: true },
+    });
+    m.set(name, row.id);
+  }
+  return m;
 }
 
 function pick<T>(rng: () => number, arr: readonly T[]): T {
@@ -609,14 +840,15 @@ async function ensureAgentPool(
     const attentionLevel = uniform(rng, 0.3, 0.95);
     const emotionalVolatility = uniform(rng, 0, 1);
     const fatigue = uniform(rng, 0, 0.2);
-    const archetypeName = archetypes.length > 0 ? archetypes[i % archetypes.length]!.name : null;
+    const rot = archetypes.length > 0 ? archetypes[i % archetypes.length]! : null;
     const agentName = `Agent ${String(i + 1).padStart(pad, "0")}`;
     await prisma.runAgent.create({
       data: {
         id: agentId,
         runId: poolRunId,
         name: agentName,
-        archetype: archetypeName,
+        archetype: rot?.name ?? null,
+        archetypeId: rot?.id ?? null,
         biases: { herding, lossAversion, overconfidence, recencyBias, confirmationBias, fomo, anchoring },
         humanState: { attentionLevel, emotionalVolatility, fatigue },
       },
@@ -793,7 +1025,7 @@ async function main(): Promise<void> {
   );
   if (argv.cvVal029) {
     log(
-      `[CV-VAL-029] threshold decision + preset=${argv.weightPreset} transformMode=${argv.transformMode} cvVal038=${argv.cvVal038} cvVal039=${argv.cvVal039}, label=${argv.label ?? ""}`,
+      `[CV-VAL-029] threshold decision + preset=${argv.weightPreset} transformMode=${argv.transformMode} cvVal038=${argv.cvVal038} cvVal039=${argv.cvVal039} cvVal040=${argv.cvVal040} cvVal046MixId=${argv.cvVal046MixId ?? ""} cvVal048MixLetter=${argv.cvVal048MixLetter ?? ""}, label=${argv.label ?? ""}`,
     );
   }
   if (argv.cvVal027) {
@@ -1070,6 +1302,40 @@ async function main(): Promise<void> {
       cv038DiverseByAgent.set(a.id, cv038DiverseParamsForAgent(a.id, globalSeed));
     }
   }
+  const cv040StructuredTypeByAgent =
+    argv.cvVal029 && argv.cvVal040
+      ? cv040StructuredTypeByAgentFromList(agents)
+      : argv.cvVal029 && argv.cvVal048MixLetter != null
+        ? cv048StructuredTypeByMix(agents, argv.cvVal048MixLetter)
+        : argv.cvVal029 && argv.cvVal046MixId != null
+          ? cv046StructuredTypeByMix(agents, argv.cvVal046MixId)
+          : null;
+
+  if (cv040StructuredTypeByAgent) {
+    const idByStructuredName = await ensureCvStructuredArchetypeRows(prisma);
+    const dbgCounts: Partial<Record<Cv040StructuredType, number>> = {};
+    for (const ag of agents) {
+      const ty = cv040StructuredTypeByAgent.get(ag.id)!;
+      dbgCounts[ty] = (dbgCounts[ty] ?? 0) + 1;
+    }
+    const CHUNK = 250;
+    for (let ci = 0; ci < agents.length; ci += CHUNK) {
+      const slice = agents.slice(ci, ci + CHUNK);
+      await prisma.$transaction(
+        slice.map((ag) => {
+          const ty = cv040StructuredTypeByAgent.get(ag.id)!;
+          const aid = idByStructuredName.get(ty);
+          if (!aid) throw new Error(`[CV-ARCH-050] missing Archetype id for structured role: ${ty}`);
+          return prisma.runAgent.update({
+            where: { id: ag.id },
+            data: { archetype: ty, archetypeId: aid },
+          });
+        }),
+      );
+    }
+    console.log("[CV-ARCH-050] RunAgent structured archetype counts:", JSON.stringify(dbgCounts));
+  }
+
   const goldBaseHist = new Map<string, number[]>();
   const goldWByAgent = new Map<string, GoldSoftWeights>();
   const goldLagByAgent = new Map<string, number>();
@@ -1215,44 +1481,75 @@ async function main(): Promise<void> {
         const effInfo = argv.overrideInfo ?? w029.info;
         const effEvt = argv.overrideEvt ?? w029.evt;
         const effReg = argv.overrideReg ?? w029.reg;
+        const effArch = effectiveArchetypeProfileForAgent(
+          agent.id,
+          agent.archetype ?? null,
+          agent.archetypeId ?? null,
+        );
         const baseNow = clamp11(
-          effSyn * channels.synthetic_i +
-            effInfo * channels.infoSignal +
-            effEvt * channels.eventSignal +
-            effReg * channels.regime_i,
+          effSyn * effArch.wSyn * channels.synthetic_i +
+            effInfo * effArch.wInfo * channels.infoSignal +
+            effEvt * effArch.wEvt * channels.eventSignal +
+            effReg * effArch.wReg * channels.regime_i,
         );
         const tm = argv.transformMode;
+        const useStructuredAgents =
+          tm === "none" &&
+          (argv.cvVal040 || argv.cvVal046MixId != null || argv.cvVal048MixLetter != null);
         const useCv038Diversity =
-          (argv.cvVal038 && tm === "none") ||
-          (argv.cvVal039 && tm === "none") ||
-          tm === "diverse_agents";
+          !useStructuredAgents &&
+          ((argv.cvVal038 && tm === "none") ||
+            (argv.cvVal039 && tm === "none") ||
+            tm === "diverse_agents");
         const cv039NoiseKey = argv.cvVal039 ? "cv039" : "cv038";
         let signalI: number;
-        if (tm === "none" && !useCv038Diversity) {
+        if (tm === "none" && !useCv038Diversity && !useStructuredAgents) {
           signalI = baseNow;
+        } else if (useStructuredAgents && cv040StructuredTypeByAgent) {
+          signalI = baseNow;
+          const ty = cv040StructuredTypeByAgent.get(agent.id)!;
+          if (ty === "trend") {
+            const momentumComponent = clamp11(synthetic_i * 0.25);
+            signalI += momentumComponent;
+          } else if (ty === "contrarian") {
+            signalI *= -0.7;
+          } else if (ty === "noise") {
+            const rng040 = createSeededRng(
+              hashToSeed(`cv040noise:${globalSeed}:${agent.id}:${step}`),
+            );
+            signalI += randn(rng040) * 0.01;
+          } else {
+            signalI = 0.7 * infoSignal + 0.3 * signalI;
+          }
+          signalI = clamp11(signalI);
         } else if (useCv038Diversity) {
           const p = cv038DiverseByAgent.get(agent.id)!;
-          signalI = baseNow * p.sensitivity;
+          signalI = baseNow * p.sensitivity * effArch.reactionSpeed;
           const rng038 = createSeededRng(
             hashToSeed(`${cv039NoiseKey}:${globalSeed}:${agent.id}:${step}`),
           );
           signalI += randn(rng038) * p.noiseSigma;
         } else if (tm === "smooth_only") {
           const prevSm = cv033SmoothMemory.get(agent.id);
+          const mem = effArch.memoryFactor;
+          const newW = 0.85 - 0.15 * mem;
+          const oldW = 1 - newW;
           signalI =
-            prevSm === undefined ? baseNow : 0.7 * baseNow + 0.3 * prevSm;
+            prevSm === undefined ? baseNow : newW * baseNow + oldW * prevSm;
           cv033SmoothMemory.set(agent.id, signalI);
         } else if (tm === "minimal_memory") {
           const prevBase = cv034MinimalMemory.get(agent.id);
+          const nw = 0.92 - 0.12 * effArch.memoryFactor;
           signalI =
-            prevBase === undefined ? baseNow : 0.85 * baseNow + 0.15 * prevBase;
+            prevBase === undefined ? baseNow : nw * baseNow + (1 - nw) * prevBase;
           cv034MinimalMemory.set(agent.id, baseNow);
         } else if (tm === "amplify_extremes") {
           const absBn = Math.abs(baseNow);
+          const exp = Math.min(1.35, 1.05 + 0.12 * effArch.reactionSpeed);
           if (absBn < 0.05) {
             signalI = baseNow;
           } else {
-            signalI = Math.sign(baseNow) * Math.pow(absBn, 1.1);
+            signalI = Math.sign(baseNow) * Math.pow(absBn, exp);
           }
         } else {
           const delayI = delayMultiplierForAgent(agent.id);
@@ -1272,25 +1569,43 @@ async function main(): Promise<void> {
             prevBase: baseNow,
             prevSmoothedMid: nsm029,
           });
-          signalI = coreFromModel;
+          const reactMul = Math.min(1.35, Math.max(0.65, 0.72 + 0.28 * effArch.reactionSpeed));
+          signalI = clamp11(coreFromModel * reactMul);
         }
+        signalI = applyVolatilityToSignal(signalI, syntheticSignal, effArch.volatilitySensitivity);
+        const archNoise =
+          (hashToUnitFloat(`cv052n:${globalSeed}:${agent.id}:${step}`) - 0.5) * 2;
+        signalI = clamp11(signalI + effArch.bias + archNoise * 0.14 * effArch.noiseAmp);
         const decisionScale = argv.overrideDecisionScale ?? 0.7;
         const scaledSignal = signalI * decisionScale;
         const baseTh029 = argv.overrideThreshold ?? 0.02;
-        const TH = useCv038Diversity
-          ? baseTh029 * cv038DiverseByAgent.get(agent.id)!.thresholdFactor
-          : baseTh029;
+        let TH = baseTh029 * effArch.thresholdMul;
+        if (useCv038Diversity) {
+          TH *= cv038DiverseByAgent.get(agent.id)!.thresholdFactor;
+        }
         let action: Action;
         if (scaledSignal > TH) action = "BUY";
         else if (scaledSignal < -TH) action = "SELL";
         else action = "HOLD";
-        const confidence = clamp01(0.45 + 0.35 * Math.min(1, Math.abs(signalI)));
+        const confidence = confidenceFromProfile(effArch, agent.id, step, signalI);
         modelHist[decisionModel][action]++;
+        const structTy =
+          useStructuredAgents && cv040StructuredTypeByAgent
+            ? cv040StructuredTypeByAgent.get(agent.id)!
+            : "";
+        const structTag =
+          structTy && argv.cvVal048MixLetter != null
+            ? ` cv048_mix${argv.cvVal048MixLetter}=${structTy}`
+            : structTy && argv.cvVal046MixId != null
+              ? ` cv046_mix${argv.cvVal046MixId}=${structTy}`
+              : structTy
+              ? ` cv040=${structTy}`
+              : "";
         const rationale029 =
           `model=${decisionModel} cvVal029 preset=${argv.weightPreset} transformMode=${tm} base=${baseNow.toFixed(3)} signal=${signalI.toFixed(3)} ` +
           `(syn_i=${synthetic_i.toFixed(2)} info=${infoSignal.toFixed(2)} evt=${eventSignal.toFixed(
             2,
-          )} reg_i=${regime_i.toFixed(2)} exposed=${exposedCount})`;
+          )} reg_i=${regime_i.toFixed(2)} exposed=${exposedCount}${structTag})`;
 
         agentInfoStates.push({
           runId,
@@ -1620,9 +1935,16 @@ async function main(): Promise<void> {
         continue;
       }
 
-      const baseSignal = val024.useFeatureMask
-        ? computeBaseSignalMasked(channels, featureMaskForAgent(agent.id))
-        : computeBaseSignal(channels);
+      const effArchDefault = effectiveArchetypeProfileForAgent(
+        agent.id,
+        agent.archetype ?? null,
+        agent.archetypeId ?? null,
+      );
+      const baseSignal = baseSignalArch052Default(
+        channels,
+        val024.useFeatureMask ? featureMaskForAgent(agent.id) : null,
+        effArchDefault,
+      );
       baseForRationale = baseSignal;
       const delayI = val024.useDelayI ? delayMultiplierForAgent(agent.id) : 1;
       const divMem = constrainedDiversityMemory.get(agent.id) ?? {};
@@ -1640,7 +1962,12 @@ async function main(): Promise<void> {
         prevBase: baseSignal,
         prevSmoothedMid: nextSmoothedMid,
       });
-      let signalI = coreFromModel;
+      const reactMulDef = Math.min(
+        1.35,
+        Math.max(0.65, 0.72 + 0.28 * effArchDefault.reactionSpeed),
+      );
+      let signalI = clamp11(coreFromModel * reactMulDef);
+      const noiseScale = Math.min(1.6, Math.max(0.45, effArchDefault.noiseAmp * 0.55 + 0.45));
       if (val024.useDecorrelationNoise) {
         signalI += decorrelationShock(
           agent.id,
@@ -1649,15 +1976,25 @@ async function main(): Promise<void> {
           RATIONALITY_NOISE_SCALE,
           PRIVATE_SIGNAL_SCALE,
           rng,
-        );
+        ) * noiseScale;
       } else {
-        signalI += randn(rng) * RATIONALITY_NOISE_SCALE * (1 - rationality);
-        signalI += randn(rng) * PRIVATE_SIGNAL_SCALE * (1 - understanding);
+        signalI += randn(rng) * RATIONALITY_NOISE_SCALE * (1 - rationality) * noiseScale;
+        signalI += randn(rng) * PRIVATE_SIGNAL_SCALE * (1 - understanding) * noiseScale;
       }
       signalI = clamp11(signalI);
+      signalI = applyVolatilityToSignal(
+        signalI,
+        syntheticSignal,
+        effArchDefault.volatilitySensitivity,
+      );
+      const archNoise052 =
+        (hashToUnitFloat(`cv052n:${globalSeed}:${agent.id}:${step}`) - 0.5) * 2;
+      signalI = clamp11(
+        signalI + effArchDefault.bias + archNoise052 * 0.14 * effArchDefault.noiseAmp,
+      );
 
-      const action = actionFromSignSignal(signalI);
-      const confidence = clamp01(0.45 + 0.35 * Math.min(1, Math.abs(signalI)));
+      const action = actionFromSignalArch052Default(signalI, effArchDefault.thresholdMul);
+      const confidence = confidenceFromProfile(effArchDefault, agent.id, step, signalI);
 
       modelHist[decisionModel][action]++;
 

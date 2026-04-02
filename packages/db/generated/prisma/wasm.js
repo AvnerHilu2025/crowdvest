@@ -224,6 +224,7 @@ exports.Prisma.RunAgentScalarFieldEnum = {
   runId: 'runId',
   name: 'name',
   archetype: 'archetype',
+  archetypeId: 'archetypeId',
   biases: 'biases',
   humanState: 'humanState',
   createdAt: 'createdAt',

@@ -1,6 +1,7 @@
 /**
  * CV-055: Pairwise action agreement between agents (empirical diversity proxy).
  * Uses at most 300 agent pairs (deterministic sample) to avoid O(n²) blowups.
+ * Loads AgentDecision in batches to limit peak fetch memory and log progress.
  *
  * Env: RUN_ID (required). Optional: RUN_VARIANT_ID — scope decisions to one variant.
  */
@@ -9,6 +10,7 @@ import fs from "fs";
 import { PrismaClient } from "@crowdvest/db";
 
 const MAX_SAMPLE_PAIRS = 300;
+const BATCH_SIZE = 5000;
 
 function loadEnv(): void {
   const repoRoot = path.resolve(__dirname, "../../../../.env");
@@ -34,7 +36,6 @@ type Row = {
   agentId: string;
   step: number;
   action: "BUY" | "SELL" | "HOLD";
-  confidence: number;
 };
 
 /** Lexicographic pair index on sorted agent list: 0=(0,1), …, P-1=(n-2,n-1). */
@@ -64,37 +65,52 @@ function similarityAlignedByIndex(a: Row[], b: Row[]) {
 async function main(): Promise<void> {
   loadEnv();
   const runId = process.env.RUN_ID?.trim();
-  if (!runId) throw new Error("RUN_ID required");
+  if (!runId) {
+    throw new Error("RUN_ID is required");
+  }
 
   const variantId = process.env.RUN_VARIANT_ID?.trim();
 
   const prisma = new PrismaClient();
-  const decisions = await prisma.agentDecision.findMany({
-    where: {
-      runId,
-      ...(variantId ? { runVariantId: variantId } : {}),
-    },
-    select: {
-      agentId: true,
-      step: true,
-      action: true,
-      confidence: true,
-    },
-  });
-
   const byAgent: Record<string, Row[]> = {};
-  for (const d of decisions) {
-    let list = byAgent[d.agentId];
-    if (!list) {
-      list = [];
-      byAgent[d.agentId] = list;
-    }
-    list.push({
-      agentId: d.agentId,
-      step: d.step,
-      action: d.action,
-      confidence: d.confidence,
+
+  let offset = 0;
+  let totalProcessed = 0;
+
+  while (true) {
+    const rows = await prisma.agentDecision.findMany({
+      where: {
+        runId,
+        ...(variantId ? { runVariantId: variantId } : {}),
+      },
+      skip: offset,
+      take: BATCH_SIZE,
+      orderBy: { id: "asc" },
+      select: {
+        agentId: true,
+        action: true,
+        step: true,
+      },
     });
+
+    if (rows.length === 0) break;
+
+    for (const row of rows) {
+      let list = byAgent[row.agentId];
+      if (!list) {
+        list = [];
+        byAgent[row.agentId] = list;
+      }
+      list.push({
+        agentId: row.agentId,
+        step: row.step,
+        action: row.action,
+      });
+    }
+
+    totalProcessed += rows.length;
+    offset += BATCH_SIZE;
+    console.log(`Processed ${totalProcessed} rows...`);
   }
 
   const sortedAgentIds = Object.keys(byAgent).sort();

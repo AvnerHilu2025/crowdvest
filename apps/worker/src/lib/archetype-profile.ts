@@ -192,3 +192,40 @@ export function confidenceFromProfile(
     Math.min(1, eff.confidenceBase + eff.confidenceVariance * (uc - 0.5) * 2 + extra),
   );
 }
+
+export function applyArchetypeSignalBias(
+  archetypeId: string,
+  signals: {
+    synthetic: number;
+    info: number;
+    event: number;
+    regime: number;
+  },
+): typeof signals {
+  const s = { ...signals };
+
+  switch (archetypeId) {
+    case "trend":
+      s.synthetic *= 1.3;
+      s.regime *= 1.2;
+      break;
+
+    case "contrarian":
+      s.synthetic *= -1.2;
+      break;
+
+    case "noise":
+      s.synthetic *= Math.random() * 2 - 1;
+      s.info *= 0.3;
+      break;
+
+    case "fundamental":
+      s.info *= 1.4;
+      break;
+
+    default:
+      break;
+  }
+
+  return s;
+}

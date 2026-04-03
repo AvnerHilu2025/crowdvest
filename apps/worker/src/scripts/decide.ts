@@ -34,6 +34,7 @@ import path from "path";
 import fs from "fs";
 import { createHash } from "crypto";
 import { Prisma, PrismaClient } from "@crowdvest/db";
+import archetypesConfig from "../config/archetypes.config.json";
 import {
   clamp01,
   clamp11,
@@ -87,6 +88,7 @@ import {
   type GoldSoftWeights,
 } from "../lib/agent-decision-models";
 import {
+  applyArchetypeSignalBias,
   applyVolatilityToSignal,
   confidenceFromProfile,
   effectiveArchetypeProfileForAgent,
@@ -107,8 +109,47 @@ const VAL018_TARGET_FRAC_SCALE = 0.78;
 /** Samples per step for mean pairwise Jaccard of exposed event-id sets. */
 const VAL018_OVERLAP_SAMPLES = 12_000;
 
-function clampRegimeForBlend(x: number): number {
-  return Math.tanh(x * 0.5);
+function compressRegimeSignal(x: number): number {
+  return Math.tanh(x * 0.45);
+}
+
+function applyArchetypeChannelGating(
+  archetypeId: string,
+  c: { synthetic: number; info: number; event: number; regime: number },
+  /** Deterministic stand-in for (Math.random() * 2 - 1) on noise archetype; pass from keyed hash at call site. */
+  noiseSyntheticSigned?: number,
+) {
+  const x = { ...c };
+
+  switch (archetypeId) {
+    case "trend":
+      x.synthetic *= 1.8;
+      x.regime *= 0.4;
+      break;
+
+    case "contrarian":
+      x.synthetic *= -1.5;
+      x.regime *= 0.3;
+      break;
+
+    case "fundamental":
+      x.info *= 1.8;
+      x.synthetic *= 0.4;
+      x.regime *= 0.4;
+      break;
+
+    case "noise":
+      x.synthetic *= noiseSyntheticSigned ?? Math.random() * 2 - 1;
+      x.info *= 0.2;
+      x.regime *= 0.2;
+      break;
+
+    default:
+      x.regime *= 0.6;
+      break;
+  }
+
+  return x;
 }
 
 function applyExposure(signal: number, factor: number): number {
@@ -119,6 +160,24 @@ function applyExposure(signal: number, factor: number): number {
 function applyLatency(current: number, history: number[], delay: number): number {
   if (delay <= 0 || history.length <= delay) return current;
   return history[history.length - 1 - delay]!;
+}
+
+function getArchetypeBias(name: string): number {
+  if (!name) return 0;
+  const n = name.toLowerCase();
+
+  if (n.includes("contrarian")) return -1;
+  if (n.includes("trend")) return 1;
+  if (n.includes("growth")) return 0.5;
+  if (n.includes("value")) return -0.5;
+  if (n.includes("noise")) return 0;
+
+  return 0;
+}
+
+function seededNoise(seed: number): number {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
 }
 
 /**
@@ -649,6 +708,8 @@ function baseSignalArch052Default(
   },
   mask: FeatureMask | null,
   ap: EffectiveArchetypeProfile,
+  archetypeId: string,
+  gateNoiseSigned: number,
 ): number {
   if (mask) {
     const synWeight = (mask.syn ? ARCH052_LEGACY_SYN : 0) * ap.wSyn;
@@ -659,15 +720,25 @@ function baseSignalArch052Default(
     const infoSignal = channels.infoSignal;
     const eventSignal = channels.eventSignal;
     const regimeI = channels.regime_i;
-    const regimeBlend = clampRegimeForBlend(regimeI);
-    const regimeWeightEffective = regimeWeight * 0.3;
+    const reg_e_compressed = compressRegimeSignal(regimeI);
+    const regimeWeightEffective = regimeWeight * 0.35;
     const sum = synWeight + infoWeight + eventWeight + regimeWeight;
     if (sum < 1e-9) return 0;
-    const finalSignal =
-      synWeight * syntheticI +
-      infoWeight * infoSignal +
-      eventWeight * eventSignal +
-      regimeWeightEffective * regimeBlend;
+    const syntheticComponent = synWeight * syntheticI;
+    const infoComponent = infoWeight * infoSignal;
+    const eventComponent = eventWeight * eventSignal;
+    const regimeComponent = regimeWeightEffective * reg_e_compressed;
+    const gated = applyArchetypeChannelGating(
+      archetypeId,
+      {
+        synthetic: syntheticComponent,
+        info: infoComponent,
+        event: eventComponent,
+        regime: regimeComponent,
+      },
+      gateNoiseSigned,
+    );
+    const finalSignal = gated.synthetic + gated.info + gated.event + gated.regime;
     return clamp11(finalSignal / sum);
   }
   const synWeight = ARCH052_LEGACY_SYN * ap.wSyn;
@@ -678,13 +749,23 @@ function baseSignalArch052Default(
   const infoSignal = channels.infoSignal;
   const eventSignal = channels.eventSignal;
   const regimeI = channels.regime_i;
-  const regimeBlend = clampRegimeForBlend(regimeI);
-  const regimeWeightEffective = regimeWeight * 0.3;
-  const finalSignal =
-    synWeight * syntheticI +
-    infoWeight * infoSignal +
-    eventWeight * eventSignal +
-    regimeWeightEffective * regimeBlend;
+  const reg_e_compressed = compressRegimeSignal(regimeI);
+  const regimeWeightEffective = regimeWeight * 0.35;
+  const syntheticComponent = synWeight * syntheticI;
+  const infoComponent = infoWeight * infoSignal;
+  const eventComponent = eventWeight * eventSignal;
+  const regimeComponent = regimeWeightEffective * reg_e_compressed;
+  const gated = applyArchetypeChannelGating(
+    archetypeId,
+    {
+      synthetic: syntheticComponent,
+      info: infoComponent,
+      event: eventComponent,
+      regime: regimeComponent,
+    },
+    gateNoiseSigned,
+  );
+  const finalSignal = gated.synthetic + gated.info + gated.event + gated.regime;
   return clamp11(finalSignal);
 }
 
@@ -713,6 +794,8 @@ type PipelineDiagRow = {
   event_signal: number;
   regime_raw: number;
   regime_i: number;
+  /** arch052 blend input: compressRegimeSignal(regime_i); omitted on other paths */
+  reg_e_compressed?: number;
   distorted_signal: number;
   /** Signal compared to threshold (scaled for cv029, else pre-threshold signal). */
   final_signal: number;
@@ -821,15 +904,17 @@ function printPipelineDiagnostics(
     if (stepRows.length === 0) continue;
     lines.push(`step=${st}`);
     lines.push(
-      "| agentId | archetype | path | syn_mkt | syn_i | info | evt | reg_raw | reg_i | syn_e | inf_e | evt_e | reg_e | distorted | final | th | dom | act |",
+      "| agentId | archetype | path | syn_mkt | syn_i | info | evt | reg_raw | reg_i | reg_ec | syn_e | inf_e | evt_e | reg_e | distorted | final | th | dom | act |",
     );
     lines.push(
-      "|---------|-----------|------|---------|-------|------|-----|---------|-------|-------|-------|-------|-------|-----------|-------|----|-----|-----|",
+      "|---------|-----------|------|---------|-------|------|-----|---------|-------|--------|-------|-------|-------|-------|-----------|-------|----|-----|-----|",
     );
     for (const r of stepRows.sort((a, b) => a.agentId.localeCompare(b.agentId))) {
       const aid = r.agentId.length > 8 ? `${r.agentId.slice(0, 8)}…` : r.agentId;
+      const regEc =
+        r.reg_e_compressed !== undefined ? r.reg_e_compressed.toFixed(4) : "-";
       lines.push(
-        `| ${aid} | ${r.archetypeLabel.replace(/\|/g, "\\|")} | ${r.pathTag} | ${r.synthetic_market.toFixed(4)} | ${r.synthetic_i.toFixed(4)} | ${r.info_signal.toFixed(4)} | ${r.event_signal.toFixed(4)} | ${r.regime_raw.toFixed(4)} | ${r.regime_i.toFixed(4)} | ${r.syn_exp.toFixed(4)} | ${r.info_exp.toFixed(4)} | ${r.evt_exp.toFixed(4)} | ${r.reg_exp.toFixed(4)} | ${r.distorted_signal.toFixed(4)} | ${r.final_signal.toFixed(4)} | ${r.threshold.toFixed(5)} | ${r.dominant_leg} | ${r.action} |`,
+        `| ${aid} | ${r.archetypeLabel.replace(/\|/g, "\\|")} | ${r.pathTag} | ${r.synthetic_market.toFixed(4)} | ${r.synthetic_i.toFixed(4)} | ${r.info_signal.toFixed(4)} | ${r.event_signal.toFixed(4)} | ${r.regime_raw.toFixed(4)} | ${r.regime_i.toFixed(4)} | ${regEc} | ${r.syn_exp.toFixed(4)} | ${r.info_exp.toFixed(4)} | ${r.evt_exp.toFixed(4)} | ${r.reg_exp.toFixed(4)} | ${r.distorted_signal.toFixed(4)} | ${r.final_signal.toFixed(4)} | ${r.threshold.toFixed(5)} | ${r.dominant_leg} | ${r.action} |`,
       );
     }
     lines.push("");
@@ -1091,11 +1176,22 @@ async function ensureAgentPool(
     return poolRunId;
   }
   await ensureCvStructuredArchetypeRows(prisma);
-  const archetypes = await prisma.archetype.findMany({
+  const archetypes = archetypesConfig.archetypes;
+  function pickArchetype(index: number) {
+    return archetypes[index % archetypes.length]!;
+  }
+  for (const a of archetypes) {
+    await prisma.archetype.upsert({
+      where: { name: a.name },
+      create: { name: a.name, description: `CrowdVest archetype (${a.id})` },
+      update: {},
+    });
+  }
+  const dbArchetypes = await prisma.archetype.findMany({
     orderBy: { id: "asc" },
     select: { id: true, name: true },
   });
-  const toCreate = agentsCount - existingCount;
+  const archetypeIdByName = new Map(dbArchetypes.map((row) => [row.name, row.id]));
   const pad = String(agentsCount).length;
   for (let i = existingCount; i < agentsCount; i++) {
     const namespace = "crowdvest-agent-v1";
@@ -1112,15 +1208,18 @@ async function ensureAgentPool(
     const attentionLevel = uniform(rng, 0.3, 0.95);
     const emotionalVolatility = uniform(rng, 0, 1);
     const fatigue = uniform(rng, 0, 0.2);
-    const rot = archetypes.length > 0 ? archetypes[i % archetypes.length]! : null;
+    const archetype = pickArchetype(i);
+    const archetypeId =
+      archetypeIdByName.get(archetype.name) ??
+      (dbArchetypes.length > 0 ? dbArchetypes[i % dbArchetypes.length]!.id : null);
     const agentName = `Agent ${String(i + 1).padStart(pad, "0")}`;
     await prisma.runAgent.create({
       data: {
         id: agentId,
         runId: poolRunId,
         name: agentName,
-        archetype: rot?.name ?? null,
-        archetypeId: rot?.id ?? null,
+        archetypeId,
+        archetype: archetype.name,
         biases: { herding, lossAversion, overconfidence, recencyBias, confirmationBias, fomo, anchoring },
         humanState: { attentionLevel, emotionalVolatility, fatigue },
       },
@@ -1680,7 +1779,8 @@ async function main(): Promise<void> {
       experiencesByRunAgent.set(exp.runAgentId, list);
     }
 
-    for (const agent of agents) {
+    for (let agentIndex = 0; agentIndex < agents.length; agentIndex++) {
+      const agent = agents[agentIndex]!;
       const traits = traitMapByAgent.get(agent.id) ?? new Map();
       const biases = extractBiases(traits);
       const state = agentState.get(agent.id)!;
@@ -1726,28 +1826,17 @@ async function main(): Promise<void> {
       });
 
       const understanding = getTrait(traits, "understanding", 0.5);
-      const infoSignalRaw = blendInfoWithUnderstanding({
+      let infoSignalRaw = blendInfoWithUnderstanding({
         infoRaw: infoAfterExposure,
         understanding,
         rng,
       });
 
-      const eventSignalRaw = computeEventSignalIndependent({
+      let eventSignalRaw = computeEventSignalIndependent({
         events: subset,
         attentionLevel: state.attentionLevel,
         fatigue: state.fatigue,
         emotionalVolatility: getTrait(traits, "emotionalVolatility"),
-      });
-
-      const synthetic_i_raw = computeAgentSyntheticSignal({
-        syntheticSignal,
-        riskTolerance: getTrait(traits, "riskTolerance"),
-        rng,
-      });
-      const regime_i_raw = computeAgentRegimeSignal({
-        regimeSignal: regime.regimeSignal,
-        newsSensitivity: getTrait(traits, "newsSensitivity"),
-        rng,
       });
 
       const archCfgId = resolveArchetypeConfigId(
@@ -1756,6 +1845,38 @@ async function main(): Promise<void> {
         agent.archetypeId ?? null,
       );
       const archetypeConfig = loadArchetypesConfig().byId.get(archCfgId)!;
+
+      let synthetic_i_raw = computeAgentSyntheticSignal({
+        syntheticSignal,
+        riskTolerance: getTrait(traits, "riskTolerance"),
+        rng,
+      });
+      const archetypeName = archetypeConfig?.name || "";
+      const bias = getArchetypeBias(archetypeName);
+      const noise = (seededNoise(agentIndex * 1000 + step) - 0.5) * 0.1;
+      synthetic_i_raw = synthetic_i_raw + bias * 0.25 + noise;
+
+      let regime_i_raw = computeAgentRegimeSignal({
+        regimeSignal: regime.regimeSignal,
+        newsSensitivity: getTrait(traits, "newsSensitivity"),
+        rng,
+      });
+
+      const structuredRole = (agent.archetype ?? "").trim().toLowerCase();
+      const archetypeIdForBias = ["trend", "contrarian", "noise", "fundamental"].includes(structuredRole)
+        ? structuredRole
+        : "";
+      const channelBiased = applyArchetypeSignalBias(archetypeIdForBias, {
+        synthetic: synthetic_i_raw,
+        info: infoSignalRaw,
+        event: eventSignalRaw,
+        regime: regime_i_raw,
+      });
+      synthetic_i_raw = channelBiased.synthetic;
+      infoSignalRaw = channelBiased.info;
+      eventSignalRaw = channelBiased.event;
+      regime_i_raw = channelBiased.regime;
+
       const exposure = archetypeConfig.informationExposure ?? {
         synthetic: 1,
         info: 1,
@@ -2366,10 +2487,13 @@ async function main(): Promise<void> {
         agent.archetype ?? null,
         agent.archetypeId ?? null,
       );
+      const arch052GateNoise = (hashToUnitFloat(`arch052gate:${globalSeed}:${agent.id}:${step}`) - 0.5) * 2;
       const baseSignal = baseSignalArch052Default(
         channels,
         val024.useFeatureMask ? featureMaskForAgent(agent.id) : null,
         effArchDefault,
+        structuredRole,
+        arch052GateNoise,
       );
       baseForRationale = baseSignal;
       const delayI = val024.useDelayI ? delayMultiplierForAgent(agent.id) : 1;
@@ -2522,6 +2646,7 @@ async function main(): Promise<void> {
           event_signal: eventSignalRaw,
           regime_raw: regime.regimeSignal,
           regime_i: regime_i_raw,
+          reg_e_compressed: compressRegimeSignal(regime_i),
           distorted_signal: signalI,
           final_signal: signalI,
           threshold,

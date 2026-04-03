@@ -21,6 +21,20 @@ export interface ArchetypeConfigEntry {
   };
   confidence: { base: number; variance: number };
   horizon: ArchetypeHorizon;
+  /** Per-channel visibility multipliers (0–1) before blend; not normalized. */
+  informationExposure?: {
+    synthetic: number;
+    info: number;
+    event: number;
+    regime: number;
+  };
+  /** Step delays per channel (reserved; history not wired yet). */
+  informationLatency?: {
+    synthetic: number;
+    info: number;
+    event: number;
+    regime: number;
+  };
 }
 
 export interface ArchetypesConfigFile {
@@ -111,30 +125,31 @@ export function effectiveArchetypeProfileForAgent(
   const archId = resolveArchetypeConfigId(agentId, archetypeLabel, archetypeUuid);
   const def = byId.get(archId)!;
 
-  const wSyn = def.weights.synthetic * vary(agentId, archId, "ws", 0.75, 1.25);
-  const wInfo = def.weights.info * vary(agentId, archId, "wi", 0.75, 1.25);
-  const wEvt = def.weights.event * vary(agentId, archId, "we", 0.75, 1.25);
-  const wReg = def.weights.regime * vary(agentId, archId, "wr", 0.75, 1.25);
+  /* CV-ARCH-058: tighter per-agent jitter so archetype base profiles dominate cross-type separation. */
+  const wSyn = def.weights.synthetic * vary(agentId, archId, "ws", 0.82, 1.18);
+  const wInfo = def.weights.info * vary(agentId, archId, "wi", 0.82, 1.18);
+  const wEvt = def.weights.event * vary(agentId, archId, "we", 0.82, 1.18);
+  const wReg = def.weights.regime * vary(agentId, archId, "wr", 0.82, 1.18);
 
-  const thScale = vary(agentId, archId, "th", 0.8, 1.2);
-  const aggScale = vary(agentId, archId, "agg", 0.85, 1.15);
+  const thScale = vary(agentId, archId, "th", 0.88, 1.12);
+  const aggScale = vary(agentId, archId, "agg", 0.9, 1.1);
   const thresholdMul =
     (def.decision.threshold * thScale) / Math.max(0.25, def.decision.aggressiveness * aggScale);
 
-  const strJ = vary(agentId, archId, "bias", 0.85, 1.15);
+  const strJ = vary(agentId, archId, "bias", 0.9, 1.1);
   const bias = clamp11(def.bias.direction * def.bias.strength * strJ);
 
-  const noiseAmp = def.behavior.noiseSensitivity * vary(agentId, archId, "noise", 0.8, 1.2);
+  const noiseAmp = def.behavior.noiseSensitivity * vary(agentId, archId, "noise", 0.88, 1.12);
   const volatilitySensitivity =
-    def.behavior.volatilitySensitivity * vary(agentId, archId, "vol", 0.8, 1.2);
-  const reactionSpeed = def.behavior.reactionSpeed * vary(agentId, archId, "react", 0.8, 1.2);
-  let memoryFactor = def.behavior.memoryFactor * vary(agentId, archId, "mem", 0.8, 1.2);
+    def.behavior.volatilitySensitivity * vary(agentId, archId, "vol", 0.88, 1.12);
+  const reactionSpeed = def.behavior.reactionSpeed * vary(agentId, archId, "react", 0.88, 1.12);
+  let memoryFactor = def.behavior.memoryFactor * vary(agentId, archId, "mem", 0.88, 1.12);
   memoryFactor = Math.max(0.05, Math.min(0.98, memoryFactor));
 
-  const confVar = def.confidence.variance * vary(agentId, archId, "cvar", 0.85, 1.15);
+  const confVar = def.confidence.variance * vary(agentId, archId, "cvar", 0.9, 1.1);
   const confBase = Math.max(
     0.12,
-    Math.min(0.88, def.confidence.base * vary(agentId, archId, "cbase", 0.92, 1.08)),
+    Math.min(0.88, def.confidence.base * vary(agentId, archId, "cbase", 0.95, 1.05)),
   );
 
   return {

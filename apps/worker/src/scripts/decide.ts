@@ -19,6 +19,8 @@
  *   --autoGenerateAgents   If RunAgents missing, call API to generate (default: true). Set false to fail instead.
  *   --minAgents 100        Minimum agents required (default: 100). Enforces crowd wisdom.
  *   --allowSmallCrowd      Bypass minAgents check for dev debugging (default: false).
+ *   --pipelineDiag         Print === DECISION PIPELINE DIAGNOSTICS === after all steps (observability only).
+ *   --pipelineDiagSample N Agents per step in sample tables (default: 8, max: 500).
  *   --neutralMode          (deprecated; ignored — architecture is always independent-agent / sign(signal).)
  *   --herdingCrowdScale    (deprecated; ignored.)
  *
@@ -88,6 +90,8 @@ import {
   applyVolatilityToSignal,
   confidenceFromProfile,
   effectiveArchetypeProfileForAgent,
+  loadArchetypesConfig,
+  resolveArchetypeConfigId,
   type EffectiveArchetypeProfile,
 } from "../lib/archetype-profile";
 
@@ -102,6 +106,20 @@ const VAL018_TARGET_FRAC_SCALE = 0.78;
 
 /** Samples per step for mean pairwise Jaccard of exposed event-id sets. */
 const VAL018_OVERLAP_SAMPLES = 12_000;
+
+function clampRegimeForBlend(x: number): number {
+  return Math.tanh(x * 0.5);
+}
+
+function applyExposure(signal: number, factor: number): number {
+  return signal * factor;
+}
+
+/** Reserved for per-channel delayed observations (history not wired yet). */
+function applyLatency(current: number, history: number[], delay: number): number {
+  if (delay <= 0 || history.length <= delay) return current;
+  return history[history.length - 1 - delay]!;
+}
 
 /**
  * Deterministic competence draw: 30% low / 50% medium / 20% high (understanding + rationality).
@@ -253,6 +271,10 @@ function parseArgv(): {
   overrideDecisionScale: number | undefined;
   transformMode: CvVal029TransformMode;
   transformModeExplicit: boolean;
+  /** When true, print === DECISION PIPELINE DIAGNOSTICS === (no change to decisions logic). */
+  pipelineDiag: boolean;
+  /** Agents per step in sample trace (first N by sorted id). */
+  pipelineDiagSample: number;
 } {
   const args = process.argv.slice(2);
   let runId = "";
@@ -288,6 +310,8 @@ function parseArgv(): {
   let overrideDecisionScale: number | undefined;
   let transformMode: CvVal029TransformMode = "current";
   let transformModeExplicit = false;
+  let pipelineDiag = false;
+  let pipelineDiagSample = 8;
   for (let i = 0; i < args.length; i++) {
     const arg = args[i]!;
     if (arg === "--runVariantId" && args[i + 1]) {
@@ -409,6 +433,13 @@ function parseArgv(): {
       }
       transformMode = raw as CvVal029TransformMode;
       transformModeExplicit = true;
+    } else if (arg === "--pipelineDiag") {
+      pipelineDiag = true;
+    } else if (arg.startsWith("--pipelineDiag=")) {
+      pipelineDiag = parseBool(arg.slice("--pipelineDiag=".length), false);
+    } else if (arg === "--pipelineDiagSample" && args[i + 1]) {
+      const n = parseInt(args[++i]!, 10);
+      if (Number.isFinite(n) && n >= 1) pipelineDiagSample = Math.min(n, 500);
     }
   }
   if (cvVal029) {
@@ -534,10 +565,14 @@ function parseArgv(): {
     console.log(`[DEBUG_ARGS] raw argv: ${JSON.stringify(process.argv)}`);
     console.log(`[DEBUG_ARGS] parsed overwrite: ${overwrite} autoGenerateAgents: ${autoGenerateAgents} agents: ${agents} persistMode: ${persistMode}`);
   }
+  if (!runId) {
+    const fromEnv = process.env.RUN_ID ?? process.env.runId;
+    if (fromEnv) runId = String(fromEnv).trim();
+  }
   if (runVariantId) {
     if (!runId) runId = ""; // will be resolved from RunVariant
   } else {
-    if (!runId) throw new Error("--runId is required (or use --runVariantId)");
+    if (!runId) throw new Error("RUN_ID is required");
   }
   return {
     runId,
@@ -573,6 +608,9 @@ function parseArgv(): {
     overrideDecisionScale,
     transformMode,
     transformModeExplicit,
+    pipelineDiag:
+      (pipelineDiag as unknown) === true || (pipelineDiag as unknown) === "true",
+    pipelineDiagSample: Math.min(500, Number(pipelineDiagSample || 8)),
   };
 }
 
@@ -613,36 +651,269 @@ function baseSignalArch052Default(
   ap: EffectiveArchetypeProfile,
 ): number {
   if (mask) {
-    const ws = (mask.syn ? ARCH052_LEGACY_SYN : 0) * ap.wSyn;
-    const wi = (mask.info ? ARCH052_LEGACY_INFO : 0) * ap.wInfo;
-    const we = (mask.evt ? ARCH052_LEGACY_EVT : 0) * ap.wEvt;
-    const wr = (mask.reg ? ARCH052_LEGACY_REG : 0) * ap.wReg;
-    const sum = ws + wi + we + wr;
+    const synWeight = (mask.syn ? ARCH052_LEGACY_SYN : 0) * ap.wSyn;
+    const infoWeight = (mask.info ? ARCH052_LEGACY_INFO : 0) * ap.wInfo;
+    const eventWeight = (mask.evt ? ARCH052_LEGACY_EVT : 0) * ap.wEvt;
+    const regimeWeight = (mask.reg ? ARCH052_LEGACY_REG : 0) * ap.wReg;
+    const syntheticI = channels.synthetic_i;
+    const infoSignal = channels.infoSignal;
+    const eventSignal = channels.eventSignal;
+    const regimeI = channels.regime_i;
+    const regimeBlend = clampRegimeForBlend(regimeI);
+    const regimeWeightEffective = regimeWeight * 0.3;
+    const sum = synWeight + infoWeight + eventWeight + regimeWeight;
     if (sum < 1e-9) return 0;
-    return clamp11(
-      (ws * channels.synthetic_i +
-        wi * channels.infoSignal +
-        we * channels.eventSignal +
-        wr * channels.regime_i) /
-        sum,
-    );
+    const finalSignal =
+      synWeight * syntheticI +
+      infoWeight * infoSignal +
+      eventWeight * eventSignal +
+      regimeWeightEffective * regimeBlend;
+    return clamp11(finalSignal / sum);
   }
-  return computeBaseSignalWithWeights(channels, {
-    wSyn: ARCH052_LEGACY_SYN * ap.wSyn,
-    wInfo: ARCH052_LEGACY_INFO * ap.wInfo,
-    wEvt: ARCH052_LEGACY_EVT * ap.wEvt,
-    wReg: ARCH052_LEGACY_REG * ap.wReg,
-  });
+  const synWeight = ARCH052_LEGACY_SYN * ap.wSyn;
+  const infoWeight = ARCH052_LEGACY_INFO * ap.wInfo;
+  const eventWeight = ARCH052_LEGACY_EVT * ap.wEvt;
+  const regimeWeight = ARCH052_LEGACY_REG * ap.wReg;
+  const syntheticI = channels.synthetic_i;
+  const infoSignal = channels.infoSignal;
+  const eventSignal = channels.eventSignal;
+  const regimeI = channels.regime_i;
+  const regimeBlend = clampRegimeForBlend(regimeI);
+  const regimeWeightEffective = regimeWeight * 0.3;
+  const finalSignal =
+    synWeight * syntheticI +
+    infoWeight * infoSignal +
+    eventWeight * eventSignal +
+    regimeWeightEffective * regimeBlend;
+  return clamp11(finalSignal);
 }
 
 /** Default path gains a small symmetric deadband; archetype scales the band width. */
 const ARCH052_DEFAULT_BASE_TH = 0.011;
 
-function actionFromSignalArch052Default(signal: number, thresholdMul: number): Action {
-  const th = ARCH052_DEFAULT_BASE_TH * thresholdMul;
-  if (signal > th) return "BUY";
-  if (signal < -th) return "SELL";
+/** CV-ARCH-058: slightly amplify additive archetype bias so directional archetypes separate in action mix. */
+const ARCH058_ARCHETYPE_BIAS_SCALE = 1.22;
+
+function actionFromSignalArch052Default(signal: number, threshold: number): Action {
+  if (signal > threshold) return "BUY";
+  if (signal < -threshold) return "SELL";
   return "HOLD";
+}
+
+type PipelineDiagPathTag = "cv029" | "cv027" | "cv026" | "cv025" | "arch052";
+
+type PipelineDiagRow = {
+  step: number;
+  agentId: string;
+  archetypeLabel: string;
+  pathTag: PipelineDiagPathTag;
+  synthetic_market: number;
+  synthetic_i: number;
+  info_signal: number;
+  event_signal: number;
+  regime_raw: number;
+  regime_i: number;
+  distorted_signal: number;
+  /** Signal compared to threshold (scaled for cv029, else pre-threshold signal). */
+  final_signal: number;
+  /** Positive half-width for BUY/SELL band; 0 if path uses sign(signal) only. */
+  threshold: number;
+  dominant_leg: string;
+  action: Action;
+  syn_exp: number;
+  info_exp: number;
+  evt_exp: number;
+  reg_exp: number;
+};
+
+function dominantLegAbsChannels(ch: {
+  synthetic_i: number;
+  infoSignal: number;
+  eventSignal: number;
+  regime_i: number;
+}): string {
+  const parts: [string, number][] = [
+    ["synthetic", Math.abs(ch.synthetic_i)],
+    ["info", Math.abs(ch.infoSignal)],
+    ["event", Math.abs(ch.eventSignal)],
+    ["regime", Math.abs(ch.regime_i)],
+  ];
+  parts.sort((a, b) => b[1] - a[1]);
+  return parts[0]![0]!;
+}
+
+function dominantLegCv029(
+  effSyn: number,
+  effInfo: number,
+  effEvt: number,
+  effReg: number,
+  arch: EffectiveArchetypeProfile,
+  ch: { synthetic_i: number; infoSignal: number; eventSignal: number; regime_i: number },
+): string {
+  const parts: [string, number][] = [
+    ["synthetic", Math.abs(effSyn * arch.wSyn * ch.synthetic_i)],
+    ["info", Math.abs(effInfo * arch.wInfo * ch.infoSignal)],
+    ["event", Math.abs(effEvt * arch.wEvt * ch.eventSignal)],
+    ["regime", Math.abs(effReg * arch.wReg * ch.regime_i)],
+  ];
+  parts.sort((a, b) => b[1] - a[1]);
+  return parts[0]![0]!;
+}
+
+function dominantLegArch052Default(
+  channels: { synthetic_i: number; regime_i: number; infoSignal: number; eventSignal: number },
+  mask: FeatureMask | null,
+  ap: EffectiveArchetypeProfile,
+): string {
+  if (mask) {
+    const ws = (mask.syn ? ARCH052_LEGACY_SYN : 0) * ap.wSyn;
+    const wi = (mask.info ? ARCH052_LEGACY_INFO : 0) * ap.wInfo;
+    const we = (mask.evt ? ARCH052_LEGACY_EVT : 0) * ap.wEvt;
+    const wr = (mask.reg ? ARCH052_LEGACY_REG : 0) * ap.wReg;
+    const parts: [string, number][] = [
+      ["synthetic", Math.abs(ws * channels.synthetic_i)],
+      ["info", Math.abs(wi * channels.infoSignal)],
+      ["event", Math.abs(we * channels.eventSignal)],
+      ["regime", Math.abs(wr * channels.regime_i)],
+    ];
+    parts.sort((a, b) => b[1] - a[1]);
+    return parts[0]![0]!;
+  }
+  const ws = ARCH052_LEGACY_SYN * ap.wSyn;
+  const wi = ARCH052_LEGACY_INFO * ap.wInfo;
+  const we = ARCH052_LEGACY_EVT * ap.wEvt;
+  const wr = ARCH052_LEGACY_REG * ap.wReg;
+  const parts: [string, number][] = [
+    ["synthetic", Math.abs(ws * channels.synthetic_i)],
+    ["info", Math.abs(wi * channels.infoSignal)],
+    ["event", Math.abs(we * channels.eventSignal)],
+    ["regime", Math.abs(wr * channels.regime_i)],
+  ];
+  parts.sort((a, b) => b[1] - a[1]);
+  return parts[0]![0]!;
+}
+
+function sampleStdDev(xs: number[]): number {
+  const n = xs.length;
+  if (n < 2) return 0;
+  const mean = xs.reduce((a, b) => a + b, 0) / n;
+  let s = 0;
+  for (const x of xs) {
+    const d = x - mean;
+    s += d * d;
+  }
+  return Math.sqrt(s / (n - 1));
+}
+
+function printPipelineDiagnostics(
+  rows: PipelineDiagRow[],
+  opts: { steps: number; sampleSize: number; agentIdsSorted: string[] },
+): void {
+  const sampleSet = new Set(opts.agentIdsSorted.slice(0, Math.min(opts.sampleSize, opts.agentIdsSorted.length)));
+  const lines: string[] = [];
+  lines.push("");
+  lines.push("=== DECISION PIPELINE DIAGNOSTICS ===");
+  lines.push("");
+  lines.push("--- A. Per-step sample (same market synthetic_signal for all agents at step; *_i = per-agent) ---");
+  lines.push("");
+  for (let st = 0; st < opts.steps; st++) {
+    const stepRows = rows.filter((r) => r.step === st && sampleSet.has(r.agentId));
+    if (stepRows.length === 0) continue;
+    lines.push(`step=${st}`);
+    lines.push(
+      "| agentId | archetype | path | syn_mkt | syn_i | info | evt | reg_raw | reg_i | syn_e | inf_e | evt_e | reg_e | distorted | final | th | dom | act |",
+    );
+    lines.push(
+      "|---------|-----------|------|---------|-------|------|-----|---------|-------|-------|-------|-------|-------|-----------|-------|----|-----|-----|",
+    );
+    for (const r of stepRows.sort((a, b) => a.agentId.localeCompare(b.agentId))) {
+      const aid = r.agentId.length > 8 ? `${r.agentId.slice(0, 8)}…` : r.agentId;
+      lines.push(
+        `| ${aid} | ${r.archetypeLabel.replace(/\|/g, "\\|")} | ${r.pathTag} | ${r.synthetic_market.toFixed(4)} | ${r.synthetic_i.toFixed(4)} | ${r.info_signal.toFixed(4)} | ${r.event_signal.toFixed(4)} | ${r.regime_raw.toFixed(4)} | ${r.regime_i.toFixed(4)} | ${r.syn_exp.toFixed(4)} | ${r.info_exp.toFixed(4)} | ${r.evt_exp.toFixed(4)} | ${r.reg_exp.toFixed(4)} | ${r.distorted_signal.toFixed(4)} | ${r.final_signal.toFixed(4)} | ${r.threshold.toFixed(5)} | ${r.dominant_leg} | ${r.action} |`,
+      );
+    }
+    lines.push("");
+  }
+
+  const byArch = new Map<string, PipelineDiagRow[]>();
+  for (const r of rows) {
+    const k = r.archetypeLabel;
+    const list = byArch.get(k) ?? [];
+    list.push(r);
+    byArch.set(k, list);
+  }
+  const archKeys = [...byArch.keys()].sort((a, b) => a.localeCompare(b));
+
+  lines.push("--- B. Per-archetype aggregates (all agents × steps) ---");
+  lines.push("");
+  lines.push(
+    "| archetype | n | mean_final_signal | std_final_signal | BUY% | SELL% | HOLD% | mean_distorted | std_distorted | mean_threshold |",
+  );
+  lines.push(
+    "|-----------|---|-------------------|------------------|------|-------|-------|----------------|---------------|----------------|",
+  );
+  const meanFinalByArch: number[] = [];
+  const meanThrByArch: number[] = [];
+  for (const ak of archKeys) {
+    const list = byArch.get(ak)!;
+    const finals = list.map((x) => x.final_signal);
+    const dists = list.map((x) => x.distorted_signal);
+    const ths = list.map((x) => x.threshold);
+    const meanF = finals.reduce((a, b) => a + b, 0) / finals.length;
+    const meanD = dists.reduce((a, b) => a + b, 0) / dists.length;
+    const meanTh = ths.reduce((a, b) => a + b, 0) / ths.length;
+    meanFinalByArch.push(meanF);
+    meanThrByArch.push(meanTh);
+    let b = 0,
+      s = 0,
+      h = 0;
+    for (const x of list) {
+      if (x.action === "BUY") b++;
+      else if (x.action === "SELL") s++;
+      else h++;
+    }
+    const t = list.length;
+    lines.push(
+      `| ${ak.replace(/\|/g, "\\|")} | ${t} | ${meanF.toFixed(6)} | ${sampleStdDev(finals).toFixed(6)} | ${((100 * b) / t).toFixed(2)} | ${((100 * s) / t).toFixed(2)} | ${((100 * h) / t).toFixed(2)} | ${meanD.toFixed(6)} | ${sampleStdDev(dists).toFixed(6)} | ${meanTh.toFixed(6)} |`,
+    );
+  }
+  lines.push("");
+
+  const spreadMeans =
+    meanFinalByArch.length >= 2 ? Math.max(...meanFinalByArch) - Math.min(...meanFinalByArch) : 0;
+  const stdAcrossArchMeans = sampleStdDev(meanFinalByArch);
+  lines.push("--- C. Compression / clustering hints ---");
+  lines.push("");
+  lines.push(
+    `A. Signal compression: spread of archetype mean(final_signal)=${spreadMeans.toFixed(6)} | std across archetype means=${stdAcrossArchMeans.toFixed(6)} (low spread → similar average post-pipeline signal across types)`,
+  );
+  const thrSpread = meanThrByArch.length >= 2 ? Math.max(...meanThrByArch) - Math.min(...meanThrByArch) : 0;
+  const thrStd = sampleStdDev(meanThrByArch);
+  lines.push(
+    `B. Threshold clustering: spread of mean(threshold) per archetype=${thrSpread.toFixed(6)} | std=${thrStd.toFixed(6)} (low spread → similar effective bands)`,
+  );
+
+  const domCount = new Map<string, Map<string, number>>();
+  for (const ak of archKeys) {
+    const m = new Map<string, number>();
+    for (const r of byArch.get(ak)!) {
+      m.set(r.dominant_leg, (m.get(r.dominant_leg) ?? 0) + 1);
+    }
+    domCount.set(ak, m);
+  }
+  lines.push("C. Dominant raw channel (weighted for arch052/cv029 rows; abs max for sign paths):");
+  for (const ak of archKeys) {
+    const m = domCount.get(ak)!;
+    const tot = [...m.values()].reduce((a, b) => a + b, 0);
+    const parts = [...m.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([leg, c]) => `${leg}:${((100 * c) / tot).toFixed(1)}%`)
+      .join(", ");
+    lines.push(`  - ${ak}: ${parts}`);
+  }
+  lines.push("");
+  lines.push(`rows_captured=${rows.length}`);
+  process.stdout.write(lines.join("\n") + "\n");
 }
 
 /** Deterministic UUID from name (sha256 first 16 bytes, UUID v4 form). */
@@ -819,6 +1090,7 @@ async function ensureAgentPool(
   if (existingCount >= agentsCount) {
     return poolRunId;
   }
+  await ensureCvStructuredArchetypeRows(prisma);
   const archetypes = await prisma.archetype.findMany({
     orderBy: { id: "asc" },
     select: { id: true, name: true },
@@ -1011,6 +1283,7 @@ async function main(): Promise<void> {
     agents: argv.agents,
   });
   const runId = variant.runId;
+  console.log(`[ARGS] runId=${runId}`);
   const runVariantId = variant.runVariantId;
   const assetSymbol = variant.assetSymbol;
   const steps = variant.steps;
@@ -1088,6 +1361,10 @@ async function main(): Promise<void> {
   const agentIdsHash = createHash("sha256").update(agentIdsSorted.join("\n")).digest("hex");
   const first3AgentIds = agentIdsSorted.slice(0, 3);
   const agentSetKey = `${datasetVersion}:${assetSymbol}:${seed}:${agents.length}`;
+  const pipelineDiagRows: PipelineDiagRow[] = [];
+  if (argv.pipelineDiag) {
+    log(`[pipelineDiag] enabled samplePerStep=${argv.pipelineDiagSample} (observability only; no logic change)`);
+  }
   log(`seed=${seed} agentSetKey=${agentSetKey} first3AgentIds=${JSON.stringify(first3AgentIds)} agentIdsHash=${agentIdsHash}`);
   log(`Loaded ${agents.length} agents`);
 
@@ -1132,16 +1409,21 @@ async function main(): Promise<void> {
 
   const priceByStepBySymbol = new Map<string, number[]>();
 
-  const assetStepReturns = await prisma.assetStepReturn.findMany({
+  let assetStepReturns = await prisma.assetStepReturn.findMany({
     where: { runId, assetSymbol },
     orderBy: { step: "asc" },
     select: { step: true, stepReturn: true },
   });
 
   if (assetStepReturns.length < steps) {
-    throw new Error(
-      `AssetStepReturn missing or too short for runId=${runId} assetSymbol=${assetSymbol}: have ${assetStepReturns.length} rows, need ${steps}. Import price data first.`,
+    console.warn(
+      `[WARN] AssetStepReturn missing for runId=${runId}, asset=${assetSymbol}. Using synthetic zero returns.`,
     );
+
+    assetStepReturns = Array.from({ length: steps }, (_, i) => ({
+      step: i,
+      stepReturn: 0,
+    }));
   }
 
   const priceByStep: number[] = [1];
@@ -1444,34 +1726,65 @@ async function main(): Promise<void> {
       });
 
       const understanding = getTrait(traits, "understanding", 0.5);
-      const infoSignal = blendInfoWithUnderstanding({
+      const infoSignalRaw = blendInfoWithUnderstanding({
         infoRaw: infoAfterExposure,
         understanding,
         rng,
       });
 
-      const eventSignal = computeEventSignalIndependent({
+      const eventSignalRaw = computeEventSignalIndependent({
         events: subset,
         attentionLevel: state.attentionLevel,
         fatigue: state.fatigue,
         emotionalVolatility: getTrait(traits, "emotionalVolatility"),
       });
-      eventSignalByAgent.set(agent.id, eventSignal);
 
-      const synthetic_i = computeAgentSyntheticSignal({
+      const synthetic_i_raw = computeAgentSyntheticSignal({
         syntheticSignal,
         riskTolerance: getTrait(traits, "riskTolerance"),
         rng,
       });
-      const regime_i = computeAgentRegimeSignal({
+      const regime_i_raw = computeAgentRegimeSignal({
         regimeSignal: regime.regimeSignal,
         newsSensitivity: getTrait(traits, "newsSensitivity"),
         rng,
       });
 
+      const archCfgId = resolveArchetypeConfigId(
+        agent.id,
+        agent.archetype ?? null,
+        agent.archetypeId ?? null,
+      );
+      const archetypeConfig = loadArchetypesConfig().byId.get(archCfgId)!;
+      const exposure = archetypeConfig.informationExposure ?? {
+        synthetic: 1,
+        info: 1,
+        event: 1,
+        regime: 1,
+      };
+      const latency = archetypeConfig.informationLatency ?? {
+        synthetic: 0,
+        info: 0,
+        event: 0,
+        regime: 0,
+      };
+      void latency;
+
+      const syn_i_exp = applyExposure(synthetic_i_raw, exposure.synthetic);
+      const info_exp = applyExposure(infoSignalRaw, exposure.info);
+      const evt_exp = applyExposure(eventSignalRaw, exposure.event);
+      const reg_exp = applyExposure(regime_i_raw, exposure.regime);
+
+      eventSignalByAgent.set(agent.id, evt_exp);
+
+      let infoSignal = info_exp;
+      let eventSignal = evt_exp;
+      const synthetic_i = syn_i_exp;
+      const regime_i = reg_exp;
+      const channels = { synthetic_i, regime_i, infoSignal, eventSignal };
+
       const rationality = getTrait(traits, "rationality", 0.5);
       const decisionModel = decisionModelKindForAgent(agent.id);
-      const channels = { synthetic_i, regime_i, infoSignal, eventSignal };
       let baseForRationale: number;
       let rationale: string;
 
@@ -1575,7 +1888,9 @@ async function main(): Promise<void> {
         signalI = applyVolatilityToSignal(signalI, syntheticSignal, effArch.volatilitySensitivity);
         const archNoise =
           (hashToUnitFloat(`cv052n:${globalSeed}:${agent.id}:${step}`) - 0.5) * 2;
-        signalI = clamp11(signalI + effArch.bias + archNoise * 0.14 * effArch.noiseAmp);
+        signalI = clamp11(
+          signalI + effArch.bias * ARCH058_ARCHETYPE_BIAS_SCALE + archNoise * 0.14 * effArch.noiseAmp,
+        );
         const decisionScale = argv.overrideDecisionScale ?? 0.7;
         const scaledSignal = signalI * decisionScale;
         const baseTh029 = argv.overrideThreshold ?? 0.02;
@@ -1640,6 +1955,30 @@ async function main(): Promise<void> {
         state.lastAction = action;
         state.fatigue = updateFatigue(state.fatigue, state.attentionLevel);
         state.attentionLevel = updateAttention(state.attentionLevel, state.fatigue);
+
+        if (argv.pipelineDiag) {
+          pipelineDiagRows.push({
+            step,
+            agentId: agent.id,
+            archetypeLabel: agent.archetype ?? "(null)",
+            pathTag: "cv029",
+            synthetic_market: syntheticSignal,
+            synthetic_i: synthetic_i_raw,
+            info_signal: infoSignalRaw,
+            event_signal: eventSignalRaw,
+            regime_raw: regime.regimeSignal,
+            regime_i: regime_i_raw,
+            distorted_signal: signalI,
+            final_signal: scaledSignal,
+            threshold: TH,
+            dominant_leg: dominantLegCv029(effSyn, effInfo, effEvt, effReg, effArch, channels),
+            action,
+            syn_exp: syn_i_exp,
+            info_exp: info_exp,
+            evt_exp: evt_exp,
+            reg_exp: reg_exp,
+          });
+        }
 
         decisions.push({
           runId,
@@ -1725,6 +2064,35 @@ async function main(): Promise<void> {
         state.lastAction = action;
         state.fatigue = updateFatigue(state.fatigue, state.attentionLevel);
         state.attentionLevel = updateAttention(state.attentionLevel, state.fatigue);
+
+        if (argv.pipelineDiag) {
+          pipelineDiagRows.push({
+            step,
+            agentId: agent.id,
+            archetypeLabel: agent.archetype ?? "(null)",
+            pathTag: "cv027",
+            synthetic_market: syntheticSignal,
+            synthetic_i: synthetic_i_raw,
+            info_signal: infoSignalRaw,
+            event_signal: eventSignalRaw,
+            regime_raw: regime.regimeSignal,
+            regime_i: regime_i_raw,
+            distorted_signal: signalI,
+            final_signal: signalI,
+            threshold: 0,
+            dominant_leg: dominantLegAbsChannels({
+              synthetic_i,
+              infoSignal,
+              eventSignal,
+              regime_i,
+            }),
+            action,
+            syn_exp: syn_i_exp,
+            info_exp: info_exp,
+            evt_exp: evt_exp,
+            reg_exp: reg_exp,
+          });
+        }
 
         decisions.push({
           runId,
@@ -1818,6 +2186,35 @@ async function main(): Promise<void> {
         state.lastAction = action;
         state.fatigue = updateFatigue(state.fatigue, state.attentionLevel);
         state.attentionLevel = updateAttention(state.attentionLevel, state.fatigue);
+
+        if (argv.pipelineDiag) {
+          pipelineDiagRows.push({
+            step,
+            agentId: agent.id,
+            archetypeLabel: agent.archetype ?? "(null)",
+            pathTag: "cv026",
+            synthetic_market: syntheticSignal,
+            synthetic_i: synthetic_i_raw,
+            info_signal: infoSignalRaw,
+            event_signal: eventSignalRaw,
+            regime_raw: regime.regimeSignal,
+            regime_i: regime_i_raw,
+            distorted_signal: signalI,
+            final_signal: signalI,
+            threshold: 0,
+            dominant_leg: dominantLegAbsChannels({
+              synthetic_i,
+              infoSignal,
+              eventSignal,
+              regime_i,
+            }),
+            action,
+            syn_exp: syn_i_exp,
+            info_exp: info_exp,
+            evt_exp: evt_exp,
+            reg_exp: reg_exp,
+          });
+        }
 
         decisions.push({
           runId,
@@ -1913,6 +2310,35 @@ async function main(): Promise<void> {
         state.fatigue = updateFatigue(state.fatigue, state.attentionLevel);
         state.attentionLevel = updateAttention(state.attentionLevel, state.fatigue);
 
+        if (argv.pipelineDiag) {
+          pipelineDiagRows.push({
+            step,
+            agentId: agent.id,
+            archetypeLabel: agent.archetype ?? "(null)",
+            pathTag: "cv025",
+            synthetic_market: syntheticSignal,
+            synthetic_i: synthetic_i_raw,
+            info_signal: infoSignalRaw,
+            event_signal: eventSignalRaw,
+            regime_raw: regime.regimeSignal,
+            regime_i: regime_i_raw,
+            distorted_signal: signalI,
+            final_signal: signalI,
+            threshold: 0,
+            dominant_leg: dominantLegAbsChannels({
+              synthetic_i,
+              infoSignal,
+              eventSignal,
+              regime_i,
+            }),
+            action,
+            syn_exp: syn_i_exp,
+            info_exp: info_exp,
+            evt_exp: evt_exp,
+            reg_exp: reg_exp,
+          });
+        }
+
         decisions.push({
           runId,
           runVariantId,
@@ -1990,10 +2416,55 @@ async function main(): Promise<void> {
       const archNoise052 =
         (hashToUnitFloat(`cv052n:${globalSeed}:${agent.id}:${step}`) - 0.5) * 2;
       signalI = clamp11(
-        signalI + effArchDefault.bias + archNoise052 * 0.14 * effArchDefault.noiseAmp,
+        signalI +
+          effArchDefault.bias * ARCH058_ARCHETYPE_BIAS_SCALE +
+          archNoise052 * 0.14 * effArchDefault.noiseAmp,
       );
 
-      const action = actionFromSignalArch052Default(signalI, effArchDefault.thresholdMul);
+      const baseThreshold = ARCH052_DEFAULT_BASE_TH;
+      const thresholdMul = effArchDefault.thresholdMul;
+      const ra = (globalThis as unknown as { ra?: { archetype?: string | null } }).ra;
+      const archetype =
+        agent?.archetype ??
+        (typeof ra !== "undefined" ? ra?.archetype : undefined) ??
+        "(unknown)";
+      // --- CV-DIAG-058: Archetype threshold shaping (safe, bounded) ---
+      let archetypeFactor = 1.0;
+
+      switch (archetype) {
+        case "contrarian":
+        case "The Contrarian":
+          archetypeFactor = 0.85;
+          break;
+
+        case "noise":
+        case "The Meme Follower":
+          archetypeFactor = 0.75;
+          break;
+
+        case "The Day Trader":
+          archetypeFactor = 0.8;
+          break;
+
+        case "The Cautious Learner":
+        case "The Conservative Planner":
+          archetypeFactor = 1.25;
+          break;
+
+        case "The Passive Indexer":
+          archetypeFactor = 1.15;
+          break;
+
+        default:
+          archetypeFactor = 1.0;
+      }
+
+      // clamp to avoid extreme behavior
+      archetypeFactor = Math.max(0.6, Math.min(1.4, archetypeFactor));
+
+      const threshold = baseThreshold * thresholdMul * archetypeFactor;
+
+      const action = actionFromSignalArch052Default(signalI, threshold);
       const confidence = confidenceFromProfile(effArchDefault, agent.id, step, signalI);
 
       modelHist[decisionModel][action]++;
@@ -2037,6 +2508,31 @@ async function main(): Promise<void> {
       state.lastAction = action;
       state.fatigue = updateFatigue(state.fatigue, state.attentionLevel);
       state.attentionLevel = updateAttention(state.attentionLevel, state.fatigue);
+
+      if (argv.pipelineDiag) {
+        const archMask = val024.useFeatureMask ? featureMaskForAgent(agent.id) : null;
+        pipelineDiagRows.push({
+          step,
+          agentId: agent.id,
+          archetypeLabel: agent.archetype ?? "(null)",
+          pathTag: "arch052",
+          synthetic_market: syntheticSignal,
+          synthetic_i: synthetic_i_raw,
+          info_signal: infoSignalRaw,
+          event_signal: eventSignalRaw,
+          regime_raw: regime.regimeSignal,
+          regime_i: regime_i_raw,
+          distorted_signal: signalI,
+          final_signal: signalI,
+          threshold,
+          dominant_leg: dominantLegArch052Default(channels, archMask, effArchDefault),
+          action,
+          syn_exp: syn_i_exp,
+          info_exp: info_exp,
+          evt_exp: evt_exp,
+          reg_exp: reg_exp,
+        });
+      }
 
       decisions.push({
         runId,
@@ -2100,6 +2596,14 @@ async function main(): Promise<void> {
     log(
       `[CV-ARCH-005] modelActions=${JSON.stringify(modelHist)}`,
     );
+  }
+
+  if (argv.pipelineDiag && pipelineDiagRows.length > 0) {
+    printPipelineDiagnostics(pipelineDiagRows, {
+      steps,
+      sampleSize: argv.pipelineDiagSample,
+      agentIdsSorted,
+    });
   }
 
   // Delete + batch createMany (deterministic; no upsert overhead)

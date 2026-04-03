@@ -1,0 +1,245 @@
+{
+  "version": 1,
+  "archetypes": [
+    {
+      "id": "linear_quant",
+      "name": "Linear Quant",
+      "weights": { "synthetic": 1.42, "info": 0.72, "event": 0.58, "regime": 0.78 },
+      "decision": { "threshold": 1.05, "aggressiveness": 1.12 },
+      "bias": { "direction": 0.02, "strength": 0.04 },
+      "behavior": { "noiseSensitivity": 0.35, "volatilitySensitivity": 0.92, "reactionSpeed": 0.95, "memoryFactor": 0.38 },
+      "confidence": { "base": 0.46, "variance": 0.04 },
+      "horizon": "mid"
+    },
+    {
+      "id": "nonlinear_quant",
+      "name": "Nonlinear Quant",
+      "weights": { "synthetic": 1.38, "info": 0.88, "event": 0.72, "regime": 0.82 },
+      "decision": { "threshold": 0.88, "aggressiveness": 1.28 },
+      "bias": { "direction": -0.04, "strength": 0.05 },
+      "behavior": { "noiseSensitivity": 0.55, "volatilitySensitivity": 1.18, "reactionSpeed": 1.22, "memoryFactor": 0.32 },
+      "confidence": { "base": 0.48, "variance": 0.06 },
+      "horizon": "short"
+    },
+    {
+      "id": "mean_reversion",
+      "name": "Mean Reversion Trader",
+      "weights": { "synthetic": 0.68, "info": 1.12, "event": 0.92, "regime": 1.08 },
+      "decision": { "threshold": 1.38, "aggressiveness": 0.82 },
+      "bias": { "direction": -0.12, "strength": 0.07 },
+      "behavior": { "noiseSensitivity": 0.48, "volatilitySensitivity": 0.72, "reactionSpeed": 0.78, "memoryFactor": 0.62 },
+      "confidence": { "base": 0.44, "variance": 0.05 },
+      "horizon": "mid"
+    },
+    {
+      "id": "momentum_trader",
+      "name": "Momentum Trader",
+      "weights": { "synthetic": 1.55, "info": 0.62, "event": 0.88, "regime": 0.72 },
+      "decision": { "threshold": 0.62, "aggressiveness": 1.42 },
+      "bias": { "direction": 0.14, "strength": 0.06 },
+      "behavior": { "noiseSensitivity": 0.62, "volatilitySensitivity": 1.32, "reactionSpeed": 1.38, "memoryFactor": 0.22 },
+      "confidence": { "base": 0.5, "variance": 0.08 },
+      "horizon": "short"
+    },
+    {
+      "id": "news_reactor",
+      "name": "News Reactor",
+      "weights": { "synthetic": 0.58, "info": 1.58, "event": 1.12, "regime": 0.82 },
+      "decision": { "threshold": 0.78, "aggressiveness": 1.35 },
+      "bias": { "direction": 0.06, "strength": 0.06 },
+      "behavior": { "noiseSensitivity": 1.05, "volatilitySensitivity": 1.08, "reactionSpeed": 1.32, "memoryFactor": 0.28 },
+      "confidence": { "base": 0.47, "variance": 0.1 },
+      "horizon": "short"
+    },
+    {
+      "id": "info_skeptic",
+      "name": "Information Skeptic",
+      "weights": { "synthetic": 1.22, "info": 0.48, "event": 0.68, "regime": 1.35 },
+      "decision": { "threshold": 1.48, "aggressiveness": 0.75 },
+      "bias": { "direction": -0.08, "strength": 0.05 },
+      "behavior": { "noiseSensitivity": 0.28, "volatilitySensitivity": 0.65, "reactionSpeed": 0.72, "memoryFactor": 0.55 },
+      "confidence": { "base": 0.42, "variance": 0.03 },
+      "horizon": "long"
+    },
+    {
+      "id": "event_sniper",
+      "name": "Event Sniper",
+      "weights": { "synthetic": 0.72, "info": 0.78, "event": 1.68, "regime": 0.88 },
+      "decision": { "threshold": 0.55, "aggressiveness": 1.48 },
+      "bias": { "direction": 0.03, "strength": 0.04 },
+      "behavior": { "noiseSensitivity": 0.88, "volatilitySensitivity": 1.25, "reactionSpeed": 1.52, "memoryFactor": 0.18 },
+      "confidence": { "base": 0.49, "variance": 0.09 },
+      "horizon": "short"
+    },
+    {
+      "id": "late_event_follower",
+      "name": "Late Event Follower",
+      "weights": { "synthetic": 0.82, "info": 0.92, "event": 1.38, "regime": 0.95 },
+      "decision": { "threshold": 1.18, "aggressiveness": 0.92 },
+      "bias": { "direction": -0.02, "strength": 0.04 },
+      "behavior": { "noiseSensitivity": 0.58, "volatilitySensitivity": 0.88, "reactionSpeed": 0.68, "memoryFactor": 0.78 },
+      "confidence": { "base": 0.45, "variance": 0.04 },
+      "horizon": "mid"
+    },
+    {
+      "id": "false_event_reactor",
+      "name": "False Event Reactor",
+      "weights": { "synthetic": 0.65, "info": 0.88, "event": 1.62, "regime": 0.75 },
+      "decision": { "threshold": 0.72, "aggressiveness": 1.22 },
+      "bias": { "direction": 0.1, "strength": 0.08 },
+      "behavior": { "noiseSensitivity": 2.15, "volatilitySensitivity": 1.45, "reactionSpeed": 1.42, "memoryFactor": 0.25 },
+      "confidence": { "base": 0.52, "variance": 0.14 },
+      "horizon": "short"
+    },
+    {
+      "id": "macro_follower",
+      "name": "Macro Follower",
+      "weights": { "synthetic": 0.62, "info": 0.88, "event": 0.58, "regime": 1.72 },
+      "decision": { "threshold": 1.28, "aggressiveness": 0.88 },
+      "bias": { "direction": 0.04, "strength": 0.03 },
+      "behavior": { "noiseSensitivity": 0.32, "volatilitySensitivity": 0.82, "reactionSpeed": 0.62, "memoryFactor": 0.72 },
+      "confidence": { "base": 0.43, "variance": 0.03 },
+      "horizon": "long"
+    },
+    {
+      "id": "regime_contrarian",
+      "name": "Regime Contrarian",
+      "weights": { "synthetic": 0.88, "info": 1.02, "event": 0.95, "regime": 0.38 },
+      "decision": { "threshold": 1.22, "aggressiveness": 0.95 },
+      "bias": { "direction": -0.14, "strength": 0.08 },
+      "behavior": { "noiseSensitivity": 0.72, "volatilitySensitivity": 1.02, "reactionSpeed": 0.85, "memoryFactor": 0.52 },
+      "confidence": { "base": 0.46, "variance": 0.06 },
+      "horizon": "mid"
+    },
+    {
+      "id": "stability_seeker",
+      "name": "Stability Seeker",
+      "weights": { "synthetic": 0.92, "info": 1.08, "event": 0.72, "regime": 1.18 },
+      "decision": { "threshold": 1.72, "aggressiveness": 0.62 },
+      "bias": { "direction": -0.04, "strength": 0.03 },
+      "behavior": { "noiseSensitivity": 0.22, "volatilitySensitivity": 0.55, "reactionSpeed": 0.68, "memoryFactor": 0.68 },
+      "confidence": { "base": 0.4, "variance": 0.02 },
+      "horizon": "long"
+    },
+    {
+      "id": "volatility_chaser",
+      "name": "Volatility Chaser",
+      "weights": { "synthetic": 1.18, "info": 0.95, "event": 1.12, "regime": 0.82 },
+      "decision": { "threshold": 0.68, "aggressiveness": 1.38 },
+      "bias": { "direction": 0.08, "strength": 0.05 },
+      "behavior": { "noiseSensitivity": 1.18, "volatilitySensitivity": 1.68, "reactionSpeed": 1.28, "memoryFactor": 0.3 },
+      "confidence": { "base": 0.5, "variance": 0.11 },
+      "horizon": "short"
+    },
+    {
+      "id": "volatility_avoider",
+      "name": "Volatility Avoider",
+      "weights": { "synthetic": 0.95, "info": 1.15, "event": 0.65, "regime": 1.22 },
+      "decision": { "threshold": 1.55, "aggressiveness": 0.68 },
+      "bias": { "direction": -0.1, "strength": 0.05 },
+      "behavior": { "noiseSensitivity": 0.38, "volatilitySensitivity": 0.42, "reactionSpeed": 0.75, "memoryFactor": 0.58 },
+      "confidence": { "base": 0.41, "variance": 0.03 },
+      "horizon": "long"
+    },
+    {
+      "id": "optimist",
+      "name": "Optimist",
+      "weights": { "synthetic": 1.05, "info": 1.08, "event": 0.88, "regime": 0.95 },
+      "decision": { "threshold": 0.92, "aggressiveness": 1.12 },
+      "bias": { "direction": 1.0, "strength": 0.09 },
+      "behavior": { "noiseSensitivity": 0.55, "volatilitySensitivity": 0.98, "reactionSpeed": 1.02, "memoryFactor": 0.42 },
+      "confidence": { "base": 0.52, "variance": 0.05 },
+      "horizon": "mid"
+    },
+    {
+      "id": "pessimist",
+      "name": "Pessimist",
+      "weights": { "synthetic": 0.98, "info": 1.05, "event": 0.92, "regime": 1.05 },
+      "decision": { "threshold": 1.08, "aggressiveness": 0.9 },
+      "bias": { "direction": -1.0, "strength": 0.09 },
+      "behavior": { "noiseSensitivity": 0.62, "volatilitySensitivity": 0.92, "reactionSpeed": 0.92, "memoryFactor": 0.48 },
+      "confidence": { "base": 0.44, "variance": 0.05 },
+      "horizon": "mid"
+    },
+    {
+      "id": "conviction_buyer",
+      "name": "High Conviction Buyer",
+      "weights": { "synthetic": 1.12, "info": 0.92, "event": 0.82, "regime": 0.88 },
+      "decision": { "threshold": 0.48, "aggressiveness": 1.55 },
+      "bias": { "direction": 0.18, "strength": 0.07 },
+      "behavior": { "noiseSensitivity": 0.65, "volatilitySensitivity": 1.12, "reactionSpeed": 1.18, "memoryFactor": 0.35 },
+      "confidence": { "base": 0.54, "variance": 0.07 },
+      "horizon": "short"
+    },
+    {
+      "id": "conviction_seller",
+      "name": "High Conviction Seller",
+      "weights": { "synthetic": 0.92, "info": 1.02, "event": 0.95, "regime": 1.08 },
+      "decision": { "threshold": 0.52, "aggressiveness": 1.52 },
+      "bias": { "direction": -0.2, "strength": 0.07 },
+      "behavior": { "noiseSensitivity": 0.68, "volatilitySensitivity": 1.08, "reactionSpeed": 1.15, "memoryFactor": 0.38 },
+      "confidence": { "base": 0.53, "variance": 0.07 },
+      "horizon": "short"
+    },
+    {
+      "id": "passive_allocator",
+      "name": "Passive Allocator",
+      "weights": { "synthetic": 0.88, "info": 0.82, "event": 0.55, "regime": 1.35 },
+      "decision": { "threshold": 1.62, "aggressiveness": 0.55 },
+      "bias": { "direction": 0.02, "strength": 0.02 },
+      "behavior": { "noiseSensitivity": 0.18, "volatilitySensitivity": 0.58, "reactionSpeed": 0.58, "memoryFactor": 0.82 },
+      "confidence": { "base": 0.38, "variance": 0.02 },
+      "horizon": "long"
+    },
+    {
+      "id": "conservative_planner",
+      "name": "Conservative Planner",
+      "weights": { "synthetic": 0.85, "info": 1.02, "event": 0.62, "regime": 1.28 },
+      "decision": { "threshold": 1.58, "aggressiveness": 0.58 },
+      "bias": { "direction": -0.06, "strength": 0.04 },
+      "behavior": { "noiseSensitivity": 0.25, "volatilitySensitivity": 0.62, "reactionSpeed": 0.65, "memoryFactor": 0.88 },
+      "confidence": { "base": 0.4, "variance": 0.02 },
+      "horizon": "long"
+    },
+    {
+      "id": "noise_amplifier",
+      "name": "Noise Amplifier",
+      "weights": { "synthetic": 1.02, "info": 1.18, "event": 1.25, "regime": 0.78 },
+      "decision": { "threshold": 0.85, "aggressiveness": 1.25 },
+      "bias": { "direction": 0.05, "strength": 0.05 },
+      "behavior": { "noiseSensitivity": 2.35, "volatilitySensitivity": 1.22, "reactionSpeed": 1.32, "memoryFactor": 0.28 },
+      "confidence": { "base": 0.48, "variance": 0.12 },
+      "horizon": "short"
+    },
+    {
+      "id": "noise_dampener",
+      "name": "Noise Dampener",
+      "weights": { "synthetic": 1.08, "info": 0.85, "event": 0.58, "regime": 1.12 },
+      "decision": { "threshold": 1.35, "aggressiveness": 0.78 },
+      "bias": { "direction": 0.01, "strength": 0.02 },
+      "behavior": { "noiseSensitivity": 0.15, "volatilitySensitivity": 0.68, "reactionSpeed": 0.68, "memoryFactor": 0.65 },
+      "confidence": { "base": 0.42, "variance": 0.02 },
+      "horizon": "long"
+    },
+    {
+      "id": "short_horizon_scalper",
+      "name": "Short Horizon Scalper",
+      "weights": { "synthetic": 1.28, "info": 0.92, "event": 1.22, "regime": 0.62 },
+      "decision": { "threshold": 0.58, "aggressiveness": 1.48 },
+      "bias": { "direction": 0.04, "strength": 0.03 },
+      "behavior": { "noiseSensitivity": 1.12, "volatilitySensitivity": 1.38, "reactionSpeed": 1.58, "memoryFactor": 0.12 },
+      "confidence": { "base": 0.49, "variance": 0.09 },
+      "horizon": "short"
+    },
+    {
+      "id": "long_horizon_allocator",
+      "name": "Long Horizon Allocator",
+      "weights": { "synthetic": 0.72, "info": 1.22, "event": 0.62, "regime": 1.48 },
+      "decision": { "threshold": 1.32, "aggressiveness": 0.85 },
+      "bias": { "direction": 0.03, "strength": 0.03 },
+      "behavior": { "noiseSensitivity": 0.28, "volatilitySensitivity": 0.75, "reactionSpeed": 0.6, "memoryFactor": 0.92 },
+      "confidence": { "base": 0.41, "variance": 0.03 },
+      "horizon": "long"
+    }
+  ]
+}

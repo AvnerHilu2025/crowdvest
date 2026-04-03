@@ -1,0 +1,9 @@
+node_modules
+.pnpm-store
+.turbo
+.next
+dist
+.cache
+logs
+hardening_logs
+.vscode

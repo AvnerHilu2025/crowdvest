@@ -34,3 +34,14 @@ packages/**/dist/
 coverage/
 logs/
 *.tsbuildinfo
+node_modules/
+.pnpm-store/
+.turbo/
+.next/
+dist/
+.cache/
+.vscode/
+logs/
+hardening_logs/
+*.log
+tmp*

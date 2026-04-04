@@ -4,6 +4,118 @@
  */
 
 import { clamp01, clamp11, hashToUnitFloat, type InfoEventInput } from "./exposure";
+import type { AgentSourceAccess } from "./archetype-profile";
+import { getSourceById } from "./information-sources";
+
+export type SourceWeightedChannels = {
+  info: number;
+  event: number;
+  regime: number;
+};
+
+export function deriveSourceWeightedChannels(input: {
+  baseInfo: number;
+  baseEvent: number;
+  baseRegime: number;
+  sourceAccess: AgentSourceAccess[];
+}): SourceWeightedChannels {
+  const { baseInfo, baseEvent, baseRegime, sourceAccess } = input;
+
+  let info = 0;
+  let event = 0;
+  let regime = 0;
+  let infoDen = 0;
+  let eventDen = 0;
+  let regimeDen = 0;
+
+  for (const a of sourceAccess) {
+    const meta = getSourceById(a.sourceId);
+    if (!meta) continue;
+
+    const strength = meta.defaultWeight * a.exposure * a.trust * (1 - 0.35 * meta.baseNoise);
+
+    switch (meta.type) {
+      case "news":
+      case "analyst":
+      case "peer":
+        info += baseInfo * strength;
+        infoDen += strength;
+        break;
+
+      case "social":
+      case "rumor":
+        event += baseEvent * strength;
+        eventDen += strength;
+        break;
+
+      case "macro":
+        regime += baseRegime * strength;
+        regimeDen += strength;
+        break;
+
+      case "market":
+        break;
+    }
+  }
+
+  return {
+    info: infoDen > 0 ? clamp11(info / infoDen) : 0,
+    event: eventDen > 0 ? clamp11(event / eventDen) : 0,
+    regime: regimeDen > 0 ? clamp11(regime / regimeDen) : 0,
+  };
+}
+
+export function generateSourceSignal(input: {
+  runId: string;
+  step: number;
+  sourceId: string;
+}): number {
+  const { runId, step, sourceId } = input;
+
+  const src = getSourceById(sourceId);
+  if (!src) return 0;
+
+  const seed = `${runId}:${sourceId}:${step}`;
+
+  const u1 = hashToUnitFloat(seed + ":a");
+  const u2 = hashToUnitFloat(seed + ":b");
+
+  let signal = 0;
+
+  switch (src.type) {
+    case "macro":
+      // slow drift
+      signal = (u1 - 0.5) * 0.6;
+      break;
+
+    case "news":
+    case "analyst":
+      // structured moderate signal
+      signal = (u1 - 0.5) * 1.0 * (1 - src.baseNoise);
+      break;
+
+    case "social":
+      // noisy spikes
+      signal = (u1 - 0.5) * 2.0;
+      break;
+
+    case "rumor":
+      // chaotic flips
+      signal = u1 > 0.5 ? 1 : -1;
+      break;
+
+    case "peer":
+      signal = (u1 - 0.5) * 1.2;
+      break;
+
+    case "market":
+      signal = (u1 - 0.5) * 0.8;
+      break;
+  }
+
+  void u2;
+  return Math.max(-1, Math.min(1, signal));
+}
 
 /** Deterministic source quality in ~[0.38, 1] from source id (CV-VAL-018). */
 export function signalQualityFromSource(source: string | null | undefined): number {

@@ -40,17 +40,49 @@ const W_INFO = 0.38;
 const W_EVT = 0.14;
 const W_REG = 0.5;
 
+/** Regime dominance softening + minority boosts; weights normalized before blend. */
+const DOMINANCE_PENALTY = 0.6;
+
+function blendChannelsWithRegimeRebalance(
+  synthetic: number,
+  info: number,
+  event: number,
+  regime: number,
+  weights: { synthetic: number; info: number; event: number; regime: number },
+): number {
+  const sumW = weights.synthetic + weights.info + weights.event + weights.regime;
+  if (sumW < 1e-9) return 0;
+
+  const wSynthetic = weights.synthetic / sumW;
+  const wInfo = weights.info / sumW;
+  const wEvent = weights.event / sumW;
+  const wRegime = weights.regime / sumW;
+
+  const adjustedRegime =
+    Math.abs(regime) > 0.4 ? regime * (1 - DOMINANCE_PENALTY) : regime;
+  const adjustedInfo = info * (1 + 0.2);
+  const adjustedEvent = event * (1 + 0.3);
+
+  return clamp11(
+    synthetic * wSynthetic +
+      adjustedInfo * wInfo +
+      adjustedEvent * wEvent +
+      adjustedRegime * wRegime,
+  );
+}
+
 export function computeBaseSignal(
   i: Pick<
     DecisionModelChannelInput,
     "synthetic_i" | "regime_i" | "infoSignal" | "eventSignal"
   >,
 ): number {
-  return clamp11(
-    W_SYN * i.synthetic_i +
-      W_INFO * i.infoSignal +
-      W_EVT * i.eventSignal +
-      W_REG * i.regime_i,
+  return blendChannelsWithRegimeRebalance(
+    i.synthetic_i,
+    i.infoSignal,
+    i.eventSignal,
+    i.regime_i,
+    { synthetic: W_SYN, info: W_INFO, event: W_EVT, regime: W_REG },
   );
 }
 
@@ -97,11 +129,12 @@ export function computeBaseSignalWithSharedPreset(
   presetName: string,
 ): number {
   const w = getSharedWeightPreset(presetName);
-  return clamp11(
-    w.syn * i.synthetic_i +
-      w.info * i.infoSignal +
-      w.evt * i.eventSignal +
-      w.reg * i.regime_i,
+  return blendChannelsWithRegimeRebalance(
+    i.synthetic_i,
+    i.infoSignal,
+    i.eventSignal,
+    i.regime_i,
+    { synthetic: w.syn, info: w.info, event: w.evt, regime: w.reg },
   );
 }
 
@@ -138,11 +171,12 @@ export function computeBaseSignalWithWeights(
   >,
   w: GoldSoftWeights,
 ): number {
-  return clamp11(
-    w.wSyn * i.synthetic_i +
-      w.wInfo * i.infoSignal +
-      w.wEvt * i.eventSignal +
-      w.wReg * i.regime_i,
+  return blendChannelsWithRegimeRebalance(
+    i.synthetic_i,
+    i.infoSignal,
+    i.eventSignal,
+    i.regime_i,
+    { synthetic: w.wSyn, info: w.wInfo, event: w.wEvt, regime: w.wReg },
   );
 }
 
@@ -207,15 +241,16 @@ export function computeBaseSignalMasked(
   >,
   mask: FeatureMask,
 ): number {
-  let ws = mask.syn ? W_SYN : 0;
-  let wi = mask.info ? W_INFO : 0;
-  let we = mask.evt ? W_EVT : 0;
-  let wr = mask.reg ? W_REG : 0;
-  const sum = ws + wi + we + wr;
-  if (sum < 1e-9) return 0;
-  return clamp11(
-    (ws * i.synthetic_i + wi * i.infoSignal + we * i.eventSignal + wr * i.regime_i) / sum,
-  );
+  const ws = mask.syn ? W_SYN : 0;
+  const wi = mask.info ? W_INFO : 0;
+  const we = mask.evt ? W_EVT : 0;
+  const wr = mask.reg ? W_REG : 0;
+  return blendChannelsWithRegimeRebalance(i.synthetic_i, i.infoSignal, i.eventSignal, i.regime_i, {
+    synthetic: ws,
+    info: wi,
+    event: we,
+    regime: wr,
+  });
 }
 
 /** Per-agent delay aggressiveness ∈ ~[0.55, 1.42] (CV-VAL-023 `delay_i`). */

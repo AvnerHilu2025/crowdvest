@@ -59,6 +59,75 @@ export type EffectiveArchetypeProfile = {
   horizon: ArchetypeHorizon;
 };
 
+export type AgentPersonaProfile = {
+  ageBucket: "young" | "mid" | "senior";
+  digitalAffinity: number;
+  institutionalTrust: number;
+  socialReactivity: number;
+};
+
+export type AgentSourceAccess = {
+  sourceId: string;
+  exposure: number;
+  trust: number;
+  latencyTolerance: number;
+};
+
+export type PersonaProfile = {
+  ageGroup: "young" | "adult" | "senior";
+  digitalAffinity: number; // 0..1
+  financialLiteracy: number; // 0..1
+  confidenceLevel: number; // 0..1
+  peerInfluence: number; // 0..1
+  authorityTrust: number; // 0..1
+  attentionBias: number; // 0..1
+  impressionSensitivity: number; // 0..1
+  engagementLevel: number; // 0..1
+  randomnessFactor: number; // 0..1
+};
+
+export type DecisionMode =
+  | "analytical"
+  | "social"
+  | "attention"
+  | "impression"
+  | "authority"
+  | "random";
+
+export type SourceAccess = {
+  macro: boolean;
+  news: boolean;
+  social: boolean;
+  peers: boolean;
+  analyst: boolean;
+  technical: boolean;
+};
+
+export type SourceTrust = {
+  macro: number;
+  news: number;
+  social: number;
+  peers: number;
+  analyst: number;
+  technical: number;
+};
+
+export type SourceLatency = {
+  macro: number;
+  news: number;
+  social: number;
+  peers: number;
+  analyst: number;
+  technical: number;
+};
+
+export type SourceProfile = {
+  access: SourceAccess;
+  trust: SourceTrust;
+  latency: SourceLatency;
+  maxSourcesPerStep: number;
+};
+
 let cached: { byId: Map<string, ArchetypeConfigEntry>; order: string[] } | null = null;
 
 export function loadArchetypesConfig(): { byId: Map<string, ArchetypeConfigEntry>; order: string[] } {
@@ -170,6 +239,85 @@ export function effectiveArchetypeProfileForAgent(
   };
 }
 
+export function buildAgentPersonaProfile(agentId: string): AgentPersonaProfile {
+  const ageU = hashToUnitFloat(`persona:age:${agentId}`);
+  const digU = hashToUnitFloat(`persona:dig:${agentId}`);
+  const instU = hashToUnitFloat(`persona:inst:${agentId}`);
+  const socU = hashToUnitFloat(`persona:soc:${agentId}`);
+
+  const ageBucket = ageU < 0.33 ? "young" : ageU < 0.72 ? "mid" : "senior";
+
+  return {
+    ageBucket,
+    digitalAffinity: digU,
+    institutionalTrust: instU,
+    socialReactivity: socU,
+  };
+}
+
+export function buildAgentSourceAccess(archetypeId: string, persona: AgentPersonaProfile): AgentSourceAccess[] {
+  const out: AgentSourceAccess[] = [];
+
+  function push(sourceId: string, exposure: number, trust: number, latencyTolerance: number) {
+    out.push({
+      sourceId,
+      exposure: Math.max(0, Math.min(1, exposure)),
+      trust: Math.max(0, Math.min(1, trust)),
+      latencyTolerance: Math.max(0, Math.min(1, latencyTolerance)),
+    });
+  }
+
+  push("market_prices", 0.9, 0.95, 1.0);
+
+  switch (archetypeId) {
+    case "trend":
+      push("social_feed", 0.55 + 0.35 * persona.digitalAffinity, 0.35 + 0.2 * persona.socialReactivity, 0.2);
+      push("breaking_news", 0.5, 0.6, 0.4);
+      push("macro_reports", 0.25, 0.55, 0.8);
+      break;
+
+    case "contrarian":
+      push("social_feed", 0.35, 0.2, 0.2);
+      push("breaking_news", 0.45, 0.45, 0.5);
+      push("analyst_notes", 0.5, 0.65, 0.7);
+      break;
+
+    case "fundamental":
+      push("analyst_notes", 0.8, 0.82 + 0.12 * persona.institutionalTrust, 0.85);
+      push("macro_reports", 0.7, 0.84, 0.9);
+      push("breaking_news", 0.35, 0.55, 0.5);
+      break;
+
+    case "noise":
+      push("social_feed", 0.85, 0.35, 0.1);
+      push("rumor_flow", 0.95, 0.22, 0.05);
+      push("peer_circle", 0.75, 0.45, 0.2);
+      break;
+
+    default:
+      push("breaking_news", 0.45, 0.58, 0.45);
+      push("macro_reports", 0.35, 0.72, 0.7);
+      push("analyst_notes", 0.35, 0.68, 0.7);
+      push("social_feed", 0.25 + 0.35 * persona.digitalAffinity, 0.25 + 0.2 * persona.socialReactivity, 0.2);
+      break;
+  }
+
+  if (persona.ageBucket === "senior") {
+    out.forEach((x) => {
+      if (x.sourceId === "social_feed" || x.sourceId === "rumor_flow") x.exposure *= 0.65;
+      if (x.sourceId === "analyst_notes" || x.sourceId === "macro_reports") x.trust = Math.min(1, x.trust * 1.12);
+    });
+  }
+
+  if (persona.ageBucket === "young") {
+    out.forEach((x) => {
+      if (x.sourceId === "social_feed" || x.sourceId === "rumor_flow") x.exposure = Math.min(1, x.exposure * 1.18);
+    });
+  }
+
+  return out;
+}
+
 export function applyVolatilityToSignal(
   signal: number,
   syntheticSignal: number,
@@ -228,4 +376,120 @@ export function applyArchetypeSignalBias(
   }
 
   return s;
+}
+
+export function buildDefaultPersona(archetypeId: string): PersonaProfile {
+  switch (archetypeId) {
+    case "trend":
+      return {
+        ageGroup: "young",
+        digitalAffinity: 0.9,
+        financialLiteracy: 0.5,
+        confidenceLevel: 0.8,
+        peerInfluence: 0.7,
+        authorityTrust: 0.3,
+        attentionBias: 0.8,
+        impressionSensitivity: 0.4,
+        engagementLevel: 0.9,
+        randomnessFactor: 0.2,
+      };
+
+    case "fundamental":
+      return {
+        ageGroup: "adult",
+        digitalAffinity: 0.5,
+        financialLiteracy: 0.9,
+        confidenceLevel: 0.6,
+        peerInfluence: 0.2,
+        authorityTrust: 0.7,
+        attentionBias: 0.3,
+        impressionSensitivity: 0.2,
+        engagementLevel: 0.7,
+        randomnessFactor: 0.1,
+      };
+
+    case "contrarian":
+      return {
+        ageGroup: "adult",
+        digitalAffinity: 0.6,
+        financialLiteracy: 0.7,
+        confidenceLevel: 0.7,
+        peerInfluence: 0.1,
+        authorityTrust: 0.2,
+        attentionBias: 0.4,
+        impressionSensitivity: 0.3,
+        engagementLevel: 0.6,
+        randomnessFactor: 0.3,
+      };
+
+    default:
+      return {
+        ageGroup: "adult",
+        digitalAffinity: 0.5,
+        financialLiteracy: 0.5,
+        confidenceLevel: 0.5,
+        peerInfluence: 0.5,
+        authorityTrust: 0.5,
+        attentionBias: 0.5,
+        impressionSensitivity: 0.5,
+        engagementLevel: 0.5,
+        randomnessFactor: 0.5,
+      };
+  }
+}
+
+export function getDecisionMode(persona: PersonaProfile): DecisionMode {
+  if (persona.randomnessFactor > 0.7) return "random";
+  if (persona.peerInfluence > 0.7) return "social";
+  if (persona.attentionBias > 0.7) return "attention";
+  if (persona.impressionSensitivity > 0.7) return "impression";
+  if (persona.authorityTrust > 0.7) return "authority";
+  return "analytical";
+}
+
+export function buildSourceProfile(persona: PersonaProfile): SourceProfile {
+  const trust: SourceTrust = {
+    macro: persona.financialLiteracy * 0.9,
+    news: 0.3 + persona.engagementLevel * 0.5,
+    social: persona.digitalAffinity * 0.9,
+    peers: persona.peerInfluence * 0.9,
+    analyst: persona.authorityTrust * 0.9,
+    technical: persona.financialLiteracy * 0.8,
+  };
+
+  const totalTrust =
+    (trust.macro +
+      trust.news +
+      trust.social +
+      trust.peers +
+      trust.analyst +
+      trust.technical) || 1;
+
+  trust.macro /= totalTrust;
+  trust.news /= totalTrust;
+  trust.social /= totalTrust;
+  trust.peers /= totalTrust;
+  trust.analyst /= totalTrust;
+  trust.technical /= totalTrust;
+
+  return {
+    access: {
+      macro: persona.financialLiteracy > 0.7,
+      news: persona.engagementLevel > 0.4 && persona.digitalAffinity > 0.3,
+      social: persona.digitalAffinity > 0.6,
+      peers: persona.peerInfluence > 0.4,
+      analyst: persona.authorityTrust > 0.6,
+      technical: persona.financialLiteracy > 0.6,
+    },
+    trust,
+    latency: {
+      macro: 3,
+      news: 1,
+      social: 0,
+      peers: 0,
+      analyst: 2,
+      technical: 1,
+    },
+    maxSourcesPerStep: Math.max(1, Math.floor(persona.engagementLevel * 3)),
+  };
 }

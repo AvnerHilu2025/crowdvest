@@ -61,10 +61,13 @@ import {
   computeAgentSyntheticSignal,
   computeAgentRegimeSignal,
   signalQualityFromSource,
+  generateSourceSignal,
 } from "../lib/agent-information-exposure";
 import { computeRegimeState } from "../market/regime";
 import { assertRunExists } from "../lib/assert-run-exists";
 import { chunk } from "../lib/chunk";
+import { getSourceById } from "../lib/information-sources";
+import { generateAgentProfile } from "../lib/population-generator";
 import {
   decisionModelKindForAgent,
   computeBaseSignal,
@@ -90,8 +93,13 @@ import {
 import {
   applyArchetypeSignalBias,
   applyVolatilityToSignal,
+  buildAgentPersonaProfile,
+  buildAgentSourceAccess,
+  buildDefaultPersona,
+  buildSourceProfile,
   confidenceFromProfile,
   effectiveArchetypeProfileForAgent,
+  getDecisionMode,
   loadArchetypesConfig,
   resolveArchetypeConfigId,
   type EffectiveArchetypeProfile,
@@ -796,6 +804,11 @@ type PipelineDiagRow = {
   regime_i: number;
   /** arch052 blend input: compressRegimeSignal(regime_i); omitted on other paths */
   reg_e_compressed?: number;
+  persona_age_bucket?: "young" | "mid" | "senior";
+  persona_digital_affinity?: number;
+  source_access_count?: number;
+  /** Same as source_access_count; pipeline diag alias */
+  sourceCount?: number;
   distorted_signal: number;
   /** Signal compared to threshold (scaled for cv029, else pre-threshold signal). */
   final_signal: number;
@@ -807,6 +820,18 @@ type PipelineDiagRow = {
   info_exp: number;
   evt_exp: number;
   reg_exp: number;
+  raw_synthetic_market?: number;
+  blended_synthetic_market?: number;
+  final_synthetic_market?: number;
+  raw_info_signal?: number;
+  blended_info_signal?: number;
+  final_info_signal?: number;
+  raw_event_signal?: number;
+  blended_event_signal?: number;
+  final_event_signal?: number;
+  raw_regime_signal?: number;
+  blended_regime_signal?: number;
+  final_regime_signal?: number;
 };
 
 function dominantLegAbsChannels(ch: {
@@ -904,17 +929,21 @@ function printPipelineDiagnostics(
     if (stepRows.length === 0) continue;
     lines.push(`step=${st}`);
     lines.push(
-      "| agentId | archetype | path | syn_mkt | syn_i | info | evt | reg_raw | reg_i | reg_ec | syn_e | inf_e | evt_e | reg_e | distorted | final | th | dom | act |",
+      "| agentId | archetype | path | syn_mkt | syn_i | info | evt | reg_raw | reg_i | reg_ec | syn_e | inf_e | evt_e | reg_e | distorted | final | th | dom | act | p_age | p_dig | src_n |",
     );
     lines.push(
-      "|---------|-----------|------|---------|-------|------|-----|---------|-------|--------|-------|-------|-------|-------|-----------|-------|----|-----|-----|",
+      "|---------|-----------|------|---------|-------|------|-----|---------|-------|--------|-------|-------|-------|-------|-----------|-------|----|-----|-----|-------|-------|-------|",
     );
     for (const r of stepRows.sort((a, b) => a.agentId.localeCompare(b.agentId))) {
       const aid = r.agentId.length > 8 ? `${r.agentId.slice(0, 8)}…` : r.agentId;
       const regEc =
         r.reg_e_compressed !== undefined ? r.reg_e_compressed.toFixed(4) : "-";
+      const pAge = r.persona_age_bucket ?? "-";
+      const pDig =
+        r.persona_digital_affinity !== undefined ? r.persona_digital_affinity.toFixed(3) : "-";
+      const srcN = r.source_access_count !== undefined ? String(r.source_access_count) : "-";
       lines.push(
-        `| ${aid} | ${r.archetypeLabel.replace(/\|/g, "\\|")} | ${r.pathTag} | ${r.synthetic_market.toFixed(4)} | ${r.synthetic_i.toFixed(4)} | ${r.info_signal.toFixed(4)} | ${r.event_signal.toFixed(4)} | ${r.regime_raw.toFixed(4)} | ${r.regime_i.toFixed(4)} | ${regEc} | ${r.syn_exp.toFixed(4)} | ${r.info_exp.toFixed(4)} | ${r.evt_exp.toFixed(4)} | ${r.reg_exp.toFixed(4)} | ${r.distorted_signal.toFixed(4)} | ${r.final_signal.toFixed(4)} | ${r.threshold.toFixed(5)} | ${r.dominant_leg} | ${r.action} |`,
+        `| ${aid} | ${r.archetypeLabel.replace(/\|/g, "\\|")} | ${r.pathTag} | ${r.synthetic_market.toFixed(4)} | ${r.synthetic_i.toFixed(4)} | ${r.info_signal.toFixed(4)} | ${r.event_signal.toFixed(4)} | ${r.regime_raw.toFixed(4)} | ${r.regime_i.toFixed(4)} | ${regEc} | ${r.syn_exp.toFixed(4)} | ${r.info_exp.toFixed(4)} | ${r.evt_exp.toFixed(4)} | ${r.reg_exp.toFixed(4)} | ${r.distorted_signal.toFixed(4)} | ${r.final_signal.toFixed(4)} | ${r.threshold.toFixed(5)} | ${r.dominant_leg} | ${r.action} | ${pAge} | ${pDig} | ${srcN} |`,
       );
     }
     lines.push("");
@@ -1780,7 +1809,11 @@ async function main(): Promise<void> {
     }
 
     for (let agentIndex = 0; agentIndex < agents.length; agentIndex++) {
+      const i = step;
+      const agentIdx = agentIndex;
       const agent = agents[agentIndex]!;
+      const profile = generateAgentProfile();
+      (agent as any).profile = profile;
       const traits = traitMapByAgent.get(agent.id) ?? new Map();
       const biases = extractBiases(traits);
       const state = agentState.get(agent.id)!;
@@ -1862,6 +1895,66 @@ async function main(): Promise<void> {
         rng,
       });
 
+      const effArch = effectiveArchetypeProfileForAgent(agent.id, agent.archetype, agent.archetypeId);
+      const structuredRoleForPersona = (agent.archetype ?? "").trim().toLowerCase();
+      const archetypeIdForPersona = ["trend", "contrarian", "noise", "fundamental"].includes(
+        structuredRoleForPersona,
+      )
+        ? structuredRoleForPersona
+        : effArch.archetypeId;
+      const persona = buildDefaultPersona(archetypeIdForPersona);
+      const decisionMode = getDecisionMode(persona);
+      const sources = buildSourceProfile(persona);
+      const personaProfile = buildAgentPersonaProfile(agent.id);
+      const sourceAccess = buildAgentSourceAccess(effArch.archetypeId, personaProfile);
+
+      let infoAgg = 0;
+      let eventAgg = 0;
+      let regimeAgg = 0;
+      let infoDen = 0;
+      let eventDen = 0;
+      let regimeDen = 0;
+
+      for (const access of sourceAccess) {
+        const src = getSourceById(access.sourceId);
+        if (!src) continue;
+
+        const srcSignal = generateSourceSignal({
+          runId,
+          step,
+          sourceId: access.sourceId,
+        });
+
+        const weight = access.exposure * access.trust;
+
+        switch (src.type) {
+          case "news":
+          case "analyst":
+          case "peer":
+            infoAgg += srcSignal * weight;
+            infoDen += weight;
+            break;
+
+          case "social":
+          case "rumor":
+            eventAgg += srcSignal * weight;
+            eventDen += weight;
+            break;
+
+          case "macro":
+            regimeAgg += srcSignal * weight;
+            regimeDen += weight;
+            break;
+
+          case "market":
+            break;
+        }
+      }
+
+      infoSignalRaw = infoDen > 0 ? clamp11(infoAgg / infoDen) : infoSignalRaw;
+      eventSignalRaw = eventDen > 0 ? clamp11(eventAgg / eventDen) : eventSignalRaw;
+      regime_i_raw = regimeDen > 0 ? clamp11(regimeAgg / regimeDen) : regime_i_raw;
+
       const structuredRole = (agent.archetype ?? "").trim().toLowerCase();
       const archetypeIdForBias = ["trend", "contrarian", "noise", "fundamental"].includes(structuredRole)
         ? structuredRole
@@ -1900,8 +1993,78 @@ async function main(): Promise<void> {
 
       let infoSignal = info_exp;
       let eventSignal = evt_exp;
-      const synthetic_i = syn_i_exp;
-      const regime_i = reg_exp;
+      let synthetic_i = syn_i_exp;
+      let regime_i = reg_exp;
+
+      const baseSynthetic = syntheticSignal;
+      const baseInfo = infoSignal;
+      const baseEvent = eventSignal;
+      const baseRegime = regime.regimeSignal;
+
+      const blendedSynthetic =
+        baseSynthetic * sources.trust.technical +
+        baseInfo * sources.trust.peers * 0.3;
+
+      const blendedInfo =
+        baseInfo * sources.trust.news +
+        baseRegime * sources.trust.macro * 0.4 +
+        baseEvent * sources.trust.social * 0.2;
+
+      const blendedEvent =
+        baseEvent * sources.trust.social +
+        baseInfo * sources.trust.news * 0.2;
+
+      const blendedRegime =
+        baseRegime * sources.trust.macro +
+        baseInfo * sources.trust.news * 0.3;
+
+      let finalSynthetic = sources.access.technical ? blendedSynthetic : 0;
+      let finalInfo = sources.access.news ? blendedInfo : 0;
+      let finalEvent = sources.access.social ? blendedEvent : 0;
+      let finalRegime = sources.access.macro ? blendedRegime : 0;
+
+      switch (decisionMode) {
+        case "social":
+          finalEvent *= 1.5;
+          finalInfo *= 0.7;
+          break;
+
+        case "attention":
+          finalEvent *= 1.7;
+          finalRegime *= 0.5;
+          break;
+
+        case "impression":
+          finalEvent *= 1.8;
+          finalSynthetic *= 0.5;
+          break;
+
+        case "authority":
+          finalInfo *= 1.4;
+          finalEvent *= 0.6;
+          break;
+
+        case "random":
+          finalSynthetic *= hashToUnitFloat(`pdm:${agent.id}:${step}:s`);
+          finalInfo *= hashToUnitFloat(`pdm:${agent.id}:${step}:i`);
+          finalEvent *= hashToUnitFloat(`pdm:${agent.id}:${step}:e`);
+          finalRegime *= hashToUnitFloat(`pdm:${agent.id}:${step}:r`);
+          break;
+
+        default:
+          break;
+      }
+
+      const ratioOr = (num: number, den: number) => {
+        if (Math.abs(den) < 1e-12) return num === 0 ? 1 : 0;
+        return num / den;
+      };
+
+      synthetic_i *= ratioOr(finalSynthetic, baseSynthetic);
+      infoSignal *= ratioOr(finalInfo, baseInfo);
+      eventSignal *= ratioOr(finalEvent, baseEvent);
+      regime_i *= ratioOr(finalRegime, baseRegime);
+
       const channels = { synthetic_i, regime_i, infoSignal, eventSignal };
 
       const rationality = getTrait(traits, "rationality", 0.5);
@@ -2078,6 +2241,9 @@ async function main(): Promise<void> {
         state.attentionLevel = updateAttention(state.attentionLevel, state.fatigue);
 
         if (argv.pipelineDiag) {
+          if (i < 5) {
+            console.log("PROFILE SAMPLE:", (agent as any).profile);
+          }
           pipelineDiagRows.push({
             step,
             agentId: agent.id,
@@ -2187,6 +2353,9 @@ async function main(): Promise<void> {
         state.attentionLevel = updateAttention(state.attentionLevel, state.fatigue);
 
         if (argv.pipelineDiag) {
+          if (i < 5) {
+            console.log("PROFILE SAMPLE:", (agent as any).profile);
+          }
           pipelineDiagRows.push({
             step,
             agentId: agent.id,
@@ -2309,6 +2478,9 @@ async function main(): Promise<void> {
         state.attentionLevel = updateAttention(state.attentionLevel, state.fatigue);
 
         if (argv.pipelineDiag) {
+          if (i < 5) {
+            console.log("PROFILE SAMPLE:", (agent as any).profile);
+          }
           pipelineDiagRows.push({
             step,
             agentId: agent.id,
@@ -2432,6 +2604,9 @@ async function main(): Promise<void> {
         state.attentionLevel = updateAttention(state.attentionLevel, state.fatigue);
 
         if (argv.pipelineDiag) {
+          if (i < 5) {
+            console.log("PROFILE SAMPLE:", (agent as any).profile);
+          }
           pipelineDiagRows.push({
             step,
             agentId: agent.id,
@@ -2634,6 +2809,9 @@ async function main(): Promise<void> {
       state.attentionLevel = updateAttention(state.attentionLevel, state.fatigue);
 
       if (argv.pipelineDiag) {
+        if (i < 5) {
+          console.log("PROFILE SAMPLE:", (agent as any).profile);
+        }
         const archMask = val024.useFeatureMask ? featureMaskForAgent(agent.id) : null;
         pipelineDiagRows.push({
           step,
@@ -2647,6 +2825,10 @@ async function main(): Promise<void> {
           regime_raw: regime.regimeSignal,
           regime_i: regime_i_raw,
           reg_e_compressed: compressRegimeSignal(regime_i),
+          persona_age_bucket: personaProfile.ageBucket,
+          persona_digital_affinity: personaProfile.digitalAffinity,
+          source_access_count: sourceAccess.length,
+          sourceCount: sourceAccess.length,
           distorted_signal: signalI,
           final_signal: signalI,
           threshold,
@@ -2656,6 +2838,47 @@ async function main(): Promise<void> {
           info_exp: info_exp,
           evt_exp: evt_exp,
           reg_exp: reg_exp,
+          raw_synthetic_market: baseSynthetic,
+          blended_synthetic_market: blendedSynthetic,
+          final_synthetic_market: finalSynthetic,
+          raw_info_signal: baseInfo,
+          blended_info_signal: blendedInfo,
+          final_info_signal: finalInfo,
+          raw_event_signal: baseEvent,
+          blended_event_signal: blendedEvent,
+          final_event_signal: finalEvent,
+          raw_regime_signal: baseRegime,
+          blended_regime_signal: blendedRegime,
+          final_regime_signal: finalRegime,
+        });
+      }
+
+      if (i === 0 && agentIdx === 0) {
+        console.log("DEBUG_SIGNAL", {
+          synthetic: {
+            raw: baseSynthetic,
+            blended: blendedSynthetic,
+            final: finalSynthetic,
+          },
+          info: {
+            raw: baseInfo,
+            blended: blendedInfo,
+            final: finalInfo,
+          },
+          event: {
+            raw: baseEvent,
+            blended: blendedEvent,
+            final: finalEvent,
+          },
+          regime: {
+            raw: baseRegime,
+            blended: blendedRegime,
+            final: finalRegime,
+          },
+          infoSignalRaw,
+          eventSignalRaw,
+          regime_i_raw,
+          finalSignal: signalI,
         });
       }
 

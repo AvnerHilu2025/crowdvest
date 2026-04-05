@@ -17,6 +17,7 @@
     "decide": "tsx src/scripts/decide.ts",
     "decide:drift-smoke": "tsx src/scripts/decide-drift-smoke.ts",
     "compute-crowd-metrics": "tsx src/scripts/compute-crowd-metrics.ts",
+    "validate:postfix-signals": "tsx src/scripts/validate-postfix-signals.ts",
     "compute-rewards": "tsx src/scripts/compute-rewards.ts",
     "backfill:run-duration": "tsx src/scripts/backfill-run-duration.ts",
     "backfill:variant-duration": "tsx src/scripts/backfill-variant-duration.ts",

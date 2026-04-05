@@ -13,67 +13,145 @@
     "passive": 0.15,
     "random": 0.1
   },
+  "worldviewDistribution": {
+    "left": 0.25,
+    "center": 0.35,
+    "right": 0.25,
+    "anti_establishment": 0.15
+  },
   "channelsByAge": {
     "young": {
       "social": 0.9,
       "ads": 0.8,
       "altNews": 0.7,
       "news": 0.5,
-      "authority": 0.3
+      "authority": 0.3,
+      "peers": 0.8,
+      "technical": 0.2
     },
     "adult": {
       "news": 0.8,
       "authority": 0.6,
       "social": 0.5,
-      "ads": 0.5
+      "ads": 0.5,
+      "peers": 0.5,
+      "technical": 0.5,
+      "macro": 0.4
     },
     "senior": {
       "news": 0.9,
       "authority": 0.8,
       "macro": 0.6,
-      "social": 0.2
+      "social": 0.2,
+      "peers": 0.3,
+      "technical": 0.2
+    }
+  },
+  "sourceFamilies": {
+    "news": {
+      "left": ["mainstream_left"],
+      "center": ["mainstream_center"],
+      "right": ["mainstream_right"],
+      "anti_establishment": ["alternative_news"]
+    },
+    "altNews": {
+      "left": ["alt_left"],
+      "center": ["mixed_alt"],
+      "right": ["alt_right"],
+      "anti_establishment": ["conspiracy_alt"]
+    },
+    "social": {
+      "left": ["social_left_cluster"],
+      "center": ["social_general_cluster"],
+      "right": ["social_right_cluster"],
+      "anti_establishment": ["anti_establishment_cluster"]
+    },
+    "authority": {
+      "left": ["institutional_authority"],
+      "center": ["institutional_authority"],
+      "right": ["institutional_authority", "community_authority"],
+      "anti_establishment": ["influencer_authority"]
+    },
+    "ads": {
+      "left": ["identity_ads"],
+      "center": ["prestige_ads"],
+      "right": ["identity_ads", "fear_ads"],
+      "anti_establishment": ["urgency_ads", "fear_ads"]
+    },
+    "peers": {
+      "left": ["peer_left_circle"],
+      "center": ["peer_general_circle"],
+      "right": ["peer_right_circle"],
+      "anti_establishment": ["peer_anti_establishment_circle"]
+    },
+    "technical": {
+      "left": ["technical_feed"],
+      "center": ["technical_feed"],
+      "right": ["technical_feed"],
+      "anti_establishment": ["technical_feed"]
+    },
+    "macro": {
+      "left": ["macro_bulletin"],
+      "center": ["macro_bulletin"],
+      "right": ["macro_bulletin"],
+      "anti_establishment": ["macro_bulletin"]
     }
   },
   "personaChannelModifiers": {
     "analytical": {
-      "news": 1.2,
-      "authority": 1.2,
-      "social": 0.7,
-      "ads": 0.6,
-      "altNews": 0.5
+      "news": 1.35,
+      "authority": 1.35,
+      "social": 0.45,
+      "ads": 0.35,
+      "altNews": 0.25,
+      "macro": 1.15
     },
     "social": {
-      "social": 1.3,
-      "ads": 1.1,
-      "news": 0.8,
-      "authority": 0.7
+      "social": 1.45,
+      "ads": 1.15,
+      "news": 0.65,
+      "authority": 0.50,
+      "macro": 0.55
     },
     "attention": {
-      "ads": 1.3,
-      "altNews": 1.2,
-      "social": 1.1,
-      "news": 0.7
+      "ads": 1.45,
+      "altNews": 1.35,
+      "social": 1.20,
+      "news": 0.60,
+      "authority": 0.55,
+      "macro": 0.45
     },
     "authority": {
-      "authority": 1.4,
-      "news": 1.1,
-      "social": 0.6
+      "authority": 1.55,
+      "news": 1.10,
+      "social": 0.35,
+      "ads": 0.35,
+      "altNews": 0.30,
+      "macro": 1.10
     },
     "emotion": {
-      "ads": 1.3,
-      "social": 1.2,
-      "altNews": 1.1
+      "ads": 1.45,
+      "social": 1.25,
+      "altNews": 1.20,
+      "news": 0.75,
+      "authority": 0.60,
+      "macro": 0.50
     },
     "passive": {
-      "news": 0.7,
-      "social": 0.7,
-      "ads": 0.7
+      "news": 0.55,
+      "social": 0.55,
+      "ads": 0.55,
+      "authority": 0.65,
+      "altNews": 0.55,
+      "macro": 0.65
     },
     "random": {
-      "news": 1.0,
-      "social": 1.0,
-      "ads": 1.0,
-      "altNews": 1.0
+      "news": 1.00,
+      "social": 1.00,
+      "ads": 1.00,
+      "authority": 1.00,
+      "altNews": 1.00,
+      "macro": 1.00
     }
   }
 }

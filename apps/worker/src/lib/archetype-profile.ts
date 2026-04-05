@@ -447,6 +447,24 @@ export function getDecisionMode(persona: PersonaProfile): DecisionMode {
   return "analytical";
 }
 
+/**
+ * Graded behavioral awareness of event-like shocks (social/peer/engagement), in [0, 1].
+ * Used with a soft access modifier when `sources.access.social` is false.
+ */
+export function computeEventAwareness(persona: PersonaProfile): number {
+  const raw =
+    0.4 * persona.digitalAffinity +
+    0.35 * persona.peerInfluence +
+    0.25 * persona.engagementLevel;
+  return Math.max(0, Math.min(1, raw));
+}
+
+/**
+ * When `buildSourceProfile` reports `access.social === false`, scale behavioral event leg
+ * by this floor instead of hard zero (second-hand / ambient exposure).
+ */
+export const EVENT_ACCESS_SOFT_FLOOR = 0.2;
+
 export function buildSourceProfile(persona: PersonaProfile): SourceProfile {
   const trust: SourceTrust = {
     macro: persona.financialLiteracy * 0.9,

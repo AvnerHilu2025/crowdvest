@@ -61,12 +61,13 @@ import {
   computeAgentSyntheticSignal,
   computeAgentRegimeSignal,
   signalQualityFromSource,
-  generateSourceSignal,
+  stepSignalsFromChannelsPreApplyExposure,
+  minimalStepEventSignal,
+  logEventPathExposure,
 } from "../lib/agent-information-exposure";
 import { computeRegimeState } from "../market/regime";
 import { assertRunExists } from "../lib/assert-run-exists";
 import { chunk } from "../lib/chunk";
-import { getSourceById } from "../lib/information-sources";
 import { generateAgentProfile } from "../lib/population-generator";
 import {
   decisionModelKindForAgent,
@@ -97,7 +98,9 @@ import {
   buildAgentSourceAccess,
   buildDefaultPersona,
   buildSourceProfile,
+  computeEventAwareness,
   confidenceFromProfile,
+  EVENT_ACCESS_SOFT_FLOOR,
   effectiveArchetypeProfileForAgent,
   getDecisionMode,
   loadArchetypesConfig,
@@ -116,6 +119,51 @@ const VAL018_TARGET_FRAC_SCALE = 0.78;
 
 /** Samples per step for mean pairwise Jaccard of exposed event-id sets. */
 const VAL018_OVERLAP_SAMPLES = 12_000;
+
+/** Stage C.4: per–source-family routing into channels (used by independent emitters). */
+const SOURCE_TO_SIGNAL_ROUTING: Record<
+  string,
+  {
+    info?: number;
+    event?: number;
+    regime?: number;
+    synthetic?: number;
+    amplification?: number;
+  }
+> = {
+  institutional_authority: { info: 0.8, regime: 0.2 },
+  community_authority: { info: 0.6, event: 0.4 },
+  influencer_authority: { event: 0.7, info: 0.3 },
+
+  mainstream_left: { info: 1.0 },
+  mainstream_center: { info: 1.0 },
+  mainstream_right: { info: 1.0 },
+  alternative_news: { event: 0.7, info: 0.3 },
+
+  alt_left: { event: 0.6, info: 0.4 },
+  alt_right: { event: 0.6, info: 0.4 },
+  mixed_alt: { event: 0.5, info: 0.5 },
+  conspiracy_alt: { event: 1.0, amplification: 1.4 },
+
+  social_left_cluster: { event: 0.7, info: 0.3 },
+  social_right_cluster: { event: 0.7, info: 0.3 },
+  social_general_cluster: { event: 0.5, info: 0.5 },
+  anti_establishment_cluster: { event: 0.9, amplification: 1.2 },
+
+  prestige_ads: { info: 0.7, event: 0.3 },
+  identity_ads: { event: 0.8 },
+  fear_ads: { event: 1.0, amplification: 1.3 },
+  urgency_ads: { event: 1.0, amplification: 1.5 },
+
+  peer_left_circle: { event: 0.7, info: 0.3 },
+  peer_general_circle: { event: 0.6, info: 0.4 },
+  peer_right_circle: { event: 0.7, info: 0.3 },
+  peer_anti_establishment_circle: { event: 0.9, amplification: 1.15 },
+
+  technical_feed: { synthetic: 1.0 },
+
+  macro_bulletin: { regime: 1.0 },
+};
 
 function compressRegimeSignal(x: number): number {
   return Math.tanh(x * 0.45);
@@ -186,6 +234,101 @@ function getArchetypeBias(name: string): number {
 function seededNoise(seed: number): number {
   const x = Math.sin(seed) * 10000;
   return x - Math.floor(x);
+}
+
+/** Deep diagnostics: signals at decision time (`CV_DEBUG_SIGNALS=1`). */
+function logFinalSignalTrace(params: {
+  step: number;
+  agent: { id: string; archetypeId?: string | null; archetype?: string | null };
+  syntheticSignal?: number;
+  infoSignal?: number;
+  eventSignal?: number;
+  regimeSignal?: number;
+  distortedSignal: number;
+  prefBUY?: number;
+  prefSELL?: number;
+  prefHOLD?: number;
+  confidence: number;
+  /** Per-agent channel snapshot (e.g. after blend); used when primary scalars are missing or step-only. */
+  preSignals?: {
+    synthetic?: number;
+    info?: number;
+    event?: number;
+    regime?: number;
+  };
+}): void {
+  if (process.env.CV_DEBUG_SIGNALS !== "1") return;
+  const pre = params.preSignals;
+  const syn = params.syntheticSignal ?? pre?.synthetic ?? null;
+  const inf = params.infoSignal ?? pre?.info ?? null;
+  const reg = params.regimeSignal ?? pre?.regime ?? null;
+  if (process.env.CV_DEBUG_FINAL_EVENT_SITE === "1") {
+    console.log(
+      JSON.stringify({
+        tag: "FINAL_EVENT_SITE",
+        step: params.step,
+        agentId: params.agent.id,
+        archetype: params.agent.archetypeId ?? params.agent.archetype ?? null,
+        valuesJustBeforeFinalTrace: {
+          preSignalsEvent: pre?.event ?? null,
+          eventSignal: typeof params.eventSignal !== "undefined" ? params.eventSignal : null,
+          signalsEvent: null,
+        },
+      }),
+    );
+  }
+  /** Event leg: prefer upstream `preSignals.event` when non-trivial; else channel `eventSignal`; else 0. */
+  const evt =
+    pre?.event !== undefined && Math.abs(pre.event) > 1e-9
+      ? pre.event
+      : (params.eventSignal ?? 0);
+  console.log(
+    JSON.stringify({
+      tag: "FINAL_SIGNAL_TRACE",
+      step: params.step,
+      agentId: params.agent.id,
+      archetype: params.agent.archetypeId ?? params.agent.archetype ?? null,
+      signals: {
+        synthetic: syn,
+        info: inf,
+        event: evt,
+        regime: reg,
+        distorted: params.distortedSignal ?? null,
+      },
+      preferences: {
+        buy: params.prefBUY ?? null,
+        sell: params.prefSELL ?? null,
+        hold: params.prefHOLD ?? null,
+      },
+      confidence: params.confidence ?? null,
+    }),
+  );
+}
+
+/** Pipeline diagnostics: channel values right after exposure assignment (`CV_DEBUG_PRE_SIGNALS=1`). */
+function logPreSignalTrace(params: {
+  step: number;
+  agent: { id: string; archetypeId?: string | null; archetype?: string | null };
+  syntheticSignal: number;
+  infoSignal: number;
+  eventSignal: number;
+  regimeSignal: number;
+}): void {
+  if (process.env.CV_DEBUG_PRE_SIGNALS !== "1") return;
+  console.log(
+    JSON.stringify({
+      tag: "PRE_SIGNAL_TRACE",
+      step: params.step,
+      agentId: params.agent.id,
+      archetype: params.agent.archetypeId ?? params.agent.archetype ?? null,
+      preSignals: {
+        synthetic: params.syntheticSignal ?? null,
+        info: params.infoSignal ?? null,
+        event: params.eventSignal ?? null,
+        regime: params.regimeSignal ?? null,
+      },
+    }),
+  );
 }
 
 /**
@@ -832,6 +975,16 @@ type PipelineDiagRow = {
   raw_regime_signal?: number;
   blended_regime_signal?: number;
   final_regime_signal?: number;
+  /** Population profile (Stage C): persona label from generated profile. */
+  profile_persona?: string;
+  profile_raw_synthetic_i?: number;
+  profile_final_synthetic_i?: number;
+  profile_raw_info_signal?: number;
+  profile_final_info_signal?: number;
+  profile_raw_event_signal?: number;
+  profile_final_event_signal?: number;
+  profile_raw_regime_i?: number;
+  profile_final_regime_i?: number;
 };
 
 function dominantLegAbsChannels(ch: {
@@ -1816,6 +1969,7 @@ async function main(): Promise<void> {
       (agent as any).profile = profile;
       const traits = traitMapByAgent.get(agent.id) ?? new Map();
       const biases = extractBiases(traits);
+      const understanding = getTrait(traits, "understanding", 0.5);
       const state = agentState.get(agent.id)!;
       const agentSeed = hashToSeed(`${datasetVersion}:${assetSymbol}:${globalSeed}:${agent.id}:${step}`);
       const rng = createSeededRng(agentSeed);
@@ -1858,7 +2012,6 @@ async function main(): Promise<void> {
         rng,
       });
 
-      const understanding = getTrait(traits, "understanding", 0.5);
       let infoSignalRaw = blendInfoWithUnderstanding({
         infoRaw: infoAfterExposure,
         understanding,
@@ -1871,6 +2024,10 @@ async function main(): Promise<void> {
         fatigue: state.fatigue,
         emotionalVolatility: getTrait(traits, "emotionalVolatility"),
       });
+      if (eventSignalRaw === 0) {
+        const stepEventSignal = minimalStepEventSignal(step, agentIdx);
+        eventSignalRaw = stepEventSignal;
+      }
 
       const archCfgId = resolveArchetypeConfigId(
         agent.id,
@@ -1908,53 +2065,6 @@ async function main(): Promise<void> {
       const personaProfile = buildAgentPersonaProfile(agent.id);
       const sourceAccess = buildAgentSourceAccess(effArch.archetypeId, personaProfile);
 
-      let infoAgg = 0;
-      let eventAgg = 0;
-      let regimeAgg = 0;
-      let infoDen = 0;
-      let eventDen = 0;
-      let regimeDen = 0;
-
-      for (const access of sourceAccess) {
-        const src = getSourceById(access.sourceId);
-        if (!src) continue;
-
-        const srcSignal = generateSourceSignal({
-          runId,
-          step,
-          sourceId: access.sourceId,
-        });
-
-        const weight = access.exposure * access.trust;
-
-        switch (src.type) {
-          case "news":
-          case "analyst":
-          case "peer":
-            infoAgg += srcSignal * weight;
-            infoDen += weight;
-            break;
-
-          case "social":
-          case "rumor":
-            eventAgg += srcSignal * weight;
-            eventDen += weight;
-            break;
-
-          case "macro":
-            regimeAgg += srcSignal * weight;
-            regimeDen += weight;
-            break;
-
-          case "market":
-            break;
-        }
-      }
-
-      infoSignalRaw = infoDen > 0 ? clamp11(infoAgg / infoDen) : infoSignalRaw;
-      eventSignalRaw = eventDen > 0 ? clamp11(eventAgg / eventDen) : eventSignalRaw;
-      regime_i_raw = regimeDen > 0 ? clamp11(regimeAgg / regimeDen) : regime_i_raw;
-
       const structuredRole = (agent.archetype ?? "").trim().toLowerCase();
       const archetypeIdForBias = ["trend", "contrarian", "noise", "fundamental"].includes(structuredRole)
         ? structuredRole
@@ -1976,6 +2086,49 @@ async function main(): Promise<void> {
         event: 1,
         regime: 1,
       };
+      const channelsPreApplyExposure = {
+        synthetic: synthetic_i_raw,
+        info: infoSignalRaw,
+        event: eventSignalRaw,
+        regime: regime_i_raw,
+      };
+      const { stepSyntheticSignal, stepRegimeSignal } =
+        stepSignalsFromChannelsPreApplyExposure(channelsPreApplyExposure);
+
+      logEventPathExposure({
+        step,
+        agentId: agent.id,
+        archetypeId: agent.archetypeId,
+        archetype: agent.archetype,
+        channelsPreApplyExposure,
+        stepEventSignal: minimalStepEventSignal(step, agentIdx),
+      });
+
+      const upstreamExposure = {
+        /** Output of `applyInformationExposureLayer` (agent-information-exposure). */
+        infoAfterExposure,
+        /** Input to that layer (aggregateInfoSignal). */
+        rawInfoFromAggregate: rawInfo,
+        /** Archetype per-channel multipliers (archetype-profile / config `informationExposure`). */
+        exposureConfig: exposure,
+        /** Per-agent channels after `applyArchetypeSignalBias`, before `applyExposure`. */
+        channelsPreApplyExposure,
+        stepSyntheticSignal,
+        stepRegimeSignal,
+      };
+
+      if (process.env.CV_DEBUG_UPSTREAM_EXPOSURE === "1") {
+        console.log(
+          JSON.stringify({
+            tag: "UPSTREAM_EXPOSURE_TRACE",
+            step,
+            agentId: agent.id,
+            archetype: agent.archetypeId ?? agent.archetype ?? null,
+            exposure: upstreamExposure ?? null,
+          }),
+        );
+      }
+
       const latency = archetypeConfig.informationLatency ?? {
         synthetic: 0,
         info: 0,
@@ -1995,6 +2148,210 @@ async function main(): Promise<void> {
       let eventSignal = evt_exp;
       let synthetic_i = syn_i_exp;
       let regime_i = reg_exp;
+
+      const regimeSignal = regime.regimeSignal;
+
+      /** Post-exposure snapshot; not reassigned when routing/persona scales channel `let`s. */
+      const preSignals = {
+        synthetic: syn_i_exp,
+        info: info_exp,
+        event: evt_exp,
+        regime: reg_exp,
+      };
+
+      if (process.env.CV_DEBUG_SIGNAL_MAPPING === "1") {
+        console.log(
+          JSON.stringify({
+            tag: "SIGNAL_MAPPING_TRACE",
+            step,
+            agentId: agent.id,
+            archetype: agent.archetypeId ?? agent.archetype ?? null,
+            mappedFrom: upstreamExposure ?? null,
+            mappedTo: {
+              synthetic: syntheticSignal ?? null,
+              info: infoSignal ?? null,
+              event: eventSignal ?? null,
+              regime: regimeSignal ?? null,
+            },
+          }),
+        );
+      }
+
+      logPreSignalTrace({
+        step,
+        agent,
+        syntheticSignal,
+        infoSignal,
+        eventSignal,
+        regimeSignal: regime.regimeSignal,
+      });
+
+      const agentProfile = profile;
+      const famMap = agentProfile.sourceFamilies || {};
+      const chProf = agentProfile.channels || {};
+
+      let routedInfo = 0;
+      let routedEvent = 0;
+      let routedRegime = 0;
+      let routedSynthetic = 0;
+      let emitterHits = 0;
+
+      const regimeSignalRef = regime.regimeSignal;
+
+      for (const channelName of Object.keys(famMap)) {
+        const famList = famMap[channelName];
+        if (!famList || famList.length === 0) continue;
+
+        const channelWeight = chProf[channelName] || 0;
+        if (channelWeight <= 0) continue;
+
+        for (const f of famList) {
+          const routing = SOURCE_TO_SIGNAL_ROUTING[f];
+          if (!routing) continue;
+
+          emitterHits++;
+          const seedStr = `${agent.id}:${step}:${channelName}:${f}`;
+          const u = hashToUnitFloat(seedStr);
+          let emitted = (u - 0.5) * 2;
+
+          if ((routing.info || 0) > 0) {
+            emitted = 0.65 * emitted + 0.35 * infoSignal;
+          } else if ((routing.event || 0) > 0) {
+            emitted = 0.75 * emitted + 0.25 * eventSignal;
+          } else if ((routing.regime || 0) > 0) {
+            emitted = 0.75 * emitted + 0.25 * regimeSignalRef;
+          } else if ((routing.synthetic || 0) > 0) {
+            emitted = 0.75 * emitted + 0.25 * syntheticSignal;
+          }
+
+          emitted *= channelWeight;
+
+          const amp = routing.amplification ?? 1;
+
+          if (routing.info) routedInfo += emitted * routing.info;
+          if (routing.event) routedEvent += emitted * routing.event * amp;
+          if (routing.regime) routedRegime += emitted * routing.regime;
+          if (routing.synthetic) routedSynthetic += emitted * routing.synthetic;
+        }
+      }
+
+      if (emitterHits > 0) {
+        infoSignal = clamp11(routedInfo);
+        eventSignal = clamp11(routedEvent);
+        regime_i = clamp11(routedRegime);
+        synthetic_i = clamp11(routedSynthetic);
+      }
+
+      if (argv.pipelineDiag) {
+        console.log("RAW CHANNEL MIX:", {
+          info: infoSignal.toFixed(3),
+          event: eventSignal.toFixed(3),
+          regime: regime_i.toFixed(3),
+          synthetic: synthetic_i.toFixed(3),
+          persona: agentProfile.persona,
+          worldview: agentProfile.worldview,
+        });
+      }
+
+      const rawSynthetic_i = synthetic_i;
+      const rawInfoSignal = infoSignal;
+      const rawEventSignal = eventSignal;
+      const rawRegime_i = regime_i;
+
+      const profileObj = (agent as any).profile as
+        | {
+            ageGroup: string;
+            persona: string;
+            channels: Record<string, number>;
+          }
+        | undefined;
+
+      const profileChannels = profileObj?.channels ?? {};
+
+      if (profileObj) {
+        const chNews = profileChannels.news ?? 0;
+        const chAuthority = profileChannels.authority ?? 0;
+        const chSocial = profileChannels.social ?? 0;
+        const chAds = profileChannels.ads ?? 0;
+        const chAltNews = profileChannels.altNews ?? 0;
+        const chMacro = profileChannels.macro ?? 0;
+        const chTechnical = profileChannels.technical ?? 0;
+
+        const routedSynthetic =
+          synthetic_i * (0.55 + 0.45 * chTechnical) +
+          infoSignal * (0.1 * chAuthority);
+
+        const routedInfo =
+          infoSignal * (0.35 + 0.4 * chNews + 0.25 * chAuthority) +
+          eventSignal * (0.15 * chSocial + 0.1 * chAltNews);
+
+        const routedEvent =
+          eventSignal * (0.25 + 0.45 * chSocial + 0.3 * chAds) +
+          infoSignal * (0.1 * chAltNews);
+
+        const routedRegime =
+          regime_i * (0.25 + 0.5 * chMacro + 0.15 * chAuthority) +
+          infoSignal * (0.1 * chNews);
+
+        const synthetic_i_effective = clamp11(routedSynthetic);
+        const infoSignal_effective = clamp11(routedInfo);
+        const eventSignal_effective = clamp11(routedEvent);
+        const regime_i_effective = clamp11(routedRegime);
+
+        const personaKind = profileObj?.persona ?? "unknown";
+
+        let finalSynthetic = synthetic_i_effective;
+        let finalInfo = infoSignal_effective;
+        let finalEvent = eventSignal_effective;
+        let finalRegime = regime_i_effective;
+
+        switch (personaKind) {
+          case "analytical":
+            finalInfo = clamp11(finalInfo * 1.15);
+            finalEvent = clamp11(finalEvent * 0.85);
+            break;
+          case "social":
+            finalEvent = clamp11(finalEvent * 1.2);
+            finalInfo = clamp11(finalInfo * 0.9);
+            break;
+          case "attention":
+            finalEvent = clamp11(finalEvent * 1.25);
+            finalRegime = clamp11(finalRegime * 0.85);
+            break;
+          case "authority":
+            finalInfo = clamp11(finalInfo * 1.1);
+            finalRegime = clamp11(finalRegime * 1.05);
+            break;
+          case "emotion":
+            finalEvent = clamp11(finalEvent * 1.25);
+            finalInfo = clamp11(finalInfo * 0.85);
+            break;
+          case "passive":
+            finalSynthetic = clamp11(finalSynthetic * 0.85);
+            finalInfo = clamp11(finalInfo * 0.85);
+            finalEvent = clamp11(finalEvent * 0.85);
+            finalRegime = clamp11(finalRegime * 0.85);
+            break;
+          case "random":
+            finalSynthetic = clamp11(finalSynthetic * 0.75);
+            finalInfo = clamp11(finalInfo * 0.75);
+            finalEvent = clamp11(finalEvent * 0.75);
+            finalRegime = clamp11(finalRegime * 0.75);
+            break;
+          default:
+            break;
+        }
+
+        synthetic_i = finalSynthetic;
+        infoSignal = finalInfo;
+        eventSignal = finalEvent;
+        regime_i = finalRegime;
+      }
+
+      const postProfileSynthetic_i = synthetic_i;
+      const postProfileInfoSignal = infoSignal;
+      const postProfileEventSignal = eventSignal;
+      const postProfileRegime_i = regime_i;
 
       const baseSynthetic = syntheticSignal;
       const baseInfo = infoSignal;
@@ -2020,7 +2377,9 @@ async function main(): Promise<void> {
 
       let finalSynthetic = sources.access.technical ? blendedSynthetic : 0;
       let finalInfo = sources.access.news ? blendedInfo : 0;
-      let finalEvent = sources.access.social ? blendedEvent : 0;
+      const awarenessEvent = computeEventAwareness(persona);
+      const accessModifier = sources.access.social ? 1 : EVENT_ACCESS_SOFT_FLOOR;
+      let finalEvent = blendedEvent * awarenessEvent * accessModifier;
       let finalRegime = sources.access.macro ? blendedRegime : 0;
 
       switch (decisionMode) {
@@ -2066,6 +2425,32 @@ async function main(): Promise<void> {
       regime_i *= ratioOr(finalRegime, baseRegime);
 
       const channels = { synthetic_i, regime_i, infoSignal, eventSignal };
+
+      const eventSignalChannel = eventSignal;
+      {
+        const eventSignal = preSignals?.event ?? 0;
+        const signals = {
+          synthetic: syntheticSignal ?? preSignals?.synthetic ?? 0,
+          info: infoSignal ?? preSignals?.info ?? 0,
+          event: eventSignal,
+          regime: regimeSignal ?? preSignals?.regime ?? 0,
+        };
+        if (process.env.CV_DEBUG_EVENT_PATH === "1") {
+          console.log(
+            JSON.stringify({
+              tag: "EVENT_PATH_DECIDE",
+              step,
+              agentId: agent.id,
+              archetype: agent.archetypeId ?? agent.archetype ?? null,
+              eventFields: {
+                upstreamEvent: preSignals?.event ?? eventSignalChannel ?? null,
+                localEventSignal: eventSignalChannel ?? null,
+                finalEvent: signals?.event ?? null,
+              },
+            }),
+          );
+        }
+      }
 
       const rationality = getTrait(traits, "rationality", 0.5);
       const decisionModel = decisionModelKindForAgent(agent.id);
@@ -2267,6 +2652,26 @@ async function main(): Promise<void> {
           });
         }
 
+        logFinalSignalTrace({
+          step,
+          agent,
+          syntheticSignal: synthetic_i,
+          infoSignal,
+          eventSignal,
+          regimeSignal: regime_i,
+          distortedSignal: signalI,
+          prefBUY: 0,
+          prefSELL: 0,
+          prefHOLD: 0,
+          confidence,
+          preSignals: {
+            synthetic: synthetic_i,
+            info: infoSignal,
+            event: preSignals.event,
+            regime: regime_i,
+          },
+        });
+
         decisions.push({
           runId,
           runVariantId,
@@ -2383,6 +2788,26 @@ async function main(): Promise<void> {
             reg_exp: reg_exp,
           });
         }
+
+        logFinalSignalTrace({
+          step,
+          agent,
+          syntheticSignal: synthetic_i,
+          infoSignal,
+          eventSignal,
+          regimeSignal: regime_i,
+          distortedSignal: signalI,
+          prefBUY: 0,
+          prefSELL: 0,
+          prefHOLD: 0,
+          confidence,
+          preSignals: {
+            synthetic: synthetic_i,
+            info: infoSignal,
+            event: preSignals.event,
+            regime: regime_i,
+          },
+        });
 
         decisions.push({
           runId,
@@ -2509,6 +2934,26 @@ async function main(): Promise<void> {
           });
         }
 
+        logFinalSignalTrace({
+          step,
+          agent,
+          syntheticSignal: synthetic_i,
+          infoSignal,
+          eventSignal,
+          regimeSignal: regime_i,
+          distortedSignal: signalI,
+          prefBUY: 0,
+          prefSELL: 0,
+          prefHOLD: 0,
+          confidence,
+          preSignals: {
+            synthetic: synthetic_i,
+            info: infoSignal,
+            event: preSignals.event,
+            regime: regime_i,
+          },
+        });
+
         decisions.push({
           runId,
           runVariantId,
@@ -2634,6 +3079,26 @@ async function main(): Promise<void> {
             reg_exp: reg_exp,
           });
         }
+
+        logFinalSignalTrace({
+          step,
+          agent,
+          syntheticSignal: synthetic_i,
+          infoSignal,
+          eventSignal,
+          regimeSignal: regime_i,
+          distortedSignal: signalI,
+          prefBUY: 0,
+          prefSELL: 0,
+          prefHOLD: 0,
+          confidence,
+          preSignals: {
+            synthetic: synthetic_i,
+            info: infoSignal,
+            event: preSignals.event,
+            regime: regime_i,
+          },
+        });
 
         decisions.push({
           runId,
@@ -2850,11 +3315,31 @@ async function main(): Promise<void> {
           raw_regime_signal: baseRegime,
           blended_regime_signal: blendedRegime,
           final_regime_signal: finalRegime,
+          profile_persona: profileObj?.persona ?? "unknown",
+          profile_raw_synthetic_i: rawSynthetic_i,
+          profile_final_synthetic_i: postProfileSynthetic_i,
+          profile_raw_info_signal: rawInfoSignal,
+          profile_final_info_signal: postProfileInfoSignal,
+          profile_raw_event_signal: rawEventSignal,
+          profile_final_event_signal: postProfileEventSignal,
+          profile_raw_regime_i: rawRegime_i,
+          profile_final_regime_i: postProfileRegime_i,
         });
       }
 
       if (i === 0 && agentIdx === 0) {
         console.log("DEBUG_SIGNAL", {
+          profilePersona: profileObj?.persona ?? "unknown",
+          profileChannels: {
+            rawSynthetic_i,
+            finalSynthetic_i: postProfileSynthetic_i,
+            rawInfoSignal,
+            finalInfoSignal: postProfileInfoSignal,
+            rawEventSignal,
+            finalEventSignal: postProfileEventSignal,
+            rawRegime_i,
+            finalRegime_i: postProfileRegime_i,
+          },
           synthetic: {
             raw: baseSynthetic,
             blended: blendedSynthetic,
@@ -2881,6 +3366,26 @@ async function main(): Promise<void> {
           finalSignal: signalI,
         });
       }
+
+      logFinalSignalTrace({
+        step,
+        agent,
+        syntheticSignal: synthetic_i,
+        infoSignal,
+        eventSignal,
+        regimeSignal: regime_i,
+        distortedSignal: signalI,
+        prefBUY: 0,
+        prefSELL: 0,
+        prefHOLD: 0,
+        confidence,
+        preSignals: {
+          synthetic: synthetic_i,
+          info: infoSignal,
+          event: preSignals.event,
+          regime: regime_i,
+        },
+      });
 
       decisions.push({
         runId,

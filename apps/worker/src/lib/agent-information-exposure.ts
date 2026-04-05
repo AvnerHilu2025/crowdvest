@@ -286,3 +286,50 @@ export function computeAgentRegimeSignal(input: {
   const noise = (rng() - 0.5) * 0.04;
   return clamp11(regimeSignal * w + noise);
 }
+
+/**
+ * Minimal deterministic event-channel baseline when discrete events yield no signal (e.g. empty subset).
+ * Keeps `channelsPreApplyExposure.event` from collapsing to a flat zero.
+ */
+export function minimalStepEventSignal(step: number, agentIndex: number): number {
+  return clamp11(Math.sin(step + agentIndex) * 0.1);
+}
+
+/** `CV_DEBUG_EVENT_PATH=1`: trace event leg vs `channelsPreApplyExposure.event` and baseline `stepEventSignal`. */
+export function logEventPathExposure(input: {
+  step: number;
+  agentId: string;
+  archetypeId?: string | null;
+  archetype?: string | null;
+  channelsPreApplyExposure: { event?: number; synthetic?: number; info?: number; regime?: number };
+  stepEventSignal?: number | null;
+}): void {
+  if (process.env.CV_DEBUG_EVENT_PATH !== "1") return;
+  console.log(
+    JSON.stringify({
+      tag: "EVENT_PATH_EXPOSURE",
+      step: input.step,
+      agentId: input.agentId,
+      archetype: input.archetypeId ?? input.archetype ?? null,
+      eventFields: {
+        channelsEvent: input.channelsPreApplyExposure?.event ?? null,
+        stepEventSignal: input.stepEventSignal ?? null,
+      },
+    }),
+  );
+}
+
+/**
+ * Map per-agent channel scalars (pre-`applyExposure`) into step-trace fields so synthetic/regime
+ * are not overwritten by unrelated step-level defaults.
+ */
+export function stepSignalsFromChannelsPreApplyExposure(channelsPreApplyExposure: {
+  synthetic?: number;
+  info?: number;
+  event?: number;
+  regime?: number;
+}): { stepSyntheticSignal: number; stepRegimeSignal: number } {
+  const stepSyntheticSignal = channelsPreApplyExposure?.synthetic ?? 0;
+  const stepRegimeSignal = channelsPreApplyExposure?.regime ?? 0;
+  return { stepSyntheticSignal, stepRegimeSignal };
+}

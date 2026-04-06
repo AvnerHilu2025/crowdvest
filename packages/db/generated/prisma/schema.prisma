@@ -250,6 +250,8 @@ model AgentDecision {
   prefBUY         Float?
   prefSELL        Float?
   prefHOLD        Float?
+  /// When `--decisionTrace` or CV_DECISION_TRACE=1: full channel + math audit (no effect on decisions).
+  decisionTrace   Json?
 
   run        SimulationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
   runVariant RunVariant?   @relation(fields: [runVariantId], references: [id], onDelete: Cascade)

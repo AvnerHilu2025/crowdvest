@@ -21,6 +21,8 @@
  *   --allowSmallCrowd      Bypass minAgents check for dev debugging (default: false).
  *   --pipelineDiag         Print === DECISION PIPELINE DIAGNOSTICS === after all steps (observability only).
  *   --pipelineDiagSample N Agents per step in sample tables (default: 8, max: 500).
+ *   --decisionTrace        Persist JSON `decisionTrace` on each AgentDecision (channels + base + signalI + threshold).
+ *                          Or set CV_DECISION_TRACE=1. No change to decision logic.
  *   --neutralMode          (deprecated; ignored — architecture is always independent-agent / sign(signal).)
  *   --herdingCrowdScale    (deprecated; ignored.)
  *
@@ -87,6 +89,7 @@ import {
   goldDelayFloat,
   goldLagAlpha,
   interpolateHistory,
+  type AgentDecisionModelKind,
   type CvVal024ModeLetter,
   type FeatureMask,
   type GoldSoftWeights,
@@ -106,6 +109,8 @@ import {
   loadArchetypesConfig,
   resolveArchetypeConfigId,
   type EffectiveArchetypeProfile,
+  type EventModelName,
+  EVENT_MODEL_HYBRID_SOFT_GATE_V1,
 } from "../lib/archetype-profile";
 
 /** Extra Gaussian shock scale for low-rationality agents (CV-ARCH-002). */
@@ -485,6 +490,12 @@ function parseArgv(): {
   pipelineDiag: boolean;
   /** Agents per step in sample trace (first N by sorted id). */
   pipelineDiagSample: number;
+  /** Event channel behavioral path: legacy binary social gate vs hybrid soft-gate + awareness. */
+  eventModel: EventModelName;
+  /** Ablation: zero behavioral `eventSignal` before channel mix (predictive impact studies). */
+  eventContribution: "full" | "zero";
+  /** When true, store `decisionTrace` JSON on each AgentDecision (also CV_DECISION_TRACE=1). */
+  decisionTrace: boolean;
 } {
   const args = process.argv.slice(2);
   let runId = "";
@@ -522,6 +533,9 @@ function parseArgv(): {
   let transformModeExplicit = false;
   let pipelineDiag = false;
   let pipelineDiagSample = 8;
+  let eventModel: EventModelName = EVENT_MODEL_HYBRID_SOFT_GATE_V1;
+  let eventContribution: "full" | "zero" = "full";
+  let decisionTrace = false;
   for (let i = 0; i < args.length; i++) {
     const arg = args[i]!;
     if (arg === "--runVariantId" && args[i + 1]) {
@@ -650,7 +664,24 @@ function parseArgv(): {
     } else if (arg === "--pipelineDiagSample" && args[i + 1]) {
       const n = parseInt(args[++i]!, 10);
       if (Number.isFinite(n) && n >= 1) pipelineDiagSample = Math.min(n, 500);
+    } else if (arg === "--eventModel" && args[i + 1]) {
+      const v = args[++i]!.trim();
+      if (v !== "pre_hybrid_hard_gate" && v !== "hybrid_soft_gate_v1") {
+        throw new Error(`--eventModel must be pre_hybrid_hard_gate|hybrid_soft_gate_v1, got: ${v}`);
+      }
+      eventModel = v as EventModelName;
+    } else if (arg === "--eventContribution" && args[i + 1]) {
+      const v = args[++i]!.trim().toLowerCase();
+      if (v !== "full" && v !== "zero") {
+        throw new Error(`--eventContribution must be full|zero, got: ${v}`);
+      }
+      eventContribution = v as "full" | "zero";
+    } else if (arg === "--decisionTrace") {
+      decisionTrace = true;
     }
+  }
+  if (process.env.CV_DECISION_TRACE === "1" || process.env.CV_DECISION_TRACE === "true") {
+    decisionTrace = true;
   }
   if (cvVal029) {
     cvVal027 = false;
@@ -821,6 +852,9 @@ function parseArgv(): {
     pipelineDiag:
       (pipelineDiag as unknown) === true || (pipelineDiag as unknown) === "true",
     pipelineDiagSample: Math.min(500, Number(pipelineDiagSample || 8)),
+    eventModel,
+    eventContribution,
+    decisionTrace,
   };
 }
 
@@ -925,6 +959,15 @@ const ARCH052_DEFAULT_BASE_TH = 0.011;
 
 /** CV-ARCH-058: slightly amplify additive archetype bias so directional archetypes separate in action mix. */
 const ARCH058_ARCHETYPE_BIAS_SCALE = 1.22;
+
+/** Persist full audit JSON on `AgentDecision.decisionTrace` when enabled; does not affect decision math. */
+function optionalDecisionTrace(
+  enabled: boolean,
+  payload: Record<string, unknown>,
+): Prisma.InputJsonValue | undefined {
+  if (!enabled) return undefined;
+  return { v: 1, ...payload } as Prisma.InputJsonValue;
+}
 
 function actionFromSignalArch052Default(signal: number, threshold: number): Action {
   if (signal > threshold) return "BUY";
@@ -1767,6 +1810,7 @@ async function main(): Promise<void> {
     prefBUY?: number;
     prefSELL?: number;
     prefHOLD?: number;
+    decisionTrace?: Prisma.InputJsonValue;
   }[] = [];
   const agentInfoStates: {
     runId: string;
@@ -1910,6 +1954,18 @@ async function main(): Promise<void> {
   }
   const cv026Hist = new Map<string, number[]>();
   const cv026PrevTemporal = new Map<string, number>();
+
+  const arch052SignFlip = {
+    total: 0,
+    flipped: 0,
+    aligned: 0,
+    byKind: {
+      trend_follower: { total: 0, flipped: 0 },
+      mean_reversion: { total: 0, flipped: 0 },
+      news_driven: { total: 0, flipped: 0 },
+      passive_low_attention: { total: 0, flipped: 0 },
+    } as Record<AgentDecisionModelKind, { total: number; flipped: number }>,
+  };
 
   for (let step = 0; step < steps; step++) {
     const priceByStepCur = priceByStepBySymbol.get(assetSymbol);
@@ -2377,9 +2433,14 @@ async function main(): Promise<void> {
 
       let finalSynthetic = sources.access.technical ? blendedSynthetic : 0;
       let finalInfo = sources.access.news ? blendedInfo : 0;
-      const awarenessEvent = computeEventAwareness(persona);
-      const accessModifier = sources.access.social ? 1 : EVENT_ACCESS_SOFT_FLOOR;
-      let finalEvent = blendedEvent * awarenessEvent * accessModifier;
+      let finalEvent: number;
+      if (argv.eventModel === "pre_hybrid_hard_gate") {
+        finalEvent = sources.access.social ? blendedEvent : 0;
+      } else {
+        const awarenessEvent = computeEventAwareness(persona);
+        const accessModifier = sources.access.social ? 1 : EVENT_ACCESS_SOFT_FLOOR;
+        finalEvent = blendedEvent * awarenessEvent * accessModifier;
+      }
       let finalRegime = sources.access.macro ? blendedRegime : 0;
 
       switch (decisionMode) {
@@ -2423,6 +2484,10 @@ async function main(): Promise<void> {
       infoSignal *= ratioOr(finalInfo, baseInfo);
       eventSignal *= ratioOr(finalEvent, baseEvent);
       regime_i *= ratioOr(finalRegime, baseRegime);
+
+      if (argv.eventContribution === "zero") {
+        eventSignal = 0;
+      }
 
       const channels = { synthetic_i, regime_i, infoSignal, eventSignal };
 
@@ -2690,6 +2755,24 @@ async function main(): Promise<void> {
           prefBUY: 0,
           prefSELL: 0,
           prefHOLD: 0,
+          decisionTrace: optionalDecisionTrace(argv.decisionTrace, {
+            branch: "cv029",
+            transformMode: tm,
+            weightPreset: argv.weightPreset,
+            channels: {
+              synthetic_i,
+              infoSignal,
+              eventSignal,
+              regime_i,
+            },
+            baseNow,
+            signalI,
+            scaledSignal,
+            threshold: TH,
+            decisionScale: argv.overrideDecisionScale ?? 0.7,
+            useCv038Diversity,
+            useStructuredAgents,
+          }),
         });
         continue;
       }
@@ -2827,6 +2910,21 @@ async function main(): Promise<void> {
           prefBUY: 0,
           prefSELL: 0,
           prefHOLD: 0,
+          decisionTrace: optionalDecisionTrace(argv.decisionTrace, {
+            branch: "cv027",
+            weightPreset: argv.weightPreset,
+            channels: {
+              synthetic_i,
+              infoSignal,
+              eventSignal,
+              regime_i,
+            },
+            baseNow,
+            signalI,
+            scaledSignal: null,
+            threshold: 0,
+            actionRule: "sign_nonzero",
+          }),
         });
         continue;
       }
@@ -2972,6 +3070,21 @@ async function main(): Promise<void> {
           prefBUY: 0,
           prefSELL: 0,
           prefHOLD: 0,
+          decisionTrace: optionalDecisionTrace(argv.decisionTrace, {
+            branch: "cv026",
+            channels: {
+              synthetic_i,
+              infoSignal,
+              eventSignal,
+              regime_i,
+            },
+            baseNow,
+            temporalSignal,
+            signalI,
+            scaledSignal: null,
+            threshold: 0,
+            actionRule: "sign_nonzero",
+          }),
         });
         continue;
       }
@@ -3118,6 +3231,22 @@ async function main(): Promise<void> {
           prefBUY: 0,
           prefSELL: 0,
           prefHOLD: 0,
+          decisionTrace: optionalDecisionTrace(argv.decisionTrace, {
+            branch: "cv025",
+            channels: {
+              synthetic_i,
+              infoSignal,
+              eventSignal,
+              regime_i,
+            },
+            baseNow,
+            baseForTransform,
+            signalI,
+            scaledSignal: null,
+            threshold: 0,
+            actionRule: "sign_nonzero",
+            goldLag: goldLagByAgent.get(agent.id),
+          }),
         });
         continue;
       }
@@ -3138,6 +3267,8 @@ async function main(): Promise<void> {
       baseForRationale = baseSignal;
       const delayI = val024.useDelayI ? delayMultiplierForAgent(agent.id) : 1;
       const divMem = constrainedDiversityMemory.get(agent.id) ?? {};
+      const tracePrevBase = divMem.prevBase;
+      const tracePrevSmoothedMid = divMem.prevSmoothedMid;
       const { signal: coreFromModel, nextSmoothedMid } = applyConstrainedDiversityTransform(
         decisionModel,
         agent.id,
@@ -3148,6 +3279,17 @@ async function main(): Promise<void> {
         },
         delayI,
       );
+      {
+        const sb = Math.sign(baseSignal);
+        const sc = Math.sign(coreFromModel);
+        const flipped = sb !== sc;
+        arch052SignFlip.total++;
+        if (flipped) arch052SignFlip.flipped++;
+        else arch052SignFlip.aligned++;
+        const row = arch052SignFlip.byKind[decisionModel];
+        row.total++;
+        if (flipped) row.flipped++;
+      }
       constrainedDiversityMemory.set(agent.id, {
         prevBase: baseSignal,
         prevSmoothedMid: nextSmoothedMid,
@@ -3156,10 +3298,12 @@ async function main(): Promise<void> {
         1.35,
         Math.max(0.65, 0.72 + 0.28 * effArchDefault.reactionSpeed),
       );
-      let signalI = clamp11(coreFromModel * reactMulDef);
+      const signalAfterReact = clamp11(coreFromModel * reactMulDef);
       const noiseScale = Math.min(1.6, Math.max(0.45, effArchDefault.noiseAmp * 0.55 + 0.45));
+      let noiseContribution: number;
+      let signalI: number;
       if (val024.useDecorrelationNoise) {
-        signalI += decorrelationShock(
+        noiseContribution = decorrelationShock(
           agent.id,
           rationality,
           understanding,
@@ -3167,11 +3311,17 @@ async function main(): Promise<void> {
           PRIVATE_SIGNAL_SCALE,
           rng,
         ) * noiseScale;
+        signalI = signalAfterReact + noiseContribution;
       } else {
-        signalI += randn(rng) * RATIONALITY_NOISE_SCALE * (1 - rationality) * noiseScale;
-        signalI += randn(rng) * PRIVATE_SIGNAL_SCALE * (1 - understanding) * noiseScale;
+        const n1 = randn(rng) * RATIONALITY_NOISE_SCALE * (1 - rationality) * noiseScale;
+        const n2 = randn(rng) * PRIVATE_SIGNAL_SCALE * (1 - understanding) * noiseScale;
+        noiseContribution = n1 + n2;
+        signalI = signalAfterReact + n1 + n2;
       }
       signalI = clamp11(signalI);
+      const volatilityMultiplier =
+        1 +
+        (effArchDefault.volatilitySensitivity - 1) * Math.min(1, Math.abs(syntheticSignal) * 2.6);
       signalI = applyVolatilityToSignal(
         signalI,
         syntheticSignal,
@@ -3179,11 +3329,9 @@ async function main(): Promise<void> {
       );
       const archNoise052 =
         (hashToUnitFloat(`cv052n:${globalSeed}:${agent.id}:${step}`) - 0.5) * 2;
-      signalI = clamp11(
-        signalI +
-          effArchDefault.bias * ARCH058_ARCHETYPE_BIAS_SCALE +
-          archNoise052 * 0.14 * effArchDefault.noiseAmp,
-      );
+      const archetypeBiasContribution = effArchDefault.bias * ARCH058_ARCHETYPE_BIAS_SCALE;
+      const archNoiseContribution = archNoise052 * 0.14 * effArchDefault.noiseAmp;
+      signalI = clamp11(signalI + archetypeBiasContribution + archNoiseContribution);
 
       const baseThreshold = ARCH052_DEFAULT_BASE_TH;
       const thresholdMul = effArchDefault.thresholdMul;
@@ -3405,6 +3553,30 @@ async function main(): Promise<void> {
         prefBUY: 0,
         prefSELL: 0,
         prefHOLD: 0,
+        decisionTrace: optionalDecisionTrace(argv.decisionTrace, {
+          branch: "arch052_default",
+          channels: {
+            synthetic_i,
+            infoSignal,
+            eventSignal,
+            regime_i,
+          },
+          baseSignal,
+          prevBase: tracePrevBase ?? null,
+          prevSmoothedMid: tracePrevSmoothedMid ?? null,
+          coreFromModel,
+          reactMulDef,
+          noiseScale,
+          noiseContribution,
+          volatilityMultiplier,
+          archetypeBiasContribution,
+          archNoiseContribution,
+          signalI,
+          scaledSignal: null,
+          threshold,
+          actionRule: "threshold_pair",
+          cvVal024Mode: argv.cvVal024 ?? null,
+        }),
       });
     }
 
@@ -3517,6 +3689,7 @@ async function main(): Promise<void> {
     prefBUY: d.prefBUY,
     prefSELL: d.prefSELL,
     prefHOLD: d.prefHOLD,
+    ...(d.decisionTrace !== undefined ? { decisionTrace: d.decisionTrace } : {}),
   }));
   for (const batch of chunk(decisionData, 1000)) {
     await prisma.agentDecision.createMany({ data: batch });
@@ -3551,6 +3724,28 @@ async function main(): Promise<void> {
   log(
     `[CV-VAL-018] avgPairwiseEventOverlap=${avgOverlap.toFixed(3)} (target band ~0.2–0.4 when topics permit)`,
   );
+
+  {
+    const t = arch052SignFlip.total;
+    const f = arch052SignFlip.flipped;
+    const a = arch052SignFlip.aligned;
+    const rate = t === 0 ? "n/a" : (f / t).toFixed(6);
+    const kinds: AgentDecisionModelKind[] = [
+      "trend_follower",
+      "mean_reversion",
+      "news_driven",
+      "passive_low_attention",
+    ];
+    const byKind = kinds.map((k) => {
+      const r = arch052SignFlip.byKind[k];
+      const kr = r.total === 0 ? "n/a" : (r.flipped / r.total).toFixed(6);
+      return `${k}={total:${r.total} flipRate:${kr}}`;
+    });
+    console.log(
+      `[ARCH052_DEBUG] arch052_default sign(baseSignal) vs sign(coreFromModel): total=${t} flipped=${f} aligned=${a} flipRate=${rate}`,
+    );
+    console.log(`[ARCH052_DEBUG] by decisionModel: ${byKind.join(" ")}`);
+  }
 
   await prisma.$disconnect();
 }

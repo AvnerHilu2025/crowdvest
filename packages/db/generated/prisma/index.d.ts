@@ -15322,6 +15322,7 @@ export namespace Prisma {
     prefBUY: number
     prefSELL: number
     prefHOLD: number
+    decisionTrace: number
     _all: number
   }
 
@@ -15418,6 +15419,7 @@ export namespace Prisma {
     prefBUY?: true
     prefSELL?: true
     prefHOLD?: true
+    decisionTrace?: true
     _all?: true
   }
 
@@ -15527,6 +15529,7 @@ export namespace Prisma {
     prefBUY: number | null
     prefSELL: number | null
     prefHOLD: number | null
+    decisionTrace: JsonValue | null
     _count: AgentDecisionCountAggregateOutputType | null
     _avg: AgentDecisionAvgAggregateOutputType | null
     _sum: AgentDecisionSumAggregateOutputType | null
@@ -15568,6 +15571,7 @@ export namespace Prisma {
     prefBUY?: boolean
     prefSELL?: boolean
     prefHOLD?: boolean
+    decisionTrace?: boolean
     run?: boolean | SimulationRunDefaultArgs<ExtArgs>
     runVariant?: boolean | AgentDecision$runVariantArgs<ExtArgs>
     agent?: boolean | RunAgentDefaultArgs<ExtArgs>
@@ -15593,6 +15597,7 @@ export namespace Prisma {
     prefBUY?: boolean
     prefSELL?: boolean
     prefHOLD?: boolean
+    decisionTrace?: boolean
     run?: boolean | SimulationRunDefaultArgs<ExtArgs>
     runVariant?: boolean | AgentDecision$runVariantArgs<ExtArgs>
     agent?: boolean | RunAgentDefaultArgs<ExtArgs>
@@ -15618,6 +15623,7 @@ export namespace Prisma {
     prefBUY?: boolean
     prefSELL?: boolean
     prefHOLD?: boolean
+    decisionTrace?: boolean
   }
 
   export type AgentDecisionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -15658,6 +15664,10 @@ export namespace Prisma {
       prefBUY: number | null
       prefSELL: number | null
       prefHOLD: number | null
+      /**
+       * When `--decisionTrace` or CV_DECISION_TRACE=1: full channel + math audit (no effect on decisions).
+       */
+      decisionTrace: Prisma.JsonValue | null
     }, ExtArgs["result"]["agentDecision"]>
     composites: {}
   }
@@ -16073,6 +16083,7 @@ export namespace Prisma {
     readonly prefBUY: FieldRef<"AgentDecision", 'Float'>
     readonly prefSELL: FieldRef<"AgentDecision", 'Float'>
     readonly prefHOLD: FieldRef<"AgentDecision", 'Float'>
+    readonly decisionTrace: FieldRef<"AgentDecision", 'Json'>
   }
     
 
@@ -41994,7 +42005,8 @@ export namespace Prisma {
     beliefDrift: 'beliefDrift',
     prefBUY: 'prefBUY',
     prefSELL: 'prefSELL',
-    prefHOLD: 'prefHOLD'
+    prefHOLD: 'prefHOLD',
+    decisionTrace: 'decisionTrace'
   };
 
   export type AgentDecisionScalarFieldEnum = (typeof AgentDecisionScalarFieldEnum)[keyof typeof AgentDecisionScalarFieldEnum]
@@ -43477,6 +43489,7 @@ export namespace Prisma {
     prefBUY?: FloatNullableFilter<"AgentDecision"> | number | null
     prefSELL?: FloatNullableFilter<"AgentDecision"> | number | null
     prefHOLD?: FloatNullableFilter<"AgentDecision"> | number | null
+    decisionTrace?: JsonNullableFilter<"AgentDecision">
     run?: XOR<SimulationRunRelationFilter, SimulationRunWhereInput>
     runVariant?: XOR<RunVariantNullableRelationFilter, RunVariantWhereInput> | null
     agent?: XOR<RunAgentRelationFilter, RunAgentWhereInput>
@@ -43502,6 +43515,7 @@ export namespace Prisma {
     prefBUY?: SortOrderInput | SortOrder
     prefSELL?: SortOrderInput | SortOrder
     prefHOLD?: SortOrderInput | SortOrder
+    decisionTrace?: SortOrderInput | SortOrder
     run?: SimulationRunOrderByWithRelationInput
     runVariant?: RunVariantOrderByWithRelationInput
     agent?: RunAgentOrderByWithRelationInput
@@ -43531,6 +43545,7 @@ export namespace Prisma {
     prefBUY?: FloatNullableFilter<"AgentDecision"> | number | null
     prefSELL?: FloatNullableFilter<"AgentDecision"> | number | null
     prefHOLD?: FloatNullableFilter<"AgentDecision"> | number | null
+    decisionTrace?: JsonNullableFilter<"AgentDecision">
     run?: XOR<SimulationRunRelationFilter, SimulationRunWhereInput>
     runVariant?: XOR<RunVariantNullableRelationFilter, RunVariantWhereInput> | null
     agent?: XOR<RunAgentRelationFilter, RunAgentWhereInput>
@@ -43556,6 +43571,7 @@ export namespace Prisma {
     prefBUY?: SortOrderInput | SortOrder
     prefSELL?: SortOrderInput | SortOrder
     prefHOLD?: SortOrderInput | SortOrder
+    decisionTrace?: SortOrderInput | SortOrder
     _count?: AgentDecisionCountOrderByAggregateInput
     _avg?: AgentDecisionAvgOrderByAggregateInput
     _max?: AgentDecisionMaxOrderByAggregateInput
@@ -43586,6 +43602,7 @@ export namespace Prisma {
     prefBUY?: FloatNullableWithAggregatesFilter<"AgentDecision"> | number | null
     prefSELL?: FloatNullableWithAggregatesFilter<"AgentDecision"> | number | null
     prefHOLD?: FloatNullableWithAggregatesFilter<"AgentDecision"> | number | null
+    decisionTrace?: JsonNullableWithAggregatesFilter<"AgentDecision">
   }
 
   export type CrowdMetricsWhereInput = {
@@ -46620,6 +46637,7 @@ export namespace Prisma {
     prefBUY?: number | null
     prefSELL?: number | null
     prefHOLD?: number | null
+    decisionTrace?: NullableJsonNullValueInput | InputJsonValue
     run: SimulationRunCreateNestedOneWithoutAgentDecisionsInput
     runVariant?: RunVariantCreateNestedOneWithoutAgentDecisionsInput
     agent: RunAgentCreateNestedOneWithoutDecisionsInput
@@ -46645,6 +46663,7 @@ export namespace Prisma {
     prefBUY?: number | null
     prefSELL?: number | null
     prefHOLD?: number | null
+    decisionTrace?: NullableJsonNullValueInput | InputJsonValue
   }
 
   export type AgentDecisionUpdateInput = {
@@ -46664,6 +46683,7 @@ export namespace Prisma {
     prefBUY?: NullableFloatFieldUpdateOperationsInput | number | null
     prefSELL?: NullableFloatFieldUpdateOperationsInput | number | null
     prefHOLD?: NullableFloatFieldUpdateOperationsInput | number | null
+    decisionTrace?: NullableJsonNullValueInput | InputJsonValue
     run?: SimulationRunUpdateOneRequiredWithoutAgentDecisionsNestedInput
     runVariant?: RunVariantUpdateOneWithoutAgentDecisionsNestedInput
     agent?: RunAgentUpdateOneRequiredWithoutDecisionsNestedInput
@@ -46689,6 +46709,7 @@ export namespace Prisma {
     prefBUY?: NullableFloatFieldUpdateOperationsInput | number | null
     prefSELL?: NullableFloatFieldUpdateOperationsInput | number | null
     prefHOLD?: NullableFloatFieldUpdateOperationsInput | number | null
+    decisionTrace?: NullableJsonNullValueInput | InputJsonValue
   }
 
   export type AgentDecisionCreateManyInput = {
@@ -46711,6 +46732,7 @@ export namespace Prisma {
     prefBUY?: number | null
     prefSELL?: number | null
     prefHOLD?: number | null
+    decisionTrace?: NullableJsonNullValueInput | InputJsonValue
   }
 
   export type AgentDecisionUpdateManyMutationInput = {
@@ -46730,6 +46752,7 @@ export namespace Prisma {
     prefBUY?: NullableFloatFieldUpdateOperationsInput | number | null
     prefSELL?: NullableFloatFieldUpdateOperationsInput | number | null
     prefHOLD?: NullableFloatFieldUpdateOperationsInput | number | null
+    decisionTrace?: NullableJsonNullValueInput | InputJsonValue
   }
 
   export type AgentDecisionUncheckedUpdateManyInput = {
@@ -46752,6 +46775,7 @@ export namespace Prisma {
     prefBUY?: NullableFloatFieldUpdateOperationsInput | number | null
     prefSELL?: NullableFloatFieldUpdateOperationsInput | number | null
     prefHOLD?: NullableFloatFieldUpdateOperationsInput | number | null
+    decisionTrace?: NullableJsonNullValueInput | InputJsonValue
   }
 
   export type CrowdMetricsCreateInput = {
@@ -50066,6 +50090,7 @@ export namespace Prisma {
     prefBUY?: SortOrder
     prefSELL?: SortOrder
     prefHOLD?: SortOrder
+    decisionTrace?: SortOrder
   }
 
   export type AgentDecisionAvgOrderByAggregateInput = {
@@ -54873,6 +54898,7 @@ export namespace Prisma {
     prefBUY?: number | null
     prefSELL?: number | null
     prefHOLD?: number | null
+    decisionTrace?: NullableJsonNullValueInput | InputJsonValue
     runVariant?: RunVariantCreateNestedOneWithoutAgentDecisionsInput
     agent: RunAgentCreateNestedOneWithoutDecisionsInput
   }
@@ -54896,6 +54922,7 @@ export namespace Prisma {
     prefBUY?: number | null
     prefSELL?: number | null
     prefHOLD?: number | null
+    decisionTrace?: NullableJsonNullValueInput | InputJsonValue
   }
 
   export type AgentDecisionCreateOrConnectWithoutRunInput = {
@@ -55389,6 +55416,7 @@ export namespace Prisma {
     prefBUY?: FloatNullableFilter<"AgentDecision"> | number | null
     prefSELL?: FloatNullableFilter<"AgentDecision"> | number | null
     prefHOLD?: FloatNullableFilter<"AgentDecision"> | number | null
+    decisionTrace?: JsonNullableFilter<"AgentDecision">
   }
 
   export type CrowdMetricsUpsertWithWhereUniqueWithoutRunInput = {
@@ -55730,6 +55758,7 @@ export namespace Prisma {
     prefBUY?: number | null
     prefSELL?: number | null
     prefHOLD?: number | null
+    decisionTrace?: NullableJsonNullValueInput | InputJsonValue
     run: SimulationRunCreateNestedOneWithoutAgentDecisionsInput
     agent: RunAgentCreateNestedOneWithoutDecisionsInput
   }
@@ -55753,6 +55782,7 @@ export namespace Prisma {
     prefBUY?: number | null
     prefSELL?: number | null
     prefHOLD?: number | null
+    decisionTrace?: NullableJsonNullValueInput | InputJsonValue
   }
 
   export type AgentDecisionCreateOrConnectWithoutRunVariantInput = {
@@ -56558,6 +56588,7 @@ export namespace Prisma {
     prefBUY?: number | null
     prefSELL?: number | null
     prefHOLD?: number | null
+    decisionTrace?: NullableJsonNullValueInput | InputJsonValue
     run: SimulationRunCreateNestedOneWithoutAgentDecisionsInput
     runVariant?: RunVariantCreateNestedOneWithoutAgentDecisionsInput
   }
@@ -56581,6 +56612,7 @@ export namespace Prisma {
     prefBUY?: number | null
     prefSELL?: number | null
     prefHOLD?: number | null
+    decisionTrace?: NullableJsonNullValueInput | InputJsonValue
   }
 
   export type AgentDecisionCreateOrConnectWithoutAgentInput = {
@@ -60762,6 +60794,7 @@ export namespace Prisma {
     prefBUY?: number | null
     prefSELL?: number | null
     prefHOLD?: number | null
+    decisionTrace?: NullableJsonNullValueInput | InputJsonValue
   }
 
   export type CrowdMetricsCreateManyRunInput = {
@@ -61080,6 +61113,7 @@ export namespace Prisma {
     prefBUY?: NullableFloatFieldUpdateOperationsInput | number | null
     prefSELL?: NullableFloatFieldUpdateOperationsInput | number | null
     prefHOLD?: NullableFloatFieldUpdateOperationsInput | number | null
+    decisionTrace?: NullableJsonNullValueInput | InputJsonValue
     runVariant?: RunVariantUpdateOneWithoutAgentDecisionsNestedInput
     agent?: RunAgentUpdateOneRequiredWithoutDecisionsNestedInput
   }
@@ -61103,6 +61137,7 @@ export namespace Prisma {
     prefBUY?: NullableFloatFieldUpdateOperationsInput | number | null
     prefSELL?: NullableFloatFieldUpdateOperationsInput | number | null
     prefHOLD?: NullableFloatFieldUpdateOperationsInput | number | null
+    decisionTrace?: NullableJsonNullValueInput | InputJsonValue
   }
 
   export type AgentDecisionUncheckedUpdateManyWithoutRunInput = {
@@ -61124,6 +61159,7 @@ export namespace Prisma {
     prefBUY?: NullableFloatFieldUpdateOperationsInput | number | null
     prefSELL?: NullableFloatFieldUpdateOperationsInput | number | null
     prefHOLD?: NullableFloatFieldUpdateOperationsInput | number | null
+    decisionTrace?: NullableJsonNullValueInput | InputJsonValue
   }
 
   export type CrowdMetricsUpdateWithoutRunInput = {
@@ -61476,6 +61512,7 @@ export namespace Prisma {
     prefBUY?: number | null
     prefSELL?: number | null
     prefHOLD?: number | null
+    decisionTrace?: NullableJsonNullValueInput | InputJsonValue
   }
 
   export type AgentInfoStateCreateManyRunVariantInput = {
@@ -61589,6 +61626,7 @@ export namespace Prisma {
     prefBUY?: NullableFloatFieldUpdateOperationsInput | number | null
     prefSELL?: NullableFloatFieldUpdateOperationsInput | number | null
     prefHOLD?: NullableFloatFieldUpdateOperationsInput | number | null
+    decisionTrace?: NullableJsonNullValueInput | InputJsonValue
     run?: SimulationRunUpdateOneRequiredWithoutAgentDecisionsNestedInput
     agent?: RunAgentUpdateOneRequiredWithoutDecisionsNestedInput
   }
@@ -61612,6 +61650,7 @@ export namespace Prisma {
     prefBUY?: NullableFloatFieldUpdateOperationsInput | number | null
     prefSELL?: NullableFloatFieldUpdateOperationsInput | number | null
     prefHOLD?: NullableFloatFieldUpdateOperationsInput | number | null
+    decisionTrace?: NullableJsonNullValueInput | InputJsonValue
   }
 
   export type AgentDecisionUncheckedUpdateManyWithoutRunVariantInput = {
@@ -61633,6 +61672,7 @@ export namespace Prisma {
     prefBUY?: NullableFloatFieldUpdateOperationsInput | number | null
     prefSELL?: NullableFloatFieldUpdateOperationsInput | number | null
     prefHOLD?: NullableFloatFieldUpdateOperationsInput | number | null
+    decisionTrace?: NullableJsonNullValueInput | InputJsonValue
   }
 
   export type AgentInfoStateUpdateWithoutRunVariantInput = {
@@ -61944,6 +61984,7 @@ export namespace Prisma {
     prefBUY?: number | null
     prefSELL?: number | null
     prefHOLD?: number | null
+    decisionTrace?: NullableJsonNullValueInput | InputJsonValue
   }
 
   export type AgentInfoStateCreateManyAgentInput = {
@@ -62048,6 +62089,7 @@ export namespace Prisma {
     prefBUY?: NullableFloatFieldUpdateOperationsInput | number | null
     prefSELL?: NullableFloatFieldUpdateOperationsInput | number | null
     prefHOLD?: NullableFloatFieldUpdateOperationsInput | number | null
+    decisionTrace?: NullableJsonNullValueInput | InputJsonValue
     run?: SimulationRunUpdateOneRequiredWithoutAgentDecisionsNestedInput
     runVariant?: RunVariantUpdateOneWithoutAgentDecisionsNestedInput
   }
@@ -62071,6 +62113,7 @@ export namespace Prisma {
     prefBUY?: NullableFloatFieldUpdateOperationsInput | number | null
     prefSELL?: NullableFloatFieldUpdateOperationsInput | number | null
     prefHOLD?: NullableFloatFieldUpdateOperationsInput | number | null
+    decisionTrace?: NullableJsonNullValueInput | InputJsonValue
   }
 
   export type AgentDecisionUncheckedUpdateManyWithoutAgentInput = {
@@ -62092,6 +62135,7 @@ export namespace Prisma {
     prefBUY?: NullableFloatFieldUpdateOperationsInput | number | null
     prefSELL?: NullableFloatFieldUpdateOperationsInput | number | null
     prefHOLD?: NullableFloatFieldUpdateOperationsInput | number | null
+    decisionTrace?: NullableJsonNullValueInput | InputJsonValue
   }
 
   export type AgentInfoStateUpdateWithoutAgentInput = {

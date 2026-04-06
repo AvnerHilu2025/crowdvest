@@ -259,7 +259,8 @@ exports.Prisma.AgentDecisionScalarFieldEnum = {
   beliefDrift: 'beliefDrift',
   prefBUY: 'prefBUY',
   prefSELL: 'prefSELL',
-  prefHOLD: 'prefHOLD'
+  prefHOLD: 'prefHOLD',
+  decisionTrace: 'decisionTrace'
 };
 
 exports.Prisma.CrowdMetricsScalarFieldEnum = {

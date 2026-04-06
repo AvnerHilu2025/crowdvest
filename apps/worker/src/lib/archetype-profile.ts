@@ -450,6 +450,11 @@ export function getDecisionMode(persona: PersonaProfile): DecisionMode {
 /** Baseline id for hybrid soft-gate + graded awareness (compare before/after reports). */
 export const EVENT_MODEL_HYBRID_SOFT_GATE_V1 = "hybrid_soft_gate_v1";
 
+/** Legacy: `finalEvent = sources.access.social ? blendedEvent : 0` (binary social gate). */
+export const EVENT_MODEL_PRE_HYBRID_HARD_GATE = "pre_hybrid_hard_gate";
+
+export type EventModelName = "pre_hybrid_hard_gate" | "hybrid_soft_gate_v1";
+
 /** Weights for `computeEventAwareness` (must match product baseline reports). */
 export const EVENT_AWARENESS_WEIGHTS = {
   digitalAffinity: 0.4,

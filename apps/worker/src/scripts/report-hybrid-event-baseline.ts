@@ -11,7 +11,7 @@
  */
 import fs from "fs";
 import path from "path";
-import { getHybridEventBaselineMetadata } from "../lib/archetype-profile";
+import { EVENT_MODEL_HYBRID_SOFT_GATE_V1, getHybridEventBaselineMetadata } from "../lib/archetype-profile";
 import { loadEnv, runValidatePostfixSignals } from "./validate-postfix-signals";
 
 type BySeedRow = {
@@ -136,6 +136,9 @@ async function main(): Promise<void> {
       verbose: false,
       persist: "full",
       includeEventRows: false,
+      label: "",
+      eventModel: EVENT_MODEL_HYBRID_SOFT_GATE_V1,
+      eventContribution: "full",
     });
     notes.push(...result.summary.notes);
     summaryBySymbol[assetSymbol] = {

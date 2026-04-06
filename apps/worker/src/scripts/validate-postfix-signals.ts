@@ -19,12 +19,18 @@
  * holds `evt_exp` and validation can merge like `logFinalSignalTrace` in decide.ts. Pass `--persist lite`
  * to match a lite-only workflow (event stats may stay at 0 vs trace).
  * Optional `--includeEventRows` adds per-seed `eventRows` with step, agentId, event, event_exposure, event_behavior.
+ * Optional `--label`, `--eventModel pre_hybrid_hard_gate|hybrid_soft_gate_v1`, and `--eventContribution full|zero`
+ * (forwarded to decide) for model comparison / predictive-impact studies.
  */
 import path from "path";
 import fs from "fs";
 import { spawnSync } from "node:child_process";
 import { PrismaClient } from "@crowdvest/db";
-import { getHybridEventBaselineMetadata } from "../lib/archetype-profile";
+import {
+  getHybridEventBaselineMetadata,
+  EVENT_MODEL_HYBRID_SOFT_GATE_V1,
+  type EventModelName,
+} from "../lib/archetype-profile";
 
 const EPS = 1e-9;
 
@@ -96,6 +102,12 @@ function parseArgv(): {
   /** Forwarded to decide.ts; default full so AgentExperience has evt_exp for event validation. */
   persist: "lite" | "full";
   includeEventRows: boolean;
+  /** RunVariant label (distinct per model when comparing). */
+  label: string;
+  /** decide.ts event channel path. */
+  eventModel: EventModelName;
+  /** decide.ts: zero behavioral event channel before mixing (ablation). */
+  eventContribution: "full" | "zero";
 } {
   const raw = process.argv.slice(2).filter((a) => a !== "--");
   let runId = "";
@@ -106,6 +118,9 @@ function parseArgv(): {
   let verbose = false;
   let persist: "lite" | "full" = "full";
   let includeEventRows = false;
+  let label = "";
+  let eventModel: EventModelName = EVENT_MODEL_HYBRID_SOFT_GATE_V1;
+  let eventContribution: "full" | "zero" = "full";
   for (let i = 0; i < raw.length; i++) {
     if (raw[i] === "--runId" && raw[i + 1]) runId = raw[++i]!.trim();
     else if (raw[i] === "--assetSymbol" && raw[i + 1]) assetSymbol = raw[++i]!.trim() || "RUN";
@@ -126,6 +141,20 @@ function parseArgv(): {
       persist = v;
     } else if (raw[i] === "--includeEventRows") {
       includeEventRows = true;
+    } else if (raw[i] === "--label" && raw[i + 1]) {
+      label = raw[++i]!.trim();
+    } else if (raw[i] === "--eventModel" && raw[i + 1]) {
+      const v = raw[++i]!.trim();
+      if (v !== "pre_hybrid_hard_gate" && v !== "hybrid_soft_gate_v1") {
+        throw new Error(`--eventModel must be pre_hybrid_hard_gate|hybrid_soft_gate_v1, got: ${v}`);
+      }
+      eventModel = v as EventModelName;
+    } else if (raw[i] === "--eventContribution" && raw[i + 1]) {
+      const v = raw[++i]!.trim().toLowerCase();
+      if (v !== "full" && v !== "zero") {
+        throw new Error(`--eventContribution must be full|zero, got: ${v}`);
+      }
+      eventContribution = v as "full" | "zero";
     }
   }
   if (!runId) throw new Error("--runId is required");
@@ -134,7 +163,19 @@ function parseArgv(): {
     .map((s) => parseInt(s.trim(), 10))
     .filter((n) => Number.isFinite(n));
   if (seeds.length === 0) throw new Error("--seeds is required (comma-separated integers, e.g. 1,42,123,777)");
-  return { runId, assetSymbol, steps, seeds, allowSmallCrowd, verbose, persist, includeEventRows };
+  return {
+    runId,
+    assetSymbol,
+    steps,
+    seeds,
+    allowSmallCrowd,
+    verbose,
+    persist,
+    includeEventRows,
+    label,
+    eventModel,
+    eventContribution,
+  };
 }
 
 export type ValidatePostfixSignalsParams = ReturnType<typeof parseArgv>;
@@ -195,10 +236,21 @@ export async function runValidatePostfixSignals(
     notes: string[];
   };
 }> {
-  const { runId, assetSymbol, steps, seeds, allowSmallCrowd, verbose, persist, includeEventRows } = params;
+  const {
+    runId,
+    assetSymbol,
+    steps,
+    seeds,
+    allowSmallCrowd,
+    verbose,
+    persist,
+    includeEventRows,
+    label,
+    eventModel,
+    eventContribution,
+  } = params;
   const prisma = new PrismaClient();
   const workerRoot = path.join(__dirname, "..", "..");
-  const label = "";
 
   const bySeed: Array<{
     seed: number;
@@ -260,6 +312,10 @@ export async function runValidatePostfixSignals(
         "--overwrite",
         "--persist",
         persist,
+        "--eventModel",
+        eventModel,
+        "--eventContribution",
+        eventContribution,
       ];
       if (allowSmallCrowd) decideArgs.push("--allowSmallCrowd");
 

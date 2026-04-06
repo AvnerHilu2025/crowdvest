@@ -447,15 +447,26 @@ export function getDecisionMode(persona: PersonaProfile): DecisionMode {
   return "analytical";
 }
 
+/** Baseline id for hybrid soft-gate + graded awareness (compare before/after reports). */
+export const EVENT_MODEL_HYBRID_SOFT_GATE_V1 = "hybrid_soft_gate_v1";
+
+/** Weights for `computeEventAwareness` (must match product baseline reports). */
+export const EVENT_AWARENESS_WEIGHTS = {
+  digitalAffinity: 0.4,
+  peerInfluence: 0.35,
+  engagementLevel: 0.25,
+} as const;
+
 /**
  * Graded behavioral awareness of event-like shocks (social/peer/engagement), in [0, 1].
  * Used with a soft access modifier when `sources.access.social` is false.
  */
 export function computeEventAwareness(persona: PersonaProfile): number {
+  const w = EVENT_AWARENESS_WEIGHTS;
   const raw =
-    0.4 * persona.digitalAffinity +
-    0.35 * persona.peerInfluence +
-    0.25 * persona.engagementLevel;
+    w.digitalAffinity * persona.digitalAffinity +
+    w.peerInfluence * persona.peerInfluence +
+    w.engagementLevel * persona.engagementLevel;
   return Math.max(0, Math.min(1, raw));
 }
 
@@ -464,6 +475,19 @@ export function computeEventAwareness(persona: PersonaProfile): number {
  * by this floor instead of hard zero (second-hand / ambient exposure).
  */
 export const EVENT_ACCESS_SOFT_FLOOR = 0.2;
+
+/** Snapshot for validation JSON + comparison reports (hybrid soft-gate baseline). */
+export function getHybridEventBaselineMetadata(): {
+  eventModel: string;
+  eventAccessSoftFloor: number;
+  eventAwarenessWeights: typeof EVENT_AWARENESS_WEIGHTS;
+} {
+  return {
+    eventModel: EVENT_MODEL_HYBRID_SOFT_GATE_V1,
+    eventAccessSoftFloor: EVENT_ACCESS_SOFT_FLOOR,
+    eventAwarenessWeights: { ...EVENT_AWARENESS_WEIGHTS },
+  };
+}
 
 export function buildSourceProfile(persona: PersonaProfile): SourceProfile {
   const trust: SourceTrust = {

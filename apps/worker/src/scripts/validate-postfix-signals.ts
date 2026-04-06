@@ -24,6 +24,7 @@ import path from "path";
 import fs from "fs";
 import { spawnSync } from "node:child_process";
 import { PrismaClient } from "@crowdvest/db";
+import { getHybridEventBaselineMetadata } from "../lib/archetype-profile";
 
 const EPS = 1e-9;
 
@@ -70,7 +71,7 @@ function loadEnvFile(filePath: string): void {
   }
 }
 
-function loadEnv(): void {
+export function loadEnv(): void {
   const cwd = process.cwd();
   for (const p of [
     path.resolve(cwd, ".env"),
@@ -136,6 +137,8 @@ function parseArgv(): {
   return { runId, assetSymbol, steps, seeds, allowSmallCrowd, verbose, persist, includeEventRows };
 }
 
+export type ValidatePostfixSignalsParams = ReturnType<typeof parseArgv>;
+
 function meanAbs(vals: (number | null | undefined)[]): number {
   const xs = vals.filter((v): v is number => v != null && Number.isFinite(v));
   if (xs.length === 0) return 0;
@@ -178,9 +181,21 @@ function runWorkerScript(
   }
 }
 
-async function main(): Promise<void> {
-  loadEnv();
-  const { runId, assetSymbol, steps, seeds, allowSmallCrowd, verbose, persist, includeEventRows } = parseArgv();
+export async function runValidatePostfixSignals(
+  params: ValidatePostfixSignalsParams,
+): Promise<{
+  baseline: ReturnType<typeof getHybridEventBaselineMetadata>;
+  seeds: number[];
+  bySeed: unknown[];
+  summary: {
+    avgAbsByChannel: unknown;
+    pctNonZeroByChannel: unknown;
+    directionalMix: unknown;
+    signalStabilityAcrossSeeds: unknown;
+    notes: string[];
+  };
+}> {
+  const { runId, assetSymbol, steps, seeds, allowSmallCrowd, verbose, persist, includeEventRows } = params;
   const prisma = new PrismaClient();
   const workerRoot = path.join(__dirname, "..", "..");
   const label = "";
@@ -465,6 +480,7 @@ async function main(): Promise<void> {
     };
 
     const out = {
+      baseline: getHybridEventBaselineMetadata(),
       seeds,
       bySeed,
       summary: {
@@ -476,10 +492,16 @@ async function main(): Promise<void> {
       },
     };
 
-    console.log(JSON.stringify(out, null, 2));
+    return out;
   } finally {
     await prisma.$disconnect();
   }
+}
+
+async function main(): Promise<void> {
+  loadEnv();
+  const out = await runValidatePostfixSignals(parseArgv());
+  console.log(JSON.stringify(out, null, 2));
 }
 
 main().catch((e) => {

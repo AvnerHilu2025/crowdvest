@@ -36,7 +36,13 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "test": "echo \"No tests yet\"",
-    "test:decide-validate": "tsx src/scripts/decide-validate.test.ts"
+    "test:decide-validate": "tsx src/scripts/decide-validate.test.ts",
+    "test:product-channels": "tsx src/lib/product-channels.selftest.ts",
+    "test:product-decision": "tsx src/lib/product-decision.selftest.ts",
+    "diagnose:info-events": "tsx src/scripts/diagnose-info-events-run.ts",
+    "fetch:real-news": "tsx src/scripts/fetch-real-news.ts",
+    "normalize:info-events": "tsx src/scripts/normalize-news-to-info-events.ts",
+    "load:info-events": "tsx src/scripts/load-info-events.ts"
   },
   "dependencies": {
     "@crowdvest/db": "workspace:*",

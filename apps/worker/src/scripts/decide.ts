@@ -22,6 +22,7 @@
  *   --pipelineDiag         Print === DECISION PIPELINE DIAGNOSTICS === after all steps (observability only).
  *   --pipelineDiagSample N Agents per step in sample tables (default: 8, max: 500).
  *   --decisionTrace        Persist JSON `decisionTrace` on each AgentDecision (channels + base + signalI + threshold).
+ *   --productChannels      Use product-grade channel builders (no ratioOr / sin event fallback); CV_PRODUCT_CHANNELS=1.
  *                          Or set CV_DECISION_TRACE=1. No change to decision logic.
  *   --neutralMode          (deprecated; ignored — architecture is always independent-agent / sign(signal).)
  *   --herdingCrowdScale    (deprecated; ignored.)
@@ -68,6 +69,13 @@ import {
   logEventPathExposure,
 } from "../lib/agent-information-exposure";
 import { computeRegimeState } from "../market/regime";
+import { computeProductChannels, type ProductChannelResult } from "../lib/product-channels";
+import { computeProductDecision } from "../lib/product-decision";
+import {
+  formatProductChannelMetricsLine,
+  PRODUCT_CHANNEL_SYN_WARN_LOG_CAP,
+  ProductChannelRunMetrics,
+} from "../lib/product-channel-run-metrics";
 import { assertRunExists } from "../lib/assert-run-exists";
 import { chunk } from "../lib/chunk";
 import { generateAgentProfile } from "../lib/population-generator";
@@ -496,6 +504,11 @@ function parseArgv(): {
   eventContribution: "full" | "zero";
   /** When true, store `decisionTrace` JSON on each AgentDecision (also CV_DECISION_TRACE=1). */
   decisionTrace: boolean;
+  /**
+   * Product channel layer: explicit builders only (no ratioOr / persona routing / sin fallback).
+   * Also: CV_PRODUCT_CHANNELS=1 or true.
+   */
+  productChannels: boolean;
 } {
   const args = process.argv.slice(2);
   let runId = "";
@@ -536,6 +549,7 @@ function parseArgv(): {
   let eventModel: EventModelName = EVENT_MODEL_HYBRID_SOFT_GATE_V1;
   let eventContribution: "full" | "zero" = "full";
   let decisionTrace = false;
+  let productChannels = false;
   for (let i = 0; i < args.length; i++) {
     const arg = args[i]!;
     if (arg === "--runVariantId" && args[i + 1]) {
@@ -678,10 +692,15 @@ function parseArgv(): {
       eventContribution = v as "full" | "zero";
     } else if (arg === "--decisionTrace") {
       decisionTrace = true;
+    } else if (arg === "--productChannels") {
+      productChannels = true;
     }
   }
   if (process.env.CV_DECISION_TRACE === "1" || process.env.CV_DECISION_TRACE === "true") {
     decisionTrace = true;
+  }
+  if (process.env.CV_PRODUCT_CHANNELS === "1" || process.env.CV_PRODUCT_CHANNELS === "true") {
+    productChannels = true;
   }
   if (cvVal029) {
     cvVal027 = false;
@@ -855,6 +874,7 @@ function parseArgv(): {
     eventModel,
     eventContribution,
     decisionTrace,
+    productChannels,
   };
 }
 
@@ -1967,6 +1987,8 @@ async function main(): Promise<void> {
     } as Record<AgentDecisionModelKind, { total: number; flipped: number }>,
   };
 
+  const productChannelRunMetrics = argv.productChannels ? new ProductChannelRunMetrics() : null;
+
   for (let step = 0; step < steps; step++) {
     const priceByStepCur = priceByStepBySymbol.get(assetSymbol);
     if (!priceByStepCur) {
@@ -2048,41 +2070,209 @@ async function main(): Promise<void> {
       );
 
       const anchorSign = syntheticSignal;
-      const { infoSignal: rawInfo, exposedCount } = aggregateInfoSignal({
-        events: subset,
-        agentId: agent.id,
-        step,
-        seed: globalSeed,
-        attentionLevel: state.attentionLevel,
-        confirmationBias: biases.confirmationBias,
-        overconfidence: biases.overconfidence,
-        anchorSign,
-      });
+      let rawInfo: number;
+      let exposedCount: number;
+      let infoAfterExposure: number;
+      let infoSignalRaw: number;
+      let eventSignalRaw: number;
+      let synthetic_i_raw: number;
+      let regime_i_raw: number;
 
-      const infoAfterExposure = applyInformationExposureLayer({
-        rawInfoSignal: rawInfo,
-        syntheticSignal,
-        optimisticBias: (getTrait(traits, "confidence", 0.5) - 0.5) * 2,
-        politicalLean: (getTrait(traits, "contrarian", 0.5) - 0.5) * 2,
-        economicLean: (getTrait(traits, "newsSensitivity", 0.5) - 0.5) * 2,
-        rng,
-      });
+      let pcResult: ProductChannelResult | null = null;
+      if (argv.productChannels) {
+        const priceByStepCur = priceByStepBySymbol.get(assetSymbol)!;
+        if (agentIndex === 0) {
+          log(
+            `[PRODUCT_CHANNELS_DBG] step=${step} eventsForStep=${eventsForStep.length} eventPool=${eventPool.length} subset.length=${subset.length} (pass into computeProductChannels)`,
+          );
+        }
+        pcResult = computeProductChannels({
+          priceByStep: priceByStepCur,
+          step,
+          events: subset,
+          assetSymbol,
+          diagnosticRunId: runId,
+        });
+        rawInfo = pcResult.agg;
+        exposedCount = subset.length;
+        infoAfterExposure = pcResult.info;
+        infoSignalRaw = pcResult.info;
+        eventSignalRaw = pcResult.event;
+        synthetic_i_raw = pcResult.synthetic;
+        regime_i_raw = pcResult.regime;
+        productChannelRunMetrics?.record({
+          synthetic: pcResult.synthetic,
+          info: pcResult.info,
+          event: pcResult.event,
+          regime: pcResult.regime,
+        });
+        productChannelRunMetrics?.warnIfSyntheticNearSaturation(pcResult.synthetic, log);
+      } else {
+        const agg = aggregateInfoSignal({
+          events: subset,
+          agentId: agent.id,
+          step,
+          seed: globalSeed,
+          attentionLevel: state.attentionLevel,
+          confirmationBias: biases.confirmationBias,
+          overconfidence: biases.overconfidence,
+          anchorSign,
+        });
+        rawInfo = agg.infoSignal;
+        exposedCount = agg.exposedCount;
 
-      let infoSignalRaw = blendInfoWithUnderstanding({
-        infoRaw: infoAfterExposure,
-        understanding,
-        rng,
-      });
+        infoAfterExposure = applyInformationExposureLayer({
+          rawInfoSignal: rawInfo,
+          syntheticSignal,
+          optimisticBias: (getTrait(traits, "confidence", 0.5) - 0.5) * 2,
+          politicalLean: (getTrait(traits, "contrarian", 0.5) - 0.5) * 2,
+          economicLean: (getTrait(traits, "newsSensitivity", 0.5) - 0.5) * 2,
+          rng,
+        });
 
-      let eventSignalRaw = computeEventSignalIndependent({
-        events: subset,
-        attentionLevel: state.attentionLevel,
-        fatigue: state.fatigue,
-        emotionalVolatility: getTrait(traits, "emotionalVolatility"),
-      });
-      if (eventSignalRaw === 0) {
-        const stepEventSignal = minimalStepEventSignal(step, agentIdx);
-        eventSignalRaw = stepEventSignal;
+        infoSignalRaw = blendInfoWithUnderstanding({
+          infoRaw: infoAfterExposure,
+          understanding,
+          rng,
+        });
+
+        eventSignalRaw = computeEventSignalIndependent({
+          events: subset,
+          attentionLevel: state.attentionLevel,
+          fatigue: state.fatigue,
+          emotionalVolatility: getTrait(traits, "emotionalVolatility"),
+        });
+        if (eventSignalRaw === 0) {
+          const stepEventSignal = minimalStepEventSignal(step, agentIdx);
+          eventSignalRaw = stepEventSignal;
+        }
+
+        synthetic_i_raw = computeAgentSyntheticSignal({
+          syntheticSignal,
+          riskTolerance: getTrait(traits, "riskTolerance"),
+          rng,
+        });
+        const archetypeNameEarly = loadArchetypesConfig().byId.get(
+          resolveArchetypeConfigId(agent.id, agent.archetype ?? null, agent.archetypeId ?? null),
+        )?.name;
+        const biasEarly = getArchetypeBias(archetypeNameEarly || "");
+        const noiseEarly = (seededNoise(agentIndex * 1000 + step) - 0.5) * 0.1;
+        synthetic_i_raw = synthetic_i_raw + biasEarly * 0.25 + noiseEarly;
+
+        regime_i_raw = computeAgentRegimeSignal({
+          regimeSignal: regime.regimeSignal,
+          newsSensitivity: getTrait(traits, "newsSensitivity"),
+          rng,
+        });
+      }
+
+      if (argv.productChannels && pcResult) {
+        const pd = computeProductDecision({
+          synthetic: pcResult.synthetic,
+          info: pcResult.info,
+          event: pcResult.event,
+          regime: pcResult.regime,
+        });
+        const action = pd.action;
+        const confidence = pd.confidence;
+        const coherentSignal = pd.coherentSignal;
+        const decisionModelPc = decisionModelKindForAgent(agent.id);
+        const rationale =
+          `product_channels_v1 coherent=${coherentSignal.toFixed(3)} agreement=${pd.agreement.toFixed(3)} ` +
+          `strength=${pd.strength.toFixed(3)} dominant=${pd.dominantChannel} ` +
+          `(syn=${pcResult.synthetic.toFixed(2)} info=${pcResult.info.toFixed(2)} evt=${pcResult.event.toFixed(2)} reg=${pcResult.regime.toFixed(2)} exposed=${exposedCount})`;
+
+        agentInfoStates.push({
+          runId,
+          runVariantId,
+          assetSymbol,
+          agentId: agent.id,
+          step,
+          exposedCount,
+          infoSignal: pcResult.info,
+        });
+        const baselineConfPc = getTrait(traits, "confidence", 0.5);
+        const baselineRiskPc = getTrait(traits, "riskTolerance", 0.5);
+        const baselineHerdingPc = getTrait(traits, "herding", 0.5);
+        agentStatesToPersist.push({
+          runId,
+          runVariantId,
+          assetSymbol,
+          agentId: agent.id,
+          step,
+          exposedCount,
+          infoSignal: pcResult.info,
+          confidence: baselineConfPc,
+          riskTolerance: baselineRiskPc,
+          herding: baselineHerdingPc,
+        });
+
+        hist[action]++;
+        sumConf += confidence;
+        sumSignalI += coherentSignal;
+        stepDecisions.push({ agentId: agent.id, action, confidence });
+        modelHist[decisionModelPc][action]++;
+
+        state.lastAction = action;
+        state.fatigue = updateFatigue(state.fatigue, state.attentionLevel);
+        state.attentionLevel = updateAttention(state.attentionLevel, state.fatigue);
+
+        eventSignalByAgent.set(agent.id, pcResult.event);
+
+        logFinalSignalTrace({
+          step,
+          agent,
+          syntheticSignal: pcResult.synthetic,
+          infoSignal: pcResult.info,
+          eventSignal: pcResult.event,
+          regimeSignal: pcResult.regime,
+          distortedSignal: coherentSignal,
+          prefBUY: 0,
+          prefSELL: 0,
+          prefHOLD: 0,
+          confidence,
+          preSignals: {
+            synthetic: pcResult.synthetic,
+            info: pcResult.info,
+            event: pcResult.event,
+            regime: pcResult.regime,
+          },
+        });
+
+        decisions.push({
+          runId,
+          runVariantId,
+          step,
+          agentId: agent.id,
+          assetSymbol,
+          action,
+          confidence,
+          rationale,
+          syntheticSignal: pcResult.synthetic,
+          infoSignal: pcResult.info,
+          eventSignal: pcResult.event,
+          regimeSignal: pcResult.regime,
+          distortedSignal: coherentSignal,
+          beliefDrift: 0,
+          prefBUY: 0,
+          prefSELL: 0,
+          prefHOLD: 0,
+          decisionTrace: optionalDecisionTrace(argv.decisionTrace, {
+            branch: "product_channels_v1",
+            channels: {
+              synthetic: pcResult.synthetic,
+              infoSignal: pcResult.info,
+              eventSignal: pcResult.event,
+              regime_i: pcResult.regime,
+            },
+            agreement: pd.agreement,
+            strength: pd.strength,
+            coherentSignal: pd.coherentSignal,
+            threshold: 0.15,
+            dominantChannel: pd.dominantChannel,
+          }),
+        });
+        continue;
       }
 
       const archCfgId = resolveArchetypeConfigId(
@@ -2091,22 +2281,6 @@ async function main(): Promise<void> {
         agent.archetypeId ?? null,
       );
       const archetypeConfig = loadArchetypesConfig().byId.get(archCfgId)!;
-
-      let synthetic_i_raw = computeAgentSyntheticSignal({
-        syntheticSignal,
-        riskTolerance: getTrait(traits, "riskTolerance"),
-        rng,
-      });
-      const archetypeName = archetypeConfig?.name || "";
-      const bias = getArchetypeBias(archetypeName);
-      const noise = (seededNoise(agentIndex * 1000 + step) - 0.5) * 0.1;
-      synthetic_i_raw = synthetic_i_raw + bias * 0.25 + noise;
-
-      let regime_i_raw = computeAgentRegimeSignal({
-        regimeSignal: regime.regimeSignal,
-        newsSensitivity: getTrait(traits, "newsSensitivity"),
-        rng,
-      });
 
       const effArch = effectiveArchetypeProfileForAgent(agent.id, agent.archetype, agent.archetypeId);
       const structuredRoleForPersona = (agent.archetype ?? "").trim().toLowerCase();
@@ -2125,16 +2299,18 @@ async function main(): Promise<void> {
       const archetypeIdForBias = ["trend", "contrarian", "noise", "fundamental"].includes(structuredRole)
         ? structuredRole
         : "";
-      const channelBiased = applyArchetypeSignalBias(archetypeIdForBias, {
-        synthetic: synthetic_i_raw,
-        info: infoSignalRaw,
-        event: eventSignalRaw,
-        regime: regime_i_raw,
-      });
-      synthetic_i_raw = channelBiased.synthetic;
-      infoSignalRaw = channelBiased.info;
-      eventSignalRaw = channelBiased.event;
-      regime_i_raw = channelBiased.regime;
+      if (!argv.productChannels) {
+        const channelBiased = applyArchetypeSignalBias(archetypeIdForBias, {
+          synthetic: synthetic_i_raw,
+          info: infoSignalRaw,
+          event: eventSignalRaw,
+          regime: regime_i_raw,
+        });
+        synthetic_i_raw = channelBiased.synthetic;
+        infoSignalRaw = channelBiased.info;
+        eventSignalRaw = channelBiased.event;
+        regime_i_raw = channelBiased.regime;
+      }
 
       const exposure = archetypeConfig.informationExposure ?? {
         synthetic: 1,
@@ -2242,6 +2418,38 @@ async function main(): Promise<void> {
         regimeSignal: regime.regimeSignal,
       });
 
+      const profileObj = (agent as any).profile as
+        | {
+            ageGroup: string;
+            persona: string;
+            channels: Record<string, number>;
+          }
+        | undefined;
+
+      /** Trust/blend stage snapshots for diagnostics (defaults = product-channel path). */
+      let pipelineBaseSynthetic = syntheticSignal;
+      let pipelineBlendedSynthetic = syntheticSignal;
+      let pipelineFinalSynthetic = syntheticSignal;
+      let pipelineBaseInfo = infoSignal;
+      let pipelineBlendedInfo = infoSignal;
+      let pipelineFinalInfo = infoSignal;
+      let pipelineBaseEvent = eventSignal;
+      let pipelineBlendedEvent = eventSignal;
+      let pipelineFinalEvent = eventSignal;
+      let pipelineBaseRegime = regime.regimeSignal;
+      let pipelineBlendedRegime = regime.regimeSignal;
+      let pipelineFinalRegime = regime.regimeSignal;
+
+      let rawSynthetic_i: number;
+      let rawInfoSignal: number;
+      let rawEventSignal: number;
+      let rawRegime_i: number;
+      let postProfileSynthetic_i: number;
+      let postProfileInfoSignal: number;
+      let postProfileEventSignal: number;
+      let postProfileRegime_i: number;
+
+      if (!argv.productChannels) {
       const agentProfile = profile;
       const famMap = agentProfile.sourceFamilies || {};
       const chProf = agentProfile.channels || {};
@@ -2309,18 +2517,10 @@ async function main(): Promise<void> {
         });
       }
 
-      const rawSynthetic_i = synthetic_i;
-      const rawInfoSignal = infoSignal;
-      const rawEventSignal = eventSignal;
-      const rawRegime_i = regime_i;
-
-      const profileObj = (agent as any).profile as
-        | {
-            ageGroup: string;
-            persona: string;
-            channels: Record<string, number>;
-          }
-        | undefined;
+      rawSynthetic_i = synthetic_i;
+      rawInfoSignal = infoSignal;
+      rawEventSignal = eventSignal;
+      rawRegime_i = regime_i;
 
       const profileChannels = profileObj?.channels ?? {};
 
@@ -2404,15 +2604,20 @@ async function main(): Promise<void> {
         regime_i = finalRegime;
       }
 
-      const postProfileSynthetic_i = synthetic_i;
-      const postProfileInfoSignal = infoSignal;
-      const postProfileEventSignal = eventSignal;
-      const postProfileRegime_i = regime_i;
+      postProfileSynthetic_i = synthetic_i;
+      postProfileInfoSignal = infoSignal;
+      postProfileEventSignal = eventSignal;
+      postProfileRegime_i = regime_i;
 
       const baseSynthetic = syntheticSignal;
       const baseInfo = infoSignal;
       const baseEvent = eventSignal;
       const baseRegime = regime.regimeSignal;
+
+      pipelineBaseSynthetic = baseSynthetic;
+      pipelineBaseInfo = baseInfo;
+      pipelineBaseEvent = baseEvent;
+      pipelineBaseRegime = baseRegime;
 
       const blendedSynthetic =
         baseSynthetic * sources.trust.technical +
@@ -2430,6 +2635,11 @@ async function main(): Promise<void> {
       const blendedRegime =
         baseRegime * sources.trust.macro +
         baseInfo * sources.trust.news * 0.3;
+
+      pipelineBlendedSynthetic = blendedSynthetic;
+      pipelineBlendedInfo = blendedInfo;
+      pipelineBlendedEvent = blendedEvent;
+      pipelineBlendedRegime = blendedRegime;
 
       let finalSynthetic = sources.access.technical ? blendedSynthetic : 0;
       let finalInfo = sources.access.news ? blendedInfo : 0;
@@ -2484,6 +2694,34 @@ async function main(): Promise<void> {
       infoSignal *= ratioOr(finalInfo, baseInfo);
       eventSignal *= ratioOr(finalEvent, baseEvent);
       regime_i *= ratioOr(finalRegime, baseRegime);
+
+      pipelineFinalSynthetic = finalSynthetic;
+      pipelineFinalInfo = finalInfo;
+      pipelineFinalEvent = finalEvent;
+      pipelineFinalRegime = finalRegime;
+
+      } else {
+        rawSynthetic_i = synthetic_i;
+        rawInfoSignal = infoSignal;
+        rawEventSignal = eventSignal;
+        rawRegime_i = regime_i;
+        postProfileSynthetic_i = synthetic_i;
+        postProfileInfoSignal = infoSignal;
+        postProfileEventSignal = eventSignal;
+        postProfileRegime_i = regime_i;
+        pipelineBaseSynthetic = syntheticSignal;
+        pipelineBlendedSynthetic = syntheticSignal;
+        pipelineFinalSynthetic = syntheticSignal;
+        pipelineBaseInfo = infoSignal;
+        pipelineBlendedInfo = infoSignal;
+        pipelineFinalInfo = infoSignal;
+        pipelineBaseEvent = eventSignal;
+        pipelineBlendedEvent = eventSignal;
+        pipelineFinalEvent = eventSignal;
+        pipelineBaseRegime = regime.regimeSignal;
+        pipelineBlendedRegime = regime.regimeSignal;
+        pipelineFinalRegime = regime.regimeSignal;
+      }
 
       if (argv.eventContribution === "zero") {
         eventSignal = 0;
@@ -3451,18 +3689,18 @@ async function main(): Promise<void> {
           info_exp: info_exp,
           evt_exp: evt_exp,
           reg_exp: reg_exp,
-          raw_synthetic_market: baseSynthetic,
-          blended_synthetic_market: blendedSynthetic,
-          final_synthetic_market: finalSynthetic,
-          raw_info_signal: baseInfo,
-          blended_info_signal: blendedInfo,
-          final_info_signal: finalInfo,
-          raw_event_signal: baseEvent,
-          blended_event_signal: blendedEvent,
-          final_event_signal: finalEvent,
-          raw_regime_signal: baseRegime,
-          blended_regime_signal: blendedRegime,
-          final_regime_signal: finalRegime,
+          raw_synthetic_market: pipelineBaseSynthetic,
+          blended_synthetic_market: pipelineBlendedSynthetic,
+          final_synthetic_market: pipelineFinalSynthetic,
+          raw_info_signal: pipelineBaseInfo,
+          blended_info_signal: pipelineBlendedInfo,
+          final_info_signal: pipelineFinalInfo,
+          raw_event_signal: pipelineBaseEvent,
+          blended_event_signal: pipelineBlendedEvent,
+          final_event_signal: pipelineFinalEvent,
+          raw_regime_signal: pipelineBaseRegime,
+          blended_regime_signal: pipelineBlendedRegime,
+          final_regime_signal: pipelineFinalRegime,
           profile_persona: profileObj?.persona ?? "unknown",
           profile_raw_synthetic_i: rawSynthetic_i,
           profile_final_synthetic_i: postProfileSynthetic_i,
@@ -3489,24 +3727,24 @@ async function main(): Promise<void> {
             finalRegime_i: postProfileRegime_i,
           },
           synthetic: {
-            raw: baseSynthetic,
-            blended: blendedSynthetic,
-            final: finalSynthetic,
+            raw: pipelineBaseSynthetic,
+            blended: pipelineBlendedSynthetic,
+            final: pipelineFinalSynthetic,
           },
           info: {
-            raw: baseInfo,
-            blended: blendedInfo,
-            final: finalInfo,
+            raw: pipelineBaseInfo,
+            blended: pipelineBlendedInfo,
+            final: pipelineFinalInfo,
           },
           event: {
-            raw: baseEvent,
-            blended: blendedEvent,
-            final: finalEvent,
+            raw: pipelineBaseEvent,
+            blended: pipelineBlendedEvent,
+            final: pipelineFinalEvent,
           },
           regime: {
-            raw: baseRegime,
-            blended: blendedRegime,
-            final: finalRegime,
+            raw: pipelineBaseRegime,
+            blended: pipelineBlendedRegime,
+            final: pipelineFinalRegime,
           },
           infoSignalRaw,
           eventSignalRaw,
@@ -3621,6 +3859,17 @@ async function main(): Promise<void> {
     log(
       `[CV-ARCH-005] modelActions=${JSON.stringify(modelHist)}`,
     );
+  }
+
+  if (argv.productChannels && productChannelRunMetrics) {
+    const s = productChannelRunMetrics.summarize();
+    log(formatProductChannelMetricsLine(s));
+    if (productChannelRunMetrics.syntheticSaturationWarnings > PRODUCT_CHANNEL_SYN_WARN_LOG_CAP) {
+      log(
+        `[PRODUCT_CHANNELS] total synthetic saturation warnings=${productChannelRunMetrics.syntheticSaturationWarnings} (only first ${PRODUCT_CHANNEL_SYN_WARN_LOG_CAP} logged per run)`,
+      );
+    }
+    productChannelRunMetrics.assertEventNonZeroRateInRange();
   }
 
   if (argv.pipelineDiag && pipelineDiagRows.length > 0) {

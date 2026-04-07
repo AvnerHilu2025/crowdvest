@@ -63,11 +63,26 @@ async function main(): Promise<void> {
   const text = fs.readFileSync(rawPath, "utf-8");
   const envelope = JSON.parse(text) as FetchEnvelope;
   const provider = envelope.provider as NewsProviderId;
-  if (provider !== "alphavantage" && provider !== "finnhub") {
+  if (provider !== "alphavantage" && provider !== "finnhub" && provider !== "yahoo") {
     throw new Error(`Unknown provider in input: ${envelope.provider}`);
   }
 
   const articles = parseProviderResponse(provider, envelope.apiResponse);
+
+  console.log("DEBUG provider:", provider);
+  console.log("DEBUG envelope assetSymbol:", envelope.assetSymbol);
+  console.log("DEBUG envelope date range:", envelope.dateFrom, envelope.dateTo);
+  console.log(
+    "DEBUG raw apiResponse keys:",
+    envelope.apiResponse && typeof envelope.apiResponse === "object"
+      ? Object.keys(envelope.apiResponse).slice(0, 20)
+      : typeof envelope.apiResponse,
+  );
+  console.log("DEBUG parsed articles count:", articles.length);
+  if (articles.length > 0) {
+    console.log("DEBUG first parsed article:", JSON.stringify(articles[0], null, 2));
+  }
+
   const records = articles.map((a) =>
     buildNormalizedRecord(
       args.runId,
@@ -78,6 +93,30 @@ async function main(): Promise<void> {
       a,
     ),
   );
+
+  // === FIX: redistribute steps evenly to avoid clustering ===
+
+  // sort by publishedAt (ascending)
+  records.sort((a, b) => {
+    return new Date(a.publishedAt).getTime() - new Date(b.publishedAt).getTime();
+  });
+
+  const total = records.length;
+  const totalSteps = args.steps;
+
+  // reassign steps deterministically
+  records.forEach((r, index) => {
+    const step = Math.floor((index / total) * totalSteps);
+    r.step = Math.max(0, Math.min(totalSteps - 1, step));
+  });
+
+  // debug distribution
+  const dist: Record<number, number> = {};
+  records.forEach((r) => {
+    dist[r.step] = (dist[r.step] || 0) + 1;
+  });
+
+  console.log("DEBUG step distribution:", dist);
 
   const out: NormalizeOutputEnvelope = {
     runId: args.runId,

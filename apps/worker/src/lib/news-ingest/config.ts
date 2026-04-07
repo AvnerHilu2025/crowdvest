@@ -4,8 +4,9 @@ export function getNewsProviderFromEnv(): NewsProviderId {
   const p = (process.env.NEWS_PROVIDER ?? "alphavantage").trim().toLowerCase();
   if (p === "alphavantage" || p === "alpha_vantage" || p === "av") return "alphavantage";
   if (p === "finnhub" || p === "finn_hub") return "finnhub";
+  if (p === "yahoo" || p === "yahoo_finance" || p === "yfinance") return "yahoo";
   throw new Error(
-    `NEWS_PROVIDER must be "alphavantage" or "finnhub" (got: ${process.env.NEWS_PROVIDER})`,
+    `NEWS_PROVIDER must be "alphavantage", "finnhub", or "yahoo" (got: ${process.env.NEWS_PROVIDER})`,
   );
 }
 

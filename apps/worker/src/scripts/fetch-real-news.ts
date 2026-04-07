@@ -1,7 +1,7 @@
 /**
  * CLI: pnpm -C apps/worker run fetch:real-news -- --assetSymbol SPY --dateFrom 2024-01-01 --dateTo 2024-01-31 --output ./raw-news.json
  *
- * Fetches raw provider JSON only (no DB). Provider from NEWS_PROVIDER (alphavantage | finnhub).
+ * Fetches raw provider JSON only (no DB). Provider from NEWS_PROVIDER (alphavantage | finnhub | yahoo).
  */
 import fs from "fs";
 import path from "path";
@@ -31,7 +31,7 @@ function parseArgs(argv: string[]): {
     else if (a === "--output" && rest[i + 1]) output = rest[++i]!.trim();
     else if (a === "--provider" && rest[i + 1]) {
       const p = rest[++i]!.trim().toLowerCase();
-      if (p === "alphavantage" || p === "finnhub") provider = p;
+      if (p === "alphavantage" || p === "finnhub" || p === "yahoo") provider = p;
     }
   }
   return { assetSymbol, dateFrom, dateTo, output, provider };
@@ -41,7 +41,7 @@ async function main(): Promise<void> {
   const { assetSymbol, dateFrom, dateTo, output, provider: providerArg } = parseArgs(process.argv);
   if (!assetSymbol || !dateFrom || !dateTo || !output) {
     console.error(
-      "Usage: tsx src/scripts/fetch-real-news.ts --assetSymbol SPY --dateFrom YYYY-MM-DD --dateTo YYYY-MM-DD --output path.json [--provider alphavantage|finnhub]",
+      "Usage: tsx src/scripts/fetch-real-news.ts --assetSymbol SPY --dateFrom YYYY-MM-DD --dateTo YYYY-MM-DD --output path.json [--provider alphavantage|finnhub|yahoo]",
     );
     process.exit(1);
   }

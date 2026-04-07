@@ -105,8 +105,18 @@ export function buildNormalizedRecord(
       ? Math.max(-1, Math.min(1, a.sentimentScore))
       : placeholderSentimentFromTitle(a.title);
   const credibility = credibilityFromSource(a.source);
-  const salience = salienceFromTitle(a.title);
+  const originalSalience = salienceFromTitle(a.title);
   const eventType = classifyEventType(a.title);
+  let salience = originalSalience;
+  // === FIX: amplify info signal ===
+  if (eventType === "info") {
+    salience = Math.min(1, salience * 2.0);
+  }
+  console.log("DEBUG salience after boost:", {
+    title: a.title,
+    original: originalSalience,
+    boosted: salience,
+  });
   const step = assignedStep(a.publishedAt, dateFrom, dateTo, steps);
   return {
     runId,

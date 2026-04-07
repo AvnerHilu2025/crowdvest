@@ -24,6 +24,7 @@
  *   --decisionTrace        Persist JSON `decisionTrace` on each AgentDecision (channels + base + signalI + threshold).
  *   --productChannels      Use product-grade channel builders (no ratioOr / sin event fallback); CV_PRODUCT_CHANNELS=1.
  *                          Or set CV_DECISION_TRACE=1. No change to decision logic.
+ *   Env CV_DEBUG_CROWD_TRADE_MAP=1  Per-step JSON: plurality vs mean agent signal (crowd vs trade-direction diagnostics).
  *   --neutralMode          (deprecated; ignored — architecture is always independent-agent / sign(signal).)
  *   --herdingCrowdScale    (deprecated; ignored.)
  *
@@ -3849,7 +3850,28 @@ async function main(): Promise<void> {
 
     const buyPct = nAg > 0 ? (100 * hist.BUY) / nAg : 0;
     const sellPct = nAg > 0 ? (100 * hist.SELL) / nAg : 0;
+    const holdPct = nAg > 0 ? (100 * hist.HOLD) / nAg : 0;
     const avgConf = nAg > 0 ? sumConf / nAg : 0;
+    if (process.env.CV_DEBUG_CROWD_TRADE_MAP === "1") {
+      const thresholdNote = argv.productChannels
+        ? "product_channels_v1: per-agent coherentSignal vs T=0.15 (see product-decision.ts)"
+        : "arch052_default: per-agent signalI vs archetype-scaled threshold (see decision trace)";
+      console.log(
+        JSON.stringify({
+          tag: "CROWD_TRADE_MAP",
+          step,
+          assetSymbol,
+          aggregateSignalUsedForCrowdMetrics: avgAgentSignal,
+          buyPct,
+          sellPct,
+          holdPct,
+          crowdPluralityAction: pluralityAction,
+          buySellHoldCounts: { BUY: hist.BUY, SELL: hist.SELL, HOLD: hist.HOLD },
+          chosenCrowdDirection: pluralityAction,
+          thresholdOrReason: thresholdNote,
+        }),
+      );
+    }
     log(
       `Step ${step}: marketSignal=${syntheticSignal.toFixed(3)} buyPct=${buyPct.toFixed(
         1,

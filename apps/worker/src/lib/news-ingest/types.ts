@@ -2,7 +2,7 @@
  * News ingestion types (fetch → normalize → load InfoEvent).
  */
 
-export type NewsProviderId = "alphavantage" | "finnhub";
+export type NewsProviderId = "alphavantage" | "finnhub" | "yahoo";
 
 export interface FetchEnvelope {
   provider: NewsProviderId;
@@ -10,8 +10,21 @@ export interface FetchEnvelope {
   dateFrom: string;
   dateTo: string;
   fetchedAt: string;
-  /** Raw provider JSON (Alpha Vantage object or Finnhub array). */
+  /** Raw provider payload (Alpha Vantage JSON, Finnhub array, Yahoo RSS-derived JSON, …). */
   apiResponse: unknown;
+}
+
+/** Normalized shape written as `apiResponse` for provider `yahoo` (Yahoo Finance headline RSS). */
+export interface YahooFinanceRssApiResponse {
+  format: "yahoo_finance_rss_v1";
+  feedUrl: string;
+  /** Headlines whose pubDate falls in the requested [dateFrom, dateTo] window (UTC). */
+  items: Array<{
+    title: string;
+    link?: string;
+    pubDateIso: string;
+    source?: string;
+  }>;
 }
 
 /** Provider-neutral article before CrowdVest normalization. */

@@ -59,15 +59,27 @@ function clamp11(x: number): number {
   return Math.max(-1, Math.min(1, x));
 }
 
-export function parseFinnhubResponse(apiResponse: unknown): ParsedArticle[] {
-  if (!Array.isArray(apiResponse)) {
-    if (apiResponse && typeof apiResponse === "object" && "error" in (apiResponse as object)) {
+/** Align with fetch-from-provider normalizeFinnhubJsonBody (defensive for hand-built JSON). */
+function unwrapFinnhubPayload(apiResponse: unknown): unknown {
+  if (Array.isArray(apiResponse)) return apiResponse;
+  if (apiResponse && typeof apiResponse === "object") {
+    const o = apiResponse as Record<string, unknown>;
+    if (typeof o.error === "string") {
       throw new Error(`Finnhub: ${JSON.stringify(apiResponse)}`);
     }
+    if (Array.isArray(o.data)) return o.data;
+    if (Array.isArray(o.news)) return o.news;
+  }
+  return apiResponse;
+}
+
+export function parseFinnhubResponse(apiResponse: unknown): ParsedArticle[] {
+  const unwrapped = unwrapFinnhubPayload(apiResponse);
+  if (!Array.isArray(unwrapped)) {
     return [];
   }
   const out: ParsedArticle[] = [];
-  for (const row of apiResponse) {
+  for (const row of unwrapped) {
     const r = row as Record<string, unknown>;
     const title = String(r.headline ?? r.title ?? "").trim();
     if (!title) continue;
@@ -93,10 +105,37 @@ export function parseFinnhubResponse(apiResponse: unknown): ParsedArticle[] {
   return out;
 }
 
+export function parseYahooResponse(apiResponse: unknown): ParsedArticle[] {
+  const o = apiResponse as { format?: string; items?: unknown[] };
+  if (!o?.items || !Array.isArray(o.items)) {
+    return [];
+  }
+  const out: ParsedArticle[] = [];
+  for (const row of o.items) {
+    const r = row as Record<string, unknown>;
+    const title = String(r.title ?? "").trim();
+    if (!title) continue;
+    const pubIso = String(r.pubDateIso ?? "");
+    const publishedAt = new Date(pubIso);
+    if (Number.isNaN(publishedAt.getTime())) continue;
+    const source = String(r.source ?? "Yahoo Finance");
+    out.push({
+      title,
+      url: typeof r.link === "string" ? r.link : undefined,
+      publishedAt,
+      source,
+      sentimentScore: undefined,
+      raw: row,
+    });
+  }
+  return out;
+}
+
 export function parseProviderResponse(
   provider: NewsProviderId,
   apiResponse: unknown,
 ): ParsedArticle[] {
   if (provider === "alphavantage") return parseAlphaVantageResponse(apiResponse);
-  return parseFinnhubResponse(apiResponse);
+  if (provider === "finnhub") return parseFinnhubResponse(apiResponse);
+  return parseYahooResponse(apiResponse);
 }

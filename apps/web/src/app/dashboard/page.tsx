@@ -8,6 +8,7 @@ import {
 import { getWebBase } from "@/lib/web-base";
 import { stabilityReason } from "@/lib/risk";
 import { stabilityRiskScore, riskBand, stabilityCause } from "@/lib/stability-triage";
+import type { TradeDirectionDivergenceExplanation } from "@/components/dashboard/crowd-intelligence-types";
 
 export const dynamic = "force-dynamic";
 
@@ -390,9 +391,9 @@ type DashboardSummary = {
     productInterpretation?: { preferredForResearch?: string | null; preferredForDeployment?: string | null };
   };
   directionBiasByAgentType?: {
-    trendFollower: { avgSignal: number; positiveCount: number; negativeCount: number };
-    contrarian: { avgSignal: number; positiveCount: number; negativeCount: number };
-    balanced: { avgSignal: number; positiveCount: number; negativeCount: number };
+    trendFollower: { avgSignal: number; positiveCount: number; negativeCount: number; neutralCount?: number };
+    contrarian: { avgSignal: number; positiveCount: number; negativeCount: number; neutralCount?: number };
+    balanced: { avgSignal: number; positiveCount: number; negativeCount: number; neutralCount?: number };
   };
   decisionFunnelDiagnostics?: {
     totalSignals: number;
@@ -421,6 +422,26 @@ type DashboardSummary = {
     negativeSignalCount: number;
     nearZeroSignalCount: number;
   };
+  tradeDirectionDiagnostics?: {
+    executedLongTrades: number;
+    executedShortTrades: number;
+    longShare: number | null;
+    shortShare: number | null;
+    sampleTradeDirections?: unknown[];
+  };
+  tradeDirectionDiagnosticsCrowd?: {
+    runId: string | null;
+    assetSymbol: string;
+    executedLongTrades: number;
+    executedShortTrades: number;
+    longShare: number | null;
+    shortShare: number | null;
+  };
+  tradeDirectionDivergence?: {
+    divergence: number | null;
+    directionAgreement: boolean | null;
+  };
+  tradeDirectionDivergenceExplanation?: TradeDirectionDivergenceExplanation | null;
 };
 
 export default async function DashboardPage({
@@ -442,7 +463,7 @@ export default async function DashboardPage({
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) {
     return (
-      <div data-testid="dashboard-root" style={{ maxWidth: 1152, margin: "0 auto", padding: "32px 24px" }}>
+      <div data-testid="dashboard-root" className="w-full px-6 py-6 xl:px-10">
         <h1 style={{ fontSize: 28, fontWeight: 700 }}>Dashboard</h1>
         <p style={{ marginTop: 16, color: "#dc2626" }}>Failed to load dashboard. Check that the API is running.</p>
       </div>
@@ -547,7 +568,13 @@ export default async function DashboardPage({
   const filterLabel = unstableOnly ? "unstable/diverging" : "all";
 
   return (
-    <Suspense fallback={<div style={{ maxWidth: 1152, margin: "0 auto", padding: "32px 24px" }}>Loading dashboard…</div>}>
+    <Suspense
+      fallback={
+        <div data-testid="dashboard-root" className="w-full px-6 py-6 xl:px-10">
+          Loading dashboard…
+        </div>
+      }
+    >
       <DashboardClient
         initialData={{
         consensus: data.consensus,
@@ -659,6 +686,10 @@ export default async function DashboardPage({
           data.directionBiasDiagnostics != null && typeof data.directionBiasDiagnostics === "object"
             ? data.directionBiasDiagnostics
             : undefined,
+        tradeDirectionDiagnostics: data.tradeDirectionDiagnostics,
+        tradeDirectionDiagnosticsCrowd: data.tradeDirectionDiagnosticsCrowd,
+        tradeDirectionDivergence: data.tradeDirectionDivergence,
+        tradeDirectionDivergenceExplanation: data.tradeDirectionDivergenceExplanation,
         latestRunInfoEvents,
         latestRunCrowdStateRecommendation,
         performance: latestRunPerformance,

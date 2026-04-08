@@ -150,8 +150,8 @@ export function VariantsPanel({ runId }: { runId: string | null }) {
       }}
     >
       <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 14 }}>Variant comparison</div>
-      <div style={{ overflowX: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 360 }}>
+      <div>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr>
               <th style={thStyle}>Variant</th>

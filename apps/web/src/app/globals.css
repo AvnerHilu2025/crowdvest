@@ -84,6 +84,14 @@ body {
   padding: 24px 20px;
 }
 
+/* Dashboard: use full viewport width; padding lives on [data-testid="dashboard-root"] */
+.app-main:has([data-testid="dashboard-root"]) {
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+  padding: 0;
+}
+
 /* Card */
 .card {
   border: 1px solid var(--cv-border);

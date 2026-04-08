@@ -14,6 +14,12 @@ import { Sparkline } from "@/components/sparkline";
 import { API_BASE } from "@/lib/api";
 import styles from "./dashboard.module.css";
 import { VariantsPanel } from "./VariantsPanel";
+import { CrowdVerdictHero } from "@/components/dashboard/CrowdVerdictHero";
+import { CrowdFlowMap } from "@/components/dashboard/CrowdFlowMap";
+import { SignalContributionPanel } from "@/components/dashboard/SignalContributionPanel";
+import { ArchetypeInfluencePanel } from "@/components/dashboard/ArchetypeInfluencePanel";
+import { AdvancedAnalysis } from "@/components/dashboard/AdvancedAnalysis";
+import type { TradeDirectionDivergenceExplanation } from "@/components/dashboard/crowd-intelligence-types";
 
 const formatPercent = (value?: number | null) => {
   if (value === null || value === undefined) return "-";
@@ -214,6 +220,7 @@ type DirectionBiasSlice = {
   avgSignal: number;
   positiveCount: number;
   negativeCount: number;
+  neutralCount?: number;
 };
 
 type DirectionBiasByAgentTypeInput = {
@@ -370,7 +377,8 @@ function buildCrowdInfluenceRows(
     if (!row || !Number.isFinite(row.avgSignal) || !Number.isFinite(row.positiveCount) || !Number.isFinite(row.negativeCount)) {
       continue;
     }
-    const totalSignals = row.positiveCount + row.negativeCount;
+    const neutralCount = row.neutralCount ?? 0;
+    const totalSignals = row.positiveCount + row.negativeCount + neutralCount;
     const dominanceRatio = Math.abs(row.avgSignal);
     const influenceScore = totalSignals * dominanceRatio;
     raw.push({
@@ -981,21 +989,44 @@ export type DashboardClientProps = {
         avgSignal: number;
         positiveCount: number;
         negativeCount: number;
+        neutralCount?: number;
       };
       contrarian?: {
         avgSignal: number;
         positiveCount: number;
         negativeCount: number;
+        neutralCount?: number;
       };
       balanced?: {
         avgSignal: number;
         positiveCount: number;
         negativeCount: number;
+        neutralCount?: number;
       };
     };
     decisionFunnelDiagnostics?: unknown;
     informationExposureDiagnostics?: unknown;
     directionBiasDiagnostics?: unknown;
+    tradeDirectionDiagnostics?: {
+      executedLongTrades: number;
+      executedShortTrades: number;
+      longShare: number | null;
+      shortShare: number | null;
+      sampleTradeDirections?: unknown[];
+    };
+    tradeDirectionDiagnosticsCrowd?: {
+      runId: string | null;
+      assetSymbol: string;
+      executedLongTrades: number;
+      executedShortTrades: number;
+      longShare: number | null;
+      shortShare: number | null;
+    };
+    tradeDirectionDivergence?: {
+      divergence: number | null;
+      directionAgreement: boolean | null;
+    };
+    tradeDirectionDivergenceExplanation?: TradeDirectionDivergenceExplanation | null;
     /** Capped list for event-level explainability (server-fetched; not part of dashboard summary). */
     latestRunInfoEvents?: DashboardLatestRunInfoEvent[];
     /** Crowd-state recommendation for the same run + asset (server-fetched). */
@@ -1136,9 +1167,32 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
     backtestMetrics,
     backtestDiagnostics,
     strategyComparisonSummaryAudit,
+    tradeDirectionDiagnostics,
+    tradeDirectionDiagnosticsCrowd,
+    tradeDirectionDivergence,
+    tradeDirectionDivergenceExplanation,
+    decisionFunnelDiagnostics,
+    informationExposureDiagnostics,
+    directionBiasDiagnostics,
     latestRunInfoEvents,
     performance,
   } = initialData ?? {};
+
+  const crowdIntelligenceRawMetrics = useMemo((): Record<string, unknown> => {
+    const o: Record<string, unknown> = {};
+    if (directionBiasDiagnostics != null && typeof directionBiasDiagnostics === "object") {
+      o.directionBiasDiagnostics = directionBiasDiagnostics;
+    }
+    if (decisionFunnelDiagnostics != null && typeof decisionFunnelDiagnostics === "object") {
+      o.decisionFunnelDiagnostics = decisionFunnelDiagnostics;
+    }
+    if (informationExposureDiagnostics != null && typeof informationExposureDiagnostics === "object") {
+      o.informationExposureDiagnostics = informationExposureDiagnostics;
+    }
+    if (consensus != null) o.consensusSnapshot = consensus;
+    if (directionBiasByAgentType != null) o.directionBiasByAgentType = directionBiasByAgentType;
+    return o;
+  }, [consensus, decisionFunnelDiagnostics, directionBiasByAgentType, directionBiasDiagnostics, informationExposureDiagnostics]);
 
   const dashboardInfoEventsRunId = useMemo(() => {
     if (latestScalingRow?.runId) return latestScalingRow.runId;
@@ -1615,7 +1669,7 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
   const p95AccStdDev = p95(accStdDevVals) || 0.05;
 
   return (
-    <div data-testid="dashboard-root" style={{ maxWidth: 1152, margin: "0 auto", padding: "32px 24px" }}>
+    <div data-testid="dashboard-root" className="w-full px-6 py-6 xl:px-10">
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, marginBottom: 24 }}>
         <div>
           <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0 }}>Dashboard</h1>
@@ -1629,6 +1683,43 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
           navigateFilters={navigateFilters}
           filtersDisabled={isFilterLoading}
         />
+      </div>
+
+      <div className="mb-8 w-full rounded-2xl bg-slate-950 p-4 ring-1 ring-slate-800/80 sm:p-6">
+        <div className="space-y-12">
+          <CrowdVerdictHero
+            assetSymbol={initialQuery.assetSymbol}
+            consensus={consensus ?? undefined}
+            explanation={tradeDirectionDivergenceExplanation ?? undefined}
+            showDivergenceSummary={false}
+          />
+
+          <div className="grid grid-cols-12 gap-6 lg:gap-8">
+            <div className="col-span-12 lg:col-span-8">
+              <CrowdFlowMap directionBiasByAgentType={directionBiasByAgentType} />
+            </div>
+            <div className="col-span-12 lg:col-span-4">
+              <ArchetypeInfluencePanel
+                explanation={tradeDirectionDivergenceExplanation ?? undefined}
+                directionBiasByAgentType={directionBiasByAgentType}
+                topInfoEvent={decisionFlowInformationEvents[0] ?? null}
+              />
+            </div>
+          </div>
+
+          <SignalContributionPanel
+            explanation={tradeDirectionDivergenceExplanation ?? undefined}
+            crowdDiagnostics={tradeDirectionDiagnosticsCrowd}
+          />
+
+          <AdvancedAnalysis
+            explanation={tradeDirectionDivergenceExplanation ?? undefined}
+            divergence={tradeDirectionDivergence}
+            tradeDirectionDiagnostics={tradeDirectionDiagnostics}
+            tradeDirectionDiagnosticsCrowd={tradeDirectionDiagnosticsCrowd}
+            rawMetrics={crowdIntelligenceRawMetrics}
+          />
+        </div>
       </div>
 
       <div className={styles.dashboardContentShell}>
@@ -1647,24 +1738,6 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
           <div style={{ fontSize: 15, color: "rgba(15, 23, 42, 0.55)" }}>No crowd snapshot</div>
         ) : (
           <>
-            <div
-              style={{
-                fontSize: 56,
-                fontWeight: 800,
-                letterSpacing: "0.06em",
-                lineHeight: 1.1,
-                marginBottom: 10,
-                color:
-                  dominantConsensusAction(consensus) === "BUY"
-                    ? "#15803d"
-                    : dominantConsensusAction(consensus) === "SELL"
-                      ? "#b91c1c"
-                      : "#475569",
-              }}
-            >
-              {dominantConsensusAction(consensus)} {initialQuery.assetSymbol}
-            </div>
-
             {globalMarketConfidenceScore != null ? (
               <div
                 className={styles.globalConfidence}
@@ -1860,11 +1933,10 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
         <div
           style={{
             display: "flex",
+            flexWrap: "wrap",
             alignItems: "stretch",
             gap: 0,
-            overflowX: "auto",
             paddingBottom: 4,
-            WebkitOverflowScrolling: "touch",
           }}
         >
           {(
@@ -3056,7 +3128,7 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
             {aggregationModeRanking.length > 0 ? (
               <div data-testid="production-aggregation-ranking">
                 <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 6 }}>Ranking</div>
-                <div className={styles.tableWrap} style={{ maxHeight: 120 }}>
+                <div className={styles.tableWrap}>
                   <table className={styles.table}>
                     <thead>
                       <tr>

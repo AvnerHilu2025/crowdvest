@@ -1,8 +1,8 @@
 /**
  * Backtest v0 for SPY using local market CSV and decision/metrics pipeline.
  *
- * CLI: pnpm -C apps/worker run backtest-v0 --runId <id> --seeds <count> [--seedStart 1] [--csv path] [--priceField close] [--steps 29] [--agents 200]
- * --seeds <count>: required. Run <count> different seeds (e.g. --seeds 3 runs seeds 1,2,3 with default seedStart).
+ * CLI: pnpm -C apps/worker run backtest-v0 --runId <id> [--seeds <count>] [--seedStart 1] [--csv path] [--priceField close] [--steps 29] [--agents 200]
+ * --seeds <count>: optional, default 1. Run <count> different seeds (e.g. --seeds 3 runs seeds 1,2,3 with default seedStart). Must be an integer >= 1 if provided.
  * --seedStart <number>: optional, default 1. Seed list = [seedStart, seedStart+1, ..., seedStart+count-1].
  * --runId: required OR omit to create a new run once. Same runId for all seeds; seeds only affect agent randomness.
  * --csv: required when AssetStepReturn count for (runId, assetSymbol) is 0.
@@ -98,7 +98,7 @@ function parseArgv(): {
   let priceField = "close";
   let steps = 29;
   let agents = 200;
-  let seedsCount = 0; // required
+  let seedsCount = 1;
   let seedStart = 1;
   let label = "";
   let persistMode: PersistMode = "lite";
@@ -120,9 +120,16 @@ function parseArgv(): {
     } else if (args[i] === "--agents" && args[i + 1]) {
       const n = parseInt(args[++i]!, 10);
       if (Number.isFinite(n) && n >= 1) agents = n;
-    } else if (args[i] === "--seeds" && args[i + 1]) {
+    } else if (args[i] === "--seeds") {
+      const next = args[i + 1];
+      if (!next) {
+        throw new Error("--seeds requires an integer >= 1. Example: --seeds 5");
+      }
       const n = parseInt(String(args[++i]).trim(), 10);
-      if (Number.isFinite(n) && n >= 1) seedsCount = n;
+      if (!Number.isFinite(n) || n < 1) {
+        throw new Error("--seeds must be an integer >= 1. Example: --seeds 5");
+      }
+      seedsCount = n;
     } else if (args[i] === "--seedStart" && args[i + 1]) {
       const n = parseInt(String(args[++i]).trim(), 10);
       if (Number.isFinite(n)) seedStart = n;
@@ -138,7 +145,6 @@ function parseArgv(): {
       overwrite = true;
     }
   }
-  if (seedsCount < 1) throw new Error("--seeds <count> is required (count >= 1). Example: --seeds 5");
   const seeds = Array.from({ length: seedsCount }, (_, i) => seedStart + i);
   const symbols: string[] =
     symbolsStr.length > 0
@@ -371,30 +377,74 @@ async function main(): Promise<void> {
     try {
     // 3) Find or create RunVariant for this seed (and optional label); upsert for idempotency
     const label = argv.label ?? "";
-    const variant = await prisma.runVariant.upsert({
-      where: {
-        runId_assetSymbol_seed_label: {
-          runId,
-          assetSymbol,
-          seed,
-          label,
-        },
-      },
-      update: {
-        agents: argv.agents,
-        steps: argv.steps,
-      },
-      create: {
+    console.log(
+      JSON.stringify({
+        tag: "BEFORE_RUN_VARIANT_UPSERT",
         runId,
         assetSymbol,
         seed,
         label,
-        agents: argv.agents,
-        steps: argv.steps,
+      }),
+    );
+    const runVariantUnique = {
+      runId_assetSymbol_seed_label: {
+        runId,
+        assetSymbol,
+        seed,
+        label,
       },
-      select: { id: true },
-    });
-    const variantId = variant.id;
+    } as const;
+    let variantId: string;
+    try {
+      const variant = await prisma.runVariant.upsert({
+        where: runVariantUnique,
+        update: {
+          agents: argv.agents,
+          steps: argv.steps,
+        },
+        create: {
+          runId,
+          assetSymbol,
+          seed,
+          label,
+          agents: argv.agents,
+          steps: argv.steps,
+        },
+        select: { id: true },
+      });
+      variantId = variant.id;
+    } catch (e) {
+      if ((e as { code?: string })?.code !== "P2002") throw e;
+      const existing = await prisma.runVariant.findUnique({
+        where: runVariantUnique,
+        select: { id: true },
+      });
+      if (!existing) throw e;
+      console.log(
+        "REUSING_EXISTING_VARIANT",
+        JSON.stringify({
+          runId,
+          assetSymbol,
+          seed,
+          label,
+          variantId: existing.id,
+        }),
+      );
+      await prisma.runVariant.update({
+        where: { id: existing.id },
+        data: { agents: argv.agents, steps: argv.steps },
+      });
+      variantId = existing.id;
+    }
+    console.log(
+      JSON.stringify({
+        tag: "AFTER_RUN_VARIANT_UPSERT",
+        runId,
+        assetSymbol,
+        seed,
+        variantId,
+      }),
+    );
     variantIds.push(variantId);
 
     // Skip entire variant if already computed (unless --overwrite)
@@ -406,6 +456,14 @@ async function main(): Promise<void> {
       });
       if (summary?.debugDecisionsHash && summary?.debugReturnsHash) {
         ok(`✅ SKIP variant seed=${seed} (already computed)`);
+        console.log(
+          JSON.stringify({
+            tag: "SKIP_DECIDE_AND_METRICS_PATH",
+            seed,
+            variantId,
+            reason: "RunVariantSummary has debugDecisionsHash and debugReturnsHash",
+          }),
+        );
         // Still need to load CrowdMetrics for corr computation below; data exists from prior run
       } else {
         // Run decide and compute-crowd-metrics
@@ -496,28 +554,20 @@ async function main(): Promise<void> {
       mark("CrowdMetrics persisted");
     }
 
-    // 7) Load CrowdMetrics for this variant and AssetStepReturn; build pairs for t=0..steps-2
-    const [metrics, stepReturns] = await Promise.all([
-      prisma.crowdMetrics.findMany({
-        where: { runVariantId: variantId },
-        orderBy: { step: "asc" },
-        select: { step: true, weightedSignal: true },
-      }),
-      prisma.assetStepReturn.findMany({
-        where: { runId, assetSymbol },
-        orderBy: { step: "asc" },
-        select: { step: true, stepReturn: true },
-      }),
-    ]);
+    // 7) Load AssetStepReturn; build pred/return pairs for t=0..steps-2 from crowd plurality (BUY/SELL/HOLD)
+    const stepReturns = await prisma.assetStepReturn.findMany({
+      where: { runId, assetSymbol },
+      orderBy: { step: "asc" },
+      select: { step: true, stepReturn: true },
+    });
 
     const assetStepReturnCount = stepReturns.length;
     if (assetStepReturnCount === 0) {
       throw new Error("Cannot compute corr: AssetStepReturn count is 0 for runId=" + runId + ". Import CSV first.");
     }
-    const signalByStep = new Map(metrics.map((m) => [m.step, m.weightedSignal]));
     const returnByStep = new Map(stepReturns.map((r) => [r.step, r.stepReturn]));
 
-    // Per-step predictedSign from actual decision distribution (BUY/SELL/HOLD majority)
+    // Per-step predictedSign from actual decision distribution (BUY/SELL/HOLD plurality)
     const perStepCounts = await getPerStepDecisionCounts(prisma, variantId);
     const predictedSignByStep = new Map<number, number>();
     for (const [step, counts] of perStepCounts) {
@@ -528,18 +578,28 @@ async function main(): Promise<void> {
     const ret1: number[] = [];
     const stepsForPairs: number[] = [];
     for (let t = 0; t <= argv.steps - 2; t++) {
-      const sig = signalByStep.get(t);
       const nextRet = returnByStep.get(t + 1);
-      if (
-        sig != null &&
-        nextRet != null &&
-        Number.isFinite(sig) &&
-        Number.isFinite(nextRet)
-      ) {
-        pred.push(sig);
-        ret1.push(nextRet);
-        stepsForPairs.push(t);
+      if (nextRet == null || !Number.isFinite(nextRet)) continue;
+
+      const counts = perStepCounts.get(t);
+      const buyCount = counts?.BUY ?? 0;
+      const sellCount = counts?.SELL ?? 0;
+      const holdCount = counts?.HOLD ?? 0;
+      let direction: "LONG" | "SHORT" | "NONE";
+      if (buyCount > sellCount) {
+        direction = "LONG";
+      } else if (sellCount > buyCount) {
+        direction = "SHORT";
+      } else {
+        direction = "NONE";
       }
+      console.log("DEBUG TRADE MAP:", { step: t, buyCount, sellCount, holdCount, direction });
+
+      if (direction === "NONE") continue;
+
+      pred.push(direction === "LONG" ? 1 : -1);
+      ret1.push(nextRet);
+      stepsForPairs.push(t);
     }
     const pairsCount = pred.length;
 
@@ -603,6 +663,23 @@ async function main(): Promise<void> {
       debugDecisionsHash: decisionsHash,
       debugReturnsHash: returnsHash,
     };
+    console.log(
+      JSON.stringify({
+        tag: "BEFORE_RUN_VARIANT_SUMMARY_UPSERT",
+        seed,
+        variantId,
+        corrRounded,
+        corrVal,
+        directionalAccuracy,
+        dirAccVal,
+        pairsCount,
+        corrIsNull: corrRounded == null,
+        directionalAccuracyIsNull: directionalAccuracy == null,
+        corrValIsNaN: Number.isNaN(corrVal),
+        dirAccValIsNaN: Number.isNaN(dirAccVal),
+        pairsCountIsNaN: Number.isNaN(pairsCount),
+      }),
+    );
     await prisma.runVariantSummary.upsert({
       where: { runVariantId: variantId },
       create: {
@@ -620,6 +697,13 @@ async function main(): Promise<void> {
         ...debugPayload,
       },
     });
+    console.log(
+      JSON.stringify({
+        tag: "AFTER_RUN_VARIANT_SUMMARY_UPSERT",
+        seed,
+        variantId,
+      }),
+    );
     await prisma.backtestResult.deleteMany({ where: { runVariantId: variantId } });
     await prisma.backtestResult.create({
       data: {
@@ -643,11 +727,24 @@ async function main(): Promise<void> {
     }
     mark("RunVariant + metrics persisted");
   } catch (e) {
-      // P2002 = unique constraint (e.g. RunVariant already exists): skip, do not fail the run
-      if ((e as { code?: string })?.code === "P2002") {
-        ok(`✅ SKIP variant seed=${seed} (already computed)`);
-        continue;
-      }
+      const code = (e as { code?: string })?.code;
+      const isP2002 = code === "P2002";
+      console.error(
+        JSON.stringify(
+          {
+            tag: "VARIANT_ITERATION_CATCH",
+            seed,
+            assetSymbol,
+            code,
+            isP2002,
+            message: e instanceof Error ? e.message : String(e),
+            stack: e instanceof Error ? e.stack : undefined,
+          },
+          null,
+          2,
+        ),
+      );
+      console.error("[backtest-v0 DIAG] full error object:", e);
       throw e;
     }
   }
@@ -675,34 +772,52 @@ async function main(): Promise<void> {
       throw new Error(`Run ${runId} not found during finalization`);
     }
 
-    const variantCount = await prisma.runVariant.count({
+    const label = argv.label ?? "";
+    const expectedCount = argv.symbols.length * argv.seeds.length;
+    const invocationVariantWhere = {
+      runId,
+      label,
+      assetSymbol: { in: argv.symbols },
+      seed: { in: argv.seeds },
+    };
+    const totalRunVariantCount = await prisma.runVariant.count({
       where: { runId },
     });
-
+    const actualMatchingSeedCount = await prisma.runVariant.count({
+      where: invocationVariantWhere,
+    });
     const summaryCount = await prisma.runVariantSummary.count({
       where: {
-        runVariant: {
-          runId,
-        },
+        runVariant: invocationVariantWhere,
       },
     });
 
-    const expected = expectedVariants;
-    if (variantCount !== expected) {
+    console.log(
+      JSON.stringify({
+        tag: "BACKTEST_V0_FINAL_VALIDATION",
+        runId,
+        requestedSeeds: argv.seeds,
+        expectedCount,
+        actualMatchingSeedCount,
+        totalRunVariantCount,
+      }),
+    );
+
+    if (actualMatchingSeedCount !== expectedCount) {
       throw new Error(
-        `Variant count mismatch: expected=${expected} actual=${variantCount}`,
+        `Variant count mismatch (this invocation): expected=${expectedCount} actual=${actualMatchingSeedCount}`,
       );
     }
 
-    if (summaryCount !== expected) {
+    if (summaryCount !== expectedCount) {
       throw new Error(
-        `Summary count mismatch: expected=${expected} actual=${summaryCount}`,
+        `Summary count mismatch (this invocation): expected=${expectedCount} actual=${summaryCount}`,
       );
     }
 
-    if (variantCount !== summaryCount) {
+    if (actualMatchingSeedCount !== summaryCount) {
       throw new Error(
-        `Variant/Summary mismatch: variants=${variantCount} summaries=${summaryCount}`,
+        `Variant/Summary mismatch (this invocation): variants=${actualMatchingSeedCount} summaries=${summaryCount}`,
       );
     }
     // === END VALIDATION BLOCK ===

@@ -1012,6 +1012,69 @@ export interface DashboardSummary {
       benchmarkReturn: number;
     }>;
   };
+  /** Crowd counts from AgentDecision (BUY/SELL/HOLD), same basis as worker backtest-v0 plurality. */
+  tradeDirectionDiagnosticsCrowd?: {
+    runId: string | null;
+    assetSymbol: string;
+    executedLongTrades: number;
+    executedShortTrades: number;
+    longShare: number | null;
+    shortShare: number | null;
+  };
+  /** Model vs crowd: abs(model.longShare - crowd.longShare); optional agreement on net long bias sign. */
+  tradeDirectionDivergence?: {
+    divergence: number | null;
+    directionAgreement: boolean | null;
+  };
+  /** DB-backed breakdown when model vs crowd differ; uses AgentDecision + RunAgent.archetype and signal columns. */
+  tradeDirectionDivergenceExplanation?: {
+    runId: string | null;
+    assetSymbol: string;
+    decisionRowCount: number;
+    topCrowdBiasByArchetype: Array<{
+      archetype: string;
+      buyCount: number;
+      sellCount: number;
+      holdCount: number;
+      netBuyMinusSell: number;
+    }>;
+    buySellHoldByArchetype: Array<{
+      archetype: string;
+      buyCount: number;
+      sellCount: number;
+      holdCount: number;
+    }>;
+    signalContributions: {
+      syntheticMean: number | null;
+      infoMean: number | null;
+      eventMean: number | null;
+      regimeMean: number | null;
+      channelsByAbsoluteStrength: Array<{ channel: "synthetic" | "info" | "event" | "regime"; mean: number }>;
+      /** Per-channel mean(BUY), mean(SELL), push = meanSell − meanBuy (null push if either mean missing). */
+      channelDirectionalBreakdown: Array<{
+        channel: "synthetic" | "info" | "event" | "regime";
+        meanBuy: number | null;
+        meanSell: number | null;
+        directionalPush: number | null;
+      }>;
+      /** directionalPush = mean(SELL) − mean(BUY) per channel; SHORT crowd keeps push>0, LONG crowd keeps push<0. */
+      channelsAlignedWithCrowdDirection: Array<{
+        channel: "synthetic" | "info" | "event" | "regime";
+        directionalPush: number;
+      }>;
+    };
+    /** Archetypes with BUY−SELL sign matching crowd net (longShare − shortShare); |net| descending. */
+    archetypesWithNetAlignedToCrowd: string[];
+    /** Mean channel values per agent.archetype label (for drill-down UI). */
+    archetypeChannelMeans: Array<{
+      archetype: string;
+      meanSynthetic: number | null;
+      meanInfo: number | null;
+      meanEvent: number | null;
+      meanRegime: number | null;
+    }>;
+    summary: string | null;
+  } | null;
   informationExposureDiagnostics?: {
     avgTechnicalWeight: number;
     avgMacroWeight: number;
@@ -1376,9 +1439,9 @@ export interface DashboardSummary {
     }
   >;
   directionBiasByAgentType?: {
-    trendFollower: { avgSignal: number; positiveCount: number; negativeCount: number };
-    contrarian: { avgSignal: number; positiveCount: number; negativeCount: number };
-    balanced: { avgSignal: number; positiveCount: number; negativeCount: number };
+    trendFollower: { avgSignal: number; positiveCount: number; negativeCount: number; neutralCount: number };
+    contrarian: { avgSignal: number; positiveCount: number; negativeCount: number; neutralCount: number };
+    balanced: { avgSignal: number; positiveCount: number; negativeCount: number; neutralCount: number };
   };
   directionBiasSamples?: Array<{
     symbol: string;
@@ -3392,6 +3455,11 @@ export class DashboardService {
     );
     const tradeSetups = this.computeTradeSetups(symbolProbabilities, watchlistCandidates, marketTransition);
 
+    const tradeDirectionDiagnosticsCrowd = await this.computeTradeDirectionDiagnosticsCrowd(
+      latestRun?.id ?? null,
+      sym,
+    );
+
     return {
       consensus,
       latestRun,
@@ -3451,6 +3519,16 @@ export class DashboardService {
         const r = await this.computeBacktestAndCalibration(
           strategyDefaults.runDefaults.assetSymbols,
         );
+        const tradeDirectionDivergence = this.computeTradeDirectionDivergence(
+          r.tradeDirectionDiagnostics,
+          tradeDirectionDiagnosticsCrowd,
+        );
+        const tradeDirectionDivergenceExplanation = await this.computeTradeDirectionDivergenceExplanation(
+          latestRun?.id ?? null,
+          sym,
+          r.tradeDirectionDiagnostics,
+          tradeDirectionDiagnosticsCrowd,
+        );
         return {
           backtestMetrics: r.backtestMetrics,
           backtestDiagnostics: r.backtestDiagnostics,
@@ -3460,6 +3538,9 @@ export class DashboardService {
           runtimeWiringDiagnostics: r.runtimeWiringDiagnostics,
           backtestMeasurementDiagnostics: r.backtestMeasurementDiagnostics,
           tradeDirectionDiagnostics: r.tradeDirectionDiagnostics,
+          tradeDirectionDiagnosticsCrowd,
+          tradeDirectionDivergence,
+          tradeDirectionDivergenceExplanation,
           calibrationDirectionSummary: r.calibrationDirectionSummary,
           informationExposureDiagnostics: r.informationExposureDiagnostics,
           convictionDiagnostics: r.convictionDiagnostics,
@@ -4013,10 +4094,13 @@ export class DashboardService {
     const momentumRawDiffAcc = { min: Infinity, max: -Infinity, sum: 0, count: 0, positiveCount: 0, negativeCount: 0 };
     const return5dAcc = { min: Infinity, max: -Infinity, sum: 0, count: 0, positiveCount: 0, negativeCount: 0 };
     const technicalSignalAcc = { min: Infinity, max: -Infinity, sum: 0, count: 0, positiveCount: 0, negativeCount: 0 };
-    const byTypeSums: Record<AgentProfileType, { sumSignal: number; positiveCount: number; negativeCount: number }> = {
-      trendFollower: { sumSignal: 0, positiveCount: 0, negativeCount: 0 },
-      contrarian: { sumSignal: 0, positiveCount: 0, negativeCount: 0 },
-      balanced: { sumSignal: 0, positiveCount: 0, negativeCount: 0 },
+    const byTypeSums: Record<
+      AgentProfileType,
+      { sumSignal: number; positiveCount: number; negativeCount: number; neutralCount: number }
+    > = {
+      trendFollower: { sumSignal: 0, positiveCount: 0, negativeCount: 0, neutralCount: 0 },
+      contrarian: { sumSignal: 0, positiveCount: 0, negativeCount: 0, neutralCount: 0 },
+      balanced: { sumSignal: 0, positiveCount: 0, negativeCount: 0, neutralCount: 0 },
     };
     const directionBiasSamples: NonNullable<DashboardSummary["directionBiasSamples"]> = [];
 
@@ -4202,6 +4286,7 @@ export class DashboardService {
     const sampleNeutralRejectedShorts: NonNullable<DashboardSummary["neutralFilterAudit"]>["sampleRejectedShorts"] = [];
     let loopIterationCount = 0;
     let featAvailableCount = 0;
+    let cvDebugTradeDirSamples = 0;
 
     const fullHistoryBySym: Record<string, { pvMa20Pos: number; pvMa20Neg: number; ret5dPos: number; ret5dNeg: number }> = {};
     for (const s of ["SPY", "QQQ", "IWM"]) {
@@ -4313,6 +4398,39 @@ export class DashboardService {
         let setup: "LONG" | "SHORT" | null = null;
         if (activeSetupScore >= directionThreshold) setup = "LONG";
         else if (activeSetupScore <= -directionThreshold) setup = "SHORT";
+
+        if (process.env.CV_DEBUG_TRADE_DIRECTION === "1" && cvDebugTradeDirSamples < 500) {
+          cvDebugTradeDirSamples++;
+          const nAgents = agents.length;
+          const buyPct = nAgents > 0 ? (100 * iterPosCount) / nAgents : 0;
+          const sellPct = nAgents > 0 ? (100 * iterNegCount) / nAgents : 0;
+          const holdPct = nAgents > 0 ? (100 * (nAgents - iterPosCount - iterNegCount)) / nAgents : 0;
+          const chosenDirection = setup ?? "NONE";
+          const reason =
+            setup === "LONG"
+              ? `LONG: activeSetupScore (${activeSetupScore}) >= directionThreshold (${directionThreshold}); side from decomposed setup score (base + attenuated delta, optional flip), not decide BUY/SELL/HOLD plurality`
+              : setup === "SHORT"
+                ? `SHORT: activeSetupScore (${activeSetupScore}) <= -directionThreshold (${-directionThreshold}); side from decomposed setup score, not decide plurality`
+                : `NONE: |activeSetupScore| (${Math.abs(activeSetupScore)}) did not cross threshold (${directionThreshold}); buyPct/sellPct/holdPct here are agent-score sign shares (positive/negative/zero), not decide.ts vote %`;
+          console.log(
+            JSON.stringify({
+              tag: "TRADE_DIRECTION_CHOSEN",
+              step: i,
+              assetSymbol: symbol,
+              crowdSignal: meanSignal,
+              buyPct,
+              sellPct,
+              holdPct,
+              chosenDirection,
+              preMappingDirection,
+              activeSetupScore,
+              rawSetupScore,
+              directionThreshold,
+              signalFlipEnabled: ENABLE_SIGNAL_FLIP,
+              reason,
+            }),
+          );
+        }
 
         if (setup === "LONG") longConditionCount++;
         else if (setup === "SHORT") shortConditionCount++;
@@ -4754,6 +4872,7 @@ export class DashboardService {
           byTypeSums[t].sumSignal += bt.sumSignal;
           byTypeSums[t].positiveCount += bt.positiveCount;
           byTypeSums[t].negativeCount += bt.negativeCount;
+          byTypeSums[t].neutralCount += bt.count - bt.positiveCount - bt.negativeCount;
         }
         if (directionBiasSamples.length < 10) {
           const ts = i < timestamps.length ? timestamps[i] : null;
@@ -7041,16 +7160,19 @@ export class DashboardService {
         avgSignal: execCount > 0 && nTf > 0 ? byTypeSums.trendFollower.sumSignal / (execCount * nTf) : 0,
         positiveCount: byTypeSums.trendFollower.positiveCount,
         negativeCount: byTypeSums.trendFollower.negativeCount,
+        neutralCount: byTypeSums.trendFollower.neutralCount,
       },
       contrarian: {
         avgSignal: execCount > 0 && nContr > 0 ? byTypeSums.contrarian.sumSignal / (execCount * nContr) : 0,
         positiveCount: byTypeSums.contrarian.positiveCount,
         negativeCount: byTypeSums.contrarian.negativeCount,
+        neutralCount: byTypeSums.contrarian.neutralCount,
       },
       balanced: {
         avgSignal: execCount > 0 && nBal > 0 ? byTypeSums.balanced.sumSignal / (execCount * nBal) : 0,
         positiveCount: byTypeSums.balanced.positiveCount,
         negativeCount: byTypeSums.balanced.negativeCount,
+        neutralCount: byTypeSums.balanced.neutralCount,
       },
     };
     const decisionFunnelDiagnostics: NonNullable<DashboardSummary["decisionFunnelDiagnostics"]> = {
@@ -7185,9 +7307,9 @@ export class DashboardService {
       nearZeroSignalCount: 0,
     };
     const emptyDirectionBiasByType: NonNullable<DashboardSummary["directionBiasByAgentType"]> = {
-      trendFollower: { avgSignal: 0, positiveCount: 0, negativeCount: 0 },
-      contrarian: { avgSignal: 0, positiveCount: 0, negativeCount: 0 },
-      balanced: { avgSignal: 0, positiveCount: 0, negativeCount: 0 },
+      trendFollower: { avgSignal: 0, positiveCount: 0, negativeCount: 0, neutralCount: 0 },
+      contrarian: { avgSignal: 0, positiveCount: 0, negativeCount: 0, neutralCount: 0 },
+      balanced: { avgSignal: 0, positiveCount: 0, negativeCount: 0, neutralCount: 0 },
     };
     const emptyDirBiasBySym: NonNullable<DashboardSummary["directionBiasDiagnosticsBySymbol"]> = {};
     const emptyRow = {
@@ -9698,6 +9820,349 @@ export class DashboardService {
       majorityPct,
       entropy,
       polarization,
+    };
+  }
+
+  /**
+   * Aggregate AgentDecision BUY/SELL counts for a completed run + symbol (matches backtest-v0 crowd direction basis).
+   * longShare/shortShare use BUY+SELL as denominator (HOLD excluded), same as worker plurality ratios.
+   */
+  private async computeTradeDirectionDiagnosticsCrowd(
+    runId: string | null,
+    assetSymbol: string,
+  ): Promise<NonNullable<DashboardSummary["tradeDirectionDiagnosticsCrowd"]>> {
+    if (!runId) {
+      return {
+        runId: null,
+        assetSymbol,
+        executedLongTrades: 0,
+        executedShortTrades: 0,
+        longShare: null,
+        shortShare: null,
+      };
+    }
+    const rows = await this.prisma.agentDecision.groupBy({
+      by: ["action"],
+      where: { runId, assetSymbol },
+      _count: { id: true },
+    });
+    let buy = 0;
+    let sell = 0;
+    for (const r of rows) {
+      if (r.action === "BUY") buy = r._count.id;
+      if (r.action === "SELL") sell = r._count.id;
+    }
+    const denom = buy + sell;
+    return {
+      runId,
+      assetSymbol,
+      executedLongTrades: buy,
+      executedShortTrades: sell,
+      longShare: denom > 0 ? buy / denom : null,
+      shortShare: denom > 0 ? sell / denom : null,
+    };
+  }
+
+  /**
+   * divergence = abs(model.longShare - crowd.longShare).
+   * directionAgreement: sign(model.longShare - model.shortShare) === sign(crowd.longShare - crowd.shortShare) when all four shares are defined.
+   */
+  private computeTradeDirectionDivergence(
+    model: NonNullable<DashboardSummary["tradeDirectionDiagnostics"]>,
+    crowd: NonNullable<DashboardSummary["tradeDirectionDiagnosticsCrowd"]>,
+  ): NonNullable<DashboardSummary["tradeDirectionDivergence"]> {
+    const ml = model.longShare;
+    const ms = model.shortShare;
+    const cl = crowd.longShare;
+    const cs = crowd.shortShare;
+    const divergence = ml != null && cl != null ? Math.abs(ml - cl) : null;
+    let directionAgreement: boolean | null = null;
+    if (ml != null && ms != null && cl != null && cs != null) {
+      const modelBias = ml - ms;
+      const crowdBias = cl - cs;
+      const sgn = (x: number) => (x > 0 ? 1 : x < 0 ? -1 : 0);
+      directionAgreement = sgn(modelBias) === sgn(crowdBias);
+    }
+    return { divergence, directionAgreement };
+  }
+
+  /**
+   * Explains crowd vs model direction using AgentDecision rows: archetype histograms, mean signal channels, summary string.
+   */
+  private async computeTradeDirectionDivergenceExplanation(
+    runId: string | null,
+    assetSymbol: string,
+    model: NonNullable<DashboardSummary["tradeDirectionDiagnostics"]>,
+    crowd: NonNullable<DashboardSummary["tradeDirectionDiagnosticsCrowd"]>,
+  ): Promise<DashboardSummary["tradeDirectionDivergenceExplanation"]> {
+    if (!runId) {
+      return {
+        runId: null,
+        assetSymbol,
+        decisionRowCount: 0,
+        topCrowdBiasByArchetype: [],
+        buySellHoldByArchetype: [],
+        signalContributions: {
+          syntheticMean: null,
+          infoMean: null,
+          eventMean: null,
+          regimeMean: null,
+          channelsByAbsoluteStrength: [],
+          channelDirectionalBreakdown: [
+            { channel: "synthetic", meanBuy: null, meanSell: null, directionalPush: null },
+            { channel: "info", meanBuy: null, meanSell: null, directionalPush: null },
+            { channel: "event", meanBuy: null, meanSell: null, directionalPush: null },
+            { channel: "regime", meanBuy: null, meanSell: null, directionalPush: null },
+          ],
+          channelsAlignedWithCrowdDirection: [],
+        },
+        archetypesWithNetAlignedToCrowd: [],
+        archetypeChannelMeans: [],
+        summary: null,
+      };
+    }
+
+    const rows = await this.prisma.agentDecision.findMany({
+      where: { runId, assetSymbol },
+      select: {
+        action: true,
+        syntheticSignal: true,
+        infoSignal: true,
+        eventSignal: true,
+        regimeSignal: true,
+        agent: { select: { archetype: true } },
+      },
+    });
+
+    const meanNonNull = (vals: Array<number | null | undefined>): number | null => {
+      const xs = vals.filter((v): v is number => v != null && Number.isFinite(v));
+      if (xs.length === 0) return null;
+      return xs.reduce((a, b) => a + b, 0) / xs.length;
+    };
+
+    const byArch = new Map<
+      string,
+      { buy: number; sell: number; hold: number; synthetic: number[]; info: number[]; event: number[]; regime: number[] }
+    >();
+    const allSynth: number[] = [];
+    const allInfo: number[] = [];
+    const allEvent: number[] = [];
+    const allRegime: number[] = [];
+
+    for (const row of rows) {
+      const key = row.agent.archetype?.trim() || "(unlabeled)";
+      let g = byArch.get(key);
+      if (!g) {
+        g = { buy: 0, sell: 0, hold: 0, synthetic: [], info: [], event: [], regime: [] };
+        byArch.set(key, g);
+      }
+      if (row.action === "BUY") g.buy++;
+      else if (row.action === "SELL") g.sell++;
+      else g.hold++;
+      if (row.syntheticSignal != null && Number.isFinite(row.syntheticSignal)) {
+        g.synthetic.push(row.syntheticSignal);
+        allSynth.push(row.syntheticSignal);
+      }
+      if (row.infoSignal != null && Number.isFinite(row.infoSignal)) {
+        g.info.push(row.infoSignal);
+        allInfo.push(row.infoSignal);
+      }
+      if (row.eventSignal != null && Number.isFinite(row.eventSignal)) {
+        g.event.push(row.eventSignal);
+        allEvent.push(row.eventSignal);
+      }
+      if (row.regimeSignal != null && Number.isFinite(row.regimeSignal)) {
+        g.regime.push(row.regimeSignal);
+        allRegime.push(row.regimeSignal);
+      }
+    }
+
+    const buySellHoldByArchetype = Array.from(byArch.entries())
+      .map(([archetype, v]) => ({
+        archetype,
+        buyCount: v.buy,
+        sellCount: v.sell,
+        holdCount: v.hold,
+      }))
+      .sort((a, b) => a.archetype.localeCompare(b.archetype));
+
+    const topCrowdBiasByArchetype = Array.from(byArch.entries())
+      .map(([archetype, v]) => ({
+        archetype,
+        buyCount: v.buy,
+        sellCount: v.sell,
+        holdCount: v.hold,
+        netBuyMinusSell: v.buy - v.sell,
+      }))
+      .sort((a, b) => Math.abs(b.netBuyMinusSell) - Math.abs(a.netBuyMinusSell));
+
+    const archetypeChannelMeans = Array.from(byArch.entries())
+      .map(([archetype, v]) => ({
+        archetype,
+        meanSynthetic: meanNonNull(v.synthetic),
+        meanInfo: meanNonNull(v.info),
+        meanEvent: meanNonNull(v.event),
+        meanRegime: meanNonNull(v.regime),
+      }))
+      .sort((a, b) => a.archetype.localeCompare(b.archetype));
+
+    const syntheticMean = meanNonNull(allSynth);
+    const infoMean = meanNonNull(allInfo);
+    const eventMean = meanNonNull(allEvent);
+    const regimeMean = meanNonNull(allRegime);
+
+    const chans: Array<{ channel: "synthetic" | "info" | "event" | "regime"; mean: number }> = [];
+    if (syntheticMean != null) chans.push({ channel: "synthetic", mean: syntheticMean });
+    if (infoMean != null) chans.push({ channel: "info", mean: infoMean });
+    if (eventMean != null) chans.push({ channel: "event", mean: eventMean });
+    if (regimeMean != null) chans.push({ channel: "regime", mean: regimeMean });
+    chans.sort((a, b) => Math.abs(b.mean) - Math.abs(a.mean));
+
+    const ml = model.longShare;
+    const ms = model.shortShare;
+    const cl = crowd.longShare;
+    const cs = crowd.shortShare;
+    const sgn = (x: number) => (x > 0 ? 1 : x < 0 ? -1 : 0);
+    const crowdNet = cl != null && cs != null ? cl - cs : null;
+
+    let archetypesWithNetAlignedToCrowd: string[] = [];
+    if (crowdNet != null && crowdNet !== 0) {
+      const sc = sgn(crowdNet);
+      archetypesWithNetAlignedToCrowd = topCrowdBiasByArchetype
+        .filter((a) => sgn(a.netBuyMinusSell) === sc)
+        .map((a) => a.archetype);
+    }
+
+    type SigKey = "syntheticSignal" | "infoSignal" | "eventSignal" | "regimeSignal";
+    const channelFromKey: Record<SigKey, "synthetic" | "info" | "event" | "regime"> = {
+      syntheticSignal: "synthetic",
+      infoSignal: "info",
+      eventSignal: "event",
+      regimeSignal: "regime",
+    };
+    const meanSignalForAction = (wantBuy: boolean, key: SigKey): number | null => {
+      const vals: number[] = [];
+      for (const r of rows) {
+        if (wantBuy && r.action !== "BUY") continue;
+        if (!wantBuy && r.action !== "SELL") continue;
+        const v = r[key];
+        if (v != null && Number.isFinite(v)) vals.push(v);
+      }
+      if (vals.length === 0) return null;
+      return vals.reduce((a, b) => a + b, 0) / vals.length;
+    };
+
+    const sigKeyOrder: SigKey[] = ["syntheticSignal", "infoSignal", "eventSignal", "regimeSignal"];
+    const channelDirectionalBreakdown: Array<{
+      channel: "synthetic" | "info" | "event" | "regime";
+      meanBuy: number | null;
+      meanSell: number | null;
+      directionalPush: number | null;
+    }> = sigKeyOrder.map((sigKey) => {
+      const meanBuy = meanSignalForAction(true, sigKey);
+      const meanSell = meanSignalForAction(false, sigKey);
+      const directionalPush =
+        meanBuy != null && meanSell != null ? meanSell - meanBuy : null;
+      return {
+        channel: channelFromKey[sigKey],
+        meanBuy,
+        meanSell,
+        directionalPush,
+      };
+    });
+
+    const channelPushes: Array<{ channel: "synthetic" | "info" | "event" | "regime"; directionalPush: number }> =
+      channelDirectionalBreakdown
+        .filter((b): b is typeof b & { directionalPush: number } => b.directionalPush != null)
+        .map((b) => ({ channel: b.channel, directionalPush: b.directionalPush }));
+
+    let channelsAlignedWithCrowdDirection: Array<{
+      channel: "synthetic" | "info" | "event" | "regime";
+      directionalPush: number;
+    }> = [];
+    if (cl != null && cs != null) {
+      const crowdIsShort = cs > cl;
+      const crowdIsLong = cl > cs;
+      if (crowdIsShort) {
+        channelsAlignedWithCrowdDirection = channelPushes
+          .filter((p) => p.directionalPush > 0)
+          .sort((a, b) => b.directionalPush - a.directionalPush);
+      } else if (crowdIsLong) {
+        channelsAlignedWithCrowdDirection = channelPushes
+          .filter((p) => p.directionalPush < 0)
+          .sort((a, b) => a.directionalPush - b.directionalPush);
+      }
+    }
+
+    /** Summary text only: channels with |mean(SELL)−mean(BUY)| below this are not called out as material. */
+    const MATERIAL_DIRECTIONAL_PUSH_THRESHOLD = 0.001;
+
+    let summary: string | null = null;
+    if (rows.length > 0 && ml != null && ms != null && cl != null && cs != null) {
+      const sideLabel = (longS: number, shortS: number) =>
+        longS > shortS ? "LONG" : shortS > longS ? "SHORT" : "NEUTRAL";
+      const modelSide = sideLabel(ml, ms);
+      const crowdSide = sideLabel(cl, cs);
+      const alignedArchetypePhrase = archetypesWithNetAlignedToCrowd.slice(0, 4).join(" + ");
+      const topByMag = topCrowdBiasByArchetype.slice(0, 3).map((a) => a.archetype).join(", ");
+
+      const materiallyAlignedChannels = channelsAlignedWithCrowdDirection.filter(
+        (c) => Math.abs(c.directionalPush) >= MATERIAL_DIRECTIONAL_PUSH_THRESHOLD,
+      );
+
+      const notMateriallyExplainedBySignals =
+        "Crowd direction is not materially explained by directional signal channels; likely driven more by behavioral factors.";
+
+      const directionalSignalExplanation = (): string => {
+        if (crowdSide === "NEUTRAL") {
+          return "Crowd is balanced between long and short share; no directional signal-channel alignment applies.";
+        }
+        if (materiallyAlignedChannels.length > 0) {
+          const parts = materiallyAlignedChannels.map(
+            (c) => `${c.channel} (Δ = ${c.directionalPush.toFixed(4)})`,
+          );
+          return (
+            `Among decision-level channels, ${parts.join("; ")} show a material mean(SELL)−mean(BUY) gap ` +
+            `(|Δ| ≥ ${MATERIAL_DIRECTIONAL_PUSH_THRESHOLD}) consistent with crowd ${crowdSide} positioning.`
+          );
+        }
+        return notMateriallyExplainedBySignals;
+      };
+
+      if (modelSide === crowdSide) {
+        summary =
+          `Crowd and the dashboard execution model agree on ${modelSide} bias (long vs. short share of executed mix). ` +
+          `Largest archetype-level |BUY−SELL| concentration: ${topByMag || "n/a"}. ` +
+          directionalSignalExplanation();
+      } else {
+        const crowdDriver =
+          alignedArchetypePhrase.length > 0
+            ? `Crowd positioning is most associated with archetypes: ${alignedArchetypePhrase} (BUY−SELL net aligned with crowd). `
+            : `Strongest |BUY−SELL| archetypes by magnitude: ${topByMag || "n/a"}. `;
+        summary =
+          `Crowd reads ${crowdSide}; the model’s synthetic execution mix reads ${modelSide}. ${crowdDriver}` +
+          directionalSignalExplanation();
+      }
+    }
+
+    return {
+      runId,
+      assetSymbol,
+      decisionRowCount: rows.length,
+      topCrowdBiasByArchetype,
+      buySellHoldByArchetype,
+      signalContributions: {
+        syntheticMean,
+        infoMean,
+        eventMean,
+        regimeMean,
+        channelsByAbsoluteStrength: chans,
+        channelDirectionalBreakdown,
+        channelsAlignedWithCrowdDirection,
+      },
+      archetypesWithNetAlignedToCrowd,
+      archetypeChannelMeans,
+      summary,
     };
   }
 

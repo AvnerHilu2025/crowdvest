@@ -276,10 +276,10 @@
   border-top: 1px solid rgba(15, 23, 42, 0.08);
 }
 
-/* Dashboard tables v2 */
+/* Dashboard tables v2 — page scroll only; no inner scroll region */
 .tableWrap {
-  overflow: auto;
-  max-height: 520px;
+  overflow: visible;
+  max-height: none;
 }
 
 .table {

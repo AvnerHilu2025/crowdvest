@@ -42,7 +42,9 @@
     "diagnose:info-events": "tsx src/scripts/diagnose-info-events-run.ts",
     "fetch:real-news": "tsx src/scripts/fetch-real-news.ts",
     "normalize:info-events": "tsx src/scripts/normalize-news-to-info-events.ts",
-    "load:info-events": "tsx src/scripts/load-info-events.ts"
+    "load:info-events": "tsx src/scripts/load-info-events.ts",
+    "info-ingestion:demo": "tsx src/scripts/info-ingestion-foundation-demo.ts",
+    "react:info-events": "tsx src/scripts/react-info-events.ts"
   },
   "dependencies": {
     "@crowdvest/db": "workspace:*",

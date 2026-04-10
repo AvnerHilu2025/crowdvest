@@ -10115,7 +10115,7 @@ export class DashboardService {
 
       const directionalSignalExplanation = (): string => {
         if (crowdSide === "NEUTRAL") {
-          return "Crowd is balanced between long and short share; no directional signal-channel alignment applies.";
+          return "Final HOLD emerges from balanced opposing pressures.";
         }
         if (materiallyAlignedChannels.length > 0) {
           const parts = materiallyAlignedChannels.map(

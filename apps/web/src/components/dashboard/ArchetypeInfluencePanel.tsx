@@ -15,6 +15,7 @@ import {
   findArchetypeChannelMeans,
 } from "./ArchetypeDrillDownPanel";
 import { ExpandToggle } from "./ExpandToggle";
+import { ArchetypeAvatar, getArchetypePersona } from "./ArchetypeAvatar";
 
 const AGENT_LABELS: Record<string, string> = {
   trendFollower: "Trend follower",
@@ -27,11 +28,13 @@ const EXPANDED_MAX = 6;
 
 export type ArchetypeInfluenceRow = {
   name: string;
+  personalityDescription: string;
   buyPct: number;
   sellPct: number;
   holdPct: number;
   net: number;
   influence: number;
+  contributionScore: number;
   /** Set when rows come from `directionBiasByAgentType` (structured profiles). */
   profileKey?: "trendFollower" | "contrarian" | "balanced";
 };
@@ -44,47 +47,40 @@ function labelForNet(net: number, buyPct: number, sellPct: number): string {
 }
 
 function fromExplanation(ex: TradeDirectionDivergenceExplanation): ArchetypeInfluenceRow[] {
-  const byName = new Map(
-    (ex.buySellHoldByArchetype ?? []).map((a) => [a.archetype, a]),
-  );
-  const fromTop = ex.topCrowdBiasByArchetype ?? [];
-  const fromBsh = (ex.buySellHoldByArchetype ?? []).map((a) => ({
-    archetype: a.archetype,
-    buyCount: a.buyCount,
-    sellCount: a.sellCount,
-    holdCount: a.holdCount,
-    netBuyMinusSell: a.buyCount - a.sellCount,
-  }));
+  const rows = ex.buySellHoldByArchetype ?? [];
+  const totalDecisions = rows.reduce((sum, row) => sum + row.buyCount + row.sellCount + row.holdCount, 0);
 
-  const ordered =
-    fromTop.length > 0
-      ? [...fromTop].sort((a, b) => Math.abs(b.netBuyMinusSell) - Math.abs(a.netBuyMinusSell)).slice(0, EXPANDED_MAX)
-      : [...fromBsh].sort((a, b) => Math.abs(b.netBuyMinusSell) - Math.abs(a.netBuyMinusSell)).slice(0, EXPANDED_MAX);
-
-  return ordered.map((row) => {
-    const full = byName.get(row.archetype);
-    const buyCount = full?.buyCount ?? row.buyCount;
-    const sellCount = full?.sellCount ?? row.sellCount;
-    const holdCount = full?.holdCount ?? row.holdCount;
-    const t = buyCount + sellCount + holdCount;
-    const buyPct = t > 0 ? buyCount / t : 0;
-    const sellPct = t > 0 ? sellCount / t : 0;
-    const holdPct = t > 0 ? holdCount / t : 0;
+  return rows.map((row) => {
+    const t = row.buyCount + row.sellCount + row.holdCount;
+    const buyPct = t > 0 ? row.buyCount / t : 0;
+    const sellPct = t > 0 ? row.sellCount / t : 0;
+    const holdPct = t > 0 ? row.holdCount / t : 0;
     const net = buyPct - sellPct;
-    const influence = t;
+    const archetypeWeight = totalDecisions > 0 ? t / totalDecisions : 0;
+    const contributionScore = archetypeWeight * net;
     return {
       name: row.archetype,
+      personalityDescription: getArchetypePersona(row.archetype).blurb,
       buyPct,
       sellPct,
       holdPct,
       net,
-      influence,
+      influence: t,
+      contributionScore,
     };
   });
 }
 
 function fromAgentBias(bias: DirectionBiasByAgentType): ArchetypeInfluenceRow[] {
-  const out: ArchetypeInfluenceRow[] = [];
+  const seedRows: Array<{
+    name: string;
+    profileKey: "trendFollower" | "contrarian" | "balanced";
+    t: number;
+    buyPct: number;
+    sellPct: number;
+    holdPct: number;
+    net: number;
+  }> = [];
   for (const k of ["trendFollower", "contrarian", "balanced"] as const) {
     const row = bias[k];
     if (!row) continue;
@@ -94,17 +90,26 @@ function fromAgentBias(bias: DirectionBiasByAgentType): ArchetypeInfluenceRow[] 
     const sellPct = t > 0 ? row.negativeCount / t : 0;
     const holdPct = t > 0 ? holdCount / t : 0;
     const net = buyPct - sellPct;
-    out.push({
-      name: AGENT_LABELS[k] ?? k,
-      profileKey: k,
-      buyPct,
-      sellPct,
-      holdPct,
-      net,
-      influence: t * Math.abs(net),
-    });
+    seedRows.push({ name: AGENT_LABELS[k] ?? k, profileKey: k, t, buyPct, sellPct, holdPct, net });
   }
-  return out.sort((a, b) => b.influence - a.influence);
+  const totalDecisions = seedRows.reduce((sum, row) => sum + row.t, 0);
+  return seedRows
+    .map((row) => {
+      const archetypeWeight = totalDecisions > 0 ? row.t / totalDecisions : 0;
+      const contributionScore = archetypeWeight * row.net;
+      return {
+        name: row.name,
+        personalityDescription: getArchetypePersona(row.name).blurb,
+        profileKey: row.profileKey,
+        buyPct: row.buyPct,
+        sellPct: row.sellPct,
+        holdPct: row.holdPct,
+        net: row.net,
+        influence: row.t,
+        contributionScore,
+      };
+    })
+    .sort((a, b) => Math.abs(b.contributionScore) - Math.abs(a.contributionScore));
 }
 
 export function ArchetypeInfluencePanel({
@@ -127,9 +132,30 @@ export function ArchetypeInfluencePanel({
       ? fromExplanation(explanation)
       : fromAgentBias(directionBiasByAgentType ?? {});
 
-  const sorted = [...raw].sort((a, b) => b.influence - a.influence).slice(0, EXPANDED_MAX);
+  const sorted = [...raw]
+    .sort((a, b) => Math.abs(b.contributionScore) - Math.abs(a.contributionScore))
+    .slice(0, EXPANDED_MAX);
   const showToggle = sorted.length > SUMMARY_COUNT;
   const visible = expanded ? sorted : sorted.slice(0, SUMMARY_COUNT);
+
+  const contributionSummary = useMemo(() => {
+    if (sorted.length === 0) return null;
+    const totalInfluence = sorted.reduce((sum, row) => sum + row.influence, 0);
+    const positive = sorted.reduce((sum, row) => sum + Math.max(row.contributionScore, 0), 0);
+    const negativeAbs = sorted.reduce((sum, row) => sum + Math.abs(Math.min(row.contributionScore, 0)), 0);
+    const net = sorted.reduce((sum, row) => sum + row.contributionScore, 0);
+    const weightedHold =
+      totalInfluence > 0
+        ? sorted.reduce((sum, row) => sum + row.holdPct * (row.influence / totalInfluence), 0)
+        : 0;
+    const holdByMix = weightedHold >= 0.34;
+    const nearNeutralNet = Math.abs(net) <= 0.03;
+    const balancedPressure = positive >= 0.08 && negativeAbs >= 0.08;
+    if (holdByMix && nearNeutralNet && balancedPressure) {
+      return "Final HOLD emerges from balanced opposing pressures";
+    }
+    return null;
+  }, [sorted]);
 
   const drillMeans = useMemo(() => {
     if (!drillRow || !explanation?.archetypeChannelMeans?.length) return null;
@@ -185,44 +211,60 @@ export function ArchetypeInfluencePanel({
       {expanded && (
         <p className="mt-1 text-xs text-slate-500">Buy / sell / hold mix by archetype.</p>
       )}
-      <ul className="mt-4 divide-y divide-slate-800/80">
+      <ul className="mt-4 grid gap-3">
         {visible.map((r) => (
-          <li key={r.name} className="py-3 first:pt-0">
+          <li key={r.name}>
             <button
               type="button"
               onClick={() => setDrillRow(r)}
-              className="w-full rounded-lg text-left transition-colors hover:bg-slate-900/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500/60"
+              className="w-full rounded-xl border border-slate-800/80 bg-slate-900/45 p-3 text-left transition-colors hover:border-slate-700/90 hover:bg-slate-900/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500/60"
             >
-              <div className="flex flex-wrap items-baseline justify-between gap-2 px-1">
-                <span className="font-medium text-slate-200">{r.name}</span>
-                <span
-                  className={`text-sm ${
-                    r.net > 0.02 ? "text-emerald-400/90" : r.net < -0.02 ? "text-rose-400/90" : "text-slate-500"
-                  }`}
-                >
-                  {labelForNet(r.net, r.buyPct, r.sellPct)}
-                </span>
+              <div className="flex items-start gap-3">
+                <ArchetypeAvatar archetype={r.name} size={48} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <span className="truncate font-semibold text-slate-100">{r.name}</span>
+                    <span
+                      className={`text-sm ${
+                        r.net > 0.02 ? "text-emerald-400/90" : r.net < -0.02 ? "text-rose-400/90" : "text-slate-500"
+                      }`}
+                    >
+                      {labelForNet(r.net, r.buyPct, r.sellPct)}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-slate-400">{r.personalityDescription}</p>
+                  <p className="mt-2 font-mono text-xs text-slate-500">
+                    B {(r.buyPct * 100).toFixed(0)}% · S {(r.sellPct * 100).toFixed(0)}% · H {(r.holdPct * 100).toFixed(0)}% · net{" "}
+                    {r.net >= 0 ? "+" : ""}
+                    {(r.net * 100).toFixed(1)}%
+                  </p>
+                  <p className="mt-1 font-mono text-xs text-slate-500">
+                    Contribution{" "}
+                    <span className={r.contributionScore >= 0 ? "text-emerald-300/90" : "text-rose-300/90"}>
+                      {r.contributionScore >= 0 ? "+" : ""}
+                      {(r.contributionScore * 100).toFixed(1)}pp
+                    </span>
+                  </p>
+                </div>
               </div>
               {expanded && (
                 <>
-                  <div className="mt-2 h-1.5 max-w-[200px] overflow-hidden rounded-full bg-slate-800">
+                  <div className="mt-3 h-1.5 max-w-[220px] overflow-hidden rounded-full bg-slate-800">
                     <div className="flex h-full w-full">
                       <div className="h-full bg-emerald-500/80" style={{ width: `${r.buyPct * 100}%` }} />
                       <div className="h-full bg-rose-500/80" style={{ width: `${r.sellPct * 100}%` }} />
                       <div className="h-full bg-slate-500/60" style={{ width: `${r.holdPct * 100}%` }} />
                     </div>
                   </div>
-                  <p className="mt-2 font-mono text-xs text-slate-500">
-                    B {(r.buyPct * 100).toFixed(0)}% · S {(r.sellPct * 100).toFixed(0)}% · H {(r.holdPct * 100).toFixed(0)}% · net{" "}
-                    {r.net >= 0 ? "+" : ""}
-                    {(r.net * 100).toFixed(1)}%
-                  </p>
                 </>
               )}
             </button>
           </li>
         ))}
       </ul>
+      {contributionSummary && (
+        <p className="mt-4 border-l-2 border-sky-500/30 pl-3 text-sm text-slate-400">{contributionSummary}</p>
+      )}
 
       <ArchetypeDrillDownPanel
         open={drillRow != null}

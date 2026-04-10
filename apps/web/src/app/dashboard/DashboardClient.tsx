@@ -19,6 +19,7 @@ import { CrowdFlowMap } from "@/components/dashboard/CrowdFlowMap";
 import { SignalContributionPanel } from "@/components/dashboard/SignalContributionPanel";
 import { ArchetypeInfluencePanel } from "@/components/dashboard/ArchetypeInfluencePanel";
 import { AdvancedAnalysis } from "@/components/dashboard/AdvancedAnalysis";
+import { CrowdPersonasGrid } from "@/components/dashboard/CrowdPersonasGrid";
 import type { TradeDirectionDivergenceExplanation } from "@/components/dashboard/crowd-intelligence-types";
 
 const formatPercent = (value?: number | null) => {
@@ -1692,6 +1693,12 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
             consensus={consensus ?? undefined}
             explanation={tradeDirectionDivergenceExplanation ?? undefined}
             showDivergenceSummary={false}
+          />
+
+          <CrowdPersonasGrid
+            explanation={tradeDirectionDivergenceExplanation ?? undefined}
+            directionBiasByAgentType={directionBiasByAgentType}
+            topInfoEvent={decisionFlowInformationEvents[0] ?? null}
           />
 
           <div className="grid grid-cols-12 gap-6 lg:gap-8">

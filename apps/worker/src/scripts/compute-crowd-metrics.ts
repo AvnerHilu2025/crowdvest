@@ -9,6 +9,9 @@
  * - herdingIndex — majority concentration (higher ⇒ crowd moves as one block).
  * - wisdomScore — info-weighted diversity / independence blend (higher ⇒ “wiser” aggregate).
  *
+ * Demo: when InfoEvent rows exist for (runId, assetSymbol, step), aggregate `signal` / `weightedSignal`
+ * are nudged by avg agent `eventSignal` (no agent logic change). See applyEventAwareCrowdAmplification.
+ *
  * Run means of these indices help explain accuracy vs crowd size (e.g. very large N often raises
  * herdingIndex and lowers diversity/independence). Per-step diagnosis: GET
  * /variants/stepwise-comparison (API) compares two labels on the same run from CrowdMetrics rows.
@@ -191,6 +194,53 @@ function computeNoiseSensitivity(
   return Math.max(0, Math.min(1, product));
 }
 
+/** Mean stored `AgentDecision.eventSignal` at this step (0 if none finite). */
+function avgEventSignalAcrossAgents(rows: { eventSignal?: number | null }[]): number {
+  let sum = 0;
+  let n = 0;
+  for (const r of rows) {
+    const v = r.eventSignal;
+    if (v != null && Number.isFinite(v)) {
+      sum += v;
+      n++;
+    }
+  }
+  return n > 0 ? sum / n : 0;
+}
+
+const EVENT_IMPACT_TO_SIGNAL_GAIN = 0.5;
+/** Cap on |eventImpactFactor * gain| so aggregate signals stay demo-stable (no saturation spikes). */
+const MAX_EVENT_AGG_DELTA = 0.42;
+
+/**
+ * When `hasInfoEvents`, blend avg agent event leg into aggregate crowd signals only (not decisions).
+ * - Same delta applied to signal and weightedSignal for a visible, coherent shift.
+ * - No sign inversion vs the pre-amp value (does not push a positive aggregate through zero, etc.).
+ */
+function applyEventAwareCrowdAmplification(
+  originalSignal: number,
+  originalWeighted: number,
+  eventImpactFactor: number,
+  hasInfoEvents: boolean,
+): { signal: number; weightedSignal: number } {
+  if (!hasInfoEvents || !Number.isFinite(eventImpactFactor) || Math.abs(eventImpactFactor) < 1e-12) {
+    return { signal: originalSignal, weightedSignal: originalWeighted };
+  }
+  const rawDelta = eventImpactFactor * EVENT_IMPACT_TO_SIGNAL_GAIN;
+  const delta = clamp(rawDelta, -MAX_EVENT_AGG_DELTA, MAX_EVENT_AGG_DELTA);
+  return {
+    signal: amplifyCrowdScalar(originalSignal, delta),
+    weightedSignal: amplifyCrowdScalar(originalWeighted, delta),
+  };
+}
+
+function amplifyCrowdScalar(original: number, delta: number): number {
+  let v = original + delta;
+  if (original > 1e-9 && v < 0) v = 0;
+  if (original < -1e-9 && v > 0) v = 0;
+  return clamp(v, -1, 1);
+}
+
 /** Compute CrowdMetrics for one step from AgentDecision rows. */
 export function computeCrowdMetricsForStep(
   decisions: { action: string; confidence: number; traitMap: Map<string, number> }[],
@@ -367,6 +417,7 @@ async function main(): Promise<void> {
       step: true,
       action: true,
       confidence: true,
+      eventSignal: true,
       agent: { select: { traits: { select: { key: true, valueNum: true } } } },
     },
     orderBy: { step: "asc" },
@@ -374,7 +425,7 @@ async function main(): Promise<void> {
 
   const byStep = new Map<
     number,
-    { action: string; confidence: number; traitMap: Map<string, number> }[]
+    { action: string; confidence: number; traitMap: Map<string, number>; eventSignal?: number | null }[]
   >();
   for (const d of decisions) {
     if (!byStep.has(d.step)) byStep.set(d.step, []);
@@ -385,12 +436,24 @@ async function main(): Promise<void> {
       action: String(d.action),
       confidence: d.confidence,
       traitMap,
+      eventSignal: d.eventSignal,
     });
   }
 
   const steps = [...byStep.keys()].sort((a, b) => a - b);
   const assetSym = assetSymbol.trim() || "RUN";
   const debugCrowd = process.env.DEBUG_CROWD_METRICS === "1";
+
+  const infoEventsByStep = new Map<number, { sentiment: number; credibility: number; reach: number }[]>();
+  const allInfoEvents = await prisma.infoEvent.findMany({
+    where: { runId, assetSymbol: assetSym },
+    select: { step: true, sentiment: true, credibility: true, reach: true },
+  });
+  for (const e of allInfoEvents) {
+    const list = infoEventsByStep.get(e.step) ?? [];
+    list.push({ sentiment: e.sentiment, credibility: e.credibility, reach: e.reach });
+    infoEventsByStep.set(e.step, list);
+  }
 
   let prevWeightedSignal: number | null = null;
 
@@ -416,16 +479,8 @@ async function main(): Promise<void> {
   for (const step of steps) {
     const rows = byStep.get(step)!;
     const metrics = computeCrowdMetricsForStep(rows, prevWeightedSignal);
-    prevWeightedSignal = metrics.weightedSignal;
 
-    const eventsAtStep = await prisma.infoEvent.findMany({
-      where: {
-        runId,
-        assetSymbol: assetSym,
-        step,
-      },
-      select: { sentiment: true, credibility: true, reach: true },
-    });
+    const eventsAtStep = infoEventsByStep.get(step) ?? [];
     const eventsForStep = eventsAtStep.map((e) => ({
       sentiment: e.sentiment,
       credibility: e.credibility,
@@ -453,18 +508,46 @@ async function main(): Promise<void> {
       `[CrowdMetrics] step=${step}\n   diversity=${d.toFixed(3)} independence=${i.toFixed(3)} wisdom=${w.toFixed(3)} herding=${metrics.herdingIndex.toFixed(3)} noiseSens=${noiseSensitivity.toFixed(3)}`,
     );
 
+    const hasInfoEvents = eventsAtStep.length > 0;
+    const eventImpactFactor = avgEventSignalAcrossAgents(rows);
+    const adjusted = applyEventAwareCrowdAmplification(
+      metrics.signal,
+      metrics.weightedSignal,
+      eventImpactFactor,
+      hasInfoEvents,
+    );
+
+    const beliefMomentumOut =
+      prevWeightedSignal != null
+        ? clamp(adjusted.weightedSignal - prevWeightedSignal, -2, 2)
+        : null;
+    prevWeightedSignal = adjusted.weightedSignal;
+
+    if (hasInfoEvents) {
+      const totalSignal = Math.max(
+        1e-9,
+        Math.abs(metrics.weightedSignal) + Math.abs(metrics.signal),
+      );
+      const crowdEventContribution = eventImpactFactor / totalSignal;
+      console.log(
+        `   crowdEventContribution=${crowdEventContribution.toFixed(4)} eventImpactFactor=${eventImpactFactor.toFixed(4)} ` +
+          `signal ${metrics.signal.toFixed(3)}→${adjusted.signal.toFixed(3)} ` +
+          `weightedSignal ${metrics.weightedSignal.toFixed(3)}→${adjusted.weightedSignal.toFixed(3)}`,
+      );
+    }
+
     crowdMetricsToInsert.push({
       runId,
       runVariantId,
       assetSymbol: assetSym,
       step,
-      signal: metrics.signal,
-      weightedSignal: metrics.weightedSignal,
+      signal: adjusted.signal,
+      weightedSignal: adjusted.weightedSignal,
       consensus: metrics.consensus,
       polarization: metrics.polarization,
       uncertainty: metrics.uncertainty,
       minorityStrength: metrics.minorityStrength,
-      beliefMomentum: metrics.beliefMomentum,
+      beliefMomentum: beliefMomentumOut,
       diversityIndex: metrics.diversityIndex,
       independenceIndex: metrics.independenceIndex,
       herdingIndex: metrics.herdingIndex,

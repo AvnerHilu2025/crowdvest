@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "events": [
+    {
+      "step": 0,
+      "assetSymbol": "SPY",
+      "sourceType": "news",
+      "sourceName": "DemoWire",
+      "title": "Fed signals patience on cuts",
+      "sentiment": 0.35,
+      "confidence": 0.85,
+      "urgency": 0.25,
+      "relevance": 0.9,
+      "reach": 0.55,
+      "credibility": 0.7,
+      "topicTags": ["macro", "rates"],
+      "sensitivityOverrides": { "info": 1.1, "event": 1.15 }
+    },
+    {
+      "step": 2,
+      "assetSymbol": "SPY",
+      "sourceType": "social",
+      "sourceName": "RetailPulse",
+      "title": "Momentum chasers pile in",
+      "sentiment": -0.2,
+      "confidence": 0.6,
+      "urgency": 0.5,
+      "relevance": 0.75,
+      "reach": 0.65,
+      "credibility": 0.45,
+      "topicTags": ["sentiment"],
+      "targetArchetypes": ["event_sniper", "news_reactor"],
+      "sensitivityOverrides": { "event": 1.25 }
+    },
+    {
+      "step": 4,
+      "assetSymbol": "SPY",
+      "sourceType": "analyst",
+      "sourceName": "DeskNotes",
+      "title": "Earnings revision wave",
+      "sentiment": 0.15,
+      "confidence": 0.75,
+      "urgency": 0.15,
+      "relevance": 0.8,
+      "reach": 0.4,
+      "credibility": 0.82,
+      "topicTags": ["earnings"]
+    }
+  ]
+}

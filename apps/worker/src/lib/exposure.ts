@@ -11,6 +11,17 @@ export function clamp11(x: number): number {
   return Math.max(-1, Math.min(1, x));
 }
 
+/** Clamp scenario sensitivity override multipliers (deterministic). */
+export function scenarioChannelMul(
+  overrides: Record<string, number> | undefined,
+  channel: "info" | "event",
+): number {
+  if (!overrides) return 1;
+  const v = overrides[channel];
+  if (v == null || !Number.isFinite(v)) return 1;
+  return Math.max(0.25, Math.min(1.75, v));
+}
+
 /** Hash string to unit float [0, 1) for deterministic exposure. */
 export function hashToUnitFloat(s: string): number {
   let h = 0;
@@ -32,6 +43,14 @@ export interface InfoEventInput {
   source?: string | null;
   /** Per-source quality in [0, 1]; scales perceived info / events (CV-VAL-018). */
   signalQuality?: number;
+  /** InfoEvent.volatilityImpact — dampens high-volatility items in demo feed (deterministic). */
+  volatilityImpact?: number | null;
+  /** From `--scenarioFile`: synthetic injection merged into the same pipeline as DB InfoEvents. */
+  scenarioInjected?: boolean;
+  /** If set, only agents matching one of these archetype ids/names (case-insensitive) receive this event. */
+  scenarioTargetArchetypes?: string[];
+  /** Optional per-channel multipliers on top of normal perception (keys: `info`, `event`). */
+  scenarioSensitivityOverrides?: Record<string, number>;
 }
 
 /**
@@ -97,7 +116,8 @@ export function perceivedSentiment(input: PerceptionInput): number {
   const magBoost = 1 + 0.2 * overconfidence;
   base = clamp11(base * magBoost);
 
-  return base * clamp01(weight) * sigQ;
+  const mul = scenarioChannelMul(event.scenarioSensitivityOverrides, "info");
+  return clamp11(base * clamp01(weight) * sigQ * mul);
 }
 
 export interface AggregatePerceptionInput {
@@ -180,7 +200,8 @@ export function computeEventSignal(input: EventSignalInput): number {
   // Base: sum over events: sentiment * reach * credibility
   let base = 0;
   for (const e of events) {
-    base += e.sentiment * e.reach * e.credibility;
+    const m = scenarioChannelMul(e.scenarioSensitivityOverrides, "event");
+    base += e.sentiment * e.reach * e.credibility * m;
   }
 
   // Modulate by agent biases/humanState
@@ -223,7 +244,8 @@ export function computeEventSignalIndependent(input: {
   let base = 0;
   for (const e of events) {
     const q = clamp01(e.signalQuality ?? 1);
-    base += e.sentiment * e.reach * e.credibility * q;
+    const m = scenarioChannelMul(e.scenarioSensitivityOverrides, "event");
+    base += e.sentiment * e.reach * e.credibility * q * m;
   }
 
   let applied = base;

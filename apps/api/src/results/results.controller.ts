@@ -110,16 +110,30 @@ export class ResultsController {
     return this.resultsService.getCrowdWisdomDump(validRunId, sym);
   }
 
-  /** GET /results/crowd-state?runId=&assetSymbol= — per-step CrowdMetrics + recommendation (direction, strength, confidence, stability, explanation). */
+  /** GET /results/crowd-state?runId=&assetSymbol=&runVariantId= — per-step CrowdMetrics + recommendation (direction, strength, confidence, stability, explanation). */
   @Get("crowd-state")
   async getCrowdState(
     @Query("runId") runId: string | undefined,
     @Query("run_id") runIdAlias: string | undefined,
     @Query("assetSymbol") assetSymbol: string | undefined,
+    @Query("runVariantId") runVariantId: string | undefined,
+    @Query("run_variant_id") runVariantIdAlias: string | undefined,
   ) {
     const validRunId = validateRunId(runId ?? runIdAlias);
-    const sym = (assetSymbol ?? "RUN").trim() || "RUN";
-    return this.resultsService.getCrowdState(validRunId, sym);
+    const rvRaw = (runVariantId ?? runVariantIdAlias)?.trim() ?? "";
+    let validRunVariantId: string | undefined;
+    if (rvRaw !== "") {
+      if (!UUID_REGEX.test(rvRaw)) {
+        throw new BadRequestException(["runVariantId must be a UUID"]);
+      }
+      validRunVariantId = rvRaw;
+    }
+    const a = assetSymbol?.trim();
+    const assetOpt = a === "" || a == null ? undefined : a;
+    return this.resultsService.getCrowdState(validRunId, {
+      assetSymbol: assetOpt,
+      runVariantId: validRunVariantId,
+    });
   }
 
   /** GET /results/crowd-summary?run_id= — crowd metrics. Add assetSymbol=RUN for AgentDecision aggregation + recommendation. */

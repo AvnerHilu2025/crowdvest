@@ -14,6 +14,7 @@ import { Sparkline } from "@/components/sparkline";
 import { API_BASE } from "@/lib/api";
 import styles from "./dashboard.module.css";
 import { VariantsPanel } from "./VariantsPanel";
+import { LiveEventInjectionPanel } from "@/components/dashboard/LiveEventInjectionPanel";
 import { CrowdVerdictHero } from "@/components/dashboard/CrowdVerdictHero";
 import { CrowdFlowMap } from "@/components/dashboard/CrowdFlowMap";
 import { SignalContributionPanel } from "@/components/dashboard/SignalContributionPanel";
@@ -3708,6 +3709,8 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
       ) : null}
 
       <VariantsPanel runId={dashboardInfoEventsRunId} />
+
+      <LiveEventInjectionPanel runId={dashboardInfoEventsRunId} assetSymbol={initialQuery.assetSymbol.trim()} />
 
       {backtestMetrics && backtestMetrics.trades > 0 ? (
         <div

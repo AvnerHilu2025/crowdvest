@@ -267,10 +267,133 @@ export class ResultsService {
     };
   }
 
-  /** GET /results/crowd-state?runId=&assetSymbol= — per-step CrowdMetrics + recommendation (direction, strength, confidence, stability, explanation). */
+  /**
+   * Preferred RunVariant for a run+asset: seed=1 and empty label, else first (label asc, seed asc).
+   * Matches GET /results/latest and getRunsV2 default variant selection.
+   */
+  private pickPreferredRunVariant<T extends { seed: number; label: string | null }>(variants: T[]): T {
+    return variants.find((v) => v.seed === 1 && (v.label ?? "") === "") ?? variants[0]!;
+  }
+
+  private interpretRunVariantIdGroups(
+    groups: { runVariantId: string | null }[],
+  ): { kind: "unique"; runVariantId: string | null } | { kind: "ambiguous" } | { kind: "empty" } {
+    if (groups.length === 0) return { kind: "empty" };
+    const nonNull = groups.map((g) => g.runVariantId).filter((id): id is string => id != null);
+    const hasNull = groups.some((g) => g.runVariantId === null);
+    if (nonNull.length === 0 && hasNull) return { kind: "unique", runVariantId: null };
+    if (nonNull.length === 1 && !hasNull) return { kind: "unique", runVariantId: nonNull[0]! };
+    if (nonNull.length === 1 && hasNull) return { kind: "ambiguous" };
+    if (nonNull.length > 1) return { kind: "ambiguous" };
+    return { kind: "empty" };
+  }
+
+  /**
+   * Resolves assetSymbol and a single runVariantId scope for GET /results/crowd-state.
+   */
+  private async resolveCrowdStateScope(
+    runId: string,
+    explicitAsset: string | undefined,
+    explicitVariantId: string | undefined,
+  ): Promise<{ sym: string; variantWhere: { runVariantId: string | null } | Record<string, never> }> {
+    if (explicitVariantId) {
+      const v = await this.prisma.runVariant.findFirst({
+        where: { id: explicitVariantId, runId },
+        select: { assetSymbol: true },
+      });
+      if (!v) {
+        throw new NotFoundException(`runVariantId not found for this run: ${explicitVariantId}`);
+      }
+      if (explicitAsset != null && explicitAsset !== v.assetSymbol) {
+        throw new BadRequestException(
+          `assetSymbol mismatch: query has "${explicitAsset}" but variant uses "${v.assetSymbol}"`,
+        );
+      }
+      return { sym: v.assetSymbol, variantWhere: { runVariantId: explicitVariantId } };
+    }
+
+    let sym: string;
+    if (explicitAsset != null && explicitAsset !== "") {
+      sym = explicitAsset;
+    } else {
+      const cmSyms = await this.prisma.crowdMetrics.groupBy({
+        by: ["assetSymbol"],
+        where: { runId },
+      });
+      if (cmSyms.length > 0) {
+        const sorted = [...new Set(cmSyms.map((g) => g.assetSymbol))].sort();
+        if (sorted.length > 1) {
+          throw new BadRequestException(
+            `assetSymbol is required: multiple assets in CrowdMetrics for this run (${sorted.join(", ")})`,
+          );
+        }
+        sym = sorted[0]!;
+      } else {
+        const adSyms = await this.prisma.agentDecision.groupBy({
+          by: ["assetSymbol"],
+          where: { runId },
+        });
+        if (adSyms.length === 0) {
+          throw new BadRequestException(
+            "assetSymbol is required: no CrowdMetrics or AgentDecision rows exist for this run",
+          );
+        }
+        const sorted = [...new Set(adSyms.map((g) => g.assetSymbol))].sort();
+        if (sorted.length > 1) {
+          throw new BadRequestException(
+            `assetSymbol is required: multiple assets in AgentDecision for this run (${sorted.join(", ")})`,
+          );
+        }
+        sym = sorted[0]!;
+      }
+    }
+
+    const variants = await this.prisma.runVariant.findMany({
+      where: { runId, assetSymbol: sym },
+      orderBy: [{ label: "asc" }, { seed: "asc" }],
+      select: { id: true, seed: true, label: true },
+    });
+
+    if (variants.length > 0) {
+      const preferred = this.pickPreferredRunVariant(variants);
+      return { sym, variantWhere: { runVariantId: preferred.id } };
+    }
+
+    const cmG = await this.prisma.crowdMetrics.groupBy({
+      by: ["runVariantId"],
+      where: { runId, assetSymbol: sym },
+    });
+    const cmInterp = this.interpretRunVariantIdGroups(cmG);
+    if (cmInterp.kind === "ambiguous") {
+      throw new BadRequestException(
+        `runVariantId is required: multiple CrowdMetrics variant keys for assetSymbol=${sym} (no RunVariant rows for this asset)`,
+      );
+    }
+    if (cmInterp.kind === "unique") {
+      return { sym, variantWhere: { runVariantId: cmInterp.runVariantId } };
+    }
+
+    const adG = await this.prisma.agentDecision.groupBy({
+      by: ["runVariantId"],
+      where: { runId, assetSymbol: sym },
+    });
+    const adInterp = this.interpretRunVariantIdGroups(adG);
+    if (adInterp.kind === "ambiguous") {
+      throw new BadRequestException(
+        `runVariantId is required: multiple AgentDecision variant keys for assetSymbol=${sym} (no RunVariant rows for this asset)`,
+      );
+    }
+    if (adInterp.kind === "unique") {
+      return { sym, variantWhere: { runVariantId: adInterp.runVariantId } };
+    }
+
+    return { sym, variantWhere: {} };
+  }
+
+  /** GET /results/crowd-state?runId=&assetSymbol=&runVariantId= — per-step CrowdMetrics + recommendation (direction, strength, confidence, stability, explanation). */
   async getCrowdState(
     runId: string,
-    assetSymbol: string,
+    opts: { assetSymbol?: string; runVariantId?: string },
   ): Promise<{
     runId: string;
     assetSymbol: string;
@@ -303,9 +426,14 @@ export class ResultsService {
     });
     if (!run) throw new NotFoundException(`Run not found: ${runId}`);
 
-    const sym = (assetSymbol ?? "RUN").trim() || "RUN";
+    const { sym, variantWhere } = await this.resolveCrowdStateScope(
+      runId,
+      opts.assetSymbol,
+      opts.runVariantId,
+    );
+
     let rows = await this.prisma.crowdMetrics.findMany({
-      where: { runId, assetSymbol: sym },
+      where: { runId, assetSymbol: sym, ...variantWhere },
       orderBy: { step: "asc" },
       select: {
         step: true,
@@ -326,7 +454,7 @@ export class ResultsService {
 
     if (rows.length === 0) {
       const decisions = await this.prisma.agentDecision.findMany({
-        where: { runId, assetSymbol: sym },
+        where: { runId, assetSymbol: sym, ...variantWhere },
         select: { step: true, action: true, confidence: true },
       });
       const byStep = new Map<number, { action: string; confidence: number }[]>();

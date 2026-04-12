@@ -22,9 +22,12 @@
  *   --pipelineDiag         Print === DECISION PIPELINE DIAGNOSTICS === after all steps (observability only).
  *   --pipelineDiagSample N Agents per step in sample tables (default: 8, max: 500).
  *   --decisionTrace        Persist JSON `decisionTrace` on each AgentDecision (channels + base + signalI + threshold).
+ *   --scenarioFile <path>  JSON scenario: injected events by step (merged with DB InfoEvents; deterministic).
  *   --productChannels      Use product-grade channel builders (no ratioOr / sin event fallback); CV_PRODUCT_CHANNELS=1.
  *                          Or set CV_DECISION_TRACE=1. No change to decision logic.
  *   Env CV_DEBUG_CROWD_TRADE_MAP=1  Per-step JSON: plurality vs mean agent signal (crowd vs trade-direction diagnostics).
+ *   Env CV_INFO_FEED_EVENT_SIGNAL=1  Per step, first agent: JSON INFO_FEED_EVENT_STEP (InfoEvent → demo event leg).
+ *   Env CV_DEBUG_SIGNALS=1          JSON FINAL_SIGNAL_TRACE includes signals.infoFeedDemoEvent when non-null.
  *   --neutralMode          (deprecated; ignored — architecture is always independent-agent / sign(signal).)
  *   --herdingCrowdScale    (deprecated; ignored.)
  *
@@ -55,6 +58,20 @@ import {
   hashToUnitFloat,
   type InfoEventInput,
 } from "../lib/exposure";
+import { computeInfoFeedDemoEventContribution } from "../lib/info-feed-demo-signal";
+import { writeInfoCrowdExplain } from "../lib/write-info-crowd-explain";
+import { dbInfoEventRowToInfoEventInput } from "../lib/db-info-event-to-input";
+import {
+  loadScenarioFile,
+  mergeScenarioEventsIntoMap,
+  filterScenarioEventsForAgent,
+  type ScenarioEventRecord,
+} from "../lib/scenario-injection";
+import {
+  buildScenarioReactionStepRow,
+  writeScenarioReactionReport,
+  type ScenarioReactionStepRow,
+} from "../lib/write-scenario-reaction-report";
 import {
   selectAgentEventSubset,
   blindTopicsForAgent,
@@ -64,7 +81,6 @@ import {
   blendInfoWithUnderstanding,
   computeAgentSyntheticSignal,
   computeAgentRegimeSignal,
-  signalQualityFromSource,
   stepSignalsFromChannelsPreApplyExposure,
   minimalStepEventSignal,
   logEventPathExposure,
@@ -263,6 +279,8 @@ function logFinalSignalTrace(params: {
   prefSELL?: number;
   prefHOLD?: number;
   confidence: number;
+  /** Demo InfoEvent → event leg (pre-blend with subset channel); when set, included under signals. */
+  infoFeedDemoEvent?: number | null;
   /** Per-agent channel snapshot (e.g. after blend); used when primary scalars are missing or step-only. */
   preSignals?: {
     synthetic?: number;
@@ -296,19 +314,23 @@ function logFinalSignalTrace(params: {
     pre?.event !== undefined && Math.abs(pre.event) > 1e-9
       ? pre.event
       : (params.eventSignal ?? 0);
+  const signalsOut: Record<string, unknown> = {
+    synthetic: syn,
+    info: inf,
+    event: evt,
+    regime: reg,
+    distorted: params.distortedSignal ?? null,
+  };
+  if (params.infoFeedDemoEvent != null && Number.isFinite(params.infoFeedDemoEvent)) {
+    signalsOut.infoFeedDemoEvent = params.infoFeedDemoEvent;
+  }
   console.log(
     JSON.stringify({
       tag: "FINAL_SIGNAL_TRACE",
       step: params.step,
       agentId: params.agent.id,
       archetype: params.agent.archetypeId ?? params.agent.archetype ?? null,
-      signals: {
-        synthetic: syn,
-        info: inf,
-        event: evt,
-        regime: reg,
-        distorted: params.distortedSignal ?? null,
-      },
+      signals: signalsOut,
       preferences: {
         buy: params.prefBUY ?? null,
         sell: params.prefSELL ?? null,
@@ -510,6 +532,8 @@ function parseArgv(): {
    * Also: CV_PRODUCT_CHANNELS=1 or true.
    */
   productChannels: boolean;
+  /** Optional JSON file: injected scenario events merged into the InfoEvent pipeline. */
+  scenarioFile: string | undefined;
 } {
   const args = process.argv.slice(2);
   let runId = "";
@@ -551,6 +575,7 @@ function parseArgv(): {
   let eventContribution: "full" | "zero" = "full";
   let decisionTrace = false;
   let productChannels = false;
+  let scenarioFile: string | undefined;
   for (let i = 0; i < args.length; i++) {
     const arg = args[i]!;
     if (arg === "--runVariantId" && args[i + 1]) {
@@ -695,6 +720,8 @@ function parseArgv(): {
       decisionTrace = true;
     } else if (arg === "--productChannels") {
       productChannels = true;
+    } else if (arg === "--scenarioFile" && args[i + 1]) {
+      scenarioFile = args[++i]!.trim();
     }
   }
   if (process.env.CV_DECISION_TRACE === "1" || process.env.CV_DECISION_TRACE === "true") {
@@ -876,6 +903,7 @@ function parseArgv(): {
     eventContribution,
     decisionTrace,
     productChannels,
+    scenarioFile,
   };
 }
 
@@ -1633,6 +1661,14 @@ async function main(): Promise<void> {
   const assetSymbol = variant.assetSymbol;
   const steps = variant.steps;
   const seed = argv.seed ?? variant.seed ?? 0;
+  let scenarioRecords: ScenarioEventRecord[] = [];
+  if (argv.scenarioFile) {
+    const sp = path.isAbsolute(argv.scenarioFile)
+      ? argv.scenarioFile
+      : path.resolve(process.cwd(), argv.scenarioFile);
+    scenarioRecords = await loadScenarioFile(sp);
+    log(`Loaded scenario file: ${sp} (${scenarioRecords.length} events)`);
+  }
   const val024 = cvVal024FlagsForArgv(argv.cvVal024);
   if (argv.cvVal027 || argv.cvVal029) {
     getSharedWeightPreset(argv.weightPreset);
@@ -1882,27 +1918,52 @@ async function main(): Promise<void> {
   }
 
   const infoEventsByStep = new Map<number, InfoEventInput[]>();
-  // CV-VAL-018: include cross-asset stories on the same run+step (macro/news heterogeneity).
+  /** Per-agent raw demo feed (pre-lag) for late_event_follower step-to-step memory. */
+  const lateEventRawFeedByAgent = new Map<string, number>();
   const allEvents = await prisma.infoEvent.findMany({
     where: {
       runId,
+      assetSymbol,
       step: { gte: 0, lt: steps },
     },
     orderBy: [{ step: "asc" }, { id: "asc" }],
   });
   for (const e of allEvents) {
     const list = infoEventsByStep.get(e.step) ?? [];
-    list.push({
-      id: e.id,
-      sentiment: e.sentiment,
-      credibility: e.credibility,
-      reach: e.reach,
-      topic: e.topic,
-      source: e.source,
-      signalQuality: signalQualityFromSource(e.source),
-    });
+    list.push(
+      dbInfoEventRowToInfoEventInput({
+        id: e.id,
+        sentiment: e.sentiment,
+        credibility: e.credibility,
+        reach: e.reach,
+        topic: e.topic,
+        source: e.source,
+        volatilityImpact: e.volatilityImpact,
+      }),
+    );
     infoEventsByStep.set(e.step, list);
   }
+
+  if (scenarioRecords.length > 0) {
+    mergeScenarioEventsIntoMap(infoEventsByStep, scenarioRecords, assetSymbol, steps);
+  }
+
+  const injectedByStep = new Map<number, ScenarioEventRecord[]>();
+  for (const r of scenarioRecords) {
+    if (r.assetSymbol !== assetSymbol || r.step < 0 || r.step >= steps) continue;
+    const arr = injectedByStep.get(r.step) ?? [];
+    arr.push(r);
+    injectedByStep.set(r.step, arr);
+  }
+  for (const [k, arr] of injectedByStep) {
+    arr.sort(
+      (a, b) =>
+        a.title.localeCompare(b.title) || String(a.sourceName).localeCompare(String(b.sourceName)),
+    );
+    injectedByStep.set(k, arr);
+  }
+  const scenarioReactionRows: ScenarioReactionStepRow[] = [];
+  let prevScenarioCrowd: number | null = null;
 
   const stepJaccards: number[] = [];
 
@@ -2041,6 +2102,7 @@ async function main(): Promise<void> {
     }
 
     for (let agentIndex = 0; agentIndex < agents.length; agentIndex++) {
+      let infoFeedDemoEventForTrace: number | null = null;
       const i = step;
       const agentIdx = agentIndex;
       const agent = agents[agentIndex]!;
@@ -2050,13 +2112,23 @@ async function main(): Promise<void> {
       const biases = extractBiases(traits);
       const understanding = getTrait(traits, "understanding", 0.5);
       const state = agentState.get(agent.id)!;
+      const archetypeConfigIdForFeed = resolveArchetypeConfigId(
+        agent.id,
+        agent.archetype ?? null,
+        agent.archetypeId ?? null,
+      );
+      const eventsForAgent = filterScenarioEventsForAgent(
+        eventsForStep,
+        archetypeConfigIdForFeed,
+        agent.archetype ?? null,
+      );
       const agentSeed = hashToSeed(`${datasetVersion}:${assetSymbol}:${globalSeed}:${agent.id}:${step}`);
       const rng = createSeededRng(agentSeed);
 
-      const distinctTopics = [...new Set(eventsForStep.map((ev) => ev.topic ?? ""))];
+      const distinctTopics = [...new Set(eventsForAgent.map((ev) => ev.topic ?? ""))];
       const blindTopics = blindTopicsForAgent(distinctTopics, agent.id, step, globalSeed);
-      const visibleEvents = filterEventsVisibleToAgent(eventsForStep, blindTopics);
-      const eventPool = visibleEvents.length > 0 ? visibleEvents : eventsForStep;
+      const visibleEvents = filterEventsVisibleToAgent(eventsForAgent, blindTopics);
+      const eventPool = visibleEvents.length > 0 ? visibleEvents : eventsForAgent;
       const subset = selectAgentEventSubset({
         events: eventPool,
         agentId: agent.id,
@@ -2084,7 +2156,7 @@ async function main(): Promise<void> {
         const priceByStepCur = priceByStepBySymbol.get(assetSymbol)!;
         if (agentIndex === 0) {
           log(
-            `[PRODUCT_CHANNELS_DBG] step=${step} eventsForStep=${eventsForStep.length} eventPool=${eventPool.length} subset.length=${subset.length} (pass into computeProductChannels)`,
+            `[PRODUCT_CHANNELS_DBG] step=${step} eventsForAgent=${eventsForAgent.length} eventPool=${eventPool.length} subset.length=${subset.length} (pass into computeProductChannels)`,
           );
         }
         pcResult = computeProductChannels({
@@ -2109,6 +2181,27 @@ async function main(): Promise<void> {
         });
         productChannelRunMetrics?.warnIfSyntheticNearSaturation(pcResult.synthetic, log);
       } else {
+        const feedDemo = computeInfoFeedDemoEventContribution({
+          events: eventsForAgent,
+          archetypeConfigId: archetypeConfigIdForFeed,
+          prevRawForLag: lateEventRawFeedByAgent.get(agent.id),
+        });
+        lateEventRawFeedByAgent.set(agent.id, feedDemo.rawUnlagged);
+        infoFeedDemoEventForTrace = feedDemo.lagged;
+
+        if (process.env.CV_INFO_FEED_EVENT_SIGNAL === "1" && agentIndex === 0) {
+          console.log(
+            JSON.stringify({
+              tag: "INFO_FEED_EVENT_STEP",
+              step,
+              eventCount: eventsForAgent.length,
+              demoLagged: feedDemo.lagged,
+              rawUnlagged: feedDemo.rawUnlagged,
+              archetype: archetypeConfigIdForFeed,
+            }),
+          );
+        }
+
         const agg = aggregateInfoSignal({
           events: subset,
           agentId: agent.id,
@@ -2136,16 +2229,22 @@ async function main(): Promise<void> {
           understanding,
           rng,
         });
+        if (eventsForAgent.length > 0) {
+          infoSignalRaw = clamp11(infoSignalRaw + 0.1 * feedDemo.lagged);
+        }
 
-        eventSignalRaw = computeEventSignalIndependent({
+        const independEvent = computeEventSignalIndependent({
           events: subset,
           attentionLevel: state.attentionLevel,
           fatigue: state.fatigue,
           emotionalVolatility: getTrait(traits, "emotionalVolatility"),
         });
-        if (eventSignalRaw === 0) {
-          const stepEventSignal = minimalStepEventSignal(step, agentIdx);
-          eventSignalRaw = stepEventSignal;
+        eventSignalRaw =
+          eventsForAgent.length > 0
+            ? clamp11(0.72 * feedDemo.lagged + 0.28 * independEvent)
+            : independEvent;
+        if (Math.abs(eventSignalRaw) < 1e-8) {
+          eventSignalRaw = minimalStepEventSignal(step, agentIdx);
         }
 
         synthetic_i_raw = computeAgentSyntheticSignal({
@@ -3766,6 +3865,7 @@ async function main(): Promise<void> {
         prefSELL: 0,
         prefHOLD: 0,
         confidence,
+        infoFeedDemoEvent: infoFeedDemoEventForTrace,
         preSignals: {
           synthetic: synthetic_i,
           info: infoSignal,
@@ -3832,6 +3932,32 @@ async function main(): Promise<void> {
     const avgAgentSignal = nAg > 0 ? sumSignalI / nAg : 0;
 
     const pluralityAction = pluralityActionFromHist(hist);
+
+    if (argv.scenarioFile) {
+      const slice = decisions.slice(-agents.length);
+      scenarioReactionRows.push(
+        buildScenarioReactionStepRow({
+          step,
+          injected: injectedByStep.get(step) ?? [],
+          decisionSlice: slice.map((d) => ({
+            infoSignal: d.infoSignal ?? null,
+            eventSignal: d.eventSignal ?? null,
+            action: String(d.action),
+            agentId: d.agentId,
+          })),
+          agents: agents.map((a) => ({
+            id: a.id,
+            archetype: a.archetype ?? null,
+            archetypeId: a.archetypeId ?? null,
+          })),
+          resolveArchetypeConfigId,
+          crowdSignalBefore: prevScenarioCrowd,
+          crowdSignalAfter: avgAgentSignal,
+          dominantCrowdDirection: pluralityAction as "BUY" | "SELL" | "HOLD",
+        }),
+      );
+      prevScenarioCrowd = avgAgentSignal;
+    }
 
     for (const d of stepDecisions) {
       const wasWithMajority = d.action === pluralityAction;
@@ -3967,6 +4093,25 @@ async function main(): Promise<void> {
   }
 
   log(`Persisted ${decisions.length} decisions`);
+
+  await writeInfoCrowdExplain({
+    prisma,
+    runId,
+    assetSymbol,
+    runVariantId,
+    log,
+  });
+
+  if (argv.scenarioFile) {
+    await writeScenarioReactionReport({
+      runId,
+      assetSymbol,
+      runVariantId,
+      scenarioFile: argv.scenarioFile,
+      steps: scenarioReactionRows,
+      log,
+    });
+  }
 
   const avgOverlap =
     stepJaccards.length > 0

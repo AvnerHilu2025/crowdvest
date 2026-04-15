@@ -58,6 +58,7 @@ import {
   hashToUnitFloat,
   type InfoEventInput,
 } from "../lib/exposure";
+import { applyReactionEngine, type PendingReaction } from "../lib/reaction-engine";
 import { computeInfoFeedDemoEventContribution } from "../lib/info-feed-demo-signal";
 import { writeInfoCrowdExplain } from "../lib/write-info-crowd-explain";
 import { dbInfoEventRowToInfoEventInput } from "../lib/db-info-event-to-input";
@@ -2051,7 +2052,14 @@ async function main(): Promise<void> {
 
   const productChannelRunMetrics = argv.productChannels ? new ProductChannelRunMetrics() : null;
 
+  const reactionEnginePending = new Map<string, PendingReaction>();
+
   for (let step = 0; step < steps; step++) {
+    const reactionModeCounts = new Map<string, number>();
+    const noteReactionMode = (m: string) => {
+      reactionModeCounts.set(m, (reactionModeCounts.get(m) ?? 0) + 1);
+    };
+
     const priceByStepCur = priceByStepBySymbol.get(assetSymbol);
     if (!priceByStepCur) {
       throw new Error(`Missing priceByStep for asset ${assetSymbol} (runId=${runId})`);
@@ -2312,6 +2320,7 @@ async function main(): Promise<void> {
         sumSignalI += coherentSignal;
         stepDecisions.push({ agentId: agent.id, action, confidence });
         modelHist[decisionModelPc][action]++;
+        noteReactionMode("product_channels");
 
         state.lastAction = action;
         state.fatigue = updateFatigue(state.fatigue, state.attentionLevel);
@@ -2963,15 +2972,29 @@ async function main(): Promise<void> {
         signalI = clamp11(
           signalI + effArch.bias * ARCH058_ARCHETYPE_BIAS_SCALE + archNoise * 0.14 * effArch.noiseAmp,
         );
+        const reaction029 = applyReactionEngine({
+          agentId: agent.id,
+          step,
+          eventsForAgent,
+          archetypeId: effArch.archetypeId,
+          pending: reactionEnginePending,
+          globalSeed,
+        });
+        noteReactionMode(reaction029.mode);
         const decisionScale = argv.overrideDecisionScale ?? 0.7;
-        const scaledSignal = signalI * decisionScale;
+        const signalIForAction029 = reaction029.actionOverride
+          ? signalI
+          : clamp11(signalI + reaction029.bias);
+        const scaledSignal = signalIForAction029 * decisionScale;
         const baseTh029 = argv.overrideThreshold ?? 0.02;
         let TH = baseTh029 * effArch.thresholdMul;
         if (useCv038Diversity) {
           TH *= cv038DiverseByAgent.get(agent.id)!.thresholdFactor;
         }
         let action: Action;
-        if (scaledSignal > TH) action = "BUY";
+        if (reaction029.actionOverride) {
+          action = reaction029.actionOverride;
+        } else if (scaledSignal > TH) action = "BUY";
         else if (scaledSignal < -TH) action = "SELL";
         else action = "HOLD";
         const confidence = confidenceFromProfile(effArch, agent.id, step, signalI);
@@ -3043,7 +3066,7 @@ async function main(): Promise<void> {
             event_signal: eventSignalRaw,
             regime_raw: regime.regimeSignal,
             regime_i: regime_i_raw,
-            distorted_signal: signalI,
+            distorted_signal: signalIForAction029,
             final_signal: scaledSignal,
             threshold: TH,
             dominant_leg: dominantLegCv029(effSyn, effInfo, effEvt, effReg, effArch, channels),
@@ -3062,7 +3085,7 @@ async function main(): Promise<void> {
           infoSignal,
           eventSignal,
           regimeSignal: regime_i,
-          distortedSignal: signalI,
+          distortedSignal: signalIForAction029,
           prefBUY: 0,
           prefSELL: 0,
           prefHOLD: 0,
@@ -3088,7 +3111,7 @@ async function main(): Promise<void> {
           infoSignal,
           eventSignal,
           regimeSignal: regime.regimeSignal,
-          distortedSignal: signalI,
+          distortedSignal: signalIForAction029,
           beliefDrift: 0,
           prefBUY: 0,
           prefSELL: 0,
@@ -3110,6 +3133,9 @@ async function main(): Promise<void> {
             decisionScale: argv.overrideDecisionScale ?? 0.7,
             useCv038Diversity,
             useStructuredAgents,
+            reactionMode: reaction029.mode,
+            reactionBias: reaction029.bias,
+            reactionOverride: reaction029.actionOverride,
           }),
         });
         continue;
@@ -3135,7 +3161,19 @@ async function main(): Promise<void> {
           prevSmoothedMid: nsm027,
         });
         const signalI = clamp11(coreFromModel);
-        const action = actionFromSignSignal(signalI);
+        const reaction027 = applyReactionEngine({
+          agentId: agent.id,
+          step,
+          eventsForAgent,
+          archetypeId: archCfgId,
+          pending: reactionEnginePending,
+          globalSeed,
+        });
+        noteReactionMode(reaction027.mode);
+        const signalIForAction027 = reaction027.actionOverride
+          ? signalI
+          : clamp11(signalI + reaction027.bias);
+        const action = reaction027.actionOverride ?? actionFromSignSignal(signalIForAction027);
         const confidence = clamp01(0.45 + 0.35 * Math.min(1, Math.abs(signalI)));
         modelHist[decisionModel][action]++;
         const rationale027 =
@@ -3193,8 +3231,8 @@ async function main(): Promise<void> {
             event_signal: eventSignalRaw,
             regime_raw: regime.regimeSignal,
             regime_i: regime_i_raw,
-            distorted_signal: signalI,
-            final_signal: signalI,
+            distorted_signal: signalIForAction027,
+            final_signal: signalIForAction027,
             threshold: 0,
             dominant_leg: dominantLegAbsChannels({
               synthetic_i,
@@ -3217,7 +3255,7 @@ async function main(): Promise<void> {
           infoSignal,
           eventSignal,
           regimeSignal: regime_i,
-          distortedSignal: signalI,
+          distortedSignal: signalIForAction027,
           prefBUY: 0,
           prefSELL: 0,
           prefHOLD: 0,
@@ -3243,7 +3281,7 @@ async function main(): Promise<void> {
           infoSignal,
           eventSignal,
           regimeSignal: regime.regimeSignal,
-          distortedSignal: signalI,
+          distortedSignal: signalIForAction027,
           beliefDrift: 0,
           prefBUY: 0,
           prefSELL: 0,
@@ -3262,6 +3300,9 @@ async function main(): Promise<void> {
             scaledSignal: null,
             threshold: 0,
             actionRule: "sign_nonzero",
+            reactionMode: reaction027.mode,
+            reactionBias: reaction027.bias,
+            reactionOverride: reaction027.actionOverride,
           }),
         });
         continue;
@@ -3295,7 +3336,19 @@ async function main(): Promise<void> {
           prevSmoothedMid: nsm026,
         });
         const signalI = clamp11(coreFromModel);
-        const action = actionFromSignSignal(signalI);
+        const reaction026 = applyReactionEngine({
+          agentId: agent.id,
+          step,
+          eventsForAgent,
+          archetypeId: archCfgId,
+          pending: reactionEnginePending,
+          globalSeed,
+        });
+        noteReactionMode(reaction026.mode);
+        const signalIForAction026 = reaction026.actionOverride
+          ? signalI
+          : clamp11(signalI + reaction026.bias);
+        const action = reaction026.actionOverride ?? actionFromSignSignal(signalIForAction026);
         const confidence = clamp01(0.45 + 0.35 * Math.min(1, Math.abs(signalI)));
         modelHist[decisionModel][action]++;
         rationale =
@@ -3353,8 +3406,8 @@ async function main(): Promise<void> {
             event_signal: eventSignalRaw,
             regime_raw: regime.regimeSignal,
             regime_i: regime_i_raw,
-            distorted_signal: signalI,
-            final_signal: signalI,
+            distorted_signal: signalIForAction026,
+            final_signal: signalIForAction026,
             threshold: 0,
             dominant_leg: dominantLegAbsChannels({
               synthetic_i,
@@ -3377,7 +3430,7 @@ async function main(): Promise<void> {
           infoSignal,
           eventSignal,
           regimeSignal: regime_i,
-          distortedSignal: signalI,
+          distortedSignal: signalIForAction026,
           prefBUY: 0,
           prefSELL: 0,
           prefHOLD: 0,
@@ -3403,7 +3456,7 @@ async function main(): Promise<void> {
           infoSignal,
           eventSignal,
           regimeSignal: regime.regimeSignal,
-          distortedSignal: signalI,
+          distortedSignal: signalIForAction026,
           beliefDrift: 0,
           prefBUY: 0,
           prefSELL: 0,
@@ -3422,6 +3475,9 @@ async function main(): Promise<void> {
             scaledSignal: null,
             threshold: 0,
             actionRule: "sign_nonzero",
+            reactionMode: reaction026.mode,
+            reactionBias: reaction026.bias,
+            reactionOverride: reaction026.actionOverride,
           }),
         });
         continue;
@@ -3456,7 +3512,19 @@ async function main(): Promise<void> {
         signalI += randn(rng) * RATIONALITY_NOISE_SCALE * (1 - rationality);
         signalI += randn(rng) * PRIVATE_SIGNAL_SCALE * (1 - understanding);
         signalI = clamp11(signalI);
-        const action = actionFromSignSignal(signalI);
+        const reaction025 = applyReactionEngine({
+          agentId: agent.id,
+          step,
+          eventsForAgent,
+          archetypeId: archCfgId,
+          pending: reactionEnginePending,
+          globalSeed,
+        });
+        noteReactionMode(reaction025.mode);
+        const signalIForAction025 = reaction025.actionOverride
+          ? signalI
+          : clamp11(signalI + reaction025.bias);
+        const action = reaction025.actionOverride ?? actionFromSignSignal(signalIForAction025);
         const confidence = clamp01(0.45 + 0.35 * Math.min(1, Math.abs(signalI)));
         modelHist[decisionModel][action]++;
         rationale =
@@ -3514,8 +3582,8 @@ async function main(): Promise<void> {
             event_signal: eventSignalRaw,
             regime_raw: regime.regimeSignal,
             regime_i: regime_i_raw,
-            distorted_signal: signalI,
-            final_signal: signalI,
+            distorted_signal: signalIForAction025,
+            final_signal: signalIForAction025,
             threshold: 0,
             dominant_leg: dominantLegAbsChannels({
               synthetic_i,
@@ -3538,7 +3606,7 @@ async function main(): Promise<void> {
           infoSignal,
           eventSignal,
           regimeSignal: regime_i,
-          distortedSignal: signalI,
+          distortedSignal: signalIForAction025,
           prefBUY: 0,
           prefSELL: 0,
           prefHOLD: 0,
@@ -3564,7 +3632,7 @@ async function main(): Promise<void> {
           infoSignal,
           eventSignal,
           regimeSignal: regime.regimeSignal,
-          distortedSignal: signalI,
+          distortedSignal: signalIForAction025,
           beliefDrift: 0,
           prefBUY: 0,
           prefSELL: 0,
@@ -3584,6 +3652,9 @@ async function main(): Promise<void> {
             threshold: 0,
             actionRule: "sign_nonzero",
             goldLag: goldLagByAgent.get(agent.id),
+            reactionMode: reaction025.mode,
+            reactionBias: reaction025.bias,
+            reactionOverride: reaction025.actionOverride,
           }),
         });
         continue;
@@ -3714,7 +3785,21 @@ async function main(): Promise<void> {
 
       const threshold = baseThreshold * thresholdMul * archetypeFactor;
 
-      const action = actionFromSignalArch052Default(signalI, threshold);
+      const reaction052 = applyReactionEngine({
+        agentId: agent.id,
+        step,
+        eventsForAgent,
+        archetypeId: effArchDefault.archetypeId,
+        pending: reactionEnginePending,
+        globalSeed,
+      });
+      noteReactionMode(reaction052.mode);
+      const signalIForAction052 = reaction052.actionOverride
+        ? signalI
+        : clamp11(signalI + reaction052.bias);
+      const action = reaction052.actionOverride
+        ? reaction052.actionOverride
+        : actionFromSignalArch052Default(signalIForAction052, threshold);
       const confidence = confidenceFromProfile(effArchDefault, agent.id, step, signalI);
 
       modelHist[decisionModel][action]++;
@@ -3780,8 +3865,8 @@ async function main(): Promise<void> {
           persona_digital_affinity: personaProfile.digitalAffinity,
           source_access_count: sourceAccess.length,
           sourceCount: sourceAccess.length,
-          distorted_signal: signalI,
-          final_signal: signalI,
+          distorted_signal: signalIForAction052,
+          final_signal: signalIForAction052,
           threshold,
           dominant_leg: dominantLegArch052Default(channels, archMask, effArchDefault),
           action,
@@ -3849,7 +3934,7 @@ async function main(): Promise<void> {
           infoSignalRaw,
           eventSignalRaw,
           regime_i_raw,
-          finalSignal: signalI,
+          finalSignal: signalIForAction052,
         });
       }
 
@@ -3860,7 +3945,7 @@ async function main(): Promise<void> {
         infoSignal,
         eventSignal,
         regimeSignal: regime_i,
-        distortedSignal: signalI,
+        distortedSignal: signalIForAction052,
         prefBUY: 0,
         prefSELL: 0,
         prefHOLD: 0,
@@ -3887,7 +3972,7 @@ async function main(): Promise<void> {
         infoSignal,
         eventSignal,
         regimeSignal: regime.regimeSignal,
-        distortedSignal: signalI,
+        distortedSignal: signalIForAction052,
         beliefDrift: 0,
         prefBUY: 0,
         prefSELL: 0,
@@ -3915,8 +4000,19 @@ async function main(): Promise<void> {
           threshold,
           actionRule: "threshold_pair",
           cvVal024Mode: argv.cvVal024 ?? null,
+          reactionMode: reaction052.mode,
+          reactionBias: reaction052.bias,
+          reactionOverride: reaction052.actionOverride,
         }),
       });
+    }
+
+    if (process.env.CV_REACTION_ENGINE_DEBUG === "1" && reactionModeCounts.size > 0) {
+      const nAgents = agents.length;
+      const parts = [...reactionModeCounts.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .map(([k, v]) => `${k}=${((100 * v) / nAgents).toFixed(1)}%`);
+      log(`[ReactionEngine] step=${step} modes: ${parts.join(" ")}`);
     }
 
     const nAg = agents.length;

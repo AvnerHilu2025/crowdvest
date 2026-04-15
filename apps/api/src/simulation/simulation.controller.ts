@@ -38,6 +38,7 @@ export class SimulationController {
         body.sensitivityOverrides != null && typeof body.sensitivityOverrides === "object"
           ? (body.sensitivityOverrides as Record<string, number>)
           : undefined,
+      runVariantId: body.runVariantId != null ? String(body.runVariantId) : undefined,
     };
     return this.simulation.injectEvent(dto);
   }

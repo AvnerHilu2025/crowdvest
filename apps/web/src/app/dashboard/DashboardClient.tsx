@@ -597,6 +597,18 @@ export type DashboardCrowdStateRecommendation = {
   explanation: string;
 };
 
+export type DashboardCrowdStateEnvelope = {
+  runVariantId: string | null;
+  isActiveVariant: boolean;
+  recommendation: DashboardCrowdStateRecommendation;
+};
+
+export type DashboardActiveVariantOption = {
+  id: string;
+  seed: number;
+  label: string | null;
+};
+
 const SIGNIFICANT_INFO_EVENTS_MAX = 5;
 const SENTIMENT_LABEL_EPS = 0.05;
 
@@ -1033,6 +1045,10 @@ export type DashboardClientProps = {
     latestRunInfoEvents?: DashboardLatestRunInfoEvent[];
     /** Crowd-state recommendation for the same run + asset (server-fetched). */
     latestRunCrowdStateRecommendation?: DashboardCrowdStateRecommendation | null;
+    /** Crowd-state envelope (variant scope + recommendation). */
+    latestRunCrowdStateEnvelope?: DashboardCrowdStateEnvelope | null;
+    /** Available variants for latest run/asset (ordered with active first). */
+    initialVariantOptions?: DashboardActiveVariantOption[];
     /** GET /runs/:runId/performance for latest run (forecast accuracy aggregates). */
     performance?: DashboardRunPerformance;
   };
@@ -1177,6 +1193,8 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
     informationExposureDiagnostics,
     directionBiasDiagnostics,
     latestRunInfoEvents,
+    latestRunCrowdStateEnvelope,
+    initialVariantOptions = [],
     performance,
   } = initialData ?? {};
 
@@ -1203,6 +1221,88 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
     if (lr && typeof lr.id === "string" && lr.id.trim() !== "") return lr.id.trim();
     return null;
   }, [latestScalingRow?.runId, performance?.runId, latest]);
+
+  const [variantOptions, setVariantOptions] = useState<DashboardActiveVariantOption[]>(
+    initialVariantOptions,
+  );
+  const [activeVariantId, setActiveVariantId] = useState<string | null>(
+    latestRunCrowdStateEnvelope?.runVariantId ?? initialVariantOptions[0]?.id ?? null,
+  );
+  const [crowdStateRecommendation, setCrowdStateRecommendation] = useState<DashboardCrowdStateRecommendation | null>(
+    latestRunCrowdStateEnvelope?.recommendation ?? null,
+  );
+
+  useEffect(() => {
+    const currentParam = searchParams.get("runVariantId");
+    if (activeVariantId) {
+      if (currentParam === activeVariantId) return;
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("runVariantId", activeVariantId);
+      router.replace(`${pathname}?${params.toString()}`);
+      return;
+    }
+    if (currentParam == null) return;
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("runVariantId");
+    router.replace(`${pathname}?${params.toString()}`);
+  }, [activeVariantId, pathname, router, searchParams]);
+
+  useEffect(() => {
+    setVariantOptions(initialVariantOptions);
+    setActiveVariantId(
+      latestRunCrowdStateEnvelope?.runVariantId ?? initialVariantOptions[0]?.id ?? null,
+    );
+    setCrowdStateRecommendation(latestRunCrowdStateEnvelope?.recommendation ?? null);
+  }, [initialVariantOptions, latestRunCrowdStateEnvelope]);
+
+  useEffect(() => {
+    if (!dashboardInfoEventsRunId || !initialQuery.assetSymbol.trim() || !activeVariantId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const url = `${API_BASE}/results/crowd-state?runId=${encodeURIComponent(dashboardInfoEventsRunId)}&assetSymbol=${encodeURIComponent(
+          initialQuery.assetSymbol.trim(),
+        )}&runVariantId=${encodeURIComponent(activeVariantId)}`;
+        const res = await fetch(url, { cache: "no-store", headers: { accept: "application/json" } });
+        if (!res.ok || cancelled) return;
+        const raw = (await res.json()) as {
+          recommendation?: DashboardCrowdStateRecommendation;
+          runVariantId?: string | null;
+        };
+        if (cancelled) return;
+        if (raw.runVariantId && raw.runVariantId !== activeVariantId) {
+          setActiveVariantId(raw.runVariantId);
+        }
+        if (raw.recommendation) setCrowdStateRecommendation(raw.recommendation);
+      } catch {
+        /* ignore variant recommendation refresh errors */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [dashboardInfoEventsRunId, initialQuery.assetSymbol, activeVariantId]);
+
+  const activeVariantIndex = useMemo(() => {
+    if (!activeVariantId) return -1;
+    return variantOptions.findIndex((v) => v.id === activeVariantId);
+  }, [variantOptions, activeVariantId]);
+
+  const activeVariant = activeVariantIndex >= 0 ? variantOptions[activeVariantIndex] : null;
+
+  const activeVariantLabel = useMemo(() => {
+    if (!activeVariant) return "Unknown scenario";
+    const label = activeVariant.label?.trim();
+    if (label) return label;
+    return `Seed ${activeVariant.seed}`;
+  }, [activeVariant]);
+
+  const switchScenario = useCallback(() => {
+    if (variantOptions.length < 2) return;
+    const current = activeVariantIndex >= 0 ? activeVariantIndex : 0;
+    const next = (current + 1) % variantOptions.length;
+    setActiveVariantId(variantOptions[next]!.id);
+  }, [activeVariantIndex, variantOptions]);
 
   const [infoEventsFromFlatFetch, setInfoEventsFromFlatFetch] = useState<DashboardLatestRunInfoEvent[] | null>(
     null,
@@ -3710,7 +3810,80 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
 
       <VariantsPanel runId={dashboardInfoEventsRunId} />
 
-      <LiveEventInjectionPanel runId={dashboardInfoEventsRunId} assetSymbol={initialQuery.assetSymbol.trim()} />
+      <div
+        data-testid="active-scenario-panel"
+        style={{
+          border: "1px solid rgba(15, 23, 42, 0.10)",
+          borderRadius: 10,
+          padding: 16,
+          marginBottom: 24,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+          flexWrap: "wrap",
+        }}
+      >
+        <div>
+          <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 6 }}>
+            Active Scenario{" "}
+            <span
+              style={{
+                fontSize: 11,
+                padding: "2px 8px",
+                borderRadius: 999,
+                background: "rgba(37, 99, 235, 0.12)",
+                color: "rgba(30, 64, 175, 1)",
+                border: "1px solid rgba(59, 130, 246, 0.35)",
+                verticalAlign: "middle",
+              }}
+            >
+              Active Scenario
+            </span>
+          </div>
+          <div style={{ fontSize: 13, color: "rgba(15, 23, 42, 0.9)" }}>
+            {activeVariantLabel}
+            {activeVariant ? (
+              <span style={{ marginLeft: 8, fontFamily: "ui-monospace, monospace", fontSize: 12 }}>
+                {activeVariant.id.slice(0, 8)}…
+              </span>
+            ) : null}
+          </div>
+          <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginTop: 4 }}>
+            {variantOptions.length} scenario{variantOptions.length === 1 ? "" : "s"} available
+          </div>
+          {crowdStateRecommendation ? (
+            <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.65)", marginTop: 6 }}>
+              Crowd reaction: {crowdStateRecommendation.direction} ({Math.round(crowdStateRecommendation.confidence * 100)}%
+              confidence)
+            </div>
+          ) : null}
+        </div>
+        <button
+          type="button"
+          onClick={switchScenario}
+          disabled={variantOptions.length < 2}
+          data-testid="switch-scenario-button"
+          style={{
+            padding: "8px 12px",
+            borderRadius: 8,
+            border: "1px solid rgba(15, 23, 42, 0.2)",
+            background: variantOptions.length < 2 ? "rgba(15, 23, 42, 0.04)" : "white",
+            color: "rgba(15, 23, 42, 0.9)",
+            cursor: variantOptions.length < 2 ? "not-allowed" : "pointer",
+            fontSize: 12,
+            fontWeight: 600,
+          }}
+        >
+          Switch Scenario
+        </button>
+      </div>
+
+      <LiveEventInjectionPanel
+        runId={dashboardInfoEventsRunId}
+        assetSymbol={initialQuery.assetSymbol.trim()}
+        runVariantId={activeVariantId}
+      />
 
       {backtestMetrics && backtestMetrics.trades > 0 ? (
         <div

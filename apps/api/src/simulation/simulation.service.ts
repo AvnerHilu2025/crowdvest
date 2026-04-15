@@ -13,6 +13,7 @@ const LIVE_INFO_JSON_PREFIX = "LIVE_JSON:";
 export type InjectSimulationEventDto = {
   runId: string;
   assetSymbol: string;
+  runVariantId?: string;
   sourceType: string;
   sourceName: string;
   title: string;
@@ -101,12 +102,23 @@ export class SimulationService {
     });
     if (!run) throw new NotFoundException(`Run not found: ${runId}`);
 
-    const variant = await this.prisma.runVariant.findFirst({
-      where: { runId, assetSymbol },
-      orderBy: [{ seed: "asc" }, { label: "asc" }],
-      select: { id: true, steps: true },
-    });
+    const explicitVariantId = dto.runVariantId?.trim();
+    const variant = explicitVariantId
+      ? await this.prisma.runVariant.findFirst({
+          where: { id: explicitVariantId, runId, assetSymbol },
+          select: { id: true, steps: true },
+        })
+      : await this.prisma.runVariant.findFirst({
+          where: { runId, assetSymbol },
+          orderBy: [{ completedAt: "desc" }, { createdAt: "desc" }],
+          select: { id: true, steps: true },
+        });
     if (!variant) {
+      if (explicitVariantId) {
+        throw new BadRequestException(
+          `runVariantId=${explicitVariantId} not found for runId=${runId} assetSymbol=${assetSymbol}`,
+        );
+      }
       throw new BadRequestException(`No RunVariant for runId=${runId} assetSymbol=${assetSymbol}`);
     }
     if (dto.step >= variant.steps) {
@@ -176,6 +188,11 @@ export class SimulationService {
         recalculationDetail = `worker package not found under ${workerDir}`;
       } else {
         try {
+          // Touch the variant whenever a rerun is triggered so active-scenario ordering stays stable.
+          await this.prisma.runVariant.update({
+            where: { id: variant.id },
+            data: { completedAt: new Date() },
+          });
           await execFileAsync(
             "pnpm",
             ["-C", workerDir, "run", "decide", "--", "--runVariantId", variant.id, "--overwrite"],

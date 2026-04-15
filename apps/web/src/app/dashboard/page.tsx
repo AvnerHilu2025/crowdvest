@@ -1,6 +1,8 @@
 import React, { Suspense } from "react";
 import {
   DashboardClient,
+  type DashboardActiveVariantOption,
+  type DashboardCrowdStateEnvelope,
   type DashboardCrowdStateRecommendation,
   type DashboardLatestRunInfoEvent,
   type DashboardRunPerformance,
@@ -57,7 +59,7 @@ function capHighImpactInfoEvents(rows: DashboardLatestRunInfoEvent[]): Dashboard
   return sorted.slice(0, DASHBOARD_INFO_EVENTS_CAP);
 }
 
-function parseCrowdStateRecommendation(json: unknown): DashboardCrowdStateRecommendation | null {
+function parseCrowdState(json: unknown): DashboardCrowdStateEnvelope | null {
   if (!json || typeof json !== "object") return null;
   const o = json as Record<string, unknown>;
   const rec = o.recommendation;
@@ -77,11 +79,15 @@ function parseCrowdStateRecommendation(json: unknown): DashboardCrowdStateRecomm
     return null;
   }
   return {
-    direction: dir,
-    strength: r.strength,
-    confidence: r.confidence,
-    stability: r.stability,
-    explanation: r.explanation,
+    runVariantId: typeof o.runVariantId === "string" ? o.runVariantId : null,
+    isActiveVariant: o.isActiveVariant === true,
+    recommendation: {
+      direction: dir,
+      strength: r.strength,
+      confidence: r.confidence,
+      stability: r.stability,
+      explanation: r.explanation,
+    },
   };
 }
 
@@ -457,6 +463,11 @@ export default async function DashboardPage({
   const unstableOnly = ((Array.isArray(sp.unstableOnly) ? sp.unstableOnly[0] : sp.unstableOnly) ?? "1") === "1";
   const showLegacy = ((Array.isArray(sp.showLegacy) ? sp.showLegacy[0] : sp.showLegacy) ?? "0") === "1";
   const sortByRisk = ((Array.isArray(sp.sortRisk) ? sp.sortRisk[0] : sp.sortRisk) ?? "1") === "1";
+  const requestedRunVariantIdRaw = Array.isArray(sp.runVariantId) ? sp.runVariantId[0] : sp.runVariantId;
+  const requestedRunVariantId =
+    typeof requestedRunVariantIdRaw === "string" && requestedRunVariantIdRaw.trim() !== ""
+      ? requestedRunVariantIdRaw.trim()
+      : null;
 
   const WEB_BASE = getWebBase();
   const url = `${WEB_BASE}/api/dashboard/summary?limit=${topNNum}&assetSymbol=${encodeURIComponent(assetSymbol)}`;
@@ -481,18 +492,52 @@ export default async function DashboardPage({
 
   let latestRunInfoEvents: DashboardLatestRunInfoEvent[] | undefined;
   let latestRunCrowdStateRecommendation: DashboardCrowdStateRecommendation | null | undefined;
+  let latestRunCrowdStateEnvelope: DashboardCrowdStateEnvelope | null | undefined;
+  let initialVariantOptions: DashboardActiveVariantOption[] = [];
   let latestRunPerformance: DashboardRunPerformance | undefined;
   if (latestRun?.id) {
     const apiBase = process.env.API_BASE_URL ?? "http://localhost:4001";
     const runId = latestRun.id;
     try {
+      const variantsRes = await fetch(
+        `${apiBase}/runs/${runId}/variants?assetSymbol=${encodeURIComponent(assetSymbol)}&limit=200`,
+        { cache: "no-store", headers: { accept: "application/json" } },
+      );
+      let activeVariantId: string | null = null;
+      if (variantsRes.ok) {
+        const variantsJson = (await variantsRes.json()) as {
+          items?: Array<{ id: string; seed: number; label: string | null; completedAt: string | null; createdAt: string }>;
+        };
+        const rawItems = Array.isArray(variantsJson.items) ? variantsJson.items : [];
+        const items = rawItems
+          .filter((it) => typeof it.id === "string" && it.id.trim() !== "")
+          .sort((a, b) => {
+            const at = Date.parse(a.completedAt ?? a.createdAt ?? "");
+            const bt = Date.parse(b.completedAt ?? b.createdAt ?? "");
+            return (Number.isFinite(bt) ? bt : 0) - (Number.isFinite(at) ? at : 0);
+          });
+        initialVariantOptions = items.map((it) => ({
+          id: it.id,
+          seed: it.seed,
+          label: it.label,
+        }));
+        const requestedExists =
+          requestedRunVariantId != null &&
+          initialVariantOptions.some((v) => v.id === requestedRunVariantId);
+        activeVariantId = requestedExists
+          ? requestedRunVariantId
+          : initialVariantOptions[0]?.id ?? null;
+      }
+
       const [evRes, csRes, perfRes] = await Promise.all([
         fetch(
           `${apiBase}/runs/${runId}/info-events?assetSymbol=${encodeURIComponent(assetSymbol)}`,
           { cache: "no-store", headers: { accept: "application/json" } },
         ),
         fetch(
-          `${apiBase}/results/crowd-state?runId=${encodeURIComponent(runId)}&assetSymbol=${encodeURIComponent(assetSymbol)}`,
+          `${apiBase}/results/crowd-state?runId=${encodeURIComponent(runId)}&assetSymbol=${encodeURIComponent(assetSymbol)}${
+            activeVariantId ? `&runVariantId=${encodeURIComponent(activeVariantId)}` : ""
+          }`,
           { cache: "no-store", headers: { accept: "application/json" } },
         ),
         fetch(`${apiBase}/runs/${runId}/performance`, {
@@ -507,7 +552,8 @@ export default async function DashboardPage({
       }
       if (csRes.ok) {
         const cs: unknown = await csRes.json();
-        latestRunCrowdStateRecommendation = parseCrowdStateRecommendation(cs);
+        latestRunCrowdStateEnvelope = parseCrowdState(cs);
+        latestRunCrowdStateRecommendation = latestRunCrowdStateEnvelope?.recommendation ?? null;
       }
       if (perfRes.ok) {
         const perfJson: unknown = await perfRes.json();
@@ -692,6 +738,8 @@ export default async function DashboardPage({
         tradeDirectionDivergenceExplanation: data.tradeDirectionDivergenceExplanation,
         latestRunInfoEvents,
         latestRunCrowdStateRecommendation,
+        latestRunCrowdStateEnvelope,
+        initialVariantOptions,
         performance: latestRunPerformance,
       }}
       initialQuery={{

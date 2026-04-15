@@ -53,8 +53,12 @@ function parseTargetArchetypes(raw: string): string[] | undefined {
   return parts.length ? parts : undefined;
 }
 
-export function LiveEventInjectionPanel(props: { runId: string | null; assetSymbol: string }) {
-  const { runId, assetSymbol } = props;
+export function LiveEventInjectionPanel(props: {
+  runId: string | null;
+  assetSymbol: string;
+  runVariantId?: string | null;
+}) {
+  const { runId, assetSymbol, runVariantId } = props;
   const router = useRouter();
   const [sourceType, setSourceType] = useState<"news" | "social" | "macro" | "rumor">("news");
   const [sourceName, setSourceName] = useState("demo-wire");
@@ -127,6 +131,7 @@ export function LiveEventInjectionPanel(props: { runId: string | null; assetSymb
 
     const body = {
       runId,
+      runVariantId: runVariantId ?? undefined,
       assetSymbol: sym,
       sourceType,
       sourceName: sourceName.trim(),
@@ -192,6 +197,12 @@ export function LiveEventInjectionPanel(props: { runId: string | null; assetSymb
       <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginBottom: 14 }}>
         Persists an InfoEvent for run <span className="font-mono">{runId.slice(0, 8)}…</span> and reruns <code>decide</code> for the
         selected asset variant (deterministic, demo-friendly). Crowd panels refresh after submit.
+        {runVariantId ? (
+          <>
+            {" "}
+            Active variant: <span className="font-mono">{runVariantId.slice(0, 8)}…</span>.
+          </>
+        ) : null}
       </div>
 
       <form onSubmit={onSubmit}>

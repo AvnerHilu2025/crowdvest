@@ -267,14 +267,6 @@ export class ResultsService {
     };
   }
 
-  /**
-   * Preferred RunVariant for a run+asset: seed=1 and empty label, else first (label asc, seed asc).
-   * Matches GET /results/latest and getRunsV2 default variant selection.
-   */
-  private pickPreferredRunVariant<T extends { seed: number; label: string | null }>(variants: T[]): T {
-    return variants.find((v) => v.seed === 1 && (v.label ?? "") === "") ?? variants[0]!;
-  }
-
   private interpretRunVariantIdGroups(
     groups: { runVariantId: string | null }[],
   ): { kind: "unique"; runVariantId: string | null } | { kind: "ambiguous" } | { kind: "empty" } {
@@ -295,7 +287,12 @@ export class ResultsService {
     runId: string,
     explicitAsset: string | undefined,
     explicitVariantId: string | undefined,
-  ): Promise<{ sym: string; variantWhere: { runVariantId: string | null } | Record<string, never> }> {
+  ): Promise<{
+    sym: string;
+    variantWhere: { runVariantId: string | null } | Record<string, never>;
+    resolvedRunVariantId: string | null;
+    isActiveVariant: boolean;
+  }> {
     if (explicitVariantId) {
       const v = await this.prisma.runVariant.findFirst({
         where: { id: explicitVariantId, runId },
@@ -309,7 +306,12 @@ export class ResultsService {
           `assetSymbol mismatch: query has "${explicitAsset}" but variant uses "${v.assetSymbol}"`,
         );
       }
-      return { sym: v.assetSymbol, variantWhere: { runVariantId: explicitVariantId } };
+      return {
+        sym: v.assetSymbol,
+        variantWhere: { runVariantId: explicitVariantId },
+        resolvedRunVariantId: explicitVariantId,
+        isActiveVariant: true,
+      };
     }
 
     let sym: string;
@@ -350,13 +352,18 @@ export class ResultsService {
 
     const variants = await this.prisma.runVariant.findMany({
       where: { runId, assetSymbol: sym },
-      orderBy: [{ label: "asc" }, { seed: "asc" }],
-      select: { id: true, seed: true, label: true },
+      orderBy: [{ completedAt: "desc" }, { createdAt: "desc" }],
+      select: { id: true },
     });
 
     if (variants.length > 0) {
-      const preferred = this.pickPreferredRunVariant(variants);
-      return { sym, variantWhere: { runVariantId: preferred.id } };
+      const active = variants[0]!;
+      return {
+        sym,
+        variantWhere: { runVariantId: active.id },
+        resolvedRunVariantId: active.id,
+        isActiveVariant: true,
+      };
     }
 
     const cmG = await this.prisma.crowdMetrics.groupBy({
@@ -370,7 +377,12 @@ export class ResultsService {
       );
     }
     if (cmInterp.kind === "unique") {
-      return { sym, variantWhere: { runVariantId: cmInterp.runVariantId } };
+      return {
+        sym,
+        variantWhere: { runVariantId: cmInterp.runVariantId },
+        resolvedRunVariantId: cmInterp.runVariantId,
+        isActiveVariant: true,
+      };
     }
 
     const adG = await this.prisma.agentDecision.groupBy({
@@ -384,10 +396,15 @@ export class ResultsService {
       );
     }
     if (adInterp.kind === "unique") {
-      return { sym, variantWhere: { runVariantId: adInterp.runVariantId } };
+      return {
+        sym,
+        variantWhere: { runVariantId: adInterp.runVariantId },
+        resolvedRunVariantId: adInterp.runVariantId,
+        isActiveVariant: true,
+      };
     }
 
-    return { sym, variantWhere: {} };
+    return { sym, variantWhere: {}, resolvedRunVariantId: null, isActiveVariant: true };
   }
 
   /** GET /results/crowd-state?runId=&assetSymbol=&runVariantId= — per-step CrowdMetrics + recommendation (direction, strength, confidence, stability, explanation). */
@@ -397,6 +414,8 @@ export class ResultsService {
   ): Promise<{
     runId: string;
     assetSymbol: string;
+    runVariantId: string | null;
+    isActiveVariant: boolean;
     perStep: {
       step: number;
       signal: number;
@@ -426,7 +445,7 @@ export class ResultsService {
     });
     if (!run) throw new NotFoundException(`Run not found: ${runId}`);
 
-    const { sym, variantWhere } = await this.resolveCrowdStateScope(
+    const { sym, variantWhere, resolvedRunVariantId, isActiveVariant } = await this.resolveCrowdStateScope(
       runId,
       opts.assetSymbol,
       opts.runVariantId,
@@ -576,7 +595,14 @@ export class ResultsService {
     }
 
     const recommendation = this.buildRecommendation(perStep);
-    return { runId, assetSymbol: sym, perStep, recommendation };
+    return {
+      runId,
+      assetSymbol: sym,
+      runVariantId: resolvedRunVariantId,
+      isActiveVariant,
+      perStep,
+      recommendation,
+    };
   }
 
   private buildRecommendation(

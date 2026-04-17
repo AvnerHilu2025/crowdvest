@@ -416,6 +416,15 @@ export class ResultsService {
     assetSymbol: string;
     runVariantId: string | null;
     isActiveVariant: boolean;
+    buyCount: number;
+    sellCount: number;
+    holdCount: number;
+    totalCount: number;
+    buyPct: number;
+    sellPct: number;
+    holdPct: number;
+    majorityPct: number;
+    dominantAction: "BUY" | "SELL" | "HOLD";
     perStep: {
       step: number;
       signal: number;
@@ -431,6 +440,18 @@ export class ResultsService {
       wisdomScore: number | null;
       noiseSensitivity: number | null;
     }[];
+    distribution: {
+      buyCount: number;
+      sellCount: number;
+      holdCount: number;
+      totalCount: number;
+      buyPct: number;
+      sellPct: number;
+      holdPct: number;
+      majorityPct: number;
+      dominantAction: "BUY" | "SELL" | "HOLD";
+      entropy: number;
+    };
     recommendation: {
       direction: "bullish" | "bearish" | "neutral";
       strength: number;
@@ -595,12 +616,74 @@ export class ResultsService {
     }
 
     const recommendation = this.buildRecommendation(perStep);
+    // Snapshot convention: distribution is computed from the latest available AgentDecision step
+    // for the resolved (runId, assetSymbol, runVariantId scope), not an all-steps aggregate.
+    const latestStepRow = await this.prisma.agentDecision.findFirst({
+      where: { runId, assetSymbol: sym, ...variantWhere },
+      orderBy: { step: "desc" },
+      select: { step: true },
+    });
+    const latestStep = latestStepRow?.step ?? null;
+    const groupedActions =
+      latestStep == null
+        ? []
+        : await this.prisma.agentDecision.groupBy({
+            by: ["action"],
+            where: { runId, assetSymbol: sym, step: latestStep, ...variantWhere },
+            _count: { id: true },
+          });
+
+    let buyCount = 0;
+    let sellCount = 0;
+    let holdCount = 0;
+    for (const row of groupedActions) {
+      if (row.action === "BUY") buyCount = row._count.id;
+      else if (row.action === "SELL") sellCount = row._count.id;
+      else if (row.action === "HOLD") holdCount = row._count.id;
+    }
+    const totalCount = buyCount + sellCount + holdCount;
+    const buyPct = totalCount > 0 ? buyCount / totalCount : 0;
+    const sellPct = totalCount > 0 ? sellCount / totalCount : 0;
+    const holdPct = totalCount > 0 ? holdCount / totalCount : 0;
+    const majorityPct = Math.max(buyPct, sellPct, holdPct);
+    const dominantAction: "BUY" | "SELL" | "HOLD" =
+      buyPct >= sellPct && buyPct >= holdPct
+        ? "BUY"
+        : sellPct >= buyPct && sellPct >= holdPct
+          ? "SELL"
+          : "HOLD";
+    let entropy = 0;
+    for (const p of [buyPct, sellPct, holdPct]) {
+      if (p > 0) entropy -= p * Math.log2(p);
+    }
+
     return {
       runId,
       assetSymbol: sym,
       runVariantId: resolvedRunVariantId,
       isActiveVariant,
+      buyCount,
+      sellCount,
+      holdCount,
+      totalCount,
+      buyPct,
+      sellPct,
+      holdPct,
+      majorityPct,
+      dominantAction,
       perStep,
+      distribution: {
+        buyCount,
+        sellCount,
+        holdCount,
+        totalCount,
+        buyPct,
+        sellPct,
+        holdPct,
+        majorityPct,
+        dominantAction,
+        entropy,
+      },
       recommendation,
     };
   }
@@ -693,6 +776,111 @@ export class ResultsService {
     const explanation = baseExplanation + wisdomNote;
 
     return { direction, strength, confidence, stability, explanation };
+  }
+
+  /** Variant-scoped persona distribution for dashboard personas grid. */
+  async getVariantPersonas(
+    runId: string,
+    opts: { assetSymbol?: string; runVariantId?: string },
+  ): Promise<{
+    runId: string;
+    assetSymbol: string;
+    runVariantId: string | null;
+    isActiveVariant: boolean;
+    items: Array<{
+      archetypeId: string;
+      label: string;
+      buyCount: number;
+      sellCount: number;
+      holdCount: number;
+      totalCount: number;
+      buyPct: number;
+      sellPct: number;
+      holdPct: number;
+      dominantAction: "BUY" | "SELL" | "HOLD";
+      netContribution: number;
+      personalityDescription: string | null;
+    }>;
+  }> {
+    const run = await this.prisma.simulationRun.findUnique({
+      where: { id: runId },
+      select: { id: true },
+    });
+    if (!run) throw new NotFoundException(`Run not found: ${runId}`);
+
+    const { sym, variantWhere, resolvedRunVariantId, isActiveVariant } = await this.resolveCrowdStateScope(
+      runId,
+      opts.assetSymbol,
+      opts.runVariantId,
+    );
+
+    const rows = await this.prisma.agentDecision.findMany({
+      where: { runId, assetSymbol: sym, ...variantWhere },
+      select: {
+        action: true,
+        agentId: true,
+      },
+    });
+
+    const runAgentIds = Array.from(new Set(rows.map((r) => r.agentId)));
+    const runAgents =
+      runAgentIds.length > 0
+        ? await this.prisma.runAgent.findMany({
+            where: { id: { in: runAgentIds } },
+            select: { id: true, archetype: true },
+          })
+        : [];
+    const archetypeByRunAgentId = new Map(runAgents.map((a) => [a.id, a.archetype]));
+
+    const byArchetype = new Map<string, { buy: number; sell: number; hold: number }>();
+    for (const row of rows) {
+      const archetypeId = (archetypeByRunAgentId.get(row.agentId) ?? "").trim() || "Unknown";
+      const slot = byArchetype.get(archetypeId) ?? { buy: 0, sell: 0, hold: 0 };
+      if (row.action === "BUY") slot.buy += 1;
+      else if (row.action === "SELL") slot.sell += 1;
+      else slot.hold += 1;
+      byArchetype.set(archetypeId, slot);
+    }
+
+    const totals = Array.from(byArchetype.values()).reduce((s, v) => s + v.buy + v.sell + v.hold, 0);
+    const items = Array.from(byArchetype.entries())
+      .map(([archetypeId, c]) => {
+        const totalCount = c.buy + c.sell + c.hold;
+        const buyPct = totalCount > 0 ? c.buy / totalCount : 0;
+        const sellPct = totalCount > 0 ? c.sell / totalCount : 0;
+        const holdPct = totalCount > 0 ? c.hold / totalCount : 0;
+        const dominantAction: "BUY" | "SELL" | "HOLD" =
+          buyPct >= sellPct && buyPct >= holdPct
+            ? "BUY"
+            : sellPct >= buyPct && sellPct >= holdPct
+              ? "SELL"
+              : "HOLD";
+        const archetypeWeight = totals > 0 ? totalCount / totals : 0;
+        const netContribution = archetypeWeight * (buyPct - sellPct);
+        return {
+          archetypeId,
+          label: archetypeId,
+          buyCount: c.buy,
+          sellCount: c.sell,
+          holdCount: c.hold,
+          totalCount,
+          buyPct,
+          sellPct,
+          holdPct,
+          dominantAction,
+          netContribution,
+          personalityDescription: null,
+        };
+      })
+      .sort((a, b) => Math.abs(b.netContribution) - Math.abs(a.netContribution));
+
+    return {
+      runId,
+      assetSymbol: sym,
+      runVariantId: resolvedRunVariantId,
+      isActiveVariant,
+      items,
+    };
   }
 
   /** GET /results/decisions?run_id=&step=&assetSymbol= — per-step decision summary from AgentDecision. */

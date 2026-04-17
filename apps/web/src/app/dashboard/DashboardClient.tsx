@@ -21,6 +21,7 @@ import { SignalContributionPanel } from "@/components/dashboard/SignalContributi
 import { ArchetypeInfluencePanel } from "@/components/dashboard/ArchetypeInfluencePanel";
 import { AdvancedAnalysis } from "@/components/dashboard/AdvancedAnalysis";
 import { CrowdPersonasGrid } from "@/components/dashboard/CrowdPersonasGrid";
+import type { VariantPersonaRow } from "@/components/dashboard/CrowdPersonasGrid";
 import type { TradeDirectionDivergenceExplanation } from "@/components/dashboard/crowd-intelligence-types";
 
 const formatPercent = (value?: number | null) => {
@@ -600,6 +601,15 @@ export type DashboardCrowdStateRecommendation = {
 export type DashboardCrowdStateEnvelope = {
   runVariantId: string | null;
   isActiveVariant: boolean;
+  buyCount: number;
+  sellCount: number;
+  holdCount: number;
+  totalCount: number;
+  buyPct: number;
+  sellPct: number;
+  holdPct: number;
+  majorityPct: number;
+  dominantAction: "BUY" | "SELL" | "HOLD";
   recommendation: DashboardCrowdStateRecommendation;
 };
 
@@ -764,6 +774,14 @@ export type DashboardRunPerformance = {
     sellAccuracy: number | null;
     holdAccuracy: number | null;
   }>;
+};
+
+type DashboardVariantPersonasResponse = {
+  runId: string;
+  assetSymbol: string;
+  runVariantId: string | null;
+  isActiveVariant: boolean;
+  items: VariantPersonaRow[];
 };
 
 export type DashboardClientProps = {
@@ -1058,6 +1076,8 @@ export type DashboardClientProps = {
     showOnlyUnstable: boolean;
     showLegacy: boolean;
     sortByRisk: boolean;
+    requestedRunId?: string | null;
+    requestedRunVariantId?: string | null;
   };
 };
 
@@ -1214,26 +1234,72 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
     return o;
   }, [consensus, decisionFunnelDiagnostics, directionBiasByAgentType, directionBiasDiagnostics, informationExposureDiagnostics]);
 
+  const requestedRunIdFromQuery =
+    typeof initialQuery.requestedRunId === "string" && initialQuery.requestedRunId.trim() !== ""
+      ? initialQuery.requestedRunId.trim()
+      : null;
+
   const dashboardInfoEventsRunId = useMemo(() => {
+    if (requestedRunIdFromQuery) return requestedRunIdFromQuery;
     if (latestScalingRow?.runId) return latestScalingRow.runId;
     if (performance?.runId) return performance.runId;
     const lr = latest as { id?: string } | null | undefined;
     if (lr && typeof lr.id === "string" && lr.id.trim() !== "") return lr.id.trim();
     return null;
-  }, [latestScalingRow?.runId, performance?.runId, latest]);
+  }, [requestedRunIdFromQuery, latestScalingRow?.runId, performance?.runId, latest]);
+
+  const urlRunVariantIdRaw = searchParams.get("runVariantId");
+  const urlRunVariantId =
+    typeof urlRunVariantIdRaw === "string" && urlRunVariantIdRaw.trim() !== ""
+      ? urlRunVariantIdRaw.trim()
+      : null;
+  const requestedRunVariantIdFromProps =
+    typeof initialQuery.requestedRunVariantId === "string" &&
+    initialQuery.requestedRunVariantId.trim() !== ""
+      ? initialQuery.requestedRunVariantId.trim()
+      : null;
+
+  const normalizeRequestedVariantId = useCallback((candidate: string | null | undefined) => {
+    const c = candidate?.trim() ?? "";
+    return c !== "" ? c : null;
+  }, []);
+
+  const resolvePreferredVariantId = useCallback(
+    (
+      requested: string | null | undefined,
+      envelopeVariantId: string | null | undefined,
+      options: DashboardActiveVariantOption[],
+    ): string | null => {
+      const r = requested?.trim() ? requested.trim() : null;
+      if (r) {
+        if (options.length === 0) return r;
+        if (options.some((o) => o.id === r)) return r;
+        // runVariantId from URL/props is not in this run's variant list — do not mix runs.
+      }
+      if (envelopeVariantId) return envelopeVariantId;
+      return options[0]?.id ?? null;
+    },
+    [],
+  );
 
   const [variantOptions, setVariantOptions] = useState<DashboardActiveVariantOption[]>(
     initialVariantOptions,
   );
   const [activeVariantId, setActiveVariantId] = useState<string | null>(
-    latestRunCrowdStateEnvelope?.runVariantId ?? initialVariantOptions[0]?.id ?? null,
+    resolvePreferredVariantId(
+      normalizeRequestedVariantId(urlRunVariantId) ??
+        normalizeRequestedVariantId(requestedRunVariantIdFromProps),
+      latestRunCrowdStateEnvelope?.runVariantId ?? null,
+      initialVariantOptions,
+    ),
   );
   const [crowdStateRecommendation, setCrowdStateRecommendation] = useState<DashboardCrowdStateRecommendation | null>(
     latestRunCrowdStateEnvelope?.recommendation ?? null,
   );
+  const [variantPersonas, setVariantPersonas] = useState<VariantPersonaRow[] | null>(null);
 
   useEffect(() => {
-    const currentParam = searchParams.get("runVariantId");
+    const currentParam = urlRunVariantId;
     if (activeVariantId) {
       if (currentParam === activeVariantId) return;
       const params = new URLSearchParams(searchParams.toString());
@@ -1245,24 +1311,46 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
     const params = new URLSearchParams(searchParams.toString());
     params.delete("runVariantId");
     router.replace(`${pathname}?${params.toString()}`);
-  }, [activeVariantId, pathname, router, searchParams]);
+  }, [activeVariantId, pathname, router, searchParams, urlRunVariantId]);
 
   useEffect(() => {
     setVariantOptions(initialVariantOptions);
+    const requestedFromUrlOrProps =
+      normalizeRequestedVariantId(urlRunVariantId) ??
+      normalizeRequestedVariantId(requestedRunVariantIdFromProps);
     setActiveVariantId(
-      latestRunCrowdStateEnvelope?.runVariantId ?? initialVariantOptions[0]?.id ?? null,
+      resolvePreferredVariantId(
+        requestedFromUrlOrProps,
+        latestRunCrowdStateEnvelope?.runVariantId ?? null,
+        initialVariantOptions,
+      ),
     );
     setCrowdStateRecommendation(latestRunCrowdStateEnvelope?.recommendation ?? null);
-  }, [initialVariantOptions, latestRunCrowdStateEnvelope]);
+  }, [
+    initialVariantOptions,
+    latestRunCrowdStateEnvelope,
+    requestedRunVariantIdFromProps,
+    urlRunVariantId,
+    normalizeRequestedVariantId,
+    resolvePreferredVariantId,
+  ]);
 
   useEffect(() => {
-    if (!dashboardInfoEventsRunId || !initialQuery.assetSymbol.trim() || !activeVariantId) return;
+    const requestedFromUrlOrProps =
+      normalizeRequestedVariantId(urlRunVariantId) ??
+      normalizeRequestedVariantId(requestedRunVariantIdFromProps);
+    const variantIdForFetch = resolvePreferredVariantId(
+      requestedFromUrlOrProps,
+      latestRunCrowdStateEnvelope?.runVariantId ?? null,
+      variantOptions,
+    );
+    if (!dashboardInfoEventsRunId || !initialQuery.assetSymbol.trim() || !variantIdForFetch) return;
     let cancelled = false;
     (async () => {
       try {
         const url = `${API_BASE}/results/crowd-state?runId=${encodeURIComponent(dashboardInfoEventsRunId)}&assetSymbol=${encodeURIComponent(
           initialQuery.assetSymbol.trim(),
-        )}&runVariantId=${encodeURIComponent(activeVariantId)}`;
+        )}&runVariantId=${encodeURIComponent(variantIdForFetch)}`;
         const res = await fetch(url, { cache: "no-store", headers: { accept: "application/json" } });
         if (!res.ok || cancelled) return;
         const raw = (await res.json()) as {
@@ -1270,7 +1358,8 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
           runVariantId?: string | null;
         };
         if (cancelled) return;
-        if (raw.runVariantId && raw.runVariantId !== activeVariantId) {
+        const hasExplicitUrlRequest = normalizeRequestedVariantId(urlRunVariantId) != null;
+        if (!hasExplicitUrlRequest && raw.runVariantId && raw.runVariantId !== activeVariantId) {
           setActiveVariantId(raw.runVariantId);
         }
         if (raw.recommendation) setCrowdStateRecommendation(raw.recommendation);
@@ -1281,7 +1370,59 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
     return () => {
       cancelled = true;
     };
-  }, [dashboardInfoEventsRunId, initialQuery.assetSymbol, activeVariantId]);
+  }, [
+    dashboardInfoEventsRunId,
+    initialQuery.assetSymbol,
+    activeVariantId,
+    requestedRunVariantIdFromProps,
+    urlRunVariantId,
+    normalizeRequestedVariantId,
+    resolvePreferredVariantId,
+    latestRunCrowdStateEnvelope?.runVariantId,
+    variantOptions,
+  ]);
+
+  useEffect(() => {
+    const requestedFromUrlOrProps =
+      normalizeRequestedVariantId(urlRunVariantId) ??
+      normalizeRequestedVariantId(requestedRunVariantIdFromProps);
+    const variantIdForFetch = resolvePreferredVariantId(
+      requestedFromUrlOrProps,
+      latestRunCrowdStateEnvelope?.runVariantId ?? null,
+      variantOptions,
+    );
+    if (!dashboardInfoEventsRunId || !initialQuery.assetSymbol.trim() || !variantIdForFetch) {
+      setVariantPersonas(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const url = `${API_BASE}/results/personas?runId=${encodeURIComponent(dashboardInfoEventsRunId)}&assetSymbol=${encodeURIComponent(
+          initialQuery.assetSymbol.trim(),
+        )}&runVariantId=${encodeURIComponent(variantIdForFetch)}`;
+        const res = await fetch(url, { cache: "no-store", headers: { accept: "application/json" } });
+        if (!res.ok || cancelled) return;
+        const raw = (await res.json()) as DashboardVariantPersonasResponse;
+        if (cancelled) return;
+        if (Array.isArray(raw.items)) setVariantPersonas(raw.items);
+      } catch {
+        if (!cancelled) setVariantPersonas(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    dashboardInfoEventsRunId,
+    initialQuery.assetSymbol,
+    requestedRunVariantIdFromProps,
+    urlRunVariantId,
+    normalizeRequestedVariantId,
+    resolvePreferredVariantId,
+    latestRunCrowdStateEnvelope?.runVariantId,
+    variantOptions,
+  ]);
 
   const activeVariantIndex = useMemo(() => {
     if (!activeVariantId) return -1;
@@ -1361,6 +1502,38 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
           ),
     [consensus, decisionFlowInformationEvents],
   );
+
+  const heroConsensus = useMemo(() => {
+    const s = latestRunCrowdStateEnvelope;
+    if (!s) return null;
+    if (
+      !Number.isFinite(s.buyPct) ||
+      !Number.isFinite(s.sellPct) ||
+      !Number.isFinite(s.holdPct) ||
+      !Number.isFinite(s.majorityPct)
+    ) {
+      return null;
+    }
+    const buyPct = Math.max(0, Math.min(1, s.buyPct));
+    const sellPct = Math.max(0, Math.min(1, s.sellPct));
+    const holdPct = Math.max(0, Math.min(1, s.holdPct));
+    const majorityPct = Math.max(0, Math.min(1, s.majorityPct));
+    const entropy = (() => {
+      let out = 0;
+      for (const p of [buyPct, sellPct, holdPct]) {
+        if (p > 0) out -= p * Math.log2(p);
+      }
+      return out;
+    })();
+    return {
+      buyPct,
+      sellPct,
+      holdPct,
+      majorityPct,
+      entropy,
+      polarization: Math.abs(buyPct - sellPct),
+    };
+  }, [latestRunCrowdStateEnvelope]);
 
   const signalQualityAssetRow = useMemo(() => {
     const sym = initialQuery.assetSymbol.trim();
@@ -1791,7 +1964,7 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
         <div className="space-y-12">
           <CrowdVerdictHero
             assetSymbol={initialQuery.assetSymbol}
-            consensus={consensus ?? undefined}
+            consensus={heroConsensus ?? consensus ?? undefined}
             explanation={tradeDirectionDivergenceExplanation ?? undefined}
             showDivergenceSummary={false}
           />
@@ -1799,6 +1972,7 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
           <CrowdPersonasGrid
             explanation={tradeDirectionDivergenceExplanation ?? undefined}
             directionBiasByAgentType={directionBiasByAgentType}
+            variantRows={variantPersonas}
             topInfoEvent={decisionFlowInformationEvents[0] ?? null}
           />
 

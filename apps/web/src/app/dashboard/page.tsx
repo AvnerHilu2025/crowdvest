@@ -78,9 +78,40 @@ function parseCrowdState(json: unknown): DashboardCrowdStateEnvelope | null {
   ) {
     return null;
   }
+  const buyCount = typeof o.buyCount === "number" && Number.isFinite(o.buyCount) ? Math.max(0, Math.trunc(o.buyCount)) : null;
+  const sellCount = typeof o.sellCount === "number" && Number.isFinite(o.sellCount) ? Math.max(0, Math.trunc(o.sellCount)) : null;
+  const holdCount = typeof o.holdCount === "number" && Number.isFinite(o.holdCount) ? Math.max(0, Math.trunc(o.holdCount)) : null;
+  const totalCount = typeof o.totalCount === "number" && Number.isFinite(o.totalCount) ? Math.max(0, Math.trunc(o.totalCount)) : null;
+  const buyPct = typeof o.buyPct === "number" && Number.isFinite(o.buyPct) ? o.buyPct : null;
+  const sellPct = typeof o.sellPct === "number" && Number.isFinite(o.sellPct) ? o.sellPct : null;
+  const holdPct = typeof o.holdPct === "number" && Number.isFinite(o.holdPct) ? o.holdPct : null;
+  const majorityPct = typeof o.majorityPct === "number" && Number.isFinite(o.majorityPct) ? o.majorityPct : null;
+  const dominantAction = o.dominantAction;
+  if (
+    buyCount == null ||
+    sellCount == null ||
+    holdCount == null ||
+    totalCount == null ||
+    buyPct == null ||
+    sellPct == null ||
+    holdPct == null ||
+    majorityPct == null ||
+    (dominantAction !== "BUY" && dominantAction !== "SELL" && dominantAction !== "HOLD")
+  ) {
+    return null;
+  }
   return {
     runVariantId: typeof o.runVariantId === "string" ? o.runVariantId : null,
     isActiveVariant: o.isActiveVariant === true,
+    buyCount,
+    sellCount,
+    holdCount,
+    totalCount,
+    buyPct,
+    sellPct,
+    holdPct,
+    majorityPct,
+    dominantAction,
     recommendation: {
       direction: dir,
       strength: r.strength,
@@ -463,6 +494,11 @@ export default async function DashboardPage({
   const unstableOnly = ((Array.isArray(sp.unstableOnly) ? sp.unstableOnly[0] : sp.unstableOnly) ?? "1") === "1";
   const showLegacy = ((Array.isArray(sp.showLegacy) ? sp.showLegacy[0] : sp.showLegacy) ?? "0") === "1";
   const sortByRisk = ((Array.isArray(sp.sortRisk) ? sp.sortRisk[0] : sp.sortRisk) ?? "1") === "1";
+  const requestedRunIdRaw = Array.isArray(sp.runId) ? sp.runId[0] : sp.runId;
+  const requestedRunId =
+    typeof requestedRunIdRaw === "string" && requestedRunIdRaw.trim() !== ""
+      ? requestedRunIdRaw.trim()
+      : null;
   const requestedRunVariantIdRaw = Array.isArray(sp.runVariantId) ? sp.runVariantId[0] : sp.runVariantId;
   const requestedRunVariantId =
     typeof requestedRunVariantIdRaw === "string" && requestedRunVariantIdRaw.trim() !== ""
@@ -490,14 +526,16 @@ export default async function DashboardPage({
     : null;
   const latest = latestScalingRow ?? latestRun;
 
+  const effectiveRunId = requestedRunId ?? latestRun?.id ?? null;
+
   let latestRunInfoEvents: DashboardLatestRunInfoEvent[] | undefined;
   let latestRunCrowdStateRecommendation: DashboardCrowdStateRecommendation | null | undefined;
   let latestRunCrowdStateEnvelope: DashboardCrowdStateEnvelope | null | undefined;
   let initialVariantOptions: DashboardActiveVariantOption[] = [];
   let latestRunPerformance: DashboardRunPerformance | undefined;
-  if (latestRun?.id) {
+  if (effectiveRunId) {
     const apiBase = process.env.API_BASE_URL ?? "http://localhost:4001";
-    const runId = latestRun.id;
+    const runId = effectiveRunId;
     try {
       const variantsRes = await fetch(
         `${apiBase}/runs/${runId}/variants?assetSymbol=${encodeURIComponent(assetSymbol)}&limit=200`,
@@ -521,12 +559,12 @@ export default async function DashboardPage({
           seed: it.seed,
           label: it.label,
         }));
-        const requestedExists =
-          requestedRunVariantId != null &&
-          initialVariantOptions.some((v) => v.id === requestedRunVariantId);
-        activeVariantId = requestedExists
-          ? requestedRunVariantId
-          : initialVariantOptions[0]?.id ?? null;
+        const variantIds = new Set(initialVariantOptions.map((v) => v.id));
+        if (requestedRunVariantId && variantIds.has(requestedRunVariantId)) {
+          activeVariantId = requestedRunVariantId;
+        } else {
+          activeVariantId = initialVariantOptions[0]?.id ?? null;
+        }
       }
 
       const [evRes, csRes, perfRes] = await Promise.all([
@@ -748,6 +786,8 @@ export default async function DashboardPage({
         showOnlyUnstable: unstableOnly,
         showLegacy,
         sortByRisk,
+        requestedRunId,
+        requestedRunVariantId,
       }}
       />
     </Suspense>

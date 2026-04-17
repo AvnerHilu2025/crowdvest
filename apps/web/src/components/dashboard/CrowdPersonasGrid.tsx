@@ -11,6 +11,20 @@ type PersonaRow = PersonaCardModel & {
   influence: number;
 };
 
+export type VariantPersonaRow = {
+  archetypeId: string;
+  label: string;
+  buyCount: number;
+  sellCount: number;
+  holdCount: number;
+  buyPct: number;
+  sellPct: number;
+  holdPct: number;
+  dominantAction: "BUY" | "SELL" | "HOLD";
+  netContribution: number;
+  personalityDescription?: string | null;
+};
+
 function fromExplanation(ex: TradeDirectionDivergenceExplanation): PersonaRow[] {
   const rows = ex.buySellHoldByArchetype ?? [];
   const totalDecisions = rows.reduce((sum, row) => sum + row.buyCount + row.sellCount + row.holdCount, 0);
@@ -80,19 +94,48 @@ function fromAgentBias(bias: DirectionBiasByAgentType): PersonaRow[] {
   });
 }
 
+function fromVariantRows(rows: VariantPersonaRow[]): PersonaRow[] {
+  const total = rows.reduce((sum, row) => sum + row.buyCount + row.sellCount + row.holdCount, 0);
+  return rows
+    .map((row) => {
+      const t = row.buyCount + row.sellCount + row.holdCount;
+      const contributionScore = Number.isFinite(row.netContribution)
+        ? row.netContribution
+        : (total > 0 ? t / total : 0) * (row.buyPct - row.sellPct);
+      const decision = dominantDecisionFromMix(row.buyPct, row.sellPct, row.holdPct);
+      return {
+        name: row.label?.trim() || row.archetypeId,
+        personalityDescription:
+          row.personalityDescription?.trim() || getArchetypePersona(row.label?.trim() || row.archetypeId).blurb,
+        decision,
+        contributionScore,
+        buyPct: row.buyPct,
+        sellPct: row.sellPct,
+        holdPct: row.holdPct,
+        quickExplanation: `${decision} stance from variant mix B ${(row.buyPct * 100).toFixed(0)} / S ${(row.sellPct * 100).toFixed(0)} / H ${(row.holdPct * 100).toFixed(0)} with ${(contributionScore * 100).toFixed(1)}pp net contribution.`,
+        shareOfCrowdPct: total > 0 ? (t / total) * 100 : 0,
+        influence: t,
+      };
+    })
+    .sort((a, b) => Math.abs(b.contributionScore) - Math.abs(a.contributionScore));
+}
+
 export function CrowdPersonasGrid({
   explanation,
   directionBiasByAgentType,
+  variantRows,
   topInfoEvent,
 }: {
   explanation: TradeDirectionDivergenceExplanation | null | undefined;
   directionBiasByAgentType: DirectionBiasByAgentType | null | undefined;
+  variantRows?: VariantPersonaRow[] | null;
   topInfoEvent?: { topic: string; sentiment: number; source: string | null } | null;
 }) {
   const rows = useMemo(() => {
+    if (variantRows != null && variantRows.length > 0) return fromVariantRows(variantRows);
     if (explanation?.buySellHoldByArchetype?.length) return fromExplanation(explanation);
     return fromAgentBias(directionBiasByAgentType ?? {});
-  }, [explanation, directionBiasByAgentType]);
+  }, [variantRows, explanation, directionBiasByAgentType]);
 
   const [selectedName, setSelectedName] = useState<string | null>(null);
   const selected = useMemo(

@@ -136,6 +136,32 @@ export class ResultsController {
     });
   }
 
+  /** GET /results/personas?runId=&assetSymbol=&runVariantId= — variant-scoped persona distribution. */
+  @Get("personas")
+  async getVariantPersonas(
+    @Query("runId") runId: string | undefined,
+    @Query("run_id") runIdAlias: string | undefined,
+    @Query("assetSymbol") assetSymbol: string | undefined,
+    @Query("runVariantId") runVariantId: string | undefined,
+    @Query("run_variant_id") runVariantIdAlias: string | undefined,
+  ) {
+    const validRunId = validateRunId(runId ?? runIdAlias);
+    const rvRaw = (runVariantId ?? runVariantIdAlias)?.trim() ?? "";
+    let validRunVariantId: string | undefined;
+    if (rvRaw !== "") {
+      if (!UUID_REGEX.test(rvRaw)) {
+        throw new BadRequestException(["runVariantId must be a UUID"]);
+      }
+      validRunVariantId = rvRaw;
+    }
+    const a = assetSymbol?.trim();
+    const assetOpt = a === "" || a == null ? undefined : a;
+    return this.resultsService.getVariantPersonas(validRunId, {
+      assetSymbol: assetOpt,
+      runVariantId: validRunVariantId,
+    });
+  }
+
   /** GET /results/crowd-summary?run_id= — crowd metrics. Add assetSymbol=RUN for AgentDecision aggregation + recommendation. */
   @Get("crowd-summary")
   async getCrowdSummary(

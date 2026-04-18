@@ -102,11 +102,11 @@ function fromVariantRows(rows: VariantPersonaRow[]): PersonaRow[] {
       const contributionScore = Number.isFinite(row.netContribution)
         ? row.netContribution
         : (total > 0 ? t / total : 0) * (row.buyPct - row.sellPct);
-      const decision = dominantDecisionFromMix(row.buyPct, row.sellPct, row.holdPct);
+      const decision = row.dominantAction;
       return {
         name: row.label?.trim() || row.archetypeId,
         personalityDescription:
-          row.personalityDescription?.trim() || getArchetypePersona(row.label?.trim() || row.archetypeId).blurb,
+          row.personalityDescription?.trim() || getArchetypePersona(row.archetypeId).blurb,
         decision,
         contributionScore,
         buyPct: row.buyPct,
@@ -170,7 +170,7 @@ export function CrowdPersonasGrid({
       <div className="mb-4 flex items-end justify-between gap-3">
         <div>
           <h3 className="text-xl font-semibold text-slate-100">Crowd Personas</h3>
-          <p className="mt-1 text-sm text-slate-400">A persona view of the full archetype crowd and its live pressure mix.</p>
+          <p className="mt-1 text-sm text-slate-400">Persona view of the latest simulation step for the selected scenario.</p>
         </div>
         <p className="text-xs text-slate-500">{rows.length} personas active</p>
       </div>

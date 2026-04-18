@@ -613,6 +613,70 @@ export type DashboardCrowdStateEnvelope = {
   recommendation: DashboardCrowdStateRecommendation;
 };
 
+/** Same fields as `page.tsx` `parseCrowdState` for `GET /results/crowd-state` JSON. */
+function parseCrowdStateFromApi(json: unknown): DashboardCrowdStateEnvelope | null {
+  if (!json || typeof json !== "object") return null;
+  const o = json as Record<string, unknown>;
+  const rec = o.recommendation;
+  if (!rec || typeof rec !== "object") return null;
+  const r = rec as Record<string, unknown>;
+  if (typeof r.explanation !== "string") return null;
+  const dir = r.direction;
+  if (dir !== "bullish" && dir !== "bearish" && dir !== "neutral") return null;
+  if (
+    typeof r.strength !== "number" ||
+    !Number.isFinite(r.strength) ||
+    typeof r.confidence !== "number" ||
+    !Number.isFinite(r.confidence) ||
+    typeof r.stability !== "number" ||
+    !Number.isFinite(r.stability)
+  ) {
+    return null;
+  }
+  const buyCount = typeof o.buyCount === "number" && Number.isFinite(o.buyCount) ? Math.max(0, Math.trunc(o.buyCount)) : null;
+  const sellCount = typeof o.sellCount === "number" && Number.isFinite(o.sellCount) ? Math.max(0, Math.trunc(o.sellCount)) : null;
+  const holdCount = typeof o.holdCount === "number" && Number.isFinite(o.holdCount) ? Math.max(0, Math.trunc(o.holdCount)) : null;
+  const totalCount = typeof o.totalCount === "number" && Number.isFinite(o.totalCount) ? Math.max(0, Math.trunc(o.totalCount)) : null;
+  const buyPct = typeof o.buyPct === "number" && Number.isFinite(o.buyPct) ? o.buyPct : null;
+  const sellPct = typeof o.sellPct === "number" && Number.isFinite(o.sellPct) ? o.sellPct : null;
+  const holdPct = typeof o.holdPct === "number" && Number.isFinite(o.holdPct) ? o.holdPct : null;
+  const majorityPct = typeof o.majorityPct === "number" && Number.isFinite(o.majorityPct) ? o.majorityPct : null;
+  const dominantAction = o.dominantAction;
+  if (
+    buyCount == null ||
+    sellCount == null ||
+    holdCount == null ||
+    totalCount == null ||
+    buyPct == null ||
+    sellPct == null ||
+    holdPct == null ||
+    majorityPct == null ||
+    (dominantAction !== "BUY" && dominantAction !== "SELL" && dominantAction !== "HOLD")
+  ) {
+    return null;
+  }
+  return {
+    runVariantId: typeof o.runVariantId === "string" ? o.runVariantId : null,
+    isActiveVariant: o.isActiveVariant === true,
+    buyCount,
+    sellCount,
+    holdCount,
+    totalCount,
+    buyPct,
+    sellPct,
+    holdPct,
+    majorityPct,
+    dominantAction,
+    recommendation: {
+      direction: dir,
+      strength: r.strength,
+      confidence: r.confidence,
+      stability: r.stability,
+      explanation: r.explanation,
+    },
+  };
+}
+
 export type DashboardActiveVariantOption = {
   id: string;
   seed: number;
@@ -1293,10 +1357,52 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
       initialVariantOptions,
     ),
   );
+  const activeVariantIdRef = useRef<string | null>(activeVariantId);
+  activeVariantIdRef.current = activeVariantId;
+  /** While set, SSR sync must not reset activeVariantId to URL until `runVariantId` matches (router.replace lag). */
+  const pendingUrlAlignRef = useRef<string | null>(null);
+
+  const [crowdStateEnvelope, setCrowdStateEnvelope] = useState(latestRunCrowdStateEnvelope);
   const [crowdStateRecommendation, setCrowdStateRecommendation] = useState<DashboardCrowdStateRecommendation | null>(
     latestRunCrowdStateEnvelope?.recommendation ?? null,
   );
+  const [isInjectPanelOpen, setIsInjectPanelOpen] = useState(false);
   const [variantPersonas, setVariantPersonas] = useState<VariantPersonaRow[] | null>(null);
+  const [isScenarioLoading, setIsScenarioLoading] = useState(false);
+  const prevScenarioFetchKeyRef = useRef<string | null>(null);
+
+  const scenarioFetch = useMemo(() => {
+    const requestedFromUrlOrProps =
+      normalizeRequestedVariantId(urlRunVariantId) ??
+      normalizeRequestedVariantId(requestedRunVariantIdFromProps);
+    const variantIdFromUrl = resolvePreferredVariantId(
+      requestedFromUrlOrProps,
+      latestRunCrowdStateEnvelope?.runVariantId ?? null,
+      variantOptions,
+    );
+    const fetchVariantId =
+      activeVariantId != null && variantOptions.some((o) => o.id === activeVariantId)
+        ? activeVariantId
+        : variantIdFromUrl;
+    const assetSymbol = initialQuery.assetSymbol.trim();
+    if (!dashboardInfoEventsRunId || !assetSymbol || !fetchVariantId) return null;
+    return {
+      key: `${dashboardInfoEventsRunId}|${assetSymbol}|${fetchVariantId}`,
+      runId: dashboardInfoEventsRunId,
+      assetSymbol,
+      variantIdForFetch: fetchVariantId,
+    };
+  }, [
+    dashboardInfoEventsRunId,
+    initialQuery.assetSymbol,
+    activeVariantId,
+    urlRunVariantId,
+    requestedRunVariantIdFromProps,
+    latestRunCrowdStateEnvelope?.runVariantId,
+    variantOptions,
+    normalizeRequestedVariantId,
+    resolvePreferredVariantId,
+  ]);
 
   useEffect(() => {
     const currentParam = urlRunVariantId;
@@ -1318,13 +1424,22 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
     const requestedFromUrlOrProps =
       normalizeRequestedVariantId(urlRunVariantId) ??
       normalizeRequestedVariantId(requestedRunVariantIdFromProps);
-    setActiveVariantId(
-      resolvePreferredVariantId(
-        requestedFromUrlOrProps,
-        latestRunCrowdStateEnvelope?.runVariantId ?? null,
-        initialVariantOptions,
-      ),
+    const resolved = resolvePreferredVariantId(
+      requestedFromUrlOrProps,
+      latestRunCrowdStateEnvelope?.runVariantId ?? null,
+      initialVariantOptions,
     );
+    const urlVid = normalizeRequestedVariantId(urlRunVariantId);
+    if (pendingUrlAlignRef.current != null && urlVid !== pendingUrlAlignRef.current) {
+      setCrowdStateEnvelope(latestRunCrowdStateEnvelope);
+      setCrowdStateRecommendation(latestRunCrowdStateEnvelope?.recommendation ?? null);
+      return;
+    }
+    if (pendingUrlAlignRef.current != null && urlVid === pendingUrlAlignRef.current) {
+      pendingUrlAlignRef.current = null;
+    }
+    setActiveVariantId(resolved);
+    setCrowdStateEnvelope(latestRunCrowdStateEnvelope);
     setCrowdStateRecommendation(latestRunCrowdStateEnvelope?.recommendation ?? null);
   }, [
     initialVariantOptions,
@@ -1336,93 +1451,70 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
   ]);
 
   useEffect(() => {
-    const requestedFromUrlOrProps =
-      normalizeRequestedVariantId(urlRunVariantId) ??
-      normalizeRequestedVariantId(requestedRunVariantIdFromProps);
-    const variantIdForFetch = resolvePreferredVariantId(
-      requestedFromUrlOrProps,
-      latestRunCrowdStateEnvelope?.runVariantId ?? null,
-      variantOptions,
-    );
-    if (!dashboardInfoEventsRunId || !initialQuery.assetSymbol.trim() || !variantIdForFetch) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const url = `${API_BASE}/results/crowd-state?runId=${encodeURIComponent(dashboardInfoEventsRunId)}&assetSymbol=${encodeURIComponent(
-          initialQuery.assetSymbol.trim(),
-        )}&runVariantId=${encodeURIComponent(variantIdForFetch)}`;
-        const res = await fetch(url, { cache: "no-store", headers: { accept: "application/json" } });
-        if (!res.ok || cancelled) return;
-        const raw = (await res.json()) as {
-          recommendation?: DashboardCrowdStateRecommendation;
-          runVariantId?: string | null;
-        };
-        if (cancelled) return;
-        const hasExplicitUrlRequest = normalizeRequestedVariantId(urlRunVariantId) != null;
-        if (!hasExplicitUrlRequest && raw.runVariantId && raw.runVariantId !== activeVariantId) {
-          setActiveVariantId(raw.runVariantId);
-        }
-        if (raw.recommendation) setCrowdStateRecommendation(raw.recommendation);
-      } catch {
-        /* ignore variant recommendation refresh errors */
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    dashboardInfoEventsRunId,
-    initialQuery.assetSymbol,
-    activeVariantId,
-    requestedRunVariantIdFromProps,
-    urlRunVariantId,
-    normalizeRequestedVariantId,
-    resolvePreferredVariantId,
-    latestRunCrowdStateEnvelope?.runVariantId,
-    variantOptions,
-  ]);
-
-  useEffect(() => {
-    const requestedFromUrlOrProps =
-      normalizeRequestedVariantId(urlRunVariantId) ??
-      normalizeRequestedVariantId(requestedRunVariantIdFromProps);
-    const variantIdForFetch = resolvePreferredVariantId(
-      requestedFromUrlOrProps,
-      latestRunCrowdStateEnvelope?.runVariantId ?? null,
-      variantOptions,
-    );
-    if (!dashboardInfoEventsRunId || !initialQuery.assetSymbol.trim() || !variantIdForFetch) {
+    if (!scenarioFetch) {
+      prevScenarioFetchKeyRef.current = null;
       setVariantPersonas(null);
+      setIsScenarioLoading(false);
       return;
     }
+    const { key, runId, assetSymbol, variantIdForFetch } = scenarioFetch;
+    const keyChanged =
+      prevScenarioFetchKeyRef.current !== null && prevScenarioFetchKeyRef.current !== key;
+    if (keyChanged) setIsScenarioLoading(true);
+    prevScenarioFetchKeyRef.current = key;
+
+    const requestedVariantId = variantIdForFetch;
     let cancelled = false;
     (async () => {
       try {
-        const url = `${API_BASE}/results/personas?runId=${encodeURIComponent(dashboardInfoEventsRunId)}&assetSymbol=${encodeURIComponent(
-          initialQuery.assetSymbol.trim(),
+        const csUrl = `${API_BASE}/results/crowd-state?runId=${encodeURIComponent(runId)}&assetSymbol=${encodeURIComponent(
+          assetSymbol,
         )}&runVariantId=${encodeURIComponent(variantIdForFetch)}`;
-        const res = await fetch(url, { cache: "no-store", headers: { accept: "application/json" } });
-        if (!res.ok || cancelled) return;
-        const raw = (await res.json()) as DashboardVariantPersonasResponse;
+        const pUrl = `${API_BASE}/results/personas?runId=${encodeURIComponent(runId)}&assetSymbol=${encodeURIComponent(
+          assetSymbol,
+        )}&runVariantId=${encodeURIComponent(variantIdForFetch)}`;
+        const [csRes, pRes] = await Promise.all([
+          fetch(csUrl, { cache: "no-store", headers: { accept: "application/json" } }),
+          fetch(pUrl, { cache: "no-store", headers: { accept: "application/json" } }),
+        ]);
         if (cancelled) return;
-        if (Array.isArray(raw.items)) setVariantPersonas(raw.items);
+        if (requestedVariantId !== activeVariantIdRef.current) return;
+
+        if (csRes.ok) {
+          const raw: unknown = await csRes.json();
+          if (cancelled) return;
+          if (requestedVariantId !== activeVariantIdRef.current) return;
+          const parsed = parseCrowdStateFromApi(raw);
+          if (cancelled) return;
+          if (requestedVariantId !== activeVariantIdRef.current) return;
+          const hasExplicitUrlRequest = normalizeRequestedVariantId(urlRunVariantId) != null;
+          if (!hasExplicitUrlRequest && parsed?.runVariantId && parsed.runVariantId !== activeVariantId) {
+            setActiveVariantId(parsed.runVariantId);
+          }
+          if (parsed) {
+            setCrowdStateEnvelope(parsed);
+            setCrowdStateRecommendation(parsed.recommendation);
+          }
+        }
+
+        if (pRes.ok) {
+          const raw = (await pRes.json()) as DashboardVariantPersonasResponse;
+          if (cancelled) return;
+          if (requestedVariantId !== activeVariantIdRef.current) return;
+          if (Array.isArray(raw.items)) setVariantPersonas(raw.items);
+        }
       } catch {
-        if (!cancelled) setVariantPersonas(null);
+        if (!cancelled && requestedVariantId === activeVariantIdRef.current) setVariantPersonas(null);
+      } finally {
+        if (!cancelled && requestedVariantId === activeVariantIdRef.current) {
+          setIsScenarioLoading(false);
+        }
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [
-    dashboardInfoEventsRunId,
-    initialQuery.assetSymbol,
-    requestedRunVariantIdFromProps,
-    urlRunVariantId,
-    normalizeRequestedVariantId,
-    resolvePreferredVariantId,
-    latestRunCrowdStateEnvelope?.runVariantId,
-    variantOptions,
-  ]);
+  }, [scenarioFetch, urlRunVariantId, activeVariantId, normalizeRequestedVariantId]);
 
   const activeVariantIndex = useMemo(() => {
     if (!activeVariantId) return -1;
@@ -1442,8 +1534,19 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
     if (variantOptions.length < 2) return;
     const current = activeVariantIndex >= 0 ? activeVariantIndex : 0;
     const next = (current + 1) % variantOptions.length;
-    setActiveVariantId(variantOptions[next]!.id);
+    const nextId = variantOptions[next]!.id;
+    pendingUrlAlignRef.current = nextId;
+    setIsScenarioLoading(true);
+    setActiveVariantId(nextId);
   }, [activeVariantIndex, variantOptions]);
+
+  const selectScenarioById = useCallback((nextId: string) => {
+    if (!nextId || nextId === activeVariantId) return;
+    if (!variantOptions.some((o) => o.id === nextId)) return;
+    pendingUrlAlignRef.current = nextId;
+    setIsScenarioLoading(true);
+    setActiveVariantId(nextId);
+  }, [activeVariantId, variantOptions]);
 
   const [infoEventsFromFlatFetch, setInfoEventsFromFlatFetch] = useState<DashboardLatestRunInfoEvent[] | null>(
     null,
@@ -1504,7 +1607,7 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
   );
 
   const heroConsensus = useMemo(() => {
-    const s = latestRunCrowdStateEnvelope;
+    const s = crowdStateEnvelope ?? latestRunCrowdStateEnvelope;
     if (!s) return null;
     if (
       !Number.isFinite(s.buyPct) ||
@@ -1533,7 +1636,7 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
       entropy,
       polarization: Math.abs(buyPct - sellPct),
     };
-  }, [latestRunCrowdStateEnvelope]);
+  }, [crowdStateEnvelope, latestRunCrowdStateEnvelope]);
 
   const signalQualityAssetRow = useMemo(() => {
     const sym = initialQuery.assetSymbol.trim();
@@ -1960,22 +2063,217 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
         />
       </div>
 
+      <div
+        style={{
+          marginBottom: 24,
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "flex-end",
+          gap: 12,
+          border: "1px solid rgba(15, 23, 42, 0.10)",
+          borderRadius: 12,
+          padding: 12,
+          background: "rgba(248, 250, 252, 0.85)",
+        }}
+      >
+        <div data-testid="active-scenario-panel" style={{ flex: "1 1 360px", minWidth: 260 }}>
+          <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 6 }}>
+            Active Scenario{" "}
+            <span
+              style={{
+                fontSize: 11,
+                padding: "2px 8px",
+                borderRadius: 999,
+                background: "rgba(37, 99, 235, 0.12)",
+                color: "rgba(30, 64, 175, 1)",
+                border: "1px solid rgba(59, 130, 246, 0.35)",
+                verticalAlign: "middle",
+              }}
+            >
+              Active Scenario
+            </span>
+          </div>
+          <div style={{ fontSize: 13, color: "rgba(15, 23, 42, 0.9)" }}>
+            {activeVariantLabel}
+          </div>
+          <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginTop: 4 }}>
+            {variantOptions.length} scenario{variantOptions.length === 1 ? "" : "s"} available
+          </div>
+          {crowdStateRecommendation ? (
+            <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.65)", marginTop: 6 }}>
+              Crowd reaction: {crowdStateRecommendation.direction} ({Math.round(crowdStateRecommendation.confidence * 100)}%
+              confidence)
+            </div>
+          ) : null}
+          <div style={{ marginTop: 6, display: "flex", flexDirection: "column", gap: 6 }}>
+            <label style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", fontWeight: 600 }}>
+              Scenario selector
+            </label>
+            <select
+              value={activeVariantId ?? ""}
+              onChange={(e) => selectScenarioById(e.target.value)}
+              disabled={variantOptions.length < 2 || isScenarioLoading}
+              data-testid="scenario-selector"
+              style={{
+                minHeight: 34,
+                borderRadius: 8,
+                border: "1px solid rgba(15, 23, 42, 0.2)",
+                background: "white",
+                color: "rgba(15, 23, 42, 0.9)",
+                fontSize: 12,
+                padding: "4px 8px",
+                width: "100%",
+                maxWidth: 520,
+              }}
+            >
+              {variantOptions.map((option, idx) => (
+                <option key={option.id} value={option.id}>
+                  {(option.label?.trim() ? option.label : `Seed ${option.seed}`) ?? `Scenario ${idx + 1}`} | {option.id}
+                </option>
+              ))}
+            </select>
+            <div>
+              <label style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", fontWeight: 600, display: "block", marginBottom: 4 }}>
+                Full variant ID
+              </label>
+              <input
+                type="text"
+                readOnly
+                value={activeVariantId ?? ""}
+                onFocus={(e) => e.currentTarget.select()}
+                data-testid="active-variant-id-full"
+                style={{
+                  width: "100%",
+                  maxWidth: 520,
+                  borderRadius: 8,
+                  border: "1px solid rgba(15, 23, 42, 0.2)",
+                  background: "white",
+                  color: "rgba(15, 23, 42, 0.9)",
+                  fontSize: 12,
+                  padding: "7px 8px",
+                  fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+                }}
+              />
+            </div>
+          </div>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+          {isScenarioLoading ? (
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                borderRadius: 999,
+                background: "#f59e0b",
+                color: "#111827",
+                padding: "4px 10px",
+                fontSize: 14,
+                fontWeight: 800,
+                letterSpacing: "0.02em",
+              }}
+              aria-live="assertive"
+            >
+              LOADING...
+            </span>
+          ) : null}
+        </div>
+        <div style={{ flex: "0 1 auto", minWidth: 170 }}>
+          <button
+            type="button"
+            onClick={() => setIsInjectPanelOpen((prev) => !prev)}
+            aria-expanded={isInjectPanelOpen}
+            data-testid="toggle-live-event-injection"
+            style={{
+              padding: "8px 12px",
+              borderRadius: 8,
+              border: "1px solid rgba(15, 23, 42, 0.2)",
+              background: "white",
+              color: "rgba(15, 23, 42, 0.9)",
+              cursor: "pointer",
+              fontSize: 12,
+              fontWeight: 600,
+              marginBottom: isInjectPanelOpen ? 10 : 0,
+            }}
+          >
+            {isInjectPanelOpen ? "Hide Injection Panel" : "Inject Event"}
+          </button>
+          {isInjectPanelOpen ? (
+            <LiveEventInjectionPanel
+              runId={dashboardInfoEventsRunId}
+              assetSymbol={initialQuery.assetSymbol.trim()}
+              runVariantId={activeVariantId}
+            />
+          ) : null}
+        </div>
+      </div>
+
       <div className="mb-8 w-full rounded-2xl bg-slate-950 p-4 ring-1 ring-slate-800/80 sm:p-6">
         <div className="space-y-12">
-          <CrowdVerdictHero
-            assetSymbol={initialQuery.assetSymbol}
-            consensus={heroConsensus ?? consensus ?? undefined}
-            explanation={tradeDirectionDivergenceExplanation ?? undefined}
-            showDivergenceSummary={false}
-          />
+          {isScenarioLoading ? (
+            <div
+              className="relative z-[200] rounded-xl border-4 border-amber-300 bg-black px-4 py-5 text-center shadow-2xl ring-4 ring-amber-500"
+              aria-busy="true"
+              aria-live="assertive"
+            >
+              <div className="text-3xl font-black uppercase tracking-wide text-amber-400 sm:text-4xl">
+                LOADING SCENARIO...
+              </div>
+              <div className="mt-3 text-2xl font-black uppercase tracking-wide text-white sm:text-3xl">
+                UPDATING PERSONAS...
+              </div>
+            </div>
+          ) : null}
 
-          <CrowdPersonasGrid
-            explanation={tradeDirectionDivergenceExplanation ?? undefined}
-            directionBiasByAgentType={directionBiasByAgentType}
-            variantRows={variantPersonas}
-            topInfoEvent={decisionFlowInformationEvents[0] ?? null}
-          />
+          <div className="relative isolate min-h-[140px] overflow-visible">
+            {isScenarioLoading ? (
+              <div
+                className="pointer-events-none absolute inset-0 z-[150] flex items-center justify-center bg-black/90 px-4"
+                aria-hidden="true"
+              >
+                <span className="rounded-xl bg-amber-400 px-8 py-5 text-center text-3xl font-black uppercase tracking-wide text-black shadow-2xl ring-4 ring-white sm:text-4xl">
+                  LOADING SCENARIO...
+                </span>
+              </div>
+            ) : null}
+            <div className={isScenarioLoading ? "pointer-events-none opacity-[0.18] transition-opacity" : undefined}>
+              <CrowdVerdictHero
+                assetSymbol={initialQuery.assetSymbol}
+                consensus={heroConsensus ?? consensus ?? undefined}
+                explanation={tradeDirectionDivergenceExplanation ?? undefined}
+                showDivergenceSummary={false}
+              />
+            </div>
+          </div>
 
+          <div className="relative isolate overflow-visible">
+            {isScenarioLoading ? (
+              <div
+                className="relative z-[150] mb-4 rounded-xl border-4 border-white bg-amber-400 px-4 py-4 text-center text-2xl font-black uppercase tracking-wide text-black shadow-2xl ring-4 ring-amber-600 sm:text-3xl"
+                aria-live="assertive"
+              >
+                UPDATING PERSONAS...
+              </div>
+            ) : null}
+            <div className={isScenarioLoading ? "pointer-events-none opacity-[0.18] transition-opacity" : undefined}>
+              <CrowdPersonasGrid
+                explanation={tradeDirectionDivergenceExplanation ?? undefined}
+                directionBiasByAgentType={directionBiasByAgentType}
+                variantRows={variantPersonas}
+                topInfoEvent={decisionFlowInformationEvents[0] ?? null}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <details className="mb-8 w-full rounded-lg border border-slate-200 bg-white px-4 py-3 sm:px-5">
+        <summary
+          className="cursor-pointer select-none text-[15px] font-semibold text-slate-800 outline-none"
+          style={{ listStyle: "none" }}
+        >
+          Analysis
+        </summary>
+        <div className="mt-5 flex flex-col gap-6">
           <div className="grid grid-cols-12 gap-6 lg:gap-8">
             <div className="col-span-12 lg:col-span-8">
               <CrowdFlowMap directionBiasByAgentType={directionBiasByAgentType} />
@@ -2001,13 +2299,13 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
             tradeDirectionDiagnosticsCrowd={tradeDirectionDiagnosticsCrowd}
             rawMetrics={crowdIntelligenceRawMetrics}
           />
-        </div>
-      </div>
 
       <div className={styles.dashboardContentShell}>
         <div className={isFilterLoading ? styles.dashboardMainDimmed : undefined}>
       <div
+        aria-hidden
         style={{
+          display: "none",
           textAlign: "center",
           padding: "28px 20px 32px",
           marginBottom: 28,
@@ -3984,81 +4282,6 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
 
       <VariantsPanel runId={dashboardInfoEventsRunId} />
 
-      <div
-        data-testid="active-scenario-panel"
-        style={{
-          border: "1px solid rgba(15, 23, 42, 0.10)",
-          borderRadius: 10,
-          padding: 16,
-          marginBottom: 24,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 12,
-          flexWrap: "wrap",
-        }}
-      >
-        <div>
-          <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 6 }}>
-            Active Scenario{" "}
-            <span
-              style={{
-                fontSize: 11,
-                padding: "2px 8px",
-                borderRadius: 999,
-                background: "rgba(37, 99, 235, 0.12)",
-                color: "rgba(30, 64, 175, 1)",
-                border: "1px solid rgba(59, 130, 246, 0.35)",
-                verticalAlign: "middle",
-              }}
-            >
-              Active Scenario
-            </span>
-          </div>
-          <div style={{ fontSize: 13, color: "rgba(15, 23, 42, 0.9)" }}>
-            {activeVariantLabel}
-            {activeVariant ? (
-              <span style={{ marginLeft: 8, fontFamily: "ui-monospace, monospace", fontSize: 12 }}>
-                {activeVariant.id.slice(0, 8)}…
-              </span>
-            ) : null}
-          </div>
-          <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.55)", marginTop: 4 }}>
-            {variantOptions.length} scenario{variantOptions.length === 1 ? "" : "s"} available
-          </div>
-          {crowdStateRecommendation ? (
-            <div style={{ fontSize: 11, color: "rgba(15, 23, 42, 0.65)", marginTop: 6 }}>
-              Crowd reaction: {crowdStateRecommendation.direction} ({Math.round(crowdStateRecommendation.confidence * 100)}%
-              confidence)
-            </div>
-          ) : null}
-        </div>
-        <button
-          type="button"
-          onClick={switchScenario}
-          disabled={variantOptions.length < 2}
-          data-testid="switch-scenario-button"
-          style={{
-            padding: "8px 12px",
-            borderRadius: 8,
-            border: "1px solid rgba(15, 23, 42, 0.2)",
-            background: variantOptions.length < 2 ? "rgba(15, 23, 42, 0.04)" : "white",
-            color: "rgba(15, 23, 42, 0.9)",
-            cursor: variantOptions.length < 2 ? "not-allowed" : "pointer",
-            fontSize: 12,
-            fontWeight: 600,
-          }}
-        >
-          Switch Scenario
-        </button>
-      </div>
-
-      <LiveEventInjectionPanel
-        runId={dashboardInfoEventsRunId}
-        assetSymbol={initialQuery.assetSymbol.trim()}
-        runVariantId={activeVariantId}
-      />
-
       {backtestMetrics && backtestMetrics.trades > 0 ? (
         <div
           data-testid="backtest-performance-card"
@@ -4543,6 +4766,8 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
       </div>
         </div>
       </div>
+        </div>
+      </details>
 
       {drawerRunId && (
         <>

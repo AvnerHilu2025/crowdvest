@@ -20,6 +20,7 @@ import {
   normalizeRunPayload,
   type NormalizedRunPayload,
 } from "../common/normalize-run-payload";
+import { catalogIdForRunAgentArchetype, DASHBOARD_ARCHETYPE_CATALOG } from "./dashboard-archetype-catalog";
 
 const STATUS_MAP: Record<string, number> = {
   PENDING: 0,
@@ -787,6 +788,7 @@ export class ResultsService {
     assetSymbol: string;
     runVariantId: string | null;
     isActiveVariant: boolean;
+    snapshotStep: number | null;
     items: Array<{
       archetypeId: string;
       label: string;
@@ -814,13 +816,23 @@ export class ResultsService {
       opts.runVariantId,
     );
 
-    const rows = await this.prisma.agentDecision.findMany({
+    const latestStepRow = await this.prisma.agentDecision.findFirst({
       where: { runId, assetSymbol: sym, ...variantWhere },
-      select: {
-        action: true,
-        agentId: true,
-      },
+      orderBy: { step: "desc" },
+      select: { step: true },
     });
+    const snapshotStep = latestStepRow?.step ?? null;
+
+    const rows =
+      snapshotStep == null
+        ? []
+        : await this.prisma.agentDecision.findMany({
+            where: { runId, assetSymbol: sym, step: snapshotStep, ...variantWhere },
+            select: {
+              action: true,
+              agentId: true,
+            },
+          });
 
     const runAgentIds = Array.from(new Set(rows.map((r) => r.agentId)));
     const runAgents =
@@ -834,7 +846,8 @@ export class ResultsService {
 
     const byArchetype = new Map<string, { buy: number; sell: number; hold: number }>();
     for (const row of rows) {
-      const archetypeId = (archetypeByRunAgentId.get(row.agentId) ?? "").trim() || "Unknown";
+      const rawArchetype = archetypeByRunAgentId.get(row.agentId);
+      const archetypeId = catalogIdForRunAgentArchetype(rawArchetype ?? null);
       const slot = byArchetype.get(archetypeId) ?? { buy: 0, sell: 0, hold: 0 };
       if (row.action === "BUY") slot.buy += 1;
       else if (row.action === "SELL") slot.sell += 1;
@@ -843,42 +856,44 @@ export class ResultsService {
     }
 
     const totals = Array.from(byArchetype.values()).reduce((s, v) => s + v.buy + v.sell + v.hold, 0);
-    const items = Array.from(byArchetype.entries())
-      .map(([archetypeId, c]) => {
-        const totalCount = c.buy + c.sell + c.hold;
-        const buyPct = totalCount > 0 ? c.buy / totalCount : 0;
-        const sellPct = totalCount > 0 ? c.sell / totalCount : 0;
-        const holdPct = totalCount > 0 ? c.hold / totalCount : 0;
-        const dominantAction: "BUY" | "SELL" | "HOLD" =
-          buyPct >= sellPct && buyPct >= holdPct
+    const items = DASHBOARD_ARCHETYPE_CATALOG.map((entry) => {
+      const c = byArchetype.get(entry.id) ?? { buy: 0, sell: 0, hold: 0 };
+      const totalCount = c.buy + c.sell + c.hold;
+      const buyPct = totalCount > 0 ? c.buy / totalCount : 0;
+      const sellPct = totalCount > 0 ? c.sell / totalCount : 0;
+      const holdPct = totalCount > 0 ? c.hold / totalCount : 0;
+      const dominantAction: "BUY" | "SELL" | "HOLD" =
+        totalCount === 0
+          ? "HOLD"
+          : buyPct >= sellPct && buyPct >= holdPct
             ? "BUY"
             : sellPct >= buyPct && sellPct >= holdPct
               ? "SELL"
               : "HOLD";
-        const archetypeWeight = totals > 0 ? totalCount / totals : 0;
-        const netContribution = archetypeWeight * (buyPct - sellPct);
-        return {
-          archetypeId,
-          label: archetypeId,
-          buyCount: c.buy,
-          sellCount: c.sell,
-          holdCount: c.hold,
-          totalCount,
-          buyPct,
-          sellPct,
-          holdPct,
-          dominantAction,
-          netContribution,
-          personalityDescription: null,
-        };
-      })
-      .sort((a, b) => Math.abs(b.netContribution) - Math.abs(a.netContribution));
+      const archetypeWeight = totals > 0 ? totalCount / totals : 0;
+      const netContribution = archetypeWeight * (buyPct - sellPct);
+      return {
+        archetypeId: entry.id,
+        label: entry.label,
+        buyCount: c.buy,
+        sellCount: c.sell,
+        holdCount: c.hold,
+        totalCount,
+        buyPct,
+        sellPct,
+        holdPct,
+        dominantAction,
+        netContribution,
+        personalityDescription: null,
+      };
+    }).sort((a, b) => Math.abs(b.netContribution) - Math.abs(a.netContribution));
 
     return {
       runId,
       assetSymbol: sym,
       runVariantId: resolvedRunVariantId,
       isActiveVariant,
+      snapshotStep,
       items,
     };
   }

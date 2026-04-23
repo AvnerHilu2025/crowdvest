@@ -63,6 +63,7 @@ import { computeInfoFeedDemoEventContribution } from "../lib/info-feed-demo-sign
 import { writeInfoCrowdExplain } from "../lib/write-info-crowd-explain";
 import { dbInfoEventRowToInfoEventInput } from "../lib/db-info-event-to-input";
 import {
+  applyArchetypeSentimentScaleForAgent,
   loadScenarioFile,
   mergeScenarioEventsIntoMap,
   filterScenarioEventsForAgent,
@@ -2125,10 +2126,14 @@ async function main(): Promise<void> {
         agent.archetype ?? null,
         agent.archetypeId ?? null,
       );
-      const eventsForAgent = filterScenarioEventsForAgent(
+      const eventsForAgentFiltered = filterScenarioEventsForAgent(
         eventsForStep,
         archetypeConfigIdForFeed,
         agent.archetype ?? null,
+      );
+      const eventsForAgent = applyArchetypeSentimentScaleForAgent(
+        eventsForAgentFiltered,
+        archetypeConfigIdForFeed,
       );
       const agentSeed = hashToSeed(`${datasetVersion}:${assetSymbol}:${globalSeed}:${agent.id}:${step}`);
       const rng = createSeededRng(agentSeed);

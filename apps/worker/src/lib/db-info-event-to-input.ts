@@ -14,6 +14,9 @@ export type LiveInjectMeta = {
   title?: string;
   targetArchetypes?: string[];
   sensitivityOverrides?: Record<string, number>;
+  simulationPlatform?: string;
+  archetypeSentimentScale?: Record<string, number>;
+  defaultArchetypeSentimentScale?: number;
 };
 
 export function dbInfoEventRowToInfoEventInput(e: {
@@ -46,6 +49,21 @@ export function dbInfoEventRowToInfoEventInput(e: {
     const st = String(meta.sourceType ?? "news").trim() || "news";
     const sn = String(meta.sourceName ?? "live").trim() || "live";
     const syntheticSource = `${st}:${sn}`;
+    const simPlat = meta.simulationPlatform != null ? String(meta.simulationPlatform).trim().toLowerCase() : "";
+    const plat = ["x", "facebook", "reddit", "sec", "newswire"].includes(simPlat) ? simPlat : undefined;
+    const scaleMap: Record<string, number> | undefined =
+      meta.archetypeSentimentScale != null && typeof meta.archetypeSentimentScale === "object"
+        ? Object.fromEntries(
+            Object.entries(meta.archetypeSentimentScale).map(([k, v]) => [
+              String(k).trim().toLowerCase(),
+              typeof v === "number" && Number.isFinite(v) ? v : 1,
+            ]),
+          )
+        : undefined;
+    const defScale =
+      typeof meta.defaultArchetypeSentimentScale === "number" && Number.isFinite(meta.defaultArchetypeSentimentScale)
+        ? meta.defaultArchetypeSentimentScale
+        : undefined;
     return {
       ...base,
       source: syntheticSource,
@@ -56,6 +74,9 @@ export function dbInfoEventRowToInfoEventInput(e: {
           ?.map((t) => String(t).trim().toLowerCase())
           .filter((t) => t.length > 0) ?? undefined,
       scenarioSensitivityOverrides: meta.sensitivityOverrides,
+      simulationPlatform: plat,
+      archetypeSentimentScale: scaleMap && Object.keys(scaleMap).length > 0 ? scaleMap : undefined,
+      defaultArchetypeSentimentScale: defScale,
     };
   } catch {
     return base;

@@ -87,6 +87,28 @@ function parseCrowdState(json: unknown): DashboardCrowdStateEnvelope | null {
   const holdPct = typeof o.holdPct === "number" && Number.isFinite(o.holdPct) ? o.holdPct : null;
   const majorityPct = typeof o.majorityPct === "number" && Number.isFinite(o.majorityPct) ? o.majorityPct : null;
   const dominantAction = o.dominantAction;
+  const perStepRaw = o.perStep;
+  if (!Array.isArray(perStepRaw)) return null;
+  const perStep: DashboardCrowdStateEnvelope["perStep"] = [];
+  for (const item of perStepRaw) {
+    if (!item || typeof item !== "object") continue;
+    const s = item as Record<string, unknown>;
+    if (
+      typeof s.step !== "number" ||
+      !Number.isFinite(s.step) ||
+      typeof s.weightedSignal !== "number" ||
+      !Number.isFinite(s.weightedSignal) ||
+      typeof s.signal !== "number" ||
+      !Number.isFinite(s.signal)
+    ) {
+      continue;
+    }
+    perStep.push({
+      step: Math.trunc(s.step),
+      weightedSignal: s.weightedSignal,
+      signal: s.signal,
+    });
+  }
   if (
     buyCount == null ||
     sellCount == null ||
@@ -96,6 +118,7 @@ function parseCrowdState(json: unknown): DashboardCrowdStateEnvelope | null {
     sellPct == null ||
     holdPct == null ||
     majorityPct == null ||
+    perStep.length === 0 ||
     (dominantAction !== "BUY" && dominantAction !== "SELL" && dominantAction !== "HOLD")
   ) {
     return null;
@@ -112,6 +135,7 @@ function parseCrowdState(json: unknown): DashboardCrowdStateEnvelope | null {
     holdPct,
     majorityPct,
     dominantAction,
+    perStep,
     recommendation: {
       direction: dir,
       strength: r.strength,

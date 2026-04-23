@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { ModelDivergencePanel } from "./CrowdVerdictHero";
-import { DecisionTimeline } from "./DecisionTimeline";
 import { TechnicalDiagnostics } from "./TechnicalDiagnostics";
 import type {
   TradeDirectionDiagnostics,
@@ -62,7 +61,6 @@ export function AdvancedAnalysis({
             modelDiagnostics={tradeDirectionDiagnostics}
             crowdDiagnostics={tradeDirectionDiagnosticsCrowd}
           />
-          <DecisionTimeline />
           <TechnicalDiagnostics
             tradeDirectionDiagnostics={tradeDirectionDiagnostics}
             tradeDirectionDiagnosticsCrowd={tradeDirectionDiagnosticsCrowd}

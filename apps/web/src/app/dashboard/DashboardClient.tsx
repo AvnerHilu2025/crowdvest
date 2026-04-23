@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback, useEffect, useRef, useMemo, useTransition } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import DashboardFiltersClient from "@/components/dashboard-filters.client";
 import { MiniBar as ScalingMiniBar, Badge } from "@/components/dashboard/mini-bar";
@@ -23,6 +24,11 @@ import { AdvancedAnalysis } from "@/components/dashboard/AdvancedAnalysis";
 import { CrowdPersonasGrid } from "@/components/dashboard/CrowdPersonasGrid";
 import type { VariantPersonaRow } from "@/components/dashboard/CrowdPersonasGrid";
 import type { TradeDirectionDivergenceExplanation } from "@/components/dashboard/crowd-intelligence-types";
+
+const DecisionTimeline = dynamic(
+  () => import("@/components/dashboard/DecisionTimeline").then((m) => m.DecisionTimeline),
+  { ssr: false },
+);
 
 const formatPercent = (value?: number | null) => {
   if (value === null || value === undefined) return "-";
@@ -610,6 +616,7 @@ export type DashboardCrowdStateEnvelope = {
   holdPct: number;
   majorityPct: number;
   dominantAction: "BUY" | "SELL" | "HOLD";
+  perStep: Array<{ step: number; weightedSignal: number; signal: number }>;
   recommendation: DashboardCrowdStateRecommendation;
 };
 
@@ -642,6 +649,28 @@ function parseCrowdStateFromApi(json: unknown): DashboardCrowdStateEnvelope | nu
   const holdPct = typeof o.holdPct === "number" && Number.isFinite(o.holdPct) ? o.holdPct : null;
   const majorityPct = typeof o.majorityPct === "number" && Number.isFinite(o.majorityPct) ? o.majorityPct : null;
   const dominantAction = o.dominantAction;
+  const perStepRaw = o.perStep;
+  if (!Array.isArray(perStepRaw)) return null;
+  const perStep: DashboardCrowdStateEnvelope["perStep"] = [];
+  for (const item of perStepRaw) {
+    if (!item || typeof item !== "object") continue;
+    const s = item as Record<string, unknown>;
+    if (
+      typeof s.step !== "number" ||
+      !Number.isFinite(s.step) ||
+      typeof s.weightedSignal !== "number" ||
+      !Number.isFinite(s.weightedSignal) ||
+      typeof s.signal !== "number" ||
+      !Number.isFinite(s.signal)
+    ) {
+      continue;
+    }
+    perStep.push({
+      step: Math.trunc(s.step),
+      weightedSignal: s.weightedSignal,
+      signal: s.signal,
+    });
+  }
   if (
     buyCount == null ||
     sellCount == null ||
@@ -651,6 +680,7 @@ function parseCrowdStateFromApi(json: unknown): DashboardCrowdStateEnvelope | nu
     sellPct == null ||
     holdPct == null ||
     majorityPct == null ||
+    perStep.length === 0 ||
     (dominantAction !== "BUY" && dominantAction !== "SELL" && dominantAction !== "HOLD")
   ) {
     return null;
@@ -667,6 +697,7 @@ function parseCrowdStateFromApi(json: unknown): DashboardCrowdStateEnvelope | nu
     holdPct,
     majorityPct,
     dominantAction,
+    perStep,
     recommendation: {
       direction: dir,
       strength: r.strength,
@@ -1363,6 +1394,9 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
   const pendingUrlAlignRef = useRef<string | null>(null);
 
   const [crowdStateEnvelope, setCrowdStateEnvelope] = useState(latestRunCrowdStateEnvelope);
+  const [comparisonCrowdStateEnvelope, setComparisonCrowdStateEnvelope] = useState<DashboardCrowdStateEnvelope | null>(
+    null,
+  );
   const [crowdStateRecommendation, setCrowdStateRecommendation] = useState<DashboardCrowdStateRecommendation | null>(
     latestRunCrowdStateEnvelope?.recommendation ?? null,
   );
@@ -1386,11 +1420,14 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
         : variantIdFromUrl;
     const assetSymbol = initialQuery.assetSymbol.trim();
     if (!dashboardInfoEventsRunId || !assetSymbol || !fetchVariantId) return null;
+    const compareVariantId =
+      variantOptions.length === 2 ? (variantOptions.find((o) => o.id !== fetchVariantId)?.id ?? null) : null;
     return {
       key: `${dashboardInfoEventsRunId}|${assetSymbol}|${fetchVariantId}`,
       runId: dashboardInfoEventsRunId,
       assetSymbol,
       variantIdForFetch: fetchVariantId,
+      compareVariantId,
     };
   }, [
     dashboardInfoEventsRunId,
@@ -1433,6 +1470,7 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
     if (pendingUrlAlignRef.current != null && urlVid !== pendingUrlAlignRef.current) {
       setCrowdStateEnvelope(latestRunCrowdStateEnvelope);
       setCrowdStateRecommendation(latestRunCrowdStateEnvelope?.recommendation ?? null);
+      setComparisonCrowdStateEnvelope(null);
       return;
     }
     if (pendingUrlAlignRef.current != null && urlVid === pendingUrlAlignRef.current) {
@@ -1441,6 +1479,7 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
     setActiveVariantId(resolved);
     setCrowdStateEnvelope(latestRunCrowdStateEnvelope);
     setCrowdStateRecommendation(latestRunCrowdStateEnvelope?.recommendation ?? null);
+    setComparisonCrowdStateEnvelope(null);
   }, [
     initialVariantOptions,
     latestRunCrowdStateEnvelope,
@@ -1454,10 +1493,11 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
     if (!scenarioFetch) {
       prevScenarioFetchKeyRef.current = null;
       setVariantPersonas(null);
+      setComparisonCrowdStateEnvelope(null);
       setIsScenarioLoading(false);
       return;
     }
-    const { key, runId, assetSymbol, variantIdForFetch } = scenarioFetch;
+    const { key, runId, assetSymbol, variantIdForFetch, compareVariantId } = scenarioFetch;
     const keyChanged =
       prevScenarioFetchKeyRef.current !== null && prevScenarioFetchKeyRef.current !== key;
     if (keyChanged) setIsScenarioLoading(true);
@@ -1473,9 +1513,15 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
         const pUrl = `${API_BASE}/results/personas?runId=${encodeURIComponent(runId)}&assetSymbol=${encodeURIComponent(
           assetSymbol,
         )}&runVariantId=${encodeURIComponent(variantIdForFetch)}`;
-        const [csRes, pRes] = await Promise.all([
+        const compareCsUrl = compareVariantId
+          ? `${API_BASE}/results/crowd-state?runId=${encodeURIComponent(runId)}&assetSymbol=${encodeURIComponent(
+              assetSymbol,
+            )}&runVariantId=${encodeURIComponent(compareVariantId)}`
+          : null;
+        const [csRes, pRes, compareCsRes] = await Promise.all([
           fetch(csUrl, { cache: "no-store", headers: { accept: "application/json" } }),
           fetch(pUrl, { cache: "no-store", headers: { accept: "application/json" } }),
+          compareCsUrl ? fetch(compareCsUrl, { cache: "no-store", headers: { accept: "application/json" } }) : Promise.resolve(null),
         ]);
         if (cancelled) return;
         if (requestedVariantId !== activeVariantIdRef.current) return;
@@ -1503,8 +1549,20 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
           if (requestedVariantId !== activeVariantIdRef.current) return;
           if (Array.isArray(raw.items)) setVariantPersonas(raw.items);
         }
+        if (compareCsRes?.ok) {
+          const raw: unknown = await compareCsRes.json();
+          if (cancelled) return;
+          if (requestedVariantId !== activeVariantIdRef.current) return;
+          const parsed = parseCrowdStateFromApi(raw);
+          if (parsed) setComparisonCrowdStateEnvelope(parsed);
+        } else {
+          if (!cancelled && requestedVariantId === activeVariantIdRef.current) setComparisonCrowdStateEnvelope(null);
+        }
       } catch {
-        if (!cancelled && requestedVariantId === activeVariantIdRef.current) setVariantPersonas(null);
+        if (!cancelled && requestedVariantId === activeVariantIdRef.current) {
+          setVariantPersonas(null);
+          setComparisonCrowdStateEnvelope(null);
+        }
       } finally {
         if (!cancelled && requestedVariantId === activeVariantIdRef.current) {
           setIsScenarioLoading(false);
@@ -1529,6 +1587,16 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
     if (label) return label;
     return `Seed ${activeVariant.seed}`;
   }, [activeVariant]);
+  const comparisonVariant = useMemo(() => {
+    if (variantOptions.length !== 2 || !activeVariantId) return null;
+    return variantOptions.find((v) => v.id !== activeVariantId) ?? null;
+  }, [variantOptions, activeVariantId]);
+  const comparisonVariantLabel = useMemo(() => {
+    if (!comparisonVariant) return null;
+    const label = comparisonVariant.label?.trim();
+    if (label) return label;
+    return `Seed ${comparisonVariant.seed}`;
+  }, [comparisonVariant]);
 
   const switchScenario = useCallback(() => {
     if (variantOptions.length < 2) return;
@@ -1593,6 +1661,18 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
     () => pickTopInfoEventsForAsset(effectiveLatestRunInfoEvents, initialQuery.assetSymbol, 2),
     [effectiveLatestRunInfoEvents, initialQuery.assetSymbol],
   );
+  const timelineInfoEvents = useMemo(() => {
+    const targetAsset = initialQuery.assetSymbol.trim().toUpperCase();
+    if (!targetAsset || !Array.isArray(effectiveLatestRunInfoEvents)) return [];
+    return effectiveLatestRunInfoEvents
+      .filter((e) => e.assetSymbol.trim().toUpperCase() === targetAsset)
+      .map((e) => ({
+        step: e.step,
+        topic: e.topic,
+        sentiment: e.sentiment,
+      }))
+      .sort((a, b) => a.step - b.step);
+  }, [effectiveLatestRunInfoEvents, initialQuery.assetSymbol]);
 
   const crowdReactionContradiction = useMemo(
     () =>
@@ -2246,6 +2326,15 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
           </div>
 
           <div className="relative isolate overflow-visible">
+            <div className={isScenarioLoading ? "pointer-events-none opacity-[0.18] transition-opacity" : undefined}>
+              <DecisionTimeline
+                selectedLabel={activeVariantLabel}
+                selectedSeries={crowdStateEnvelope?.perStep ?? []}
+                comparisonLabel={comparisonVariantLabel}
+                comparisonSeries={comparisonCrowdStateEnvelope?.perStep ?? []}
+                infoEvents={timelineInfoEvents}
+              />
+            </div>
             {isScenarioLoading ? (
               <div
                 className="relative z-[150] mb-4 rounded-xl border-4 border-white bg-amber-400 px-4 py-4 text-center text-2xl font-black uppercase tracking-wide text-black shadow-2xl ring-4 ring-amber-600 sm:text-3xl"

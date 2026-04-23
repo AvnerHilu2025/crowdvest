@@ -25,11 +25,89 @@ export type InjectSimulationEventDto = {
   credibility: number;
   step: number;
   targetArchetypes?: string[];
+  /** Channel-only keys: `info`, `event` (matches worker `scenarioChannelMul`). */
   sensitivityOverrides?: Record<string, number>;
+  simulationPlatform?: string;
+  archetypeSentimentScale?: Record<string, number>;
+  defaultArchetypeSentimentScale?: number;
 };
+
+const SIMULATION_PLATFORMS = new Set(["x", "facebook", "reddit", "sec", "newswire"]);
 
 function clamp(x: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, x));
+}
+
+/** Keep only `info` and `event` keys; values clamped to scenarioChannelMul range in worker. */
+function sanitizeChannelSensitivityOnly(
+  overrides: Record<string, number> | undefined,
+): Record<string, number> | undefined {
+  if (overrides == null || typeof overrides !== "object") return undefined;
+  const out: Record<string, number> = {};
+  for (const [k, v] of Object.entries(overrides)) {
+    const key = String(k).trim().toLowerCase();
+    if (key !== "info" && key !== "event") continue;
+    if (typeof v !== "number" || !Number.isFinite(v)) continue;
+    out[key] = clamp(v, 0.25, 1.75);
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
+function sanitizeArchetypeSentimentScale(
+  raw: Record<string, number> | undefined,
+): Record<string, number> | undefined {
+  if (raw == null || typeof raw !== "object") return undefined;
+  const out: Record<string, number> = {};
+  for (const [k, v] of Object.entries(raw)) {
+    const id = String(k).trim().toLowerCase();
+    if (!id) continue;
+    if (typeof v !== "number" || !Number.isFinite(v)) continue;
+    out[id] = clamp(v, -5, 5);
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
+export type InjectEventResponse = {
+  injectedEventId: string;
+  affectedRunId: string;
+  runVariantId: string;
+  recalculationStatus: "completed" | "failed" | "skipped";
+  recalculationDetail?: string;
+  affectedArchetypesSummary: string[];
+  simulationPlatform?: string;
+  targetArchetypeCount: number;
+  archetypeScaleCount: number;
+  mixedInterpretationActive: boolean;
+  interpretationSummary?: string;
+};
+
+function buildInterpretationSummary(dto: InjectSimulationEventDto): {
+  mixedInterpretationActive: boolean;
+  interpretationSummary?: string;
+  archetypeScaleCount: number;
+} {
+  const scale = dto.archetypeSentimentScale ?? {};
+  const keys = Object.keys(scale);
+  const archetypeScaleCount = keys.length;
+  let amplified = 0;
+  let contrarian = 0;
+  let muted = 0;
+  for (const v of Object.values(scale)) {
+    if (typeof v !== "number" || !Number.isFinite(v)) continue;
+    if (v > 1.05) amplified++;
+    else if (v < -0.05) contrarian++;
+    else if (v >= 0 && v < 0.45) muted++;
+  }
+  const vals = Object.values(scale).filter((x): x is number => typeof x === "number" && Number.isFinite(x));
+  const hasPos = vals.some((v) => v > 0.05);
+  const hasNeg = vals.some((v) => v < -0.05);
+  const mixedInterpretationActive =
+    archetypeScaleCount > 0 && ((hasPos && hasNeg) || (amplified > 0 && muted > 0) || contrarian > 0);
+  const interpretationSummary =
+    archetypeScaleCount > 0
+      ? `Mixed interpretation active: ${amplified} amplified, ${contrarian} contrarian, ${muted} muted`
+      : undefined;
+  return { mixedInterpretationActive, interpretationSummary, archetypeScaleCount };
 }
 
 function resolveRepoRoot(): string {
@@ -82,19 +160,41 @@ export class SimulationService {
     if (dto.sensitivityOverrides != null && typeof dto.sensitivityOverrides !== "object") {
       throw new BadRequestException("sensitivityOverrides must be a JSON object");
     }
+    if (dto.archetypeSentimentScale != null && typeof dto.archetypeSentimentScale !== "object") {
+      throw new BadRequestException("archetypeSentimentScale must be a JSON object");
+    }
+    if (dto.simulationPlatform != null && dto.simulationPlatform !== "") {
+      const p = String(dto.simulationPlatform).trim().toLowerCase();
+      if (!SIMULATION_PLATFORMS.has(p)) {
+        throw new BadRequestException(`simulationPlatform must be one of: ${[...SIMULATION_PLATFORMS].join(", ")}`);
+      }
+    }
+    if (dto.defaultArchetypeSentimentScale != null) {
+      const d = dto.defaultArchetypeSentimentScale;
+      if (typeof d !== "number" || !Number.isFinite(d)) {
+        throw new BadRequestException("defaultArchetypeSentimentScale must be a finite number");
+      }
+    }
   }
 
-  async injectEvent(dto: InjectSimulationEventDto): Promise<{
-    injectedEventId: string;
-    affectedRunId: string;
-    runVariantId: string;
-    recalculationStatus: "completed" | "failed" | "skipped";
-    recalculationDetail?: string;
-    affectedArchetypesSummary: string[];
-  }> {
+  normalizeInjectDto(dto: InjectSimulationEventDto): InjectSimulationEventDto {
+    const def =
+      dto.defaultArchetypeSentimentScale != null && Number.isFinite(dto.defaultArchetypeSentimentScale)
+        ? clamp(dto.defaultArchetypeSentimentScale, -5, 5)
+        : undefined;
+    return {
+      ...dto,
+      sensitivityOverrides: sanitizeChannelSensitivityOnly(dto.sensitivityOverrides),
+      archetypeSentimentScale: sanitizeArchetypeSentimentScale(dto.archetypeSentimentScale),
+      defaultArchetypeSentimentScale: def,
+    };
+  }
+
+  async injectEvent(dto: InjectSimulationEventDto): Promise<InjectEventResponse> {
     this.validateInjectDto(dto);
-    const runId = dto.runId.trim();
-    const assetSymbol = dto.assetSymbol.trim();
+    const normalized = this.normalizeInjectDto(dto);
+    const runId = normalized.runId.trim();
+    const assetSymbol = normalized.assetSymbol.trim();
 
     const run = await this.prisma.simulationRun.findUnique({
       where: { id: runId },
@@ -102,7 +202,7 @@ export class SimulationService {
     });
     if (!run) throw new NotFoundException(`Run not found: ${runId}`);
 
-    const explicitVariantId = dto.runVariantId?.trim();
+    const explicitVariantId = normalized.runVariantId?.trim();
     const variant = explicitVariantId
       ? await this.prisma.runVariant.findFirst({
           where: { id: explicitVariantId, runId, assetSymbol },
@@ -121,29 +221,40 @@ export class SimulationService {
       }
       throw new BadRequestException(`No RunVariant for runId=${runId} assetSymbol=${assetSymbol}`);
     }
-    if (dto.step >= variant.steps) {
+    if (normalized.step >= variant.steps) {
       throw new BadRequestException(`step must be < variant.steps (${variant.steps})`);
     }
 
-    const meta = {
-      sourceType: dto.sourceType.trim().toLowerCase(),
-      sourceName: dto.sourceName.trim(),
-      title: dto.title.trim(),
-      targetArchetypes: dto.targetArchetypes?.map((t) => String(t).trim()).filter(Boolean),
-      sensitivityOverrides: dto.sensitivityOverrides,
+    const plat =
+      normalized.simulationPlatform != null && String(normalized.simulationPlatform).trim() !== ""
+        ? String(normalized.simulationPlatform).trim().toLowerCase()
+        : undefined;
+    const meta: Record<string, unknown> = {
+      sourceType: normalized.sourceType.trim().toLowerCase(),
+      sourceName: normalized.sourceName.trim(),
+      title: normalized.title.trim(),
+      targetArchetypes: normalized.targetArchetypes?.map((t) => String(t).trim()).filter(Boolean),
+      sensitivityOverrides: normalized.sensitivityOverrides,
     };
+    if (plat && SIMULATION_PLATFORMS.has(plat)) meta.simulationPlatform = plat;
+    if (normalized.archetypeSentimentScale && Object.keys(normalized.archetypeSentimentScale).length > 0) {
+      meta.archetypeSentimentScale = normalized.archetypeSentimentScale;
+    }
+    if (normalized.defaultArchetypeSentimentScale != null) {
+      meta.defaultArchetypeSentimentScale = normalized.defaultArchetypeSentimentScale;
+    }
     const source = `${LIVE_INFO_JSON_PREFIX}${JSON.stringify(meta)}`;
-    const reach = clamp(dto.reach * dto.relevance, 0, 1);
-    const credibility = clamp(dto.credibility * dto.confidence, 0, 1);
-    const volatilityImpact = clamp(dto.urgency, 0, 1);
+    const reach = clamp(normalized.reach * normalized.relevance, 0, 1);
+    const credibility = clamp(normalized.credibility * normalized.confidence, 0, 1);
+    const volatilityImpact = clamp(normalized.urgency, 0, 1);
 
     const created = await this.prisma.infoEvent.create({
       data: {
         runId,
         assetSymbol,
-        step: dto.step,
-        topic: dto.title.trim(),
-        sentiment: clamp(dto.sentiment, -1, 1),
+        step: normalized.step,
+        topic: normalized.title.trim(),
+        sentiment: clamp(normalized.sentiment, -1, 1),
         credibility,
         reach,
         volatilityImpact,
@@ -212,6 +323,9 @@ export class SimulationService {
       }
     }
 
+    const interp = buildInterpretationSummary(normalized);
+    const targetArchetypeCount = normalized.targetArchetypes?.length ?? 0;
+
     return {
       injectedEventId: created.id,
       affectedRunId: runId,
@@ -219,6 +333,11 @@ export class SimulationService {
       recalculationStatus,
       recalculationDetail,
       affectedArchetypesSummary,
+      simulationPlatform: plat && SIMULATION_PLATFORMS.has(plat) ? plat : undefined,
+      targetArchetypeCount,
+      archetypeScaleCount: interp.archetypeScaleCount,
+      mixedInterpretationActive: interp.mixedInterpretationActive,
+      interpretationSummary: interp.interpretationSummary,
     };
   }
 

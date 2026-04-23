@@ -51,6 +51,12 @@ export interface InfoEventInput {
   scenarioTargetArchetypes?: string[];
   /** Optional per-channel multipliers on top of normal perception (keys: `info`, `event`). */
   scenarioSensitivityOverrides?: Record<string, number>;
+  /** Simulated platform label from LIVE_JSON (demo only): x | facebook | reddit | sec | newswire. */
+  simulationPlatform?: string;
+  /** Per archetype config id: multiplies base sentiment for that agent (decide.ts). */
+  archetypeSentimentScale?: Record<string, number>;
+  /** Fallback multiplier when archetype id is not in archetypeSentimentScale. */
+  defaultArchetypeSentimentScale?: number;
 }
 
 /**

@@ -21,6 +21,175 @@ type InjectResponse = {
   recalculationStatus: "completed" | "failed" | "skipped";
   recalculationDetail?: string;
   affectedArchetypesSummary: string[];
+  simulationPlatform?: string;
+  targetArchetypeCount?: number;
+  archetypeScaleCount?: number;
+  mixedInterpretationActive?: boolean;
+  interpretationSummary?: string;
+};
+
+type SimulationSource = "custom" | "x" | "facebook" | "reddit" | "sec" | "newswire";
+
+type PresetFields = {
+  sourceType: "news" | "social" | "macro" | "rumor";
+  sourceName: string;
+  title: string;
+  sentiment: string;
+  confidence: string;
+  urgency: string;
+  relevance: string;
+  reach: string;
+  credibility: string;
+  step: string;
+  targetArchetypesRaw: string;
+  sensitivityOverridesRaw: string;
+  archetypeSentimentScaleRaw: string;
+  defaultArchetypeSentimentScale: string;
+};
+
+const SOURCE_PRESETS: Record<Exclude<SimulationSource, "custom">, PresetFields & { simulationPlatform: string }> = {
+  x: {
+    simulationPlatform: "x",
+    sourceType: "social",
+    sourceName: "x-live-timeline",
+    title: "X panic: unverified headline spreads (simulated)",
+    sentiment: "-0.55",
+    confidence: "0.45",
+    urgency: "0.88",
+    relevance: "0.72",
+    reach: "0.92",
+    credibility: "0.38",
+    step: "2",
+    targetArchetypesRaw: "",
+    sensitivityOverridesRaw: JSON.stringify({ info: 1.35, event: 1.45 }, null, 0),
+    defaultArchetypeSentimentScale: "1",
+    archetypeSentimentScaleRaw: JSON.stringify(
+      {
+        noise_amplifier: 1.65,
+        news_reactor: 1.48,
+        late_event_follower: 1.28,
+        event_sniper: 1.38,
+        info_skeptic: 0.32,
+        conservative_planner: 0.38,
+        mean_reversion: -0.95,
+      },
+      null,
+      2,
+    ),
+  },
+  facebook: {
+    simulationPlatform: "facebook",
+    sourceType: "social",
+    sourceName: "facebook-groups-demo",
+    title: "Facebook community drift: slow consensus building (simulated)",
+    sentiment: "0.22",
+    confidence: "0.55",
+    urgency: "0.35",
+    relevance: "0.7",
+    reach: "0.58",
+    credibility: "0.52",
+    step: "2",
+    targetArchetypesRaw: "",
+    sensitivityOverridesRaw: JSON.stringify({ info: 1.08, event: 0.92 }, null, 0),
+    defaultArchetypeSentimentScale: "0.88",
+    archetypeSentimentScaleRaw: JSON.stringify(
+      {
+        passive_allocator: 1.22,
+        stability_seeker: 1.18,
+        late_event_follower: 1.12,
+        news_reactor: 1.08,
+        linear_quant: 0.52,
+        conservative_planner: 0.55,
+        momentum_trader: 0.58,
+      },
+      null,
+      2,
+    ),
+  },
+  reddit: {
+    simulationPlatform: "reddit",
+    sourceType: "social",
+    sourceName: "r-wallstreetbets-demo",
+    title: "Reddit split: same post, opposite reads by archetype (simulated)",
+    sentiment: "0.4",
+    confidence: "0.5",
+    urgency: "0.62",
+    relevance: "0.68",
+    reach: "0.78",
+    credibility: "0.42",
+    step: "2",
+    targetArchetypesRaw: "",
+    sensitivityOverridesRaw: JSON.stringify({ info: 1.28, event: 1.18 }, null, 0),
+    defaultArchetypeSentimentScale: "0.9",
+    archetypeSentimentScaleRaw: JSON.stringify(
+      {
+        momentum_trader: 1.32,
+        mean_reversion: -1.12,
+        news_reactor: 1.22,
+        info_skeptic: -0.88,
+        regime_contrarian: 0.95,
+        optimist: 1.05,
+        pessimist: -1.0,
+      },
+      null,
+      2,
+    ),
+  },
+  sec: {
+    simulationPlatform: "sec",
+    sourceType: "macro",
+    sourceName: "sec-edgar-sim",
+    title: "SEC filing excerpt: material update (simulated)",
+    sentiment: "0.35",
+    confidence: "0.9",
+    urgency: "0.42",
+    relevance: "0.88",
+    reach: "0.55",
+    credibility: "0.94",
+    step: "2",
+    targetArchetypesRaw: "",
+    sensitivityOverridesRaw: JSON.stringify({ info: 1.22, event: 0.88 }, null, 0),
+    defaultArchetypeSentimentScale: "0.95",
+    archetypeSentimentScaleRaw: JSON.stringify(
+      {
+        conservative_planner: 1.38,
+        macro_follower: 1.28,
+        long_horizon_allocator: 1.22,
+        info_skeptic: 1.15,
+        noise_amplifier: 0.22,
+      },
+      null,
+      2,
+    ),
+  },
+  newswire: {
+    simulationPlatform: "newswire",
+    sourceType: "news",
+    sourceName: "demo-newswire",
+    title: "Newswire: broad market headline (simulated)",
+    sentiment: "0.28",
+    confidence: "0.82",
+    urgency: "0.55",
+    relevance: "0.8",
+    reach: "0.82",
+    credibility: "0.88",
+    step: "2",
+    targetArchetypesRaw: "",
+    sensitivityOverridesRaw: JSON.stringify({ info: 1.18, event: 1.12 }, null, 0),
+    defaultArchetypeSentimentScale: "0.95",
+    archetypeSentimentScaleRaw: JSON.stringify(
+      {
+        news_reactor: 1.38,
+        event_sniper: 1.18,
+        false_event_reactor: 1.08,
+        info_skeptic: 0.72,
+        momentum_trader: 1.05,
+        conservative_planner: 0.92,
+      },
+      null,
+      2,
+    ),
+  },
 };
 
 const cardStyle: React.CSSProperties = {
@@ -53,6 +222,12 @@ function parseTargetArchetypes(raw: string): string[] | undefined {
   return parts.length ? parts : undefined;
 }
 
+function applyPresetToState(next: SimulationSource, apply: (p: PresetFields) => void): void {
+  if (next === "custom") return;
+  const { simulationPlatform: _p, ...preset } = SOURCE_PRESETS[next];
+  apply(preset);
+}
+
 export function LiveEventInjectionPanel(props: {
   runId: string | null;
   assetSymbol: string;
@@ -70,8 +245,11 @@ export function LiveEventInjectionPanel(props: {
   const [reach, setReach] = useState("0.6");
   const [credibility, setCredibility] = useState("0.55");
   const [step, setStep] = useState("2");
+  const [simulationSource, setSimulationSource] = useState<SimulationSource>("custom");
   const [targetArchetypesRaw, setTargetArchetypesRaw] = useState("");
   const [sensitivityOverridesRaw, setSensitivityOverridesRaw] = useState("");
+  const [archetypeSentimentScaleRaw, setArchetypeSentimentScaleRaw] = useState("");
+  const [defaultArchetypeSentimentScale, setDefaultArchetypeSentimentScale] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastSuccess, setLastSuccess] = useState<InjectResponse | null>(null);
@@ -119,7 +297,7 @@ export function LiveEventInjectionPanel(props: {
       try {
         const parsed = JSON.parse(rawOv) as unknown;
         if (parsed == null || typeof parsed !== "object" || Array.isArray(parsed)) {
-          setError("sensitivityOverrides must be a JSON object, e.g. {\"news\":1.2}");
+          setError('sensitivityOverrides must be a JSON object with channel keys only, e.g. {"info":1.15,"event":1.05}');
           return;
         }
         sensitivityOverrides = parsed as Record<string, number>;
@@ -128,6 +306,35 @@ export function LiveEventInjectionPanel(props: {
         return;
       }
     }
+
+    let archetypeSentimentScale: Record<string, number> | undefined;
+    const rawScale = archetypeSentimentScaleRaw.trim();
+    if (rawScale) {
+      try {
+        const parsed = JSON.parse(rawScale) as unknown;
+        if (parsed == null || typeof parsed !== "object" || Array.isArray(parsed)) {
+          setError("archetypeSentimentScale must be a JSON object mapping archetype id → number");
+          return;
+        }
+        archetypeSentimentScale = parsed as Record<string, number>;
+      } catch {
+        setError("archetypeSentimentScale: invalid JSON");
+        return;
+      }
+    }
+
+    let defaultArchetypeSentimentScaleNum: number | undefined;
+    const defTrim = defaultArchetypeSentimentScale.trim();
+    if (defTrim) {
+      const n = Number(defTrim);
+      if (!Number.isFinite(n)) {
+        setError("defaultArchetypeSentimentScale must be a finite number");
+        return;
+      }
+      defaultArchetypeSentimentScaleNum = n;
+    }
+
+    const simulationPlatform = simulationSource !== "custom" ? simulationSource : undefined;
 
     const body = {
       runId,
@@ -145,6 +352,9 @@ export function LiveEventInjectionPanel(props: {
       step: Number(step),
       targetArchetypes: parseTargetArchetypes(targetArchetypesRaw),
       sensitivityOverrides,
+      simulationPlatform,
+      archetypeSentimentScale,
+      defaultArchetypeSentimentScale: defaultArchetypeSentimentScaleNum,
     };
 
     setSubmitting(true);
@@ -208,6 +418,40 @@ export function LiveEventInjectionPanel(props: {
       <form onSubmit={onSubmit}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 12 }}>
           <div style={{ gridColumn: "1 / -1" }}>
+            <div style={labelStyle}>Simulation source (presets prefill; you can still edit everything)</div>
+            <select
+              style={inputStyle}
+              value={simulationSource}
+              onChange={(ev) => {
+                const next = ev.target.value as SimulationSource;
+                setSimulationSource(next);
+                applyPresetToState(next, (p) => {
+                  setSourceType(p.sourceType);
+                  setSourceName(p.sourceName);
+                  setTitle(p.title);
+                  setSentiment(p.sentiment);
+                  setConfidence(p.confidence);
+                  setUrgency(p.urgency);
+                  setRelevance(p.relevance);
+                  setReach(p.reach);
+                  setCredibility(p.credibility);
+                  setStep(p.step);
+                  setTargetArchetypesRaw(p.targetArchetypesRaw);
+                  setSensitivityOverridesRaw(p.sensitivityOverridesRaw);
+                  setArchetypeSentimentScaleRaw(p.archetypeSentimentScaleRaw);
+                  setDefaultArchetypeSentimentScale(p.defaultArchetypeSentimentScale);
+                });
+              }}
+            >
+              <option value="custom">custom</option>
+              <option value="x">x — panic / velocity</option>
+              <option value="facebook">facebook — community drift</option>
+              <option value="reddit">reddit — contrarian split</option>
+              <option value="sec">sec — filing</option>
+              <option value="newswire">newswire</option>
+            </select>
+          </div>
+          <div style={{ gridColumn: "1 / -1" }}>
             <div style={labelStyle}>assetSymbol (from dashboard filter)</div>
             <input style={{ ...inputStyle, background: "rgba(15,23,42,0.04)" }} readOnly value={assetSymbol.trim() || "—"} />
           </div>
@@ -270,12 +514,31 @@ export function LiveEventInjectionPanel(props: {
             />
           </div>
           <div style={{ gridColumn: "1 / -1" }}>
-            <div style={labelStyle}>sensitivityOverrides (optional JSON object)</div>
+            <div style={labelStyle}>sensitivityOverrides (optional JSON — channels info / event only)</div>
             <textarea
               style={{ ...inputStyle, minHeight: 56, fontFamily: "ui-monospace, monospace", fontSize: 12 }}
-              placeholder='{"news":1.15}'
+              placeholder='{"info":1.15,"event":1.05}'
               value={sensitivityOverridesRaw}
               onChange={(ev) => setSensitivityOverridesRaw(ev.target.value)}
+            />
+          </div>
+          <div>
+            <div style={labelStyle}>defaultArchetypeSentimentScale (optional)</div>
+            <input
+              style={inputStyle}
+              placeholder="e.g. 0.9 — omit for 1"
+              value={defaultArchetypeSentimentScale}
+              onChange={(ev) => setDefaultArchetypeSentimentScale(ev.target.value)}
+              inputMode="decimal"
+            />
+          </div>
+          <div style={{ gridColumn: "1 / -1" }}>
+            <div style={labelStyle}>archetypeSentimentScale (optional JSON — archetype id → multiplier)</div>
+            <textarea
+              style={{ ...inputStyle, minHeight: 72, fontFamily: "ui-monospace, monospace", fontSize: 12 }}
+              placeholder='{"news_reactor":1.3,"info_skeptic":0.4}'
+              value={archetypeSentimentScaleRaw}
+              onChange={(ev) => setArchetypeSentimentScaleRaw(ev.target.value)}
             />
           </div>
         </div>
@@ -334,6 +597,22 @@ export function LiveEventInjectionPanel(props: {
               Archetypes in scope: {lastSuccess.affectedArchetypesSummary.join(", ")}
             </div>
           ) : null}
+          <div style={{ marginTop: 8, fontSize: 11, color: "rgba(15, 23, 42, 0.72)" }}>
+            {lastSuccess.simulationPlatform ? (
+              <div>
+                Simulation platform: <strong>{lastSuccess.simulationPlatform}</strong>
+              </div>
+            ) : null}
+            <div>
+              Target archetypes (payload): <strong>{lastSuccess.targetArchetypeCount ?? 0}</strong> · Per-archetype
+              scales: <strong>{lastSuccess.archetypeScaleCount ?? 0}</strong>
+            </div>
+            <div>
+              Mixed interpretation:{" "}
+              <strong>{lastSuccess.mixedInterpretationActive ? "yes" : "no"}</strong>
+              {lastSuccess.interpretationSummary ? ` — ${lastSuccess.interpretationSummary}` : ""}
+            </div>
+          </div>
         </div>
       ) : null}
 

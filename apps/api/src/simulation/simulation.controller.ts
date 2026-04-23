@@ -39,6 +39,18 @@ export class SimulationController {
           ? (body.sensitivityOverrides as Record<string, number>)
           : undefined,
       runVariantId: body.runVariantId != null ? String(body.runVariantId) : undefined,
+      simulationPlatform:
+        body.simulationPlatform != null && String(body.simulationPlatform).trim() !== ""
+          ? String(body.simulationPlatform).trim().toLowerCase()
+          : undefined,
+      archetypeSentimentScale:
+        body.archetypeSentimentScale != null && typeof body.archetypeSentimentScale === "object" && !Array.isArray(body.archetypeSentimentScale)
+          ? (body.archetypeSentimentScale as Record<string, number>)
+          : undefined,
+      defaultArchetypeSentimentScale:
+        body.defaultArchetypeSentimentScale != null && body.defaultArchetypeSentimentScale !== ""
+          ? Number(body.defaultArchetypeSentimentScale)
+          : undefined,
     };
     return this.simulation.injectEvent(dto);
   }

@@ -88,6 +88,43 @@ export function filterScenarioEventsForAgent(
   });
 }
 
+/**
+ * Per-agent effective sentiment: base * (archetypeSentimentScale[id] ?? default ?? 1), clamped [-1,1].
+ * Zero scale yields zero sentiment for that agent. When no scale fields exist on any event, returns the same array reference.
+ */
+export function applyArchetypeSentimentScaleForAgent(
+  events: InfoEventInput[],
+  archetypeConfigId: string,
+): InfoEventInput[] {
+  const aid = archetypeConfigId.trim().toLowerCase();
+  let anyScale = false;
+  for (const ev of events) {
+    if (
+      (ev.archetypeSentimentScale != null && Object.keys(ev.archetypeSentimentScale).length > 0) ||
+      ev.defaultArchetypeSentimentScale != null
+    ) {
+      anyScale = true;
+      break;
+    }
+  }
+  if (!anyScale) return events;
+
+  return events.map((ev) => {
+    const map = ev.archetypeSentimentScale;
+    const keyScale =
+      map != null && typeof map[aid] === "number" && Number.isFinite(map[aid]) ? map[aid] : undefined;
+    const def =
+      ev.defaultArchetypeSentimentScale != null &&
+      Number.isFinite(ev.defaultArchetypeSentimentScale)
+        ? ev.defaultArchetypeSentimentScale
+        : undefined;
+    const scale = keyScale ?? def ?? 1;
+    const effectiveSentiment = clamp11(ev.sentiment * scale);
+    if (effectiveSentiment === ev.sentiment) return ev;
+    return { ...ev, sentiment: effectiveSentiment };
+  });
+}
+
 export function mergeScenarioEventsIntoMap(
   infoEventsByStep: Map<number, InfoEventInput[]>,
   records: ScenarioEventRecord[],

@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Post, Query } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Delete, Get, Post, Query } from "@nestjs/common";
 import { SimulationService, type InjectSimulationEventDto } from "./simulation.service";
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -64,5 +64,35 @@ export class SimulationController {
     const limit = limitParam != null ? parseInt(limitParam, 10) : 20;
     const items = await this.simulation.listInjectedEvents(rid, Number.isFinite(limit) ? limit : 20);
     return { runId: rid, items, total: items.length };
+  }
+
+  /** Reset simulation events for current variant scope: delete all InfoEvent rows and rerun pipelines. */
+  @Delete("events")
+  async resetEvents(
+    @Query("runId") runId: string | undefined,
+    @Query("runVariantId") runVariantId: string | undefined,
+    @Query("assetSymbol") assetSymbol?: string,
+  ) {
+    const rid = validateRunId(runId);
+    const vid = String(runVariantId ?? "").trim();
+    if (vid === "") {
+      throw new BadRequestException("runVariantId is required");
+    }
+    return this.simulation.resetSimulationEvents({ runId: rid, runVariantId: vid, assetSymbol });
+  }
+
+  /** Remove most recent InfoEvent in current variant scope and rerun pipelines. */
+  @Delete("events/last")
+  async removeLastEvent(
+    @Query("runId") runId: string | undefined,
+    @Query("runVariantId") runVariantId: string | undefined,
+    @Query("assetSymbol") assetSymbol?: string,
+  ) {
+    const rid = validateRunId(runId);
+    const vid = String(runVariantId ?? "").trim();
+    if (vid === "") {
+      throw new BadRequestException("runVariantId is required");
+    }
+    return this.simulation.removeLastSimulationEvent({ runId: rid, runVariantId: vid, assetSymbol });
   }
 }

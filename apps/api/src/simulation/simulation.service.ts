@@ -81,6 +81,16 @@ export type InjectEventResponse = {
   interpretationSummary?: string;
 };
 
+export type SimulationEventMutationResponse = {
+  affectedRunId: string;
+  runVariantId: string;
+  assetSymbol: string;
+  deletedCount: number;
+  removedEventId?: string;
+  recalculationStatus: "completed" | "failed" | "skipped";
+  recalculationDetail?: string;
+};
+
 function buildInterpretationSummary(dto: InjectSimulationEventDto): {
   mixedInterpretationActive: boolean;
   interpretationSummary?: string;
@@ -129,6 +139,72 @@ function resolveRepoRoot(): string {
 @Injectable()
 export class SimulationService {
   constructor(private readonly prisma: PrismaService) {}
+
+  private async resolveVariantScope(
+    runIdRaw: string,
+    runVariantIdRaw: string,
+    assetSymbolRaw?: string,
+  ): Promise<{ runId: string; runVariantId: string; assetSymbol: string; steps: number }> {
+    const runId = runIdRaw.trim();
+    const runVariantId = runVariantIdRaw.trim();
+    if (!runId) throw new BadRequestException("runId is required");
+    if (!runVariantId) throw new BadRequestException("runVariantId is required");
+    const variant = await this.prisma.runVariant.findFirst({
+      where: { id: runVariantId, runId },
+      select: { id: true, runId: true, assetSymbol: true, steps: true },
+    });
+    if (!variant) {
+      throw new BadRequestException(`runVariantId=${runVariantId} not found for runId=${runId}`);
+    }
+    const assetSymbol = variant.assetSymbol.trim();
+    if (assetSymbolRaw != null && assetSymbolRaw.trim() !== "") {
+      const requested = assetSymbolRaw.trim();
+      if (requested !== assetSymbol) {
+        throw new BadRequestException(
+          `assetSymbol=${requested} does not match variant assetSymbol=${assetSymbol}`,
+        );
+      }
+    }
+    return { runId: variant.runId, runVariantId: variant.id, assetSymbol, steps: variant.steps };
+  }
+
+  private async rerunVariantPipelines(runVariantId: string): Promise<{
+    recalculationStatus: "completed" | "failed" | "skipped";
+    recalculationDetail?: string;
+  }> {
+    let recalculationStatus: "completed" | "failed" | "skipped" = "skipped";
+    let recalculationDetail: string | undefined;
+    if (process.env.SIMULATION_INJECT_SKIP_RERUN === "1" || process.env.SIMULATION_INJECT_SKIP_RERUN === "true") {
+      return { recalculationStatus, recalculationDetail: "SIMULATION_INJECT_SKIP_RERUN=1 — pipelines not executed" };
+    }
+    const repoRoot = resolveRepoRoot();
+    const workerDir = path.join(repoRoot, "apps", "worker");
+    if (!fs.existsSync(path.join(workerDir, "package.json"))) {
+      return { recalculationStatus, recalculationDetail: `worker package not found under ${workerDir}` };
+    }
+    try {
+      await this.prisma.runVariant.update({
+        where: { id: runVariantId },
+        data: { completedAt: new Date() },
+      });
+      await execFileAsync(
+        "pnpm",
+        ["-C", workerDir, "run", "decide", "--", "--runVariantId", runVariantId, "--overwrite"],
+        { cwd: repoRoot, maxBuffer: 64 * 1024 * 1024, timeout: 15 * 60 * 1000, env: { ...process.env } },
+      );
+      await execFileAsync(
+        "pnpm",
+        ["-C", workerDir, "run", "compute-crowd-metrics", "--", "--runVariantId", runVariantId, "--overwrite"],
+        { cwd: repoRoot, maxBuffer: 64 * 1024 * 1024, timeout: 15 * 60 * 1000, env: { ...process.env } },
+      );
+      recalculationStatus = "completed";
+    } catch (e: unknown) {
+      recalculationStatus = "failed";
+      const err = e as { stderr?: Buffer; message?: string };
+      recalculationDetail = (err.stderr?.toString() ?? err.message ?? String(e)).slice(0, 2000);
+    }
+    return { recalculationStatus, recalculationDetail };
+  }
 
   validateInjectDto(dto: InjectSimulationEventDto): void {
     if (!dto.runId?.trim()) throw new BadRequestException("runId is required");
@@ -286,42 +362,7 @@ export class SimulationService {
       .slice(0, 8)
       .map(([name, n]) => `${name}:${n}`);
 
-    let recalculationStatus: "completed" | "failed" | "skipped" = "skipped";
-    let recalculationDetail: string | undefined;
-
-    if (process.env.SIMULATION_INJECT_SKIP_RERUN === "1" || process.env.SIMULATION_INJECT_SKIP_RERUN === "true") {
-      recalculationDetail = "SIMULATION_INJECT_SKIP_RERUN=1 — decide not executed";
-    } else {
-      const repoRoot = resolveRepoRoot();
-      const workerDir = path.join(repoRoot, "apps", "worker");
-      if (!fs.existsSync(path.join(workerDir, "package.json"))) {
-        recalculationStatus = "skipped";
-        recalculationDetail = `worker package not found under ${workerDir}`;
-      } else {
-        try {
-          // Touch the variant whenever a rerun is triggered so active-scenario ordering stays stable.
-          await this.prisma.runVariant.update({
-            where: { id: variant.id },
-            data: { completedAt: new Date() },
-          });
-          await execFileAsync(
-            "pnpm",
-            ["-C", workerDir, "run", "decide", "--", "--runVariantId", variant.id, "--overwrite"],
-            {
-              cwd: repoRoot,
-              maxBuffer: 64 * 1024 * 1024,
-              timeout: 15 * 60 * 1000,
-              env: { ...process.env },
-            },
-          );
-          recalculationStatus = "completed";
-        } catch (e: unknown) {
-          recalculationStatus = "failed";
-          const err = e as { stderr?: Buffer; message?: string };
-          recalculationDetail = (err.stderr?.toString() ?? err.message ?? String(e)).slice(0, 2000);
-        }
-      }
-    }
+    const { recalculationStatus, recalculationDetail } = await this.rerunVariantPipelines(variant.id);
 
     const interp = buildInterpretationSummary(normalized);
     const targetArchetypeCount = normalized.targetArchetypes?.length ?? 0;
@@ -389,5 +430,59 @@ export class SimulationService {
         assetSymbol: r.assetSymbol,
       };
     });
+  }
+
+  async resetSimulationEvents(opts: {
+    runId: string;
+    runVariantId: string;
+    assetSymbol?: string;
+  }): Promise<SimulationEventMutationResponse> {
+    const scope = await this.resolveVariantScope(opts.runId, opts.runVariantId, opts.assetSymbol);
+    const deleted = await this.prisma.infoEvent.deleteMany({
+      where: { runId: scope.runId, assetSymbol: scope.assetSymbol },
+    });
+    const { recalculationStatus, recalculationDetail } = await this.rerunVariantPipelines(scope.runVariantId);
+    return {
+      affectedRunId: scope.runId,
+      runVariantId: scope.runVariantId,
+      assetSymbol: scope.assetSymbol,
+      deletedCount: deleted.count,
+      recalculationStatus,
+      recalculationDetail,
+    };
+  }
+
+  async removeLastSimulationEvent(opts: {
+    runId: string;
+    runVariantId: string;
+    assetSymbol?: string;
+  }): Promise<SimulationEventMutationResponse> {
+    const scope = await this.resolveVariantScope(opts.runId, opts.runVariantId, opts.assetSymbol);
+    const last = await this.prisma.infoEvent.findFirst({
+      where: { runId: scope.runId, assetSymbol: scope.assetSymbol },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      select: { id: true },
+    });
+    if (!last) {
+      return {
+        affectedRunId: scope.runId,
+        runVariantId: scope.runVariantId,
+        assetSymbol: scope.assetSymbol,
+        deletedCount: 0,
+        recalculationStatus: "skipped",
+        recalculationDetail: "No InfoEvent rows to remove",
+      };
+    }
+    await this.prisma.infoEvent.delete({ where: { id: last.id } });
+    const { recalculationStatus, recalculationDetail } = await this.rerunVariantPipelines(scope.runVariantId);
+    return {
+      affectedRunId: scope.runId,
+      runVariantId: scope.runVariantId,
+      assetSymbol: scope.assetSymbol,
+      deletedCount: 1,
+      removedEventId: last.id,
+      recalculationStatus,
+      recalculationDetail,
+    };
   }
 }

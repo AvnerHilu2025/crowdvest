@@ -430,6 +430,9 @@ export class ResultsService {
       step: number;
       signal: number;
       weightedSignal: number;
+      buyPct?: number;
+      sellPct?: number;
+      holdPct?: number;
       consensus: number;
       polarization: number;
       uncertainty: number;
@@ -589,10 +592,33 @@ export class ResultsService {
       noiseSensitivity?: number | null;
     };
     const typedRows = rows as CrowdRow[];
-    const perStep = typedRows.map((r) => ({
+    const groupedPerStepActions = await this.prisma.agentDecision.groupBy({
+      by: ["step", "action"],
+      where: { runId, assetSymbol: sym, ...variantWhere },
+      _count: { id: true },
+    });
+    const stepActionMix = new Map<number, { buy: number; sell: number; hold: number; total: number }>();
+    for (const row of groupedPerStepActions) {
+      const step = row.step;
+      const existing = stepActionMix.get(step) ?? { buy: 0, sell: 0, hold: 0, total: 0 };
+      const count = row._count.id;
+      if (row.action === "BUY") existing.buy += count;
+      else if (row.action === "SELL") existing.sell += count;
+      else if (row.action === "HOLD") existing.hold += count;
+      existing.total += count;
+      stepActionMix.set(step, existing);
+    }
+
+    const perStep = typedRows.map((r) => {
+      const mix = stepActionMix.get(r.step);
+      const total = mix?.total ?? 0;
+      return {
       step: r.step,
       signal: r.signal,
       weightedSignal: r.weightedSignal,
+      buyPct: total > 0 ? mix!.buy / total : undefined,
+      sellPct: total > 0 ? mix!.sell / total : undefined,
+      holdPct: total > 0 ? mix!.hold / total : undefined,
       consensus: r.consensus,
       polarization: r.polarization,
       uncertainty: r.uncertainty,
@@ -603,7 +629,8 @@ export class ResultsService {
       herdingIndex: r.herdingIndex ?? 0,
       wisdomScore: r.wisdomScore ?? null,
       noiseSensitivity: r.noiseSensitivity ?? 0,
-    }));
+      };
+    });
 
     const step0 = perStep[0];
     if (step0) {

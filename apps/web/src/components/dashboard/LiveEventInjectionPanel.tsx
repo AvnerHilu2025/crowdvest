@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { API_BASE } from "@/lib/api";
 
 type InjectedEventRow = {
@@ -27,8 +26,18 @@ type InjectResponse = {
   mixedInterpretationActive?: boolean;
   interpretationSummary?: string;
 };
+type EventMutationResponse = {
+  affectedRunId: string;
+  runVariantId: string;
+  assetSymbol: string;
+  deletedCount: number;
+  removedEventId?: string;
+  recalculationStatus: "completed" | "failed" | "skipped";
+  recalculationDetail?: string;
+};
 
 type SimulationSource = "custom" | "x" | "facebook" | "reddit" | "sec" | "newswire";
+type InjectionInputMode = "form" | "json";
 
 type PresetFields = {
   sourceType: "news" | "social" | "macro" | "rumor";
@@ -192,6 +201,91 @@ const SOURCE_PRESETS: Record<Exclude<SimulationSource, "custom">, PresetFields &
   },
 };
 
+const JSON_EVENT_LIBRARY: Array<{ id: string; label: string; payload: Record<string, unknown> }> = [
+  {
+    id: "reddit-panic",
+    label: "Reddit Panic",
+    payload: {
+      sourceType: "social",
+      sourceName: "r-wallstreetbets-demo",
+      title: "Reddit panic wave: risk-off cascade",
+      sentiment: -0.78,
+      confidence: 0.6,
+      urgency: 0.86,
+      relevance: 0.82,
+      reach: 0.92,
+      credibility: 0.35,
+      step: 2,
+      simulationPlatform: "reddit",
+      sensitivityOverrides: { info: 1.25, event: 1.35 },
+      defaultArchetypeSentimentScale: 1,
+    },
+  },
+  {
+    id: "positive-news-spike",
+    label: "Positive News Spike",
+    payload: {
+      sourceType: "news",
+      sourceName: "demo-newswire",
+      title: "Positive guidance surprise from leadership update",
+      sentiment: 0.72,
+      confidence: 0.88,
+      urgency: 0.64,
+      relevance: 0.9,
+      reach: 0.84,
+      credibility: 0.9,
+      step: 2,
+      simulationPlatform: "newswire",
+      sensitivityOverrides: { info: 1.12, event: 1.08 },
+      defaultArchetypeSentimentScale: 1,
+    },
+  },
+  {
+    id: "conflicting-signals",
+    label: "Conflicting Signals",
+    payload: {
+      sourceType: "social",
+      sourceName: "r-wallstreetbets-demo",
+      title: "Conflicting social interpretation stress test",
+      sentiment: -0.55,
+      confidence: 0.58,
+      urgency: 0.72,
+      relevance: 0.78,
+      reach: 0.88,
+      credibility: 0.46,
+      step: 2,
+      simulationPlatform: "reddit",
+      sensitivityOverrides: { info: 1.18, event: 1.22 },
+      defaultArchetypeSentimentScale: 0.95,
+      archetypeSentimentScale: {
+        momentum_trader: 1.4,
+        mean_reversion: -1.1,
+        conservative_planner: 0.2,
+        info_skeptic: -0.8,
+      },
+    },
+  },
+  {
+    id: "fake-rumor",
+    label: "Fake Rumor",
+    payload: {
+      sourceType: "rumor",
+      sourceName: "viral-forward-chain",
+      title: "Unverified fake rumor spreads rapidly",
+      sentiment: -0.46,
+      confidence: 0.3,
+      urgency: 0.83,
+      relevance: 0.68,
+      reach: 0.95,
+      credibility: 0.12,
+      step: 2,
+      simulationPlatform: "x",
+      sensitivityOverrides: { info: 1.3, event: 1.4 },
+      defaultArchetypeSentimentScale: 1,
+    },
+  },
+];
+
 const cardStyle: React.CSSProperties = {
   border: "1px solid rgba(15, 23, 42, 0.10)",
   borderRadius: 10,
@@ -222,6 +316,84 @@ function parseTargetArchetypes(raw: string): string[] | undefined {
   return parts.length ? parts : undefined;
 }
 
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return value != null && typeof value === "object" && !Array.isArray(value);
+}
+
+function isRecordOfFiniteNumbers(value: unknown): value is Record<string, number> {
+  if (!isPlainRecord(value)) return false;
+  for (const [k, v] of Object.entries(value)) {
+    if (!k.trim()) return false;
+    if (typeof v !== "number" || !Number.isFinite(v)) return false;
+  }
+  return true;
+}
+
+function buildJsonPayloadWithValidation(input: {
+  rawJson: string;
+  runId: string;
+  runVariantId?: string | null;
+  assetSymbol: string;
+}): { ok: true; body: Record<string, unknown> } | { ok: false; message: string } {
+  const raw = input.rawJson.trim();
+  if (!raw) return { ok: false, message: "JSON payload is empty" };
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return { ok: false, message: "JSON payload is invalid" };
+  }
+  if (!isPlainRecord(parsed)) {
+    return { ok: false, message: "JSON payload must be a JSON object" };
+  }
+
+  const payload: Record<string, unknown> = { ...parsed };
+  if (payload.runId == null || String(payload.runId).trim() === "") payload.runId = input.runId;
+  if (payload.assetSymbol == null || String(payload.assetSymbol).trim() === "") payload.assetSymbol = input.assetSymbol;
+  if ((payload.runVariantId == null || String(payload.runVariantId).trim() === "") && input.runVariantId != null) {
+    payload.runVariantId = input.runVariantId;
+  }
+
+  if (!("defaultArchetypeSentimentScale" in payload) && "defaultarchetypesentimentscale" in payload) {
+    return {
+      ok: false,
+      message: "Use exact key casing: defaultArchetypeSentimentScale (not defaultarchetypesentimentscale)",
+    };
+  }
+
+  if (typeof payload.sentiment !== "number" || !Number.isFinite(payload.sentiment)) {
+    return { ok: false, message: "JSON payload: sentiment must be a finite number" };
+  }
+  if (typeof payload.step !== "number" || !Number.isFinite(payload.step)) {
+    return { ok: false, message: "JSON payload: step must be a finite number" };
+  }
+  if (
+    payload.archetypeSentimentScale !== undefined &&
+    !isRecordOfFiniteNumbers(payload.archetypeSentimentScale)
+  ) {
+    return {
+      ok: false,
+      message: "JSON payload: archetypeSentimentScale must be an object of string:number",
+    };
+  }
+  if (
+    payload.defaultArchetypeSentimentScale !== undefined &&
+    (typeof payload.defaultArchetypeSentimentScale !== "number" ||
+      !Number.isFinite(payload.defaultArchetypeSentimentScale))
+  ) {
+    return {
+      ok: false,
+      message: "JSON payload: defaultArchetypeSentimentScale must be a finite number",
+    };
+  }
+  if (payload.sensitivityOverrides !== undefined && !isPlainRecord(payload.sensitivityOverrides)) {
+    return { ok: false, message: "JSON payload: sensitivityOverrides must be a JSON object" };
+  }
+
+  return { ok: true, body: payload };
+}
+
 function applyPresetToState(next: SimulationSource, apply: (p: PresetFields) => void): void {
   if (next === "custom") return;
   const { simulationPlatform: _p, ...preset } = SOURCE_PRESETS[next];
@@ -232,9 +404,10 @@ export function LiveEventInjectionPanel(props: {
   runId: string | null;
   assetSymbol: string;
   runVariantId?: string | null;
+  onSimulationProcessingStateChange?: (state: { active: boolean; title: string; message: string }) => void;
+  onSimulationRefreshRequested?: () => Promise<void>;
 }) {
-  const { runId, assetSymbol, runVariantId } = props;
-  const router = useRouter();
+  const { runId, assetSymbol, runVariantId, onSimulationProcessingStateChange, onSimulationRefreshRequested } = props;
   const [sourceType, setSourceType] = useState<"news" | "social" | "macro" | "rumor">("news");
   const [sourceName, setSourceName] = useState("demo-wire");
   const [title, setTitle] = useState("Live injection: sentiment probe");
@@ -246,12 +419,16 @@ export function LiveEventInjectionPanel(props: {
   const [credibility, setCredibility] = useState("0.55");
   const [step, setStep] = useState("2");
   const [simulationSource, setSimulationSource] = useState<SimulationSource>("custom");
+  const [inputMode, setInputMode] = useState<InjectionInputMode>("form");
   const [targetArchetypesRaw, setTargetArchetypesRaw] = useState("");
   const [sensitivityOverridesRaw, setSensitivityOverridesRaw] = useState("");
   const [archetypeSentimentScaleRaw, setArchetypeSentimentScaleRaw] = useState("");
   const [defaultArchetypeSentimentScale, setDefaultArchetypeSentimentScale] = useState("");
+  const [jsonPayloadRaw, setJsonPayloadRaw] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [mutating, setMutating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [lastSuccess, setLastSuccess] = useState<InjectResponse | null>(null);
   const [recent, setRecent] = useState<InjectedEventRow[]>([]);
 
@@ -277,9 +454,80 @@ export function LiveEventInjectionPanel(props: {
     void loadRecent();
   }, [loadRecent]);
 
+  const buildFormPayload = (): { ok: true; body: Record<string, unknown> } | { ok: false; message: string } => {
+    let sensitivityOverrides: Record<string, number> | undefined;
+    const rawOv = sensitivityOverridesRaw.trim();
+    if (rawOv) {
+      try {
+        const parsed = JSON.parse(rawOv) as unknown;
+        if (parsed == null || typeof parsed !== "object" || Array.isArray(parsed)) {
+          return {
+            ok: false,
+            message:
+              'sensitivityOverrides must be a JSON object with channel keys only, e.g. {"info":1.15,"event":1.05}',
+          };
+        }
+        sensitivityOverrides = parsed as Record<string, number>;
+      } catch {
+        return { ok: false, message: "sensitivityOverrides: invalid JSON" };
+      }
+    }
+
+    let archetypeSentimentScale: Record<string, number> | undefined;
+    const rawScale = archetypeSentimentScaleRaw.trim();
+    if (rawScale) {
+      try {
+        const parsed = JSON.parse(rawScale) as unknown;
+        if (parsed == null || typeof parsed !== "object" || Array.isArray(parsed)) {
+          return { ok: false, message: "archetypeSentimentScale must be a JSON object mapping archetype id → number" };
+        }
+        archetypeSentimentScale = parsed as Record<string, number>;
+      } catch {
+        return { ok: false, message: "archetypeSentimentScale: invalid JSON" };
+      }
+    }
+
+    let defaultArchetypeSentimentScaleNum: number | undefined;
+    const defTrim = defaultArchetypeSentimentScale.trim();
+    if (defTrim) {
+      const n = Number(defTrim);
+      if (!Number.isFinite(n)) {
+        return { ok: false, message: "defaultArchetypeSentimentScale must be a finite number" };
+      }
+      defaultArchetypeSentimentScaleNum = n;
+    }
+
+    const simulationPlatform = simulationSource !== "custom" ? simulationSource : undefined;
+
+    return {
+      ok: true,
+      body: {
+        runId,
+        runVariantId: runVariantId ?? undefined,
+        assetSymbol: assetSymbol.trim(),
+        sourceType,
+        sourceName: sourceName.trim(),
+        title: title.trim(),
+        sentiment: Number(sentiment),
+        confidence: Number(confidence),
+        urgency: Number(urgency),
+        relevance: Number(relevance),
+        reach: Number(reach),
+        credibility: Number(credibility),
+        step: Number(step),
+        targetArchetypes: parseTargetArchetypes(targetArchetypesRaw),
+        sensitivityOverrides,
+        simulationPlatform,
+        archetypeSentimentScale,
+        defaultArchetypeSentimentScale: defaultArchetypeSentimentScaleNum,
+      },
+    };
+  };
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setActionMessage(null);
     setLastSuccess(null);
     if (!runId) {
       setError("No active run on this dashboard — pick a run with scaling data first.");
@@ -291,73 +539,34 @@ export function LiveEventInjectionPanel(props: {
       return;
     }
 
-    let sensitivityOverrides: Record<string, number> | undefined;
-    const rawOv = sensitivityOverridesRaw.trim();
-    if (rawOv) {
-      try {
-        const parsed = JSON.parse(rawOv) as unknown;
-        if (parsed == null || typeof parsed !== "object" || Array.isArray(parsed)) {
-          setError('sensitivityOverrides must be a JSON object with channel keys only, e.g. {"info":1.15,"event":1.05}');
-          return;
-        }
-        sensitivityOverrides = parsed as Record<string, number>;
-      } catch {
-        setError("sensitivityOverrides: invalid JSON");
+    let body: Record<string, unknown>;
+    if (inputMode === "json") {
+      const parsedPayload = buildJsonPayloadWithValidation({
+        rawJson: jsonPayloadRaw,
+        runId,
+        runVariantId,
+        assetSymbol: sym,
+      });
+      if (!parsedPayload.ok) {
+        setError(parsedPayload.message);
         return;
       }
-    }
-
-    let archetypeSentimentScale: Record<string, number> | undefined;
-    const rawScale = archetypeSentimentScaleRaw.trim();
-    if (rawScale) {
-      try {
-        const parsed = JSON.parse(rawScale) as unknown;
-        if (parsed == null || typeof parsed !== "object" || Array.isArray(parsed)) {
-          setError("archetypeSentimentScale must be a JSON object mapping archetype id → number");
-          return;
-        }
-        archetypeSentimentScale = parsed as Record<string, number>;
-      } catch {
-        setError("archetypeSentimentScale: invalid JSON");
+      body = parsedPayload.body;
+    } else {
+      const formPayload = buildFormPayload();
+      if (!formPayload.ok) {
+        setError(formPayload.message);
         return;
       }
+      body = formPayload.body;
     }
-
-    let defaultArchetypeSentimentScaleNum: number | undefined;
-    const defTrim = defaultArchetypeSentimentScale.trim();
-    if (defTrim) {
-      const n = Number(defTrim);
-      if (!Number.isFinite(n)) {
-        setError("defaultArchetypeSentimentScale must be a finite number");
-        return;
-      }
-      defaultArchetypeSentimentScaleNum = n;
-    }
-
-    const simulationPlatform = simulationSource !== "custom" ? simulationSource : undefined;
-
-    const body = {
-      runId,
-      runVariantId: runVariantId ?? undefined,
-      assetSymbol: sym,
-      sourceType,
-      sourceName: sourceName.trim(),
-      title: title.trim(),
-      sentiment: Number(sentiment),
-      confidence: Number(confidence),
-      urgency: Number(urgency),
-      relevance: Number(relevance),
-      reach: Number(reach),
-      credibility: Number(credibility),
-      step: Number(step),
-      targetArchetypes: parseTargetArchetypes(targetArchetypesRaw),
-      sensitivityOverrides,
-      simulationPlatform,
-      archetypeSentimentScale,
-      defaultArchetypeSentimentScale: defaultArchetypeSentimentScaleNum,
-    };
 
     setSubmitting(true);
+    onSimulationProcessingStateChange?.({
+      active: true,
+      title: "Processing simulation",
+      message: "Injecting event and recalculating crowd behavior...",
+    });
     try {
       const res = await fetch(`${API_BASE}/simulation/inject-event`, {
         method: "POST",
@@ -381,12 +590,70 @@ export function LiveEventInjectionPanel(props: {
       }
       const ok = data as InjectResponse;
       setLastSuccess(ok);
+      onSimulationProcessingStateChange?.({
+        active: true,
+        title: "Processing simulation",
+        message: "Refreshing timeline and personas...",
+      });
       await loadRecent();
-      router.refresh();
+      if (onSimulationRefreshRequested) {
+        await onSimulationRefreshRequested();
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Request failed");
     } finally {
       setSubmitting(false);
+      onSimulationProcessingStateChange?.({ active: false, title: "", message: "" });
+    }
+  };
+
+  const runMutation = async (url: string, successPrefix: string) => {
+    setMutating(true);
+    onSimulationProcessingStateChange?.({
+      active: true,
+      title: "Processing simulation",
+      message: "Applying simulation changes and recalculating crowd behavior...",
+    });
+    setError(null);
+    setActionMessage(null);
+    setLastSuccess(null);
+    try {
+      const res = await fetch(url, { method: "DELETE", headers: { accept: "application/json" } });
+      const text = await res.text();
+      let data: unknown = null;
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch {
+        data = { message: text };
+      }
+      if (!res.ok) {
+        const msg =
+          typeof data === "object" && data != null && "message" in data
+            ? String((data as { message: unknown }).message)
+            : text || `HTTP ${res.status}`;
+        setError(msg);
+        return;
+      }
+      const out = data as EventMutationResponse;
+      setActionMessage(
+        `${successPrefix}: deleted ${out.deletedCount} event(s), recalculation ${out.recalculationStatus}${
+          out.recalculationDetail ? ` — ${out.recalculationDetail}` : ""
+        }`,
+      );
+      onSimulationProcessingStateChange?.({
+        active: true,
+        title: "Processing simulation",
+        message: "Refreshing timeline and personas...",
+      });
+      await loadRecent();
+      if (onSimulationRefreshRequested) {
+        await onSimulationRefreshRequested();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Request failed");
+    } finally {
+      setMutating(false);
+      onSimulationProcessingStateChange?.({ active: false, title: "", message: "" });
     }
   };
 
@@ -416,7 +683,147 @@ export function LiveEventInjectionPanel(props: {
       </div>
 
       <form onSubmit={onSubmit}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 12 }}>
+        <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+          <button
+            type="button"
+            onClick={() => setInputMode("form")}
+            style={{
+              padding: "5px 10px",
+              borderRadius: 999,
+              border: "1px solid rgba(15, 23, 42, 0.2)",
+              background: inputMode === "form" ? "rgba(6, 182, 212, 0.18)" : "white",
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            Form
+          </button>
+          <button
+            type="button"
+            onClick={() => setInputMode("json")}
+            style={{
+              padding: "5px 10px",
+              borderRadius: 999,
+              border: "1px solid rgba(15, 23, 42, 0.2)",
+              background: inputMode === "json" ? "rgba(6, 182, 212, 0.18)" : "white",
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            JSON
+          </button>
+        </div>
+        {inputMode === "json" ? (
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ ...labelStyle, marginBottom: 6 }}>Preset Events</div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+              {JSON_EVENT_LIBRARY.map((preset) => (
+                <button
+                  key={preset.id}
+                  type="button"
+                  onClick={() => {
+                    setInputMode("json");
+                    setError(null);
+                    setJsonPayloadRaw(JSON.stringify(preset.payload, null, 2));
+                  }}
+                  style={{
+                    padding: "6px 10px",
+                    borderRadius: 999,
+                    border: "1px solid rgba(15, 23, 42, 0.2)",
+                    background: "white",
+                    fontSize: 12,
+                    cursor: "pointer",
+                  }}
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+            <div style={{ ...labelStyle, marginBottom: 6 }}>Paste full event payload JSON</div>
+            <textarea
+              style={{ ...inputStyle, minHeight: 220, fontFamily: "ui-monospace, monospace", fontSize: 12 }}
+              placeholder='{"sourceType":"social","sourceName":"r-wallstreetbets-demo","title":"...","sentiment":-0.7,"confidence":0.7,"urgency":0.7,"relevance":0.8,"reach":0.85,"credibility":0.5,"step":2}'
+              value={jsonPayloadRaw}
+              onChange={(ev) => setJsonPayloadRaw(ev.target.value)}
+            />
+            <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+              <button
+                type="button"
+                onClick={() => {
+                  const formPayload = buildFormPayload();
+                  if (!formPayload.ok) {
+                    setError(formPayload.message);
+                    return;
+                  }
+                  setError(null);
+                  setJsonPayloadRaw(JSON.stringify(formPayload.body, null, 2));
+                }}
+                style={{
+                  padding: "6px 10px",
+                  borderRadius: 8,
+                  border: "1px solid rgba(15, 23, 42, 0.2)",
+                  background: "white",
+                  fontSize: 12,
+                  cursor: "pointer",
+                }}
+              >
+                Load current form into JSON
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const raw = jsonPayloadRaw.trim();
+                  if (!raw) {
+                    setError("JSON payload is empty");
+                    return;
+                  }
+                  try {
+                    const parsed = JSON.parse(raw);
+                    if (parsed == null || typeof parsed !== "object" || Array.isArray(parsed)) {
+                      setError("JSON payload must be a JSON object");
+                      return;
+                    }
+                    setError(null);
+                    setJsonPayloadRaw(JSON.stringify(parsed, null, 2));
+                  } catch {
+                    setError("JSON payload is invalid");
+                  }
+                }}
+                style={{
+                  padding: "6px 10px",
+                  borderRadius: 8,
+                  border: "1px solid rgba(15, 23, 42, 0.2)",
+                  background: "white",
+                  fontSize: 12,
+                  cursor: "pointer",
+                }}
+              >
+                Pretty format
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setJsonPayloadRaw("");
+                  setError(null);
+                }}
+                style={{
+                  padding: "6px 10px",
+                  borderRadius: 8,
+                  border: "1px solid rgba(15, 23, 42, 0.2)",
+                  background: "white",
+                  fontSize: 12,
+                  cursor: "pointer",
+                }}
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+        ) : null}
+        {inputMode === "form" ? (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 12 }}>
           <div style={{ gridColumn: "1 / -1" }}>
             <div style={labelStyle}>Simulation source (presets prefill; you can still edit everything)</div>
             <select
@@ -541,11 +948,12 @@ export function LiveEventInjectionPanel(props: {
               onChange={(ev) => setArchetypeSentimentScaleRaw(ev.target.value)}
             />
           </div>
-        </div>
+          </div>
+        ) : null}
 
         <button
           type="submit"
-          disabled={submitting}
+          disabled={submitting || mutating}
           data-testid="live-event-inject-submit"
           style={{
             padding: "8px 16px",
@@ -559,12 +967,75 @@ export function LiveEventInjectionPanel(props: {
         >
           {submitting ? "Injecting & recalculating…" : "Inject event & recalculate"}
         </button>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
+          <button
+            type="button"
+            disabled={submitting || mutating}
+            onClick={() => {
+              if (!runId) {
+                setError("runId is required");
+                return;
+              }
+              if (!runVariantId) {
+                setError("runVariantId is required to remove last event");
+                return;
+              }
+              const url = `${API_BASE}/simulation/events/last?runId=${encodeURIComponent(runId)}&runVariantId=${encodeURIComponent(
+                runVariantId,
+              )}&assetSymbol=${encodeURIComponent(assetSymbol.trim())}`;
+              void runMutation(url, "Removed last event");
+            }}
+            style={{
+              padding: "7px 11px",
+              borderRadius: 8,
+              border: "1px solid rgba(180, 83, 9, 0.35)",
+              background: "rgba(245, 158, 11, 0.15)",
+              fontWeight: 600,
+              fontSize: 12,
+              cursor: submitting || mutating ? "not-allowed" : "pointer",
+            }}
+          >
+            Remove Last Event
+          </button>
+          <button
+            type="button"
+            disabled={submitting || mutating}
+            onClick={() => {
+              if (!runId) {
+                setError("runId is required");
+                return;
+              }
+              if (!runVariantId) {
+                setError("runVariantId is required to reset simulation");
+                return;
+              }
+              const url = `${API_BASE}/simulation/events?runId=${encodeURIComponent(runId)}&runVariantId=${encodeURIComponent(
+                runVariantId,
+              )}&assetSymbol=${encodeURIComponent(assetSymbol.trim())}`;
+              void runMutation(url, "Simulation reset");
+            }}
+            style={{
+              padding: "7px 11px",
+              borderRadius: 8,
+              border: "1px solid rgba(220, 38, 38, 0.35)",
+              background: "rgba(220, 38, 38, 0.12)",
+              fontWeight: 600,
+              fontSize: 12,
+              cursor: submitting || mutating ? "not-allowed" : "pointer",
+            }}
+          >
+            Reset Simulation
+          </button>
+        </div>
       </form>
 
       {error ? (
         <div data-testid="live-event-inject-error" style={{ marginTop: 12, fontSize: 12, color: "#dc2626" }}>
           {error}
         </div>
+      ) : null}
+      {actionMessage ? (
+        <div style={{ marginTop: 10, fontSize: 12, color: "rgba(15, 23, 42, 0.8)" }}>{actionMessage}</div>
       ) : null}
 
       {lastSuccess ? (

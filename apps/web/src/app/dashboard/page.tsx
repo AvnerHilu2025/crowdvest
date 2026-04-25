@@ -107,6 +107,12 @@ function parseCrowdState(json: unknown): DashboardCrowdStateEnvelope | null {
       step: Math.trunc(s.step),
       weightedSignal: s.weightedSignal,
       signal: s.signal,
+      buyPct:
+        typeof s.buyPct === "number" && Number.isFinite(s.buyPct) ? Math.max(0, Math.min(1, s.buyPct)) : undefined,
+      sellPct:
+        typeof s.sellPct === "number" && Number.isFinite(s.sellPct) ? Math.max(0, Math.min(1, s.sellPct)) : undefined,
+      holdPct:
+        typeof s.holdPct === "number" && Number.isFinite(s.holdPct) ? Math.max(0, Math.min(1, s.holdPct)) : undefined,
     });
   }
   if (

@@ -238,6 +238,12 @@ type DirectionBiasByAgentTypeInput = {
   balanced?: DirectionBiasSlice;
 };
 
+type SimulationBlockingState = {
+  active: boolean;
+  title: string;
+  message: string;
+};
+
 type CrowdMapDot = {
   kind: "positive" | "negative" | "neutral";
   leftPct: number;
@@ -616,7 +622,7 @@ export type DashboardCrowdStateEnvelope = {
   holdPct: number;
   majorityPct: number;
   dominantAction: "BUY" | "SELL" | "HOLD";
-  perStep: Array<{ step: number; weightedSignal: number; signal: number }>;
+  perStep: Array<{ step: number; weightedSignal: number; signal: number; buyPct?: number; sellPct?: number; holdPct?: number }>;
   recommendation: DashboardCrowdStateRecommendation;
 };
 
@@ -669,6 +675,12 @@ function parseCrowdStateFromApi(json: unknown): DashboardCrowdStateEnvelope | nu
       step: Math.trunc(s.step),
       weightedSignal: s.weightedSignal,
       signal: s.signal,
+      buyPct:
+        typeof s.buyPct === "number" && Number.isFinite(s.buyPct) ? Math.max(0, Math.min(1, s.buyPct)) : undefined,
+      sellPct:
+        typeof s.sellPct === "number" && Number.isFinite(s.sellPct) ? Math.max(0, Math.min(1, s.sellPct)) : undefined,
+      holdPct:
+        typeof s.holdPct === "number" && Number.isFinite(s.holdPct) ? Math.max(0, Math.min(1, s.holdPct)) : undefined,
     });
   }
   if (
@@ -855,6 +867,48 @@ function parseInfoEventsFromApiJson(json: unknown): DashboardLatestRunInfoEvent[
     });
   }
   return out;
+}
+
+function parseTimelineSourceMeta(source: string | null | undefined): {
+  simulationPlatform?: string;
+  sourceType?: string;
+  sourceName?: string;
+} {
+  const src = source?.trim();
+  if (!src) return {};
+
+  const LIVE_PREFIX = "LIVE_JSON:";
+  if (src.startsWith(LIVE_PREFIX)) {
+    try {
+      const meta = JSON.parse(src.slice(LIVE_PREFIX.length)) as {
+        simulationPlatform?: unknown;
+        sourceType?: unknown;
+        sourceName?: unknown;
+      };
+      const simulationPlatform =
+        typeof meta.simulationPlatform === "string" && meta.simulationPlatform.trim() !== ""
+          ? meta.simulationPlatform.trim().toLowerCase()
+          : undefined;
+      const sourceType =
+        typeof meta.sourceType === "string" && meta.sourceType.trim() !== ""
+          ? meta.sourceType.trim()
+          : undefined;
+      const sourceName =
+        typeof meta.sourceName === "string" && meta.sourceName.trim() !== ""
+          ? meta.sourceName.trim()
+          : undefined;
+      return { simulationPlatform, sourceType, sourceName };
+    } catch {
+      return {};
+    }
+  }
+
+  const idx = src.indexOf(":");
+  if (idx <= 0 || idx >= src.length - 1) return {};
+  const sourceType = src.slice(0, idx).trim();
+  const sourceName = src.slice(idx + 1).trim();
+  if (!sourceType || !sourceName) return {};
+  return { sourceType, sourceName };
 }
 
 export type DashboardRunPerformance = {
@@ -1403,7 +1457,27 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
   const [isInjectPanelOpen, setIsInjectPanelOpen] = useState(false);
   const [variantPersonas, setVariantPersonas] = useState<VariantPersonaRow[] | null>(null);
   const [isScenarioLoading, setIsScenarioLoading] = useState(false);
+  const [simulationBlockingState, setSimulationBlockingState] = useState<SimulationBlockingState>({
+    active: false,
+    title: "",
+    message: "",
+  });
   const prevScenarioFetchKeyRef = useRef<string | null>(null);
+
+  const handleSimulationProcessingStateChange = useCallback((state: SimulationBlockingState) => {
+    setSimulationBlockingState((prev) => {
+      if (state.active) {
+        if (!prev.active) {
+          console.debug("simulation overlay: start");
+        }
+        return state;
+      }
+      if (prev.active) {
+        console.debug("simulation overlay: clear");
+      }
+      return { active: false, title: "", message: "" };
+    });
+  }, []);
 
   const scenarioFetch = useMemo(() => {
     const requestedFromUrlOrProps =
@@ -1645,12 +1719,75 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
     };
   }, [dashboardInfoEventsRunId, initialQuery.assetSymbol, latestRunInfoEvents]);
 
-  const effectiveLatestRunInfoEvents =
-    latestRunInfoEvents != null && latestRunInfoEvents.length > 0
-      ? latestRunInfoEvents
-      : infoEventsFromFlatFetch !== null
-        ? infoEventsFromFlatFetch
-        : latestRunInfoEvents;
+  const effectiveLatestRunInfoEvents = infoEventsFromFlatFetch !== null ? infoEventsFromFlatFetch : latestRunInfoEvents;
+
+  const refreshSimulationDashboardState = useCallback(async () => {
+    const runId = dashboardInfoEventsRunId;
+    const assetSymbol = initialQuery.assetSymbol.trim();
+    const variantId = activeVariantIdRef.current;
+    if (!runId || !assetSymbol || !variantId) return;
+
+    setIsScenarioLoading(true);
+    try {
+      const csUrl = `${API_BASE}/results/crowd-state?runId=${encodeURIComponent(runId)}&assetSymbol=${encodeURIComponent(
+        assetSymbol,
+      )}&runVariantId=${encodeURIComponent(variantId)}`;
+      const pUrl = `${API_BASE}/results/personas?runId=${encodeURIComponent(runId)}&assetSymbol=${encodeURIComponent(
+        assetSymbol,
+      )}&runVariantId=${encodeURIComponent(variantId)}`;
+      const compareVariantId =
+        variantOptions.length === 2 ? (variantOptions.find((o) => o.id !== variantId)?.id ?? null) : null;
+      const compareCsUrl = compareVariantId
+        ? `${API_BASE}/results/crowd-state?runId=${encodeURIComponent(runId)}&assetSymbol=${encodeURIComponent(
+            assetSymbol,
+          )}&runVariantId=${encodeURIComponent(compareVariantId)}`
+        : null;
+      const infoEventsUrl = `${API_BASE}/info-events?runId=${encodeURIComponent(runId)}&assetSymbol=${encodeURIComponent(
+        assetSymbol,
+      )}`;
+
+      const [csRes, pRes, compareCsRes, infoEventsRes] = await Promise.all([
+        fetch(csUrl, { cache: "no-store", headers: { accept: "application/json" } }),
+        fetch(pUrl, { cache: "no-store", headers: { accept: "application/json" } }),
+        compareCsUrl ? fetch(compareCsUrl, { cache: "no-store", headers: { accept: "application/json" } }) : Promise.resolve(null),
+        fetch(infoEventsUrl, { cache: "no-store", headers: { accept: "application/json" } }),
+      ]);
+
+      if (csRes.ok) {
+        const raw: unknown = await csRes.json();
+        const parsed = parseCrowdStateFromApi(raw);
+        if (parsed) {
+          setCrowdStateEnvelope(parsed);
+          setCrowdStateRecommendation(parsed.recommendation);
+        }
+      }
+
+      if (pRes.ok) {
+        const raw = (await pRes.json()) as DashboardVariantPersonasResponse;
+        if (Array.isArray(raw.items)) setVariantPersonas(raw.items);
+      }
+
+      if (compareCsRes?.ok) {
+        const raw: unknown = await compareCsRes.json();
+        const parsed = parseCrowdStateFromApi(raw);
+        if (parsed) {
+          setComparisonCrowdStateEnvelope(parsed);
+        } else {
+          setComparisonCrowdStateEnvelope(null);
+        }
+      } else {
+        setComparisonCrowdStateEnvelope(null);
+      }
+
+      if (infoEventsRes.ok) {
+        const raw: unknown = await infoEventsRes.json();
+        setInfoEventsFromFlatFetch(parseInfoEventsFromApiJson(raw));
+      }
+      console.debug("simulation overlay: refresh complete");
+    } finally {
+      setIsScenarioLoading(false);
+    }
+  }, [dashboardInfoEventsRunId, initialQuery.assetSymbol, variantOptions]);
 
   const significantInfoEvents = useMemo(
     () => pickSignificantInfoEvents(effectiveLatestRunInfoEvents, SIGNIFICANT_INFO_EVENTS_MAX),
@@ -1666,11 +1803,17 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
     if (!targetAsset || !Array.isArray(effectiveLatestRunInfoEvents)) return [];
     return effectiveLatestRunInfoEvents
       .filter((e) => e.assetSymbol.trim().toUpperCase() === targetAsset)
-      .map((e) => ({
-        step: e.step,
-        topic: e.topic,
-        sentiment: e.sentiment,
-      }))
+      .map((e) => {
+        const sourceMeta = parseTimelineSourceMeta(e.source);
+        return {
+          step: e.step,
+          topic: e.topic,
+          sentiment: e.sentiment,
+          simulationPlatform: sourceMeta.simulationPlatform,
+          sourceType: sourceMeta.sourceType,
+          sourceName: sourceMeta.sourceName,
+        };
+      })
       .sort((a, b) => a.step - b.step);
   }, [effectiveLatestRunInfoEvents, initialQuery.assetSymbol]);
 
@@ -2282,6 +2425,8 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
               runId={dashboardInfoEventsRunId}
               assetSymbol={initialQuery.assetSymbol.trim()}
               runVariantId={activeVariantId}
+              onSimulationProcessingStateChange={handleSimulationProcessingStateChange}
+              onSimulationRefreshRequested={refreshSimulationDashboardState}
             />
           ) : null}
         </div>
@@ -5028,6 +5173,58 @@ export function DashboardClient({ initialData, initialQuery }: DashboardClientPr
               }}
             >
               Analyzing market signals...
+            </div>
+          </div>
+        </div>
+      )}
+      {simulationBlockingState.active && (
+        <div
+          data-testid="simulation-blocking-overlay"
+          role="status"
+          aria-live="assertive"
+          aria-busy="true"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 10001,
+            background: "rgba(2, 6, 23, 0.72)",
+            backdropFilter: "blur(2px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 16,
+          }}
+        >
+          <div
+            style={{
+              width: "420px",
+              maxWidth: "calc(100vw - 32px)",
+              borderRadius: 14,
+              border: "1px solid rgba(148, 163, 184, 0.45)",
+              background: "#0f172a",
+              color: "#e2e8f0",
+              boxShadow: "0 24px 60px rgba(0, 0, 0, 0.5)",
+              padding: "24px 22px",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 12,
+              textAlign: "center",
+            }}
+          >
+            <div
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 999,
+                border: "3px solid rgba(148, 163, 184, 0.45)",
+                borderTopColor: "#22d3ee",
+                animation: "dashboardSpin 0.8s linear infinite",
+              }}
+            />
+            <div style={{ fontSize: 20, fontWeight: 700 }}>{simulationBlockingState.title}</div>
+            <div style={{ fontSize: 14, lineHeight: 1.5, color: "rgba(226, 232, 240, 0.92)" }}>
+              {simulationBlockingState.message}
             </div>
           </div>
         </div>
